@@ -46,32 +46,44 @@ func main() {
 		log.Println("读取配置文件失败：", err)
 		return
 	}
+	switch *runMode { //运行模式选择
+	case "cron":
+		log.Println("cronA 模式,执行一次，然后进入定时执行模式")
+		update()
+	case "cronAft":
+		log.Println("cronAft 模式稍后定时执行")
+	case "nocron":
+		update()
+		log.Println("nocron 自动推出")
+		return
+	case "clean":
+		log.Println("清理模式")
+		clean()
+		return
+	default:
+		log.Println("-r 参数错误")
+		return
+	}
 
-	update()
-	if *runMode != "cron" {
-		log.Println("非cron模式 自动推出")
+	if conf.Cron == "" {
+		log.Println("Cron配为空 自动推出")
+		return
+	}
+
+	c := cron.New()
+	_, err = c.AddFunc(conf.Cron, update)
+	if err != nil {
+		log.Println("启动计划任务失败：", err)
 		return
 	} else {
-		if conf.Cron == "" {
-			log.Println("Cron配为空 自动推出")
-			return
-		}
+		log.Println("已启动计划任务", conf.Cron)
+	}
+	c.Start()
 
-		c := cron.New()
-		_, err = c.AddFunc(conf.Cron, update)
-		if err != nil {
-			log.Println("启动计划任务失败：", err)
-			return
-		} else {
-			log.Println("已启动计划任务", conf.Cron)
-		}
-		c.Start()
-
-		{
-			osSignals := make(chan os.Signal, 1)
-			signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
-			<-osSignals
-		}
+	{
+		osSignals := make(chan os.Signal, 1)
+		signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
+		<-osSignals
 	}
 
 }
@@ -88,6 +100,50 @@ func readConf(filename string) error {
 	return nil
 }
 
+// 清理旧分流规则
+func clean() {
+	err := readConf(*confPath)
+	if err != nil {
+		log.Println("更新配置文件失败：", err)
+		return
+	}
+
+	baseurl := conf.IkuaiURL
+	if baseurl == "" {
+		gateway, err := router.GetGateway()
+		if err != nil {
+			log.Println("获取默认网关失败：", err)
+			return
+		}
+		baseurl = "http://" + gateway
+		log.Println("使用默认网关地址：", baseurl)
+	}
+
+	iKuai := api.NewIKuai(baseurl)
+
+	err = iKuai.Login(conf.Username, conf.Password)
+	if err != nil {
+		log.Println("ikuai 登陆失败：", baseurl, err)
+		return
+	} else {
+		log.Println("ikuai 登录成功", baseurl)
+	}
+
+	err = iKuai.DelIKuaiBypassCustomIsp()
+	if err != nil {
+		log.Println("移除旧的自定义运营商失败：", err)
+	} else {
+		log.Println("移除旧的自定义运营商成功")
+	}
+
+	err = iKuai.DelIKuaiBypassStreamDomain()
+	if err != nil {
+		log.Println("移除旧的域名分流失败：", err)
+	} else {
+		log.Println("移除旧的域名分流成功")
+	}
+
+}
 func update() {
 	err := readConf(*confPath)
 	if err != nil {
@@ -161,9 +217,9 @@ func update() {
 		/*
 			err = iKuai.DelIKuaiBypassStreamDomain()
 			if err != nil {
-				log.Println("域名分流== 移除旧的域名分流失败：", err)
+				log.Println("移除旧的域名分流失败：", err)
 			} else {
-				log.Println("域名分流== 移除旧的域名分流成功")
+				log.Println("移除旧的域名分流成功")
 			}*/
 		preIds, err := iKuai.PrepareDelIKuaiBypassStreamDomain()
 		if err != nil {

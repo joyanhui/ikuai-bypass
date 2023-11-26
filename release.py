@@ -10,7 +10,7 @@ parser.add_argument("-upx", action="store_true")
 parser.add_argument("-i", type=int)
 args = parser.parse_args()
 
-PROJECT_NAME = 'mosdns'
+PROJECT_NAME = 'ikuai-bypass'
 RELEASE_DIR = './release'
 
 logger = logging.getLogger(__name__)

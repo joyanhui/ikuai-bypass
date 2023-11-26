@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/robfig/cron/v3"
 	"io"
 	"log"
 	"net/http"
@@ -15,12 +16,11 @@ import (
 
 	"github.com/joyanhui/ikuai-bypass/api"
 	"github.com/joyanhui/ikuai-bypass/router"
-	"github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v3"
 )
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
-
+var runMode = flag.String("r", "cron", "运行模式")
 var conf struct {
 	IkuaiURL  string `yaml:"ikuai-url"`
 	Username  string `yaml:"username"`
@@ -40,6 +40,7 @@ var conf struct {
 func main() {
 	flag.Parse()
 
+	log.Println("运行模式", *runMode, "配置文件", *confPath)
 	err := readConf(*confPath)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
@@ -47,26 +48,32 @@ func main() {
 	}
 
 	update()
-
-	if conf.Cron == "" {
-		return
-	}
-
-	c := cron.New()
-	_, err = c.AddFunc(conf.Cron, update)
-	if err != nil {
-		log.Println("启动计划任务失败：", err)
+	if *runMode != "cron" {
+		log.Println("非cron模式 自动推出")
 		return
 	} else {
-		log.Println("已启动计划任务", conf.Cron)
-	}
-	c.Start()
+		if conf.Cron == "" {
+			log.Println("Cron配为空 自动推出")
+			return
+		}
 
-	{
-		osSignals := make(chan os.Signal, 1)
-		signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
-		<-osSignals
+		c := cron.New()
+		_, err = c.AddFunc(conf.Cron, update)
+		if err != nil {
+			log.Println("启动计划任务失败：", err)
+			return
+		} else {
+			log.Println("已启动计划任务", conf.Cron)
+		}
+		c.Start()
+
+		{
+			osSignals := make(chan os.Signal, 1)
+			signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
+			<-osSignals
+		}
 	}
+
 }
 
 func readConf(filename string) error {

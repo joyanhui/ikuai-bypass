@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const FUNC_NAME_STREAM_DOMAIN = "stream_domain"
+const FuncNameStreamDomain = "stream_domain"
 
 type StreamDomainData struct {
 	Week      string `json:"week"`
@@ -39,7 +39,7 @@ func (i *IKuai) AddStreamDomain(iface, srcAddr, domains string) error {
 		Enabled:   "yes",
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_STREAM_DOMAIN,
+		FuncName: FuncNameStreamDomain,
 		Action:   "add",
 		Param:    &param,
 	}
@@ -68,7 +68,7 @@ func (i *IKuai) ShowStreamDomainByComment(comment string) (result []StreamDomain
 		Type:     "data",
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_STREAM_DOMAIN,
+		FuncName: FuncNameStreamDomain,
 		Action:   "show",
 		Param:    &param,
 	}
@@ -91,7 +91,7 @@ func (i *IKuai) DelStreamDomain(id string) error {
 		Id: id,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_STREAM_DOMAIN,
+		FuncName: FuncNameStreamDomain,
 		Action:   "del",
 		Param:    &param,
 	}

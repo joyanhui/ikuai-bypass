@@ -23,18 +23,18 @@ custom-isp:     # 自定义运营商  IP分流
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt
   
 stream-domain:      # 域名分流
-  - interface: wan2 # 分流线路
-    src-addr: 10.1.1.5-10.1.1.254   # 分流的源地址
-    ## 域名列表网址，每行一个，超过1000行会自动分为多个
-    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/greatfire.txt
+  #- interface: wan2 # 分流线路
+  #  src-addr: 10.1.1.5-10.1.1.254   # 分流的源地址
+  #  ## 域名列表网址，每行一个，超过1000行会自动分为多个
+  #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/greatfire.txt
   - interface: wan2
     src-addr: 10.1.1.5-10.1.1.254  
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
 
   #下面是自动走wan1直连的
-  - interface: wan1
-    src-addr: 10.1.1.5-10.1.1.254  
-    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
-  - interface: wan1
-    src-addr: 10.1.1.5-10.1.1.254  
-    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
+  #- interface: wan1
+  #  src-addr: 10.1.1.5-10.1.1.254
+  #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
+  #- interface: wan1
+  #  src-addr: 10.1.1.5-10.1.1.254
+  #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt

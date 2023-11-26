@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 envs = [
     [['GOOS', 'darwin'], ['GOARCH', 'amd64']],
     [['GOOS', 'darwin'], ['GOARCH', 'arm64']],
-    # [['GOOS', 'linux'], ['GOARCH', '386']],
+    [['GOOS', 'linux'], ['GOARCH', '386']],
     [['GOOS', 'linux'], ['GOARCH', 'amd64']],
 
     [['GOOS', 'linux'], ['GOARCH', 'arm'], ['GOARM', '5']],
@@ -43,7 +43,7 @@ envs = [
     # [['GOOS', 'freebsd'], ['GOARCH', '386']],
     [['GOOS', 'freebsd'], ['GOARCH', 'amd64']],
 
-    # [['GOOS', 'windows'], ['GOARCH', '386']],
+    [['GOOS', 'windows'], ['GOARCH', '386']],
     [['GOOS', 'windows'], ['GOARCH', 'amd64']],
 ]
 

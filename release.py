@@ -96,7 +96,7 @@ def go_build():
                                  compresslevel=5) as zf:
                 zf.write(bin_filename)
                 zf.write('../README.md', 'README.md')
-                zf.write('./config_example.yml', 'config.yml')
+                zf.write('../config_example.yml', 'config.yml')
                 #zf.write('../LICENSE', 'LICENSE')
 
         except subprocess.CalledProcessError as e:

@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/joyanhui/ikuai-bypass/api"
+	"github.com/joyanhui/ikuai-bypass/router"
 	"github.com/robfig/cron/v3"
-	"github.com/ztc1997/ikuai-bypass/api"
-	"github.com/ztc1997/ikuai-bypass/router"
 	"gopkg.in/yaml.v3"
 )
 

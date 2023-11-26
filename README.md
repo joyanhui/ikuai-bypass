@@ -56,7 +56,7 @@ openwrt  lan 绑定套eth0 关闭DHCP服务，ip地址配置 10.1.1.1
 也会添加几个 telegram google 等ip地址，你可以删掉那几行，也可以添加规则 启用wan2     
 3. 另外会添加4个域名分流规则 分别强制走wan1 和wan2 你可以在下面配置文件清晰看到。需要注意的是 china-list 和 gfw两个清单 都很长，添加/更新的时候会很慢。你可以根据你的需求决定是否要保留，添加后会增加你访问网址的速度，但是会增加ikuai的性能消耗（大概增加30-120M内存消耗，cpu负载也会增加一点），如果你的ikuai配置很烂，可以去掉其他规则 只使用  国内IP列表  的IP分流即可  。
 
-文件内容参考  config_example.yml  
+文件内容参考  https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml 
 
 ##### 部署ikuai-bypass
 ikuai-bypass 只要部署在可以访问到 爱快路由器的地方即可。  
@@ -118,6 +118,8 @@ chmod +x /opt/ikuai-bypass/ikuai-bypass_linux_amd64  && /opt/ikuai-bypass/ikuai-
 
 #### 其他补充
 ##### 自定义规则和ikuai-bypass的规则
-ikuai-bypass 自动维护的规则 都会添加备注 `IKUAI_BYPASS` ，只要你添加的规则备注不是这个即可。
+ikuai-bypass 自动维护的规则 都会添加备注 `IKUAI_BYPASS` ，只要你添加的自定义的规则备注不是这个即可。
 ##### 关于实例配置文件
 实例配置文件使用了 https://mirror.ghproxy.com 作为github的代理方便可以在无科学环境更新规则，但是ghproxy有被gfw污染的先例，请自行更新更稳定的或者自建的github代理。  
+##### 是否可以替代原版ikuai-bypass
+可以直接替代，参考上面的docker配置

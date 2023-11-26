@@ -68,20 +68,40 @@ ikuai-bypass 只要部署在可以访问到 爱快路由器的地方即可。
 以openwrt为例
 ```sh
 mkdir -p /root/ikuai-bypass/ && cd /root/ikuai-bypass/
-wget -c https://  /ikuai-bypass_linux_amd64
+wget -c https://github.com/joyanhui/ikuai-bypass/raw/main/ikuai-bypass_linux_amd64
 chmod +x ./ikuai-bypass_linux_amd64
-wget -c https://  /config_example.yml
+wget -c https://github.com/joyanhui/ikuai-bypass/raw/main/config_example.yml
+# 测试
+/root/ikuai-bypass/ikuai-bypass_linux_amd64 -c /root/ikuai-bypass/config_example.yml 
+```
+添加服务
+```sh
+cat >/etc/init.d/ikuai-bypass<< \EOF
+#!/bin/sh /etc/rc.common
+#service startup sequence
+START=99
+start() {
+        #start your process with parameters in background
+        /root/ikuai-bypass/ikuai-bypass_linux_amd64 -c /root/ikuai-bypass/config_example.yml  &
+}
+stop() {
+           killall ikuai-bypass_linux_amd64
+}
+EOF
+chmod +x /etc/init.d/ikuai-bypass
 
 ```
+打开 openwrt webui ，系统>启动项，找到 ikuai-bypass 默认是禁止开机启动启动的，点`已禁用` 变成启用状态，然后启动一下。
 
+重启 openwrt,然后shell运行 `ps |grep ikuai-bypass` 验证一下是否开机自动启动
 
 ###### docker
 我没有打包docker镜像，因为完全没必要，你可以自己用下面的命令启动一个docker   
 ```sh
 mkdir ~/ikuai-bypass/ && cd ～/ikuai-bypass_exe
-wget -c https://  /ikuai-bypass_linux_amd64
+wget -c https://github.com/joyanhui/ikuai-bypass/raw/main/ikuai-bypass_linux_amd64
 chmod +x ./ikuai-bypass_linux_amd64
-wget -c https://  /config_example.yml
+wget -c https://github.com/joyanhui/ikuai-bypass/raw/main/config_example.yml
 
 docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
     -v  ~/ikuai-bypass/:/opt/ikuai-bypass/   \
@@ -95,6 +115,9 @@ chmod +x /opt/ikuai-bypass/ikuai-bypass_linux_amd64  && /opt/ikuai-bypass/ikuai-
 
 
 
-#### 自定义规则和ikuai-bypass的规则
 
+#### 其他补充
+##### 自定义规则和ikuai-bypass的规则
 ikuai-bypass 自动维护的规则 都会添加备注 `IKUAI_BYPASS` ，只要你添加的规则备注不是这个即可。
+##### 关于实例配置文件
+实例配置文件使用了 https://mirror.ghproxy.com 作为github的代理方便可以在无科学环境更新规则，但是ghproxy有被gfw污染的先例，请自行更新更稳定的或者自建的github代理。  

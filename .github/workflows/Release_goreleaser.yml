@@ -1,6 +1,6 @@
 name: Release goreleaser
+
 on:
-  workflow_dispatch:
   push:
     # run only against tags   git tag v0.1.0&&git push --tags
     tags:

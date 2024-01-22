@@ -36,7 +36,7 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 ```
 ### ikuai docker下
 因为ikuai 无法直接执行shell命令,所以自行下载 linux版本。解压后 上传到ikuai数据盘。例如/data0/ikuai-bypass/ikuai-bypass  /data0/ikuai-bypass/config.yml
-而后在ikuai的docker中随便下载一个通用的linux镜像,例如 alpine:3.18.4 。创建docker 目录挂载 `/data0/ikuai-bypass/` 到 `/data0/ikuai-bypass/`
+而后在ikuai的docker中随便下载一个通用的linux镜像,例如 alpine:3.18.4 。创建docker 目录挂载 `/data0/ikuai-bypass/` 到容器内 `/opt/ikuai-bypass/`
 入口命令修改为:
 ```sh
 chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -c  /opt/ikuai-bypass/config.yml

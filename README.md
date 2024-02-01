@@ -3,18 +3,16 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 这种方式比传统用openwrt的作为旁路由的指定网关的方案，或者only openwrt的方案更加稳定，速度更好。   
 但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流。   
 ## 主要修改点
-- 并发处理 运营商/IP分流 和 域名分流  
+- 并发处理 运营商/IP分流 和 域名分流。  
 - 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了,这也是自己下手修改的主要原因。  
-- 支持linux macos windows freebsd 多os多架构下 无docker运行 ,当然也支持docker运行
-- 支持单次运行参数`-r nocron`: 忽略配置文件的cron定时配置配置
-- 支持单独清理模式`-r clean` :清理本工具添加的备注为`IKUAI_BYPASS`的分流规则 可选附加参数   `-tag 规则备注名`
-- 支持cron运行参数`-r cron` or `-r cronAft` : 先运行一次 而后等待计划任务触发 or 先不运行等计划任务触发
+- 支持linux macos windows freebsd 多os多架构下 无docker运行 ,当然也支持docker运行。  
+- 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。  
 ## 参数说明
 - `-c` : 配置文件路径  默认为`config.yml` 可用相对路径或者绝对路径
 - `-r` : 运行模式 默认为`cron` 可选 `cron` or `nocron` or `cronAft` or `clean`  
     - `cron` : 先运行一次 而后等待计划任务触发
-    - `nocron` : 忽略配置文件的cron定时配置配置 运行依次然后就推出
-    - `cronAft` : 先不运行等计划任务出发
+    - `nocron` : 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
+    - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
 - `-tag` : 清理模式下的附加参数 
     - 默认为cleanAll(清理所有备注称中包含`IKUAI_BYPASS`的规则) 

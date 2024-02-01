@@ -66,8 +66,8 @@ chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cr
 
 ```
 ## v0.1.15 升级 新版本 说明
-v0.2.x 以后规则的备注不再是`IKUAI_BYPASS`会有后缀，所以需要先清理掉旧的分流规则再添加。
-另外配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则
+v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`，会根据tag添加了指定的后缀在备注里面，所以需要先清理掉旧的分流规则再添加。
+另外配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则 [参考](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
 ```sh
 ./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则
 ./ikuai-bypass -c /路径/config.yml -r cron #先运行一次 而后等待计划任务触发 

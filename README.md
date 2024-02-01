@@ -15,16 +15,23 @@ fork 自 [ztc1997](https://github.com/ztc1997/ikuai-bypass/
 ## 参数说明
 - `-c` : 配置文件路径 可用相对路径或者绝对路径
 - `-r` : 运行模式 `cron` or `nocron` or `clean`
-- `-tag` : 清理模式下的附加参数 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS`前缀 `cleanAll` 清理所有备注名包含`IKUAI_BYPASS`的分流规则
+- `-tag` : 清理模式下的附加参数 默认为cleanAll(清理所有备注称中包含`IKUAI_BYPASS`的规则) 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀
 
 ## 更新日志
 - 2023-02-1 某一分组规则因为网络问题失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
-- 2023-02-1 清理模式可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则
+- 2023-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则 
 - 旧版记录参考 commit信息
 ## 简要使用说明
-需要两个文件 1、可执行程序[下载](https://github.com/joyanhui/ikuai-bypass/releases)  2、配置文件 config.yml [参考](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
+需要两个文件 
+- 1、可执行程序[下载](https://github.com/joyanhui/ikuai-bypass/releases) 
+- 2、配置文件 config.yml [参考](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
+
 命令格式: ` ./ikuai-bypass -c /路径/config.yml -r 运行模式`
-例如: ` ./ikuai-bypass -c config.yml -r cron` : 将根据配置文件的内容更新分流规则更新成功后删除旧的分流规则 在配置文件的cron的时间 重新更新。
+
+例如: 
+`./ikuai-bypass` 同 `./ikuai-bypass -c config.yml -r cron`: 将根据配置文件的内容更新分流规则更新成功后删除旧的分流规则 并在配置文件的cron的时间按照计划任务 重新更新。    
+`./ikuai-bypas -r clean` 同 `./ikuai-bypass -c config.yml -r clean -tag  cleanAll`   删除所有备注名称包含 `IKUAI_BYPASS`的规则   
+`./ikuai-bypas -r clean  -tag IKUAI_BYPASS_ipcn` 或 `./ikuai-bypas -r clean  -tag ipcn` 删除名称为 `IKUAI_BYPASS_ipcn` 的分流规则   
 
 ## 不同平台下
 ###  windows下
@@ -55,7 +62,7 @@ chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cr
 
 ```
 ## v0.1.15 升级 新版本 说明
-v0.2.x 以后规则的备注不在是`IKUAI_BYPASS` 会有后缀，所以需要先清理掉旧的分流规则再添加。
+v0.2.x 以后规则的备注不再是`IKUAI_BYPASS`会有后缀，所以需要先清理掉旧的分流规则再添加。
 另外配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则
 ```sh
 ./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则

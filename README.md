@@ -8,7 +8,7 @@ fork 自 [ztc1997](https://github.com/ztc1997/ikuai-bypass/)
 ## 主要修改点
 - 并发处理 运营商/IP分流 和 域名分流  
 - 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了,这也是自己下手修改的主要原因。  
-- 支持支持linux macos windows 无docker运行 ,当然也支持docker运行
+- 支持linux macos windows freebsd 多os多架构下无docker运行 ,当然也支持docker运行
 - 支持单次运行参数`-r nocron`: 忽略配置文件的cron定时配置配置
 - 支持单独清理模式`-r clean` :清理本工具添加的备注为`IKUAI_BYPASS`的分流规则 可选附加参数   `-tag 规则备注名`
 - 支持cron运行参数`-r cron` or `-r cronAft` : 先运行一次 而后等待计划任务触发 or 先不运行等计划任务触发

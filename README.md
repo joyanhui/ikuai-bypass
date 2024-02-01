@@ -4,10 +4,10 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流。   
 ## 主要修改点
 - 并发处理 运营商/IP分流 和 域名分流。  
-- 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了,这也是自己下手修改的主要原因。  
-- 支持 无docker运行 ,当然也支持docker运行。
-- 编译了 linux  macos windows freebsd ，当然也支持openwrt、老毛子和有shell权限其他路由器。
-- 编译了 arm5-7 arm64  mipsle mips64le ppc64le amd64 386 等架构并用upx压缩，覆盖多数路由器和os系统。
+- 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了,这也是自己下手修改的主要原因。   
+- 支持 无docker运行 ,当然也支持docker运行。    
+- 编译了 linux  macos windows freebsd 的二进制，当然也支持openwrt、老毛子和有shell权限其他路由器。   
+- 编译了 arm5-7 arm64  mipsle mips64le ppc64le amd64 386 等架构并用upx压缩，覆盖多数路由器和os系统。    
 - 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。  
 ## 参数说明
 - `-c` : 配置文件路径  默认为`config.yml` 可用相对路径或者绝对路径
@@ -45,11 +45,11 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 ### linux 下
 下载 linux-xxx.zip,unzip 后在shell运行
 ### docker
-下载linux版本
+下载linux版本，参考命令如下
 ```sh
 mkdir ~/ikuai-bypass/ && cd ~/ikuai-bypass
 # 下载amd64版本，如arm版本自行修改
-wget -c https://github.com/joyanhui/ikuai-bypass/releases/download/v0.1.15/ikuai-bypass-linux-amd64.zip
+wget -c https://github.com/joyanhui/ikuai-bypass/releases/download/v0.2.2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip
 # 编辑默认的 config.yml 
 docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \

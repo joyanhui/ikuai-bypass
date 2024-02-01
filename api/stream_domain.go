@@ -106,31 +106,8 @@ func (i *IKuai) DelStreamDomain(id string) error {
 	return nil
 }
 
-func (i *IKuai) DelIKuaiBypassStreamDomain() (err error) {
-	for {
-		var data []StreamDomainData
-		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS)
-		if err != nil {
-			return
-		}
-		var ids []string
-		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
-				ids = append(ids, strconv.Itoa(d.ID))
-			}
-		}
-		if len(ids) <= 0 {
-			return
-		}
-		id := strings.Join(ids, ",")
-		err = i.DelStreamDomain(id)
-		if err != nil {
-			return
-		}
-	}
-}
-
-func (i *IKuai) PrepareDelIKuaiBypassStreamDomain() (preIds string, err error) {
+// PrepareDelStreamDomainAll 为了防止误删，先查询，然后再删除
+func (i *IKuai) PrepareDelStreamDomainAll() (preIds string, err error) {
 	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS, "的域名分流规则")
 	preIds = ""
 	err = nil
@@ -160,6 +137,7 @@ func (i *IKuai) PrepareDelIKuaiBypassStreamDomain() (preIds string, err error) {
 	return
 }
 
+// DelStreamDomainFromPreIds 从预备删除的id中删除
 func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
 	arr := strings.Split(preIds, "||")
 	for _, id := range arr {
@@ -173,4 +151,30 @@ func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
 	}
 	return
 
+}
+
+// DelStreamDomainAll 删除所有的域名分流规则
+func (i *IKuai) DelStreamDomainAll() (err error) {
+	for {
+		var data []StreamDomainData
+		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS)
+		if err != nil {
+			return
+		}
+		var ids []string
+		for _, d := range data {
+			//==  或者包含
+			if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+				ids = append(ids, strconv.Itoa(d.ID))
+			}
+		}
+		if len(ids) <= 0 {
+			return
+		}
+		id := strings.Join(ids, ",")
+		err = i.DelStreamDomain(id)
+		if err != nil {
+			return
+		}
+	}
 }

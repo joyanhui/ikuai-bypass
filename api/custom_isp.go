@@ -92,7 +92,7 @@ func (i *IKuai) DelCustomIsp(id string) error {
 }
 
 // 预备删除
-func (i *IKuai) PrepareDelIKuaiBypassCustomIsp() (preIds string, err error) {
+func (i *IKuai) PrepareDelCustomIspAll() (preIds string, err error) {
 	log.Println("运营商/IP分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS, "的运营商配置规则")
 	preIds = ""
 	err = nil
@@ -135,13 +135,14 @@ func (i *IKuai) DelCustomIspFromPreIds(preIds string) (err error) {
 	return
 }
 
-func (i *IKuai) DelIKuaiBypassCustomIsp() (err error) {
+func (i *IKuai) DelCustomIspAll() (err error) {
 	for {
 		var data []CustomIspData
 		data, err = i.ShowCustomIspByComment()
 		var ids []string
 		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
+			//== 或者包含
+			if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
 				ids = append(ids, strconv.Itoa(d.ID))
 			}
 		}

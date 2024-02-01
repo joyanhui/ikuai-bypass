@@ -10,6 +10,8 @@ fork 自 https://github.com/ztc1997/ikuai-bypass/
 - 支持单次运行参数`-r nocron`: 忽略配置文件的cron定时配置配置
 - 支持单独清理模式`-r clean` :清理本工具添加的备注为`IKUAI_BYPASS`的分流规则
 - 支持cron运行参数`-r cron` or `-r cronAft` : 先运行一次 而后等待计划任务触发 or 先不运行等计划任务出发
+## todo list
+- 某一分组规则更新失败导致这个分组的规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
 ## 简要使用说明
 需要两个文件 1、可执行程序[下载](https://github.com/joyanhui/ikuai-bypass/releases)  2、配置文件 config.yml [参考](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
 命令格式: ` ./ikuai-bypass -c /路径/config.yml -r 运行模式`

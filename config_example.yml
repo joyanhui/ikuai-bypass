@@ -24,9 +24,10 @@ custom-isp:     # 自定义运营商  IP分流
   
 stream-domain:      # 域名分流
   #- interface: wan2 # 分流线路
-  #  src-addr: 10.1.1.5-10.1.1.254   # 分流的源地址
+  #  src-addr: 10.1.1.5-10.1.1.254   # 分流的源地址 多ip段用“,”分开 参考 https://github.com/joyanhui/ikuai-bypass/issues/1#issuecomment-1892763993
   #  ## 域名列表网址，每行一个，超过1000行会自动分为多个
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/greatfire.txt
+  # 下面是强制走wan2的
   - interface: wan2
     src-addr: 10.1.1.5-10.1.1.254  
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt

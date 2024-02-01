@@ -37,8 +37,8 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
     alpine:3.18.4  /opt/ikuai-bypass/ikuai-bypass -c  /opt/ikuai-bypass/config.yml -r cron
 ```
 ### ikuai docker下
-因为ikuai 无法直接执行shell命令,实在懒得给这种小工具打包镜像。
-如果您要在ikuai的docker内运行。请自行下载 linux版本。解压后 上传到ikuai数据盘。例如/data0/ikuai-bypass/ikuai-bypass  /data0/ikuai-bypass/config.yml
+因为ikuai 无法直接执行shell命令,实在懒得给这种小工具打包镜像。尤其是没有依赖的golang工具。
+如果您要在ikuai的docker内运行。请自行下载 linux版本。解压后 上传可执行文件和配置文件 到ikuai数据盘。例如/data0/ikuai-bypass/ikuai-bypass  /data0/ikuai-bypass/config.yml
 而后在ikuai的docker中随便下载一个通用的linux镜像,例如 alpine:3.18.4 。创建docker 目录挂载 `/data0/ikuai-bypass/` 到容器内 `/opt/ikuai-bypass/`
 入口命令修改为:
 ```sh

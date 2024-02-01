@@ -24,7 +24,7 @@ fork 自 [ztc1997](https://github.com/ztc1997/ikuai-bypass/
     - 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志
-- 2023-02-1 某一分组规则因为网络问题失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
+- 2023-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
 - 2023-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则 
 - 旧版记录参考 commit信息
 ## 简要使用说明

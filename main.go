@@ -60,9 +60,9 @@ func main() {
 	case "clean":
 		log.Println("清理模式")
 		if *cleanTag == "cleanAll" {
-			log.Println("清理所有规则")
+			log.Println("清理所有备注中包含", "IKUAI_BYPASS", "的规则")
 		} else {
-			log.Println("清理规则名称", *cleanTag)
+			log.Println("清理规则备注为：", *cleanTag, "的规则")
 		}
 		clean()
 		return

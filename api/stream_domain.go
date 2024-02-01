@@ -154,7 +154,7 @@ func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
 }
 
 // DelStreamDomainAll 删除所有的域名分流规则
-func (i *IKuai) DelStreamDomainAll() (err error) {
+func (i *IKuai) DelStreamDomainAll(cleanTag string) (err error) {
 	for {
 		var data []StreamDomainData
 		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS)
@@ -163,9 +163,14 @@ func (i *IKuai) DelStreamDomainAll() (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-			//==  或者包含
-			if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
-				ids = append(ids, strconv.Itoa(d.ID))
+			if cleanTag == "cleanAll" {
+				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
+			} else {
+				if d.Comment == cleanTag {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
 			}
 		}
 		if len(ids) <= 0 {

@@ -36,17 +36,18 @@ func clean() {
 		log.Println("ikuai 登录成功", baseurl)
 	}
 	//删除旧的自定义运营商
-	err = iKuai.DelCustomIspAll()
+	err = iKuai.DelCustomIspAll(*cleanTag)
 	if err != nil {
-		log.Println("移除旧的自定义运营商失败：", err)
+		log.Println("移除旧的自定义运营商失败 tag:"+*cleanTag+"：", err)
 	} else {
-		log.Println("移除旧的自定义运营商成功")
+		log.Println("移除旧的自定义运营商成功 tag:" + *cleanTag)
 	}
 	//删除旧的域名分流
-	err = iKuai.DelStreamDomainAll()
+	err = iKuai.DelStreamDomainAll(*cleanTag)
 	if err != nil {
-		log.Println("移除旧的域名分流失败：", err)
+		log.Println("移除旧的域名分流失败 tag:"+*cleanTag+"：", err)
 	} else {
-		log.Println("移除旧的域名分流成功")
+		log.Println("移除旧的域名分流成功 tag:" + *cleanTag)
 	}
+
 }

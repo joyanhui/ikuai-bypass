@@ -8,8 +8,13 @@ fork 自 https://github.com/ztc1997/ikuai-bypass/
 - 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了,这也是自己下手修改的主要原因。  
 - 支持支持linux macos windows 无docker运行 ,当然也支持docker运行
 - 支持单次运行参数`-r nocron`: 忽略配置文件的cron定时配置配置
-- 支持单独清理模式`-r clean` :清理本工具添加的备注为`IKUAI_BYPASS`的分流规则
+- 支持单独清理模式`-r clean` :清理本工具添加的备注为`IKUAI_BYPASS`的分流规则 可选附加参数   `-tag 规则备注名`
 - 支持cron运行参数`-r cron` or `-r cronAft` : 先运行一次 而后等待计划任务触发 or 先不运行等计划任务出发
+## 参数说明
+- `-c` : 配置文件路径 可用相对路径或者绝对路径
+- `-r` : 运行模式 `cron` or `nocron` or `clean`
+- `-tag` : 清理模式下的附加参数 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS`前缀 `cleanAll` 清理所有备注名包含`IKUAI_BYPASS`的分流规则
+
 ## todo list
 - 某一分组规则更新失败导致这个分组的规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
 ## 简要使用说明
@@ -45,6 +50,14 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml
 
 ```
+## v0.1.15 升级 新版本 说明
+v0.2.x 以后规则的备注不在是`IKUAI_BYPASS` 而是`IKUAI_BYPASS_`+`分流规则的名字` 例如`IKUAI_BYPASS_`+`ISP`+`_`+`IP`+`_`+`分流规则的名字` 。
+所以需要先清理掉旧的规则再更新新的规则。
+```sh
+./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则
+./ikuai-bypass -c /路径/config.yml -r cron #先运行一次 而后等待计划任务触发 
+```
+
 ## 其他相关说明
 [https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)
 

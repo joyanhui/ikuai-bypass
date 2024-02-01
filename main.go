@@ -12,7 +12,7 @@ import (
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
 var runMode = flag.String("r", "cron", "运行模式")
-var ruleName = flag.String("rn", "all", "规则名称") //COMMENT_IKUAI_BYPASS
+var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
 var conf struct {
 	IkuaiURL  string `yaml:"ikuai-url"`
 	Username  string `yaml:"username"`
@@ -31,6 +31,14 @@ var conf struct {
 
 func main() {
 	flag.Parse()
+
+	if *cleanTag != "cleanAll" {
+		log.Println("cleanTag", *cleanTag)
+		//检查规则名称中是否包含前缀 COMMENT_IKUAI_BYPASS，如果没有添加上
+		if len(*cleanTag) < len("IKUAI_BYPASS") || (*cleanTag)[:len("IKUAI_BYPASS")] != "IKUAI_BYPASS" {
+			*cleanTag = "IKUAI_BYPASS_" + *cleanTag
+		}
+	}
 
 	log.Println("运行模式", *runMode, "配置文件", *confPath)
 	err := readConf(*confPath)

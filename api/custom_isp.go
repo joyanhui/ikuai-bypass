@@ -135,16 +135,22 @@ func (i *IKuai) DelCustomIspFromPreIds(preIds string) (err error) {
 	return
 }
 
-func (i *IKuai) DelCustomIspAll() (err error) {
+func (i *IKuai) DelCustomIspAll(cleanTag string) (err error) {
 	for {
 		var data []CustomIspData
 		data, err = i.ShowCustomIspByComment()
 		var ids []string
 		for _, d := range data {
-			//== 或者包含
-			if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
-				ids = append(ids, strconv.Itoa(d.ID))
+			if cleanTag == "cleanAll" {
+				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
+			} else {
+				if d.Comment == cleanTag {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
 			}
+
 		}
 		if len(ids) <= 0 {
 			return

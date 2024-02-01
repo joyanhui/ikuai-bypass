@@ -11,11 +11,17 @@ fork 自 [ztc1997](https://github.com/ztc1997/ikuai-bypass/
 - 支持支持linux macos windows 无docker运行 ,当然也支持docker运行
 - 支持单次运行参数`-r nocron`: 忽略配置文件的cron定时配置配置
 - 支持单独清理模式`-r clean` :清理本工具添加的备注为`IKUAI_BYPASS`的分流规则 可选附加参数   `-tag 规则备注名`
-- 支持cron运行参数`-r cron` or `-r cronAft` : 先运行一次 而后等待计划任务触发 or 先不运行等计划任务出发
+- 支持cron运行参数`-r cron` or `-r cronAft` : 先运行一次 而后等待计划任务触发 or 先不运行等计划任务触发
 ## 参数说明
-- `-c` : 配置文件路径 可用相对路径或者绝对路径
-- `-r` : 运行模式 `cron` or `nocron` or `clean`
-- `-tag` : 清理模式下的附加参数 默认为cleanAll(清理所有备注称中包含`IKUAI_BYPASS`的规则) 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀
+- `-c` : 配置文件路径  默认为`config.yml` 可用相对路径或者绝对路径
+- `-r` : 运行模式 默认为`cron` 可选 `cron` or `nocron` or `cronAft` or `clean`  
+    - `cron` : 先运行一次 而后等待计划任务触发
+    - `nocron` : 忽略配置文件的cron定时配置配置 运行依次然后就推出
+    - `cronAft` : 先不运行等计划任务出发
+    - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
+- `-tag` : 清理模式下的附加参数 
+    - 默认为cleanAll(清理所有备注称中包含`IKUAI_BYPASS`的规则) 
+    - 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志
 - 2023-02-1 某一分组规则因为网络问题失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
@@ -29,9 +35,9 @@ fork 自 [ztc1997](https://github.com/ztc1997/ikuai-bypass/
 命令格式: ` ./ikuai-bypass -c /路径/config.yml -r 运行模式`
 
 例如: 
-`./ikuai-bypass` 同 `./ikuai-bypass -c config.yml -r cron`: 将根据配置文件的内容更新分流规则更新成功后删除旧的分流规则 并在配置文件的cron的时间按照计划任务 重新更新。    
-`./ikuai-bypas -r clean` 同 `./ikuai-bypass -c config.yml -r clean -tag  cleanAll`   删除所有备注名称包含 `IKUAI_BYPASS`的规则   
-`./ikuai-bypas -r clean  -tag IKUAI_BYPASS_ipcn` 或 `./ikuai-bypas -r clean  -tag ipcn` 删除名称为 `IKUAI_BYPASS_ipcn` 的分流规则   
+`./ikuai-bypass` 或 `./ikuai-bypass -c config.yml -r cron`: 将根据配置文件的内容更新分流规则更新成功后删除旧的分流规则 并在配置文件的cron的时间按照计划任务 重新更新。    
+`./ikuai-bypas -r clean` 或 `./ikuai-bypass -c config.yml -r clean -tag  cleanAll`   删除所有备注包含 `IKUAI_BYPASS`的规则   
+`./ikuai-bypas -r clean  -tag IKUAI_BYPASS_ipcn` 或 `./ikuai-bypas -r clean  -tag ipcn` 删除备注为 `IKUAI_BYPASS_ipcn` 的分流规则   
 
 ## 不同平台下
 ###  windows下

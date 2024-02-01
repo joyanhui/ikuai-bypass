@@ -43,7 +43,7 @@ func (i *IKuai) ShowCustomIspByComment() (result []CustomIspData, err error) {
 	return
 }
 
-func (i *IKuai) AddCustomIsp(name, ipgroup string) error {
+func (i *IKuai) AddCustomIsp(name, tag, ipgroup string) error {
 	param := struct {
 		Name    string `json:"name"`
 		Ipgroup string `json:"ipgroup"`
@@ -51,7 +51,7 @@ func (i *IKuai) AddCustomIsp(name, ipgroup string) error {
 	}{
 		Name:    name,
 		Ipgroup: ipgroup,
-		Comment: COMMENT_IKUAI_BYPASS,
+		Comment: COMMENT_IKUAI_BYPASS + "_" + tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_CUSTOM_ISP,
@@ -92,8 +92,8 @@ func (i *IKuai) DelCustomIsp(id string) error {
 }
 
 // 预备删除
-func (i *IKuai) PrepareDelCustomIspAll() (preIds string, err error) {
-	log.Println("运营商/IP分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS, "的运营商配置规则")
+func (i *IKuai) PrepareDelCustomIspAll(tag string) (preIds string, err error) {
+	log.Println("运营商/IP分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的运营商配置规则")
 	preIds = ""
 	err = nil
 	for loop := 0; loop < 3; loop++ {
@@ -101,7 +101,7 @@ func (i *IKuai) PrepareDelCustomIspAll() (preIds string, err error) {
 		data, err = i.ShowCustomIspByComment()
 		var ids []string
 		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
+			if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
 				ids = append(ids, strconv.Itoa(d.ID))
 			}
 		}

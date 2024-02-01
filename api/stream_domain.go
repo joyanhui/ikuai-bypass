@@ -20,7 +20,7 @@ type StreamDomainData struct {
 	Enabled   string `json:"enabled"`
 }
 
-func (i *IKuai) AddStreamDomain(iface, srcAddr, domains string) error {
+func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
 	param := struct {
 		Interface string `json:"interface"`
 		SrcAddr   string `json:"src_addr"`
@@ -33,7 +33,7 @@ func (i *IKuai) AddStreamDomain(iface, srcAddr, domains string) error {
 		Interface: iface,
 		SrcAddr:   srcAddr,
 		Domain:    domains,
-		Comment:   COMMENT_IKUAI_BYPASS,
+		Comment:   COMMENT_IKUAI_BYPASS + "_" + tag,
 		Week:      "1234567",
 		Time:      "00:00-23:59",
 		Enabled:   "yes",
@@ -107,19 +107,19 @@ func (i *IKuai) DelStreamDomain(id string) error {
 }
 
 // PrepareDelStreamDomainAll 为了防止误删，先查询，然后再删除
-func (i *IKuai) PrepareDelStreamDomainAll() (preIds string, err error) {
-	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS, "的域名分流规则")
+func (i *IKuai) PrepareDelStreamDomainAll(tag string) (preIds string, err error) {
+	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的域名分流规则")
 	preIds = ""
 	err = nil
 	for loop := 0; loop < 5; loop++ {
 		var data []StreamDomainData
-		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS)
+		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS + "_" + tag)
 		if err != nil {
 			return
 		}
 		var ids []string
 		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
+			if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
 				ids = append(ids, strconv.Itoa(d.ID))
 			}
 		}

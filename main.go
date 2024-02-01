@@ -21,11 +21,13 @@ var conf struct {
 	CustomIsp []struct {
 		Name string `yaml:"name"`
 		URL  string `yaml:"url"`
+		Tag  string `yaml:"tag"`
 	} `yaml:"custom-isp"`
 	StreamDomain []struct {
 		Interface string `yaml:"interface"`
 		SrcAddr   string `yaml:"src-addr"`
 		URL       string `yaml:"url"`
+		Tag       string `yaml:"tag"`
 	} `yaml:"stream-domain"`
 }
 

@@ -1,26 +1,34 @@
 ## 爱快管理页面的 URL，结尾不要加 "/"，
 ## 如不填写，则使用第一个接口的网关地址作为爱快地址，
 ## 如果在爱快自带 docker 运行，网关就是爱快地址，可以不写
-ikuai-url: http://10.1.1.1
+ikuai-url: http://10.1.1.1 # 爱快网页控制台登陆地址
 username: admin # 爱快用户名
 password: admin888  # 爱快密码
-cron: 0 4 * * * # 执行更新的周期 crontab
+cron: 0 4 * * * # 执行更新的周期 格式为 crontab
 custom-isp:     # 自定义运营商  IP分流
   - name: 国内IP列表  # 自定义运营商名称
     ## 自定义运营商 cidr 列表网址，每行一个，超过5000行会自动分为多个，ipv6 地址会被删除 
+    ## 下面演示规则使用了ghproxy.com的代理，如果失效请自行更换或另外想办法
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
+    tag: ipcn # 规则的备注标签后缀 如果留空默认为自定义运营商名称
   - name: telegram
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
+    tag: iptg
   - name: google
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt
+    tag: ipgoogle
   - name: facebook
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/facebook.txt
+    tag: ipfb
   - name: twitter
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/twitter.txt
+    tag: iptw
   - name: cloudflare
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cloudflare.txt
+    tag: ipcf
   - name: netflix
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt
+    tag: ipnf
   
 stream-domain:      # 域名分流
   #- interface: wan2 # 分流线路
@@ -31,11 +39,14 @@ stream-domain:      # 域名分流
   - interface: wan2
     src-addr: 10.1.1.5-10.1.1.254  
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
+    tag: gfw
 
   #下面是自动走wan1直连的
   #- interface: wan1
   #  src-addr: 10.1.1.5-10.1.1.254
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
+  #  tag: cn
   #- interface: wan1
   #  src-addr: 10.1.1.5-10.1.1.254
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
+  #  tag: apple

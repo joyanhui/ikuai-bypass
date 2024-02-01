@@ -1,7 +1,9 @@
 ## iKuai Bypass
-
-fork 自 https://github.com/ztc1997/ikuai-bypass/
-## 功能
+ikuai 可以通过分流规则 把openwrt作为爱快的上级虚拟运营商，再把openwrt的出口绑定到实际的运营商，实现无感分流。 [具体实现](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)
+这种方式比传统用openwrt的作为旁路由的方案，或者only openwrt的方案更加稳定无感，速度更好。
+但是因为大家喜闻乐见的分流规则数据可能几万条，维护比较麻烦，这个工具就是为了自动更新爱快的分流规则。
+fork 自 [ztc1997](https://github.com/ztc1997/ikuai-bypass/
+## 功能)
 自动或手动从大家常用的订阅规则里更新爱快分流规则,让大家喜闻乐见的域名或者ip(通常是非大陆ip)走指定的wan口(通常分流到openwrt)，实现无感不影响他人的分流。
 ## 主要修改点
 - 并发处理 运营商/IP分流 和 域名分流  
@@ -15,8 +17,10 @@ fork 自 https://github.com/ztc1997/ikuai-bypass/
 - `-r` : 运行模式 `cron` or `nocron` or `clean`
 - `-tag` : 清理模式下的附加参数 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS`前缀 `cleanAll` 清理所有备注名包含`IKUAI_BYPASS`的分流规则
 
-## todo list
-- 某一分组规则更新失败导致这个分组的规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
+## 更新日志
+- 2023-02-1 某一分组规则因为网络问题失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)
+- 2023-02-1 清理模式可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则
+- 旧版记录参考 commit信息
 ## 简要使用说明
 需要两个文件 1、可执行程序[下载](https://github.com/joyanhui/ikuai-bypass/releases)  2、配置文件 config.yml [参考](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
 命令格式: ` ./ikuai-bypass -c /路径/config.yml -r 运行模式`
@@ -51,8 +55,8 @@ chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cr
 
 ```
 ## v0.1.15 升级 新版本 说明
-v0.2.x 以后规则的备注不在是`IKUAI_BYPASS` 而是`IKUAI_BYPASS_`+`分流规则的名字` 例如`IKUAI_BYPASS_`+`ISP`+`_`+`IP`+`_`+`分流规则的名字` 。
-所以需要先清理掉旧的规则再更新新的规则。
+v0.2.x 以后规则的备注不在是`IKUAI_BYPASS` 会有后缀，所以需要先清理掉旧的分流规则再添加。
+另外配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则
 ```sh
 ./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则
 ./ikuai-bypass -c /路径/config.yml -r cron #先运行一次 而后等待计划任务触发 

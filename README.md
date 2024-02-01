@@ -15,7 +15,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
     - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
 - `-tag` : 清理模式下的附加参数 
-    - 默认为cleanAll(清理所有备注称中包含`IKUAI_BYPASS`的规则) 
+    - 默认为cleanAll(清理所有备注中包含`IKUAI_BYPASS`的规则) 
     - 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志

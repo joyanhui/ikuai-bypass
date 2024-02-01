@@ -5,7 +5,9 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 ## 主要修改点
 - 并发处理 运营商/IP分流 和 域名分流。  
 - 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了,这也是自己下手修改的主要原因。  
-- 支持linux macos windows freebsd 多os多架构下 无docker运行 ,当然也支持docker运行。  
+- 支持 无docker运行 ,当然也支持docker运行。
+- 编译了 linux  macos windows freebsd ，当然也支持openwrt、老毛子和有shell权限其他路由器。
+- 编译了 arm5-7 arm64  mipsle mips64le ppc64le amd64 386 等架构并用upx压缩，覆盖多数路由器和os系统。
 - 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。  
 ## 参数说明
 - `-c` : 配置文件路径  默认为`config.yml` 可用相对路径或者绝对路径
@@ -55,7 +57,7 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
     alpine:3.18.4  /opt/ikuai-bypass/ikuai-bypass -c  /opt/ikuai-bypass/config.yml -r cron
 ```
 ### ikuai docker下
-因为ikuai 无法直接执行shell命令,实在懒得给这种小工具打包镜像。尤其是没有依赖的golang工具。
+因为ikuai 无法直接执行shell命令,实在懒得给这种小工具打包镜像，尤其是基于的golang根本没有外部依赖只是一个可执行文件。
 如果您要在ikuai的docker内运行。请自行下载 linux版本。解压后 上传可执行文件和配置文件 到ikuai数据盘。例如/data0/ikuai-bypass/ikuai-bypass  /data0/ikuai-bypass/config.yml
 而后在ikuai的docker中随便下载一个通用的linux镜像,例如 alpine:3.18.4 。创建docker 目录挂载 `/data0/ikuai-bypass/` 到容器内 `/opt/ikuai-bypass/`
 入口命令修改为:

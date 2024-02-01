@@ -9,9 +9,9 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 - 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。  
 ## 参数说明
 - `-c` : 配置文件路径  默认为`config.yml` 可用相对路径或者绝对路径
-- `-r` : 运行模式 默认为`cron` 可选 `cron` or `nocron` or `cronAft` or `clean`  
+- `-r` : 运行模式 默认为`cron`
     - `cron` : 先运行一次 而后等待计划任务触发
-    - `nocron` : 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
+    - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
     - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
 - `-tag` : 清理模式下的附加参数 
@@ -19,6 +19,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
     - 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志
+- 2023-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
 - 2023-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)   
 - 2023-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则   
 - 旧版记录参考 commit信息

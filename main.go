@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	if *cleanTag != "cleanAll" {
-		log.Println("cleanTag", *cleanTag)
+		//log.Println("cleanTag", *cleanTag)
 		//检查规则名称中是否包含前缀 COMMENT_IKUAI_BYPASS，如果没有添加上
 		if len(*cleanTag) < len("IKUAI_BYPASS") || (*cleanTag)[:len("IKUAI_BYPASS")] != "IKUAI_BYPASS" {
 			*cleanTag = "IKUAI_BYPASS_" + *cleanTag

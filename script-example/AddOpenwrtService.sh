@@ -1,11 +1,12 @@
 #!/bin/sh
-# example for openrc ( openwrt  or alpine ) 
-# Test passed under openwrt5.15.137 x64
+# Test passed under openwrt5.15.137 x64 在openwrt 5.15.137 x64 测试通过
+
+# 更新或者下载最新版到 /opt/注意修改版本号和路径  =============== start
 mkdir -p /opt/ && cd  /opt/
-# 修改成最新版本地址
 wget https://github.com/joyanhui/ikuai-bypass/releases/download/v0.2.2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm -rf README.md
 mv config.yml  ikuai-bypass.yml 
+# 更新或者下载最新版到 /opt/注意修改版本号和路径  =============== end
 
 
 cat > /etc/init.d/ikuai-bypass << \EOF
@@ -24,10 +25,11 @@ EOF
 
 chmod +x /etc/init.d/ikuai-bypass
 
+# 开机启动
 service ikuai-bypass enable
-
+# 手动启动
 service ikuai-bypass start && ps |grep ikuai-bypass
-
+# 手动停止
 service ikuai-bypass stop && ps |grep ikuai-bypass
 
 # 卸载 清理
@@ -35,3 +37,5 @@ service ikuai-bypass disable
 rm -rf /etc/init.d/ikuai-bypass 
 rm -rf /opt/ikuai-bypass
 rm -rf /opt/ikuai-bypass.yml
+
+

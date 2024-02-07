@@ -13,7 +13,7 @@ cat > /etc/init.d/ikuai-bypass << \EOF
 START=99
 start(){
         echo "ikuai-bypass  is starting"
-        /opt/ikuai-bypass  -c /opt/ikuai-bypass.yml > /dev/null 2>&1 &
+        /opt/ikuai-bypass -r cronAft  -c /opt/ikuai-bypass.yml > /dev/null 2>&1 &
 }
  
 stop(){

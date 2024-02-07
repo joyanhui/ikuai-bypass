@@ -33,6 +33,7 @@ service ikuai-bypass start && ps |grep ikuai-bypass
 #service ikuai-bypass stop && ps |grep ikuai-bypass
 
 # 卸载 清理
+#service ikuai-bypass stop
 #service ikuai-bypass disable
 #rm -rf /etc/init.d/ikuai-bypass 
 #rm -rf /opt/ikuai-bypass

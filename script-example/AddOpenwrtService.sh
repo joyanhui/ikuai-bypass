@@ -2,6 +2,7 @@
 # Test passed under openwrt5.15.137 x64 在openwrt 5.15.137 x64 测试通过
 
 # 更新或者下载最新版到 /opt/注意修改版本号和路径  =============== start
+# opkg install wget unzip 
 mkdir -p /opt/ && cd  /opt/
 wget https://github.com/joyanhui/ikuai-bypass/releases/download/v0.2.2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm -rf README.md

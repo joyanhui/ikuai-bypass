@@ -25,7 +25,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 - 2023-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
 - 2023-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug  [#3](https://github.com/joyanhui/ikuai-bypass/issues/3)   
 - 2023-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则   
-- 旧版记录参考 commit信息
+- 旧的更新记录没啥价值也未单独记，请参考commit记录
 ## 简要使用说明
 需要两个文件 
 - 1、可执行程序[下载](https://github.com/joyanhui/ikuai-bypass/releases) 

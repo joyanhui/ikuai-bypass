@@ -12,16 +12,13 @@ cat > /etc/init.d/ikuai-bypass << \EOF
 #!/bin/sh /etc/rc.common
 START=99
 start(){
-        echo "ikuai-bypass  is starting"
         /opt/ikuai-bypass -r cronAft  -c /opt/ikuai-bypass.yml > /dev/null 2>&1 &
+        echo "ikuai-bypass  is start"
 }
  
 stop(){
-       killall -9 ikuai-bypass
+       killall -q -9  ikuai-bypass
        echo "ikuai-bypass  is stop"
-}
-restart(){
-        echo "ikuai-bypass  is restart"
 }
 EOF
 
@@ -29,10 +26,12 @@ chmod +x /etc/init.d/ikuai-bypass
 
 service ikuai-bypass enable
 
-service ikuai-bypass start
+service ikuai-bypass start && ps |grep ikuai-bypass
 
-ps |grep ikuai-bypass
+service ikuai-bypass stop && ps |grep ikuai-bypass
 
-service ikuai-bypass stop
-
-ps |grep ikuai-bypass
+# 卸载 清理
+service ikuai-bypass disable
+rm -rf /etc/init.d/ikuai-bypass 
+rm -rf /opt/ikuai-bypass
+rm -rf /opt/ikuai-bypass.yml

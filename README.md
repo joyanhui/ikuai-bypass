@@ -1,5 +1,5 @@
 ## iKuai Bypass
-ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级虚拟运营商，同时作为ikuai的下级路由，再把openwrt的出口流量绑回到爱快实际的运营商，实现无感分流。[具体实现](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)   
+ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级虚拟运营商，同时作为ikuai的下级路由，再把openwrt的出口流量绑回到爱快实际的运营商，实现无感分流。[具体实现](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)   [恩山 eezz帖](https://www.right.com.cn/forum/thread-8252571-1-1.html)
 这种方式比传统用openwrt的作为旁路由的指定网关的方案，或者only openwrt的方案更加稳定，速度更好。   
 但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流。   
 ## 主要修改点

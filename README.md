@@ -39,12 +39,12 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 `./ikuai-bypas -r clean  -tag IKUAI_BYPASS_ipcn` 或 `./ikuai-bypas -r clean  -tag ipcn` 删除备注为 `IKUAI_BYPASS_ipcn` 的分流规则   
 
 ## 不同平台下
+### linux 下(推荐openwrt内直接运行)
+下载 linux-xxx.zip,unzip 后在shell运行。 openwrt下使用建议使用服务模式[参考脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh) 
 ###  windows下
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压 cmd下cd到解压后的目录运行里面的exe程序
 ### macos下
 下载 darwin-arm64.zip 或者darwin-amd64.zip,unzip 后 在shell运行
-### linux 下
-下载 linux-xxx.zip,unzip 后在shell运行。 openwrt服务模式[参考脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
 ### docker
 下载linux版本，参考命令如下
 ```sh

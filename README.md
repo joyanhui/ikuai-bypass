@@ -16,9 +16,9 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
     - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
     - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
-- `-tag` : 清理模式下的附加参数 
-    - 默认为cleanAll(清理所有备注中包含`IKUAI_BYPASS`的规则) 
-    - 指定清理的分流规则的备注，可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
+- `-tag` : 备注信息 清理模式下的附加参数 
+    - 默认为cleanAll(即清理所有备注中包含`IKUAI_BYPASS`字符的规则) 
+    - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志
 - 2023-02-7 添加一个openwrt下开机自动运行 [参考脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)

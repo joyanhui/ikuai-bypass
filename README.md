@@ -7,7 +7,7 @@ ikuai可以是物理机也可以是虚拟机。openwrt同样可以是物理机�
 ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2个（wan和lan）。可以是物理网卡也可以是虚拟网卡。  
 <details>
 <summary>点击这里展开查看详细图文说明</summary>
-<img src=".assets/img.png" >
+<img src="assets/img.png" >
 </details>
 
 ## 主要修改点

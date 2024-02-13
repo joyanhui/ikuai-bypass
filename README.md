@@ -7,8 +7,8 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 openwrt（可以运行在pve-lvc/pve-kvm/docker/ikuai内），分配两个网卡（同样可以虚拟网卡）分别为wan 和 lan。假定ikuai的lan ip为10.1.1.1 openwrt的lan ip为10.0.0.1
 
 <details>
-<summary>123</summary>
-![image](.assets/img.png)
+<summary>查看详细图文说明</summary>
+<img src=".assets/img.png" >
 </details>
 
 

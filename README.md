@@ -3,16 +3,12 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 这种方式比传统用openwrt的作为旁路由的指定网关的方案，或者only openwrt的方案更加稳定，速度更好。   
 但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流。  
 ## 分流模式简单说明
-以pve运行ikuai和openwrt为例（esxi或物理设备同理），kvm运行一个ikuai分配三个网卡（可以是虚拟网卡）分别绑定到wan1 wan2 lan1。
-openwrt（可以运行在pve-lvc/pve-kvm/docker/ikuai内），分配两个网卡（同样可以虚拟网卡）分别为wan 和 lan。假定ikuai的lan ip为10.1.1.1 openwrt的lan ip为10.0.0.1
-
+ikuai可以是物理机也可以是虚拟机。openwrt同样可以是物理机也可以是虚拟机，也可以是lxc/docker也可以部署到爱快内。   
+ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2个（wan和lan）。可以是物理网卡也可以是虚拟网卡。  
 <details>
-<summary>查看详细图文说明</summary>
+<summary>点击这里展开查看详细图文说明</summary>
 <img src=".assets/img.png" >
 </details>
-
-
-
 
 ## 主要修改点
 - 两个协程并发处理运营商/IP分流和域名分流,更新速度更快。  

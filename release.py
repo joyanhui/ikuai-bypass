@@ -29,12 +29,12 @@ envs = [
     [['GOOS', 'linux'], ['GOARCH', 'arm'], ['GOARM', '7']],
     [['GOOS', 'linux'], ['GOARCH', 'arm64']],
 
-    #[['GOOS', 'linux'], ['GOARCH', 'mips'], ['GOMIPS', 'hardfloat']],
+    # [['GOOS', 'linux'], ['GOARCH', 'mips'], ['GOMIPS', 'hardfloat']],
     [['GOOS', 'linux'], ['GOARCH', 'mips'], ['GOMIPS', 'softfloat']],
     # [['GOOS', 'linux'], ['GOARCH', 'mipsle'], ['GOMIPS', 'hardfloat']],
     [['GOOS', 'linux'], ['GOARCH', 'mipsle'], ['GOMIPS', 'softfloat']],
 
-    #[['GOOS', 'linux'], ['GOARCH', 'mips64'], ['GOMIPS64', 'hardfloat']],
+    # [['GOOS', 'linux'], ['GOARCH', 'mips64'], ['GOMIPS64', 'hardfloat']],
     [['GOOS', 'linux'], ['GOARCH', 'mips64'], ['GOMIPS64', 'softfloat']],
     # [['GOOS', 'linux'], ['GOARCH', 'mips64le'], ['GOMIPS64', 'hardfloat']],
     [['GOOS', 'linux'], ['GOARCH', 'mips64le'], ['GOMIPS64', 'softfloat']],
@@ -56,15 +56,15 @@ def go_build():
     if args.i:
         envs = [envs[args.i]]
 
-    VERSION = 'dev/unknown'
+    version = 'dev/unknown'
     try:
-        VERSION = subprocess.check_output('git describe --tags --long --always', shell=True).decode().rstrip()
+        version = subprocess.check_output('git describe --tags --long --always', shell=True).decode().rstrip()
     except subprocess.CalledProcessError as e:
         logger.error(f'get git tag failed: {e.args}')
 
-    #try:
+    # try:
     #    subprocess.check_call('go run ../ config gen config.yaml', shell=True, env=os.environ)
-    #except Exception:
+    # except Exception:
     #    logger.exception('failed to generate config template')
     #    raise
 
@@ -83,7 +83,7 @@ def go_build():
         logger.info(f'building {zip_filename}')
         try:
             subprocess.check_call(
-                f'go build -ldflags "-s -w -X main.version={VERSION}" -trimpath -o {bin_filename} ../', shell=True,
+                f'go build -ldflags "-s -w -X main.version={version}" -trimpath -o {bin_filename} ../', shell=True,
                 env=os_env)
 
             if args.upx:
@@ -98,12 +98,12 @@ def go_build():
                 zf.write(bin_filename)
                 zf.write('../README.md', 'README.md')
                 zf.write('../config_example.yml', 'config.yml')
-                #zf.write('../LICENSE', 'LICENSE')
+                # zf.write('../LICENSE', 'LICENSE')
 
         except subprocess.CalledProcessError as e:
             logger.error(f'build {zip_filename} failed: {e.args}')
-        except Exception:
-            logger.exception('unknown err')
+        except Exception as e:
+            logger.exception(f'unknown err: {e}')
 
 
 if __name__ == '__main__':
@@ -113,5 +113,4 @@ if __name__ == '__main__':
         if not os.path.exists(RELEASE_DIR):
             os.mkdir(RELEASE_DIR)
         os.chdir(RELEASE_DIR)
-
     go_build()

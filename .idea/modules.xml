@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../fish-v5/.idea/fish-v5.iml" filepath="$PROJECT_DIR$/../fish-v5/.idea/fish-v5.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/ikuai-bypass.iml" filepath="$PROJECT_DIR$/.idea/ikuai-bypass.iml" />
     </modules>
   </component>

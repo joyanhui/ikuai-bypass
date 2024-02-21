@@ -87,6 +87,6 @@ v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`，会根据tag添�
 [https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)
 
 ## 致谢
-- [JetBrains](https://jb.gg/OpenSourceSupport): 为本项目提供免费的开源许可证
 - [ztc1997](https://github.com/ztc1997/ikuai-bypass/): 实现的核心功能，我只是简单缝补了几个小地方。
+- [JetBrains](https://jb.gg/OpenSourceSupport): 为本项目提供免费的开源许可证
 - [neovim](https://neovim.io/),[NvChad](https://github.com/NvChad/NvChad),[elulcao](https://github.com/elulcao/NvChad-custom)

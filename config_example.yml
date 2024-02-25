@@ -4,7 +4,7 @@
 ikuai-url: http://10.1.1.1 # 爱快网页控制台登陆地址
 username: admin # 爱快用户名
 password: admin888  # 爱快密码
-cron: 0 4 * * * # 执行更新的周期 格式为 crontab
+cron: 0 7 * * * # 执行更新的周期 格式为 crontab
 custom-isp:     # 自定义运营商  IP分流
   - name: 国内IP列表  # 自定义运营商名称
     ## 自定义运营商 cidr 列表网址，每行一个，超过5000行会自动分为多个，ipv6 地址会被删除 

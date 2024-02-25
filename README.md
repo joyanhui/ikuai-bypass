@@ -31,7 +31,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
     - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志
-- 2023-02-1 增加去广告功能演示规则  [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
+- 2023-02-25 增加去广告功能演示规则  [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
 - 2023-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
 - 2023-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
 - 2023-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug  [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)   

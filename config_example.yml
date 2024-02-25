@@ -40,8 +40,7 @@ stream-domain:      # 域名分流
     src-addr: 10.1.1.5-10.1.1.254  
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
     tag: gfw
-
-  #下面是自动走wan1直连的
+  # 下面是自动走wan1直连的，网址列表较大，如果爱快性能不佳不建议启用。
   #- interface: wan1
   #  src-addr: 10.1.1.5-10.1.1.254
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
@@ -50,3 +49,8 @@ stream-domain:      # 域名分流
   #  src-addr: 10.1.1.5-10.1.1.254
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
   #  tag: apple
+  # 下面是去广告的，wan99是一个不可用或者不通的线路。因为网址列表较大，如果你爱快性能不佳，建议使用adguard mosdns等实现而不是让爱快来做。
+  #- interface: wan99
+  #  src-addr: 10.1.1.5-10.1.1.254
+  #  url: https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt
+  #  tag: gfw

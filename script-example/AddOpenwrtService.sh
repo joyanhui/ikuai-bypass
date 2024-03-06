@@ -4,14 +4,17 @@
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =============== start
 # 最好逐行运行
 # opkg install wget unzip 
+export GhProxy=https://mirror.ghproxy.com/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
 mkdir -p /opt/ && cd  /opt/
-wget https://github.com/joyanhui/ikuai-bypass/releases/download/v0.2.2/ikuai-bypass-linux-amd64.zip
+wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/releases/download/v0.2.2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm -rf README.md
+# 使用版本内的配置文件
 mv config.yml  ikuai-bypass.yml 
+# 或者用最新的演示配置
+wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/raw/main/config_example.yml -O ikuai-bypass.yml
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =============== end
 
 # 创建服务脚本，这段代码请整体复制后粘贴  ================================= start
-# 这段代码整体复制到ssh执行，注意 fish-shell 不兼容cat EOF的写法，请使用openwrt自带的ash或sh/bash/zsh，或者用nano vim 手动编辑
 cat > /etc/init.d/ikuai-bypass << \EOF
 #!/bin/sh /etc/rc.common
 START=99

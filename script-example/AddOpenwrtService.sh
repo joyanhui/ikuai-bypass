@@ -1,7 +1,7 @@
 #!/bin/sh
 # Test passed under openwrt5.15.137 x64 在openwrt 5.15.137 x64 测试通过
 
-# 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =============== start
+# 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== start
 # 最好逐行运行
 # opkg install wget unzip 
 export GhProxy=https://mirror.ghproxy.com/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
@@ -12,7 +12,7 @@ unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm 
 mv config.yml  ikuai-bypass.yml 
 # 或者用最新的演示配置
 wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/raw/main/config_example.yml -O ikuai-bypass.yml
-# 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =============== end
+# 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== end
 
 # 创建服务脚本，这段代码请整体复制后粘贴  ================================= start
 cat > /etc/init.d/ikuai-bypass << \EOF

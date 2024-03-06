@@ -1,6 +1,6 @@
 #!/bin/sh
 # Test passed under openwrt5.15.137 x64 在openwrt 5.15.137 x64 测试通过
-
+# 下面的脚本只支持ash sh bash zsh 不兼容fishshell 
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== start
 # 最好逐行运行
 # opkg install wget unzip 
@@ -14,7 +14,7 @@ mv config.yml  ikuai-bypass.yml
 wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/raw/main/config_example.yml -O ikuai-bypass.yml
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== end
 
-# 创建服务脚本，这段代码请整体复制后粘贴  ================================= start
+# 创建服务脚本，这段代码请整体复制后粘贴，或者使用vim nano编辑  ================================= start
 cat > /etc/init.d/ikuai-bypass << \EOF
 #!/bin/sh /etc/rc.common
 START=99
@@ -28,7 +28,7 @@ stop(){
        echo "ikuai-bypass  is stop"
 }
 EOF
-# 创建服务脚本，这段代码请整体复制后粘贴  ================================= end
+# 创建服务脚本，这段代码请整体复制后粘贴，或者使用vim nano编辑  ================================= end
 
 chmod +x /etc/init.d/ikuai-bypass # 添加执行权限
 

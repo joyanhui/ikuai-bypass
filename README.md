@@ -31,11 +31,12 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
     - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 
 ## 更新日志
-- 2023-02-25 增加去广告功能演示规则  [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
-- 2023-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
-- 2023-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
-- 2023-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug  [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)   
-- 2023-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则   
+- 2024-03-07 openwrt服务安装脚本增加无代理环境安装  
+- 2024-02-25 增加去广告功能演示规则  [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
+- 2024-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
+- 2024-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
+- 2024-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug  [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)   
+- 2024-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则   
 - 旧的更新记录没啥价值也未单独记，小工具代码简单，请参考commit记录
 ## 简要使用说明
 从 Releases [[下载]](https://github.com/joyanhui/ikuai-bypass/releases)  解压后得到一个可执行文件`ikuai-bypass`和一个通用配置文件 `config.yml` [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)      

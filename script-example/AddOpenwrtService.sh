@@ -32,13 +32,14 @@ service ikuai-bypass enable
 # 手动启动 并查看进程是否存在
 service ikuai-bypass start && ps |grep ikuai-bypass
 # 手动停止
-#service ikuai-bypass stop && ps |grep ikuai-bypass
-
+# service ikuai-bypass stop && ps |grep ikuai-bypass
+# 手动执行一次 检查执行结果
+#   /opt/ikuai-bypass -r 1 -c /opt/ikuai-bypass.yml
 # 卸载 清理
-#service ikuai-bypass stop
-#service ikuai-bypass disable
-#rm -rf /etc/init.d/ikuai-bypass 
-#rm -rf /opt/ikuai-bypass
-#rm -rf /opt/ikuai-bypass.yml
+# service ikuai-bypass stop
+# service ikuai-bypass disable
+# rm -rf /etc/init.d/ikuai-bypass 
+# rm -rf /opt/ikuai-bypass
+# rm -rf /opt/ikuai-bypass.yml
 
 

@@ -53,4 +53,4 @@ stream-domain:      # 域名分流
   #- interface: wan99
   #  src-addr: 10.1.1.5-10.1.1.254
   #  url: https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt
-  #  tag: gfw
+  #  tag: adFilter

@@ -20,3 +20,5 @@ openwrt 部署在爱快的vm内
 - lan 桥接 爱快的wan2 ，为局域网提供代理功能，作为爱快wan2的上游    
 - wan 桥接 爱快的lan1 ，作为ikuai的下的一个设备，openwrt自己连接互联网用   
 
+## 关于vmnet10
+这里的vmnet10 单独给爱快的openwrt用的。VMware默认也没有启用这个网卡，实际上也非必须，可以用vmnet8替代。不过建议还是启用一下，方便隔离和管理。

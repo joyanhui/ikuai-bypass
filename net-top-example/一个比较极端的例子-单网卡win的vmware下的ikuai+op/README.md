@@ -22,3 +22,14 @@ openwrt 部署在爱快的vm内
 
 ## 关于vmnet10
 这里的vmnet10 单独给爱快的openwrt用的。VMware默认也没有启用这个网卡，实际上也非必须，可以用vmnet8替代。不过建议还是启用一下，方便隔离和管理。
+
+## 物理机器上的网卡
+### 物理网卡
+关闭ipv4 和ipv6 功能，可以通过vmnet0上网。不过会导致win的商店打不开,或许也会有其他问题。
+所以也建议打开ipv4/ipv6 然后dhcp获取，或手动指定到 和ikuai的lan2下的网段里面。
+### VMware Network Adapter VMnet1
+这里没用到，不用管
+### VMware Network Adapter VMnet8
+由爱快lan1分配ip，或者手动配置到和爱快lan1同一个网段
+### VMware Network Adapter VMnet10
+理论上最好和爱快的wan2 以及 openwrt lan 在同一个网段，实际上不用配置。

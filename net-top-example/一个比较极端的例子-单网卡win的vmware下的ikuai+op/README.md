@@ -32,4 +32,4 @@ openwrt 部署在爱快的vm内
 ### VMware Network Adapter VMnet8
 由爱快lan1分配ip，或者手动配置到和爱快lan1同一个网段
 ### VMware Network Adapter VMnet10
-理论上最好和爱快的wan2 以及 openwrt lan 在同一个网段，实际上不用配置。
+理论上最好和爱快的wan2 以及 openwrt lan 在同一个网段，也可以在openwrt的lan上启用dhcp由op来分发ip。实际上不用管也不用配ip。

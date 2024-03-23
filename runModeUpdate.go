@@ -41,11 +41,11 @@ func update() {
 			//记录旧的自定义运营商
 			preIds, err := iKuai.PrepareDelCustomIspAll(customIsp.Tag)
 			if err != nil {
-				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表失败：", err)
+				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表失败：", customIsp.Name, customIsp.Tag, err)
 				//return
 				break
 			} else {
-				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表成功")
+				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表成功", customIsp.Name, customIsp.Tag)
 			}
 			//更新自定义运营商
 			log.Println("运营商/IP分流==  正在更新", customIsp.Name, customIsp.Tag)
@@ -58,13 +58,13 @@ func update() {
 					//删除旧的自定义运营商
 					err = iKuai.DelCustomIspFromPreIds(preIds)
 					if err == nil {
-						log.Println("运营商/IP分流== 删除旧的运营商列表成功")
-						log.Println("运营商/IP分流== 更新完成")
+						log.Println("运营商/IP分流== 删除旧的运营商列表成功", customIsp.Name, customIsp.Tag)
+						log.Println("运营商/IP分流== 更新完成", customIsp.Name, customIsp.Tag)
 					} else {
-						log.Println("运营商/IP分流== 删除旧的运营商列表有错误", err)
+						log.Println("运营商/IP分流== 删除旧的运营商列表有错误", customIsp.Name, customIsp.Tag, err)
 					}
 				} else {
-					log.Println("运营商/IP分流== 添加运营商的时候有错误", err)
+					log.Println("运营商/IP分流== 添加运营商的时候有错误", customIsp.Name, customIsp.Tag, err)
 				}
 			}
 
@@ -79,10 +79,10 @@ func update() {
 			//记录旧的域名分流
 			preIds, err := iKuai.PrepareDelStreamDomainAll(streamDomain.Tag)
 			if err != nil {
-				log.Println("域名分流== 获取准备更新的自定义运营商列表失败：", err)
+				log.Println("域名分流== 获取准备更新的域名列表失败：", streamDomain.Tag, err)
 				break
 			} else {
-				log.Println("域名分流==  获取准备更新的自定义运营商列表成功")
+				log.Println("域名分流==  获取准备更新的域名列表成功", streamDomain.Tag)
 			}
 			//更新域名分流
 

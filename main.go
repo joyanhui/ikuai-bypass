@@ -25,7 +25,7 @@ func main() {
 
 	log.Println("运行模式", *runMode, "配置文件", *confPath)
 	err := readConf(*confPath)
-	log.Println(conf)
+	//log.Println(conf)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
 		return

@@ -40,11 +40,12 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 		ipGroup := strings.Join(ig, ",")
 		err = iKuai.AddCustomIsp(name, tag, ipGroup)
 		if err != nil {
-			log.Println("运营商/IP分流==  this is err : wait to reTry", conf.AddErrRetryWait, "秒继续处理", err)
+			log.Println("运营商/IP分流==  ", name, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(conf.AddErrRetryWait)
 			err = iKuai.AddCustomIsp(name, tag, ipGroup)
 			if err != nil {
-				log.Println("运营商/IP分流==  err again jump")
+				log.Println("运营商/IP分流==  ", name, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
+				break
 			}
 		}
 		log.Println("运营商/IP分流==  添加ip:", len(ig), " 个,等待", conf.AddWait, "秒继续处理")
@@ -77,18 +78,19 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 	var countFor int = 0
 	for _, d := range domainGroup {
 		countFor = countFor + 1
-		log.Println("域名分流== adding", countFor, "/", len(domainGroup), iface, tag, "err again jump")
+		log.Println("域名分流== ", countFor, "/", len(domainGroup), iface, tag, " 正在添加 .... ")
 		domain := strings.Join(d, ",")
 		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
 		if err != nil {
-			log.Println("域名分流== ", iface, tag, "this is err : wait to reTry", conf.AddErrRetryWait, "秒继续处理", err)
+			log.Println("域名分流==  ", countFor, "/", len(domainGroup), iface, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(conf.AddErrRetryWait)
 			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
 			if err != nil {
-				log.Println("域名分流== ", iface, tag, "err again jump")
+				log.Println("域名分流=  ", countFor, "/", len(domainGroup), iface, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
+				break
 			}
 		} else {
-			log.Println("域名分流== ", iface, tag, " 添加域名:", len(d), " 个,等待", conf.AddWait, "秒继续处理")
+			log.Println("域名分流== ", iface, tag, " 添加域名:", len(d), " 个成功,等待", conf.AddWait, "秒继续处理")
 			time.Sleep(conf.AddWait)
 		}
 	}

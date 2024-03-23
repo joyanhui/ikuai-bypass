@@ -4,8 +4,8 @@ ikuai-url: http://10.1.1.1 # 爱快网页控制台登陆地址
 username: admin # 爱快用户名
 password: admin888  # 爱快密码
 cron: 0 7 * * * # 执行更新的周期 格式为 crontab
-AddErrRetryWait: 60s # 自动重试时间间隔 Seconds
-AddWait: 1s # 添加规则后等待时间
+AddErrRetryWait: 10s # 自动重试时间间隔 时间格式为 10s  120s
+AddWait: 1s # 添加规则后等待时间 等待爱快释放性能
 custom-isp:     # 自定义运营商  IP分流
   - name: 国内IP列表  # 自定义运营商名称
     ## 自定义运营商 cidr 列表网址，每行一个，超过5000行会自动分为多个，ipv6 地址会被删除 
@@ -41,7 +41,7 @@ stream-domain:      # 域名分流
     src-addr: 10.1.1.2-10.1.1.254
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
     tag: gfw
-  # 下面是自动走wan1直连的，网址列表较大，如爱快性能不佳不建议启用。
+  # 下面是自动走wan1直连的，网址列表较大，不建议启用,有可能会影响上网体验。
   - interface: wan1
     src-addr: 10.1.1.2-10.1.1.254
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt

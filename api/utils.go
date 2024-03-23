@@ -11,7 +11,7 @@ func postJson(httpClient *http.Client, url string, body interface{}, result inte
 	if err != nil {
 		return
 	}
-	
+
 	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyByte))
 	if err != nil {
 		return
@@ -25,6 +25,6 @@ func postJson(httpClient *http.Client, url string, body interface{}, result inte
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(result)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	return
 }

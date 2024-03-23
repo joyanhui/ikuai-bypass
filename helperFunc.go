@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/joyanhui/ikuai-bypass/api"
 	"gopkg.in/yaml.v3"
@@ -63,7 +64,9 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return
@@ -74,6 +77,8 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 	for _, ig := range ipGroups {
 		ipGroup := strings.Join(ig, ",")
 		err = iKuai.AddCustomIsp(name, tag, ipGroup)
+		log.Println("添加ip:", len(ig), " 个,等待1秒继续处理")
+		time.Sleep(time.Second * 1)
 	}
 	return
 }
@@ -87,7 +92,9 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return
@@ -97,6 +104,8 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 	for _, d := range domainGroup {
 		domain := strings.Join(d, ",")
 		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
+		log.Println("添加域名:", len(d), " 个,等待1秒继续处理")
+		time.Sleep(time.Second * 1)
 	}
 	return
 }
@@ -113,10 +122,10 @@ func removeIpv6(ips []string) []string {
 }
 
 func group(arr []string, subGroupLength int64) [][]string {
-	max := int64(len(arr))
+	groupMax := int64(len(arr))
 	var segmens = make([][]string, 0)
-	quantity := max / subGroupLength
-	remainder := max % subGroupLength
+	quantity := groupMax / subGroupLength
+	remainder := groupMax % subGroupLength
 	i := int64(0)
 	for i = int64(0); i < quantity; i++ {
 		segmens = append(segmens, arr[i*subGroupLength:(i+1)*subGroupLength])

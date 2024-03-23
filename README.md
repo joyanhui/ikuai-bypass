@@ -26,7 +26,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
     - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
     - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
-    - `exportDomainSteamToTxt` : 默认可选附加参数为 `-exportPath /tmp`
+    - `exportDomainSteamToTxt` : 导出域名分流规则到txt文件模式  方便手动从爱快导入 默认可选附加参数为 `-exportPath /tmp`
 - `-tag` : 备注信息 清理模式下的附加参数 
     - 默认为cleanAll(即清理所有备注中包含`IKUAI_BYPASS`字符的规则) 
     - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`

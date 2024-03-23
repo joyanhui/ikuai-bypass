@@ -73,7 +73,7 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 		return
 	}
 	domains := strings.Split(string(body), "\n")
-	log.Println("域名分流== ", iface, tag, srcAddr, "获取到", len(domains), "个域名")
+	log.Println("域名分流== ", iface, tag, "获取到", len(domains), "个域名")
 	domainGroup := group(domains, 1000) //1000条
 	var countFor int = 0
 	for _, d := range domainGroup {

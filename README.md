@@ -8,7 +8,7 @@ ikuai可以是物理机也可以是虚拟机。openwrt同样可以是物理机�
 ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2个（wan和lan）。可以是物理网卡也可以是虚拟网卡。  
 <details>
 <summary>点击这里展开查看详细图文说明</summary>
-<img src="assets/img.png" >
+<img src="assets/img.png"  alt="图文说明">
 </details>
 
 ## 主要修改点
@@ -26,12 +26,15 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
     - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
     - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
+    - `exportDomainSteamToTxt` : 默认可选附加参数为 `-exportPath /tmp`
 - `-tag` : 备注信息 清理模式下的附加参数 
-    - 默认为cleanAll(即清理所有备注中包含`IKUAI_BYPASS`字符的规则) 
+    - 默认为cleanAll(即清理所有备注中包含`IKUAI_BYPASS`字符的规则) 
     - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
-
+- `-exportPath` : 导出域名分流规则的路径
 ## 更新日志
-- 2024-03-07 openwrt服务安装脚本增加无代理环境安装  
+- 2024-03-23 增加域名分流规则导出为爱快兼容的可导入的txt文件 [[5#2016320900]](https://github.com/joyanhui/ikuai-bypass/issues/5#issuecomment-2016320900)
+- 2024-03-23 尝试修复列表太多导致爱快处理超时的问题 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
+- 2024-03-07 openwrt服务安装脚本增加无代理环境安装
 - 2024-02-25 增加去广告功能演示规则  [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
 - 2024-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
 - 2024-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式

@@ -12,6 +12,7 @@ import (
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
 var runMode = flag.String("r", "cron", "运行模式")
 var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
+var exportPath = flag.String("exportPath", "/tmp", "导出文件路径")
 
 func main() {
 	flag.Parse()
@@ -31,6 +32,11 @@ func main() {
 		return
 	}
 	switch *runMode { //运行模式选择
+	case "exportDomainSteamToTxt":
+		log.Println("导出域名分流规则到txt,可以从爱快内导入 ")
+		log.Println("导出路径:", *exportPath)
+		exportDomainTxt()
+		return
 	case "cron":
 		log.Println("cronA 模式,执行一次，然后进入定时执行模式")
 		update()

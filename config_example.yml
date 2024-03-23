@@ -42,10 +42,10 @@ stream-domain:      # 域名分流
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
     tag: gfw
   # 下面是自动走wan1直连的，网址列表较大，不建议启用,有可能会影响上网体验。
-  - interface: wan1
-    src-addr: 10.1.1.2-10.1.1.254
-    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
-    tag: cn
+  #- interface: wan1
+  #  src-addr: 10.1.1.2-10.1.1.254
+  #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
+  #  tag: cn
   #- interface: wan1
   #  src-addr: 10.1.1.2-10.1.1.254 
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt

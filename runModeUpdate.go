@@ -88,9 +88,9 @@ func update() {
 			log.Println("域名分流==  正在更新", streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddr)
 			err = updateStreamDomain(iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddr, streamDomain.URL)
 			if err != nil {
-				log.Printf("域名分流== 添加域名分流 '%s@%s' 失败：%s\n", streamDomain.Interface, streamDomain.URL, err)
+				log.Printf("域名分流== 添加域名分流 '%s' 失败：%s\n", streamDomain.Interface, err)
 			} else {
-				log.Printf("域名分流== 添加域名分流 '%s@%s' 成功\n", streamDomain.Interface, streamDomain.URL)
+				log.Printf("域名分流== 添加域名分流 '%s' 成功\n", streamDomain.Interface)
 				if err == nil {
 					//删除旧的域名分流
 					err = iKuai.DelStreamDomainFromPreIds(preIds)

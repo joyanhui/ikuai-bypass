@@ -22,6 +22,7 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 	}
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
+		return
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -54,13 +55,14 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 
 // updateStreamDomain 更新域名分流规则
 func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err error) {
-	log.Println("域名分流== http.get ...", url)
+	log.Println("域名分流==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return
 	}
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
+		return
 	}
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
@@ -72,8 +74,10 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 	domains := strings.Split(string(body), "\n")
 	log.Println("域名分流== ", iface, tag, srcAddr, "获取到", len(domains), "个域名")
 	domainGroup := group(domains, 1000) //1000条
-
+	var countFor int = 0
 	for _, d := range domainGroup {
+		countFor = countFor + 1
+		log.Println("域名分流== adding", countFor, "/", len(domainGroup), iface, tag, "err again jump")
 		domain := strings.Join(d, ",")
 		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
 		if err != nil {

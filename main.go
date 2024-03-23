@@ -44,7 +44,7 @@ func main() {
 		log.Println("cronAft 模式稍后定时执行")
 	case "nocron", "once", "1":
 		update()
-		log.Println("once 自动推出")
+		log.Println("once 模式 执行完毕自动退出")
 		return
 	case "clean":
 		log.Println("清理模式")

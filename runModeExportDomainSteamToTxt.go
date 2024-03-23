@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func exportDomainTxt() {
+func exportDomainSteamToTxt() {
 	line := ""
 
 	for _, streamDomain := range conf.StreamDomain {

@@ -35,7 +35,7 @@ func main() {
 	case "exportDomainSteamToTxt":
 		log.Println("导出域名分流规则到txt,可以从爱快内导入 ")
 		log.Println("导出路径:", *exportPath)
-		exportDomainTxt()
+		exportDomainSteamToTxt()
 		return
 	case "cron":
 		log.Println("cronA 模式,执行一次，然后进入定时执行模式")

@@ -111,29 +111,24 @@ func (i *IKuai) PrepareDelStreamDomainAll(tag string) (preIds string, err error)
 	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的域名分流规则")
 	preIds = ""
 	err = nil
-	for loop := 0; loop < 5; loop++ {
-		var data []StreamDomainData
-		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS + "_" + tag)
-		if err != nil {
-			return
-		}
-		var ids []string
-		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
-				ids = append(ids, strconv.Itoa(d.ID))
-			}
-		}
-		if len(ids) <= 0 {
-			return
-		}
-		id := strings.Join(ids, ",")
-		preIds = preIds + "||" + id
-		/*
-			err = i.DelStreamDomain(id)
-			if err != nil {
-				return
-			}*/
+	//for loop := 0; loop < 2; loop++ {
+	var data []StreamDomainData
+	data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS + "_" + tag)
+	if err != nil {
+		return
 	}
+	var ids []string
+	for _, d := range data {
+		if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+			ids = append(ids, strconv.Itoa(d.ID))
+		}
+	}
+	if len(ids) <= 0 {
+		return
+	}
+	id := strings.Join(ids, ",")
+	preIds = preIds + "||" + id
+	//}
 	return
 }
 

@@ -2,61 +2,20 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/joyanhui/ikuai-bypass/api"
-	"gopkg.in/yaml.v3"
 )
 
 // 读取配置文件 到 conf
-func readConf(filename string) error {
-	buf, err := os.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-	err = yaml.Unmarshal(buf, &conf)
-	if err != nil {
-		return fmt.Errorf("in file %q: %v", filename, err)
-	}
-
-	// 检查每个 CustomIsp 的 Tag，如果不存在，则使用 Name
-	for i := range conf.CustomIsp {
-		if conf.CustomIsp[i].Tag == "" {
-			log.Println("运营商分流规则中配置中Tag为空,采用:", conf.CustomIsp[i].Name)
-			conf.CustomIsp[i].Tag = conf.CustomIsp[i].Name
-		}
-	}
-
-	// 检查每个 StreamDomain 的 Tag，如果不存在，则使用 Interface
-	for i := range conf.StreamDomain {
-		if conf.StreamDomain[i].Tag == "" {
-			log.Println("域名分流规则中中Tag为空,采用:", conf.StreamDomain[i].Interface)
-			conf.StreamDomain[i].Tag = conf.StreamDomain[i].Interface
-		}
-	}
-
-	return nil
-	/*
-		buf, err := os.ReadFile(filename)
-		if err != nil {
-			return err
-		}
-		err = yaml.Unmarshal(buf, &conf)
-		if err != nil {
-			return fmt.Errorf("in file %q: %v", filename, err)
-		}
-		return nil
-	*/
-}
 
 // updateCustomIsp 更新运营商分流规则
 func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err error) {
+	log.Println("运营商/IP分流==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return
@@ -73,18 +32,29 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 	}
 	ips := strings.Split(string(body), "\n")
 	ips = removeIpv6(ips)
+	log.Println("运营商/IP分流== ", name, tag, " 获取到", len(ips), "个ip")
 	ipGroups := group(ips, 5000) //5000条
+
 	for _, ig := range ipGroups {
 		ipGroup := strings.Join(ig, ",")
 		err = iKuai.AddCustomIsp(name, tag, ipGroup)
-		log.Println("添加ip:", len(ig), " 个,等待1秒继续处理")
-		time.Sleep(time.Second * 1)
+		if err != nil {
+			log.Println("运营商/IP分流==  this is err : wait to reTry", conf.AddErrRetryWait, "秒继续处理", err)
+			time.Sleep(conf.AddErrRetryWait)
+			err = iKuai.AddCustomIsp(name, tag, ipGroup)
+			if err != nil {
+				log.Println("运营商/IP分流==  err again jump")
+			}
+		}
+		log.Println("运营商/IP分流==  添加ip:", len(ig), " 个,等待", conf.AddWait, "秒继续处理")
+		time.Sleep(conf.AddWait)
 	}
 	return
 }
 
 // updateStreamDomain 更新域名分流规则
 func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err error) {
+	log.Println("域名分流== http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return
@@ -100,12 +70,23 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 		return
 	}
 	domains := strings.Split(string(body), "\n")
+	log.Println("域名分流== ", iface, tag, srcAddr, "获取到", len(domains), "个域名")
 	domainGroup := group(domains, 1000) //1000条
+
 	for _, d := range domainGroup {
 		domain := strings.Join(d, ",")
 		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
-		log.Println("添加域名:", len(d), " 个,等待1秒继续处理")
-		time.Sleep(time.Second * 1)
+		if err != nil {
+			log.Println("域名分流== ", iface, tag, "this is err : wait to reTry", conf.AddErrRetryWait, "秒继续处理", err)
+			time.Sleep(conf.AddErrRetryWait)
+			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
+			if err != nil {
+				log.Println("域名分流== ", iface, tag, "err again jump")
+			}
+		} else {
+			log.Println("域名分流== ", iface, tag, " 添加域名:", len(d), " 个,等待", conf.AddWait, "秒继续处理")
+			time.Sleep(conf.AddWait)
+		}
 	}
 	return
 }

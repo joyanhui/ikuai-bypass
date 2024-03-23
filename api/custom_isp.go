@@ -91,32 +91,32 @@ func (i *IKuai) DelCustomIsp(id string) error {
 	return nil
 }
 
-// 预备删除
+// PrepareDelCustomIspAll 预备删除
 func (i *IKuai) PrepareDelCustomIspAll(tag string) (preIds string, err error) {
 	log.Println("运营商/IP分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的运营商配置规则")
 	preIds = ""
 	err = nil
-	for loop := 0; loop < 3; loop++ {
-		var data []CustomIspData
-		data, err = i.ShowCustomIspByComment()
-		var ids []string
-		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
-				ids = append(ids, strconv.Itoa(d.ID))
-			}
+	//for loop := 0; loop < 3; loop++ {
+	var data []CustomIspData
+	data, err = i.ShowCustomIspByComment()
+	var ids []string
+	for _, d := range data {
+		if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+			ids = append(ids, strconv.Itoa(d.ID))
 		}
-		if len(ids) <= 0 {
-			return
-		}
-
-		id := strings.Join(ids, ",")
-		preIds = preIds + "||" + id
-		//fmt.Println("preIds", preIds)
-		//err = i.DelCustomIsp(id)
-		//if err != nil {
-		//	return
-		//}
 	}
+	if len(ids) <= 0 {
+		return
+	}
+
+	id := strings.Join(ids, ",")
+	preIds = preIds + "||" + id
+	//fmt.Println("preIds", preIds)
+	//err = i.DelCustomIsp(id)
+	//if err != nil {
+	//	return
+	//}
+	//}
 	return
 }
 

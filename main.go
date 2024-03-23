@@ -2,34 +2,16 @@ package main
 
 import (
 	"flag"
+	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/robfig/cron/v3"
 )
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
 var runMode = flag.String("r", "cron", "运行模式")
 var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
-var conf struct {
-	IkuaiURL  string `yaml:"ikuai-url"`
-	Username  string `yaml:"username"`
-	Password  string `yaml:"password"`
-	Cron      string `yaml:"cron"`
-	CustomIsp []struct {
-		Name string `yaml:"name"`
-		URL  string `yaml:"url"`
-		Tag  string `yaml:"tag"`
-	} `yaml:"custom-isp"`
-	StreamDomain []struct {
-		Interface string `yaml:"interface"`
-		SrcAddr   string `yaml:"src-addr"`
-		URL       string `yaml:"url"`
-		Tag       string `yaml:"tag"`
-	} `yaml:"stream-domain"`
-}
 
 func main() {
 	flag.Parse()
@@ -43,6 +25,7 @@ func main() {
 
 	log.Println("运行模式", *runMode, "配置文件", *confPath)
 	err := readConf(*confPath)
+	log.Println(conf)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
 		return

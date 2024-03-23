@@ -1,11 +1,35 @@
 <component name="ProjectDictionaryState">
   <dictionary name="yh">
     <words>
+      <w>compresslevel</w>
+      <w>devnull</w>
+      <w>f'build</w>
+      <w>f'building</w>
+      <w>f'get</w>
+      <w>f'go</w>
+      <w>f'unknown</w>
+      <w>f'upx</w>
+      <w>ghproxy</w>
+      <w>goarm</w>
+      <w>gomips</w>
+      <w>hardfloat</w>
       <w>iface</w>
       <w>ikuai</w>
+      <w>ipcf</w>
+      <w>ipcn</w>
+      <w>ipfb</w>
+      <w>ipgoogle</w>
+      <w>ipgroup</w>
+      <w>ipnf</w>
+      <w>iptg</w>
+      <w>iptw</w>
       <w>kuai</w>
+      <w>mipsle</w>
       <w>nocron</w>
       <w>segmens</w>
+      <w>softfloat</w>
+      <w>trimpath</w>
+      <w>zipfile</w>
     </words>
   </dictionary>
 </component>

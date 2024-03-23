@@ -1,5 +1,4 @@
 # !/usr/bin/env python3
-# script copy form mosdns/release.py
 import argparse
 import logging
 import os

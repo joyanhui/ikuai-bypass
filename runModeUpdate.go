@@ -47,7 +47,7 @@ func update() {
 				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表成功")
 			}
 			//更新自定义运营商
-			log.Println("运营商/IP分流==  正在更新", customIsp.Name, customIsp.Tag, customIsp.URL)
+			log.Println("运营商/IP分流==  正在更新", customIsp.Name, customIsp.Tag)
 			err = updateCustomIsp(iKuai, customIsp.Name, customIsp.Tag, customIsp.URL)
 			if err != nil {
 				log.Printf("运营商/IP分流== 添加自定义运营商'%s@%s'失败：%s\n", customIsp.Name, customIsp.URL, err)
@@ -85,7 +85,7 @@ func update() {
 			}
 			//更新域名分流
 
-			log.Println("域名分流==  正在更新", streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddr, streamDomain.URL)
+			log.Println("域名分流==  正在更新", streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddr)
 			err = updateStreamDomain(iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddr, streamDomain.URL)
 			if err != nil {
 				log.Printf("域名分流== 添加域名分流 '%s@%s' 失败：%s\n", streamDomain.Interface, streamDomain.URL, err)

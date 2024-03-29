@@ -12,9 +12,11 @@ unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm 
 # 使用版本内的配置文件
 mv config.yml  ikuai-bypass.yml 
 # 或者用最新的演示配置
+rm -rf ikuai-bypass.yml && rm -rf config.yml
 wget ${GhProxy}https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/config_example.yml -O ikuai-bypass.yml
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== end
-
+# 手动执行一次 检查执行结果
+#   /opt/ikuai-bypass -r 1 -c /opt/ikuai-bypass.yml
 # 创建服务脚本，这段代码请整体复制后粘贴，或者使用vim nano编辑  ================================= start
 cat > /etc/init.d/ikuai-bypass << \EOF
 #!/bin/sh /etc/rc.common
@@ -39,8 +41,7 @@ service ikuai-bypass enable
 service ikuai-bypass start && ps |grep ikuai-bypass
 # 手动停止
 # service ikuai-bypass stop && ps |grep ikuai-bypass
-# 手动执行一次 检查执行结果
-#   /opt/ikuai-bypass -r 1 -c /opt/ikuai-bypass.yml
+
 # 卸载 清理
 # service ikuai-bypass stop
 # service ikuai-bypass disable

@@ -3,10 +3,11 @@
 # 下面的脚本只支持ash sh bash zsh 不兼容fishshell 
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== start
 # 最好逐行运行
+# opkg update
 # opkg install wget unzip 
 export GhProxy=https://mirror.ghproxy.com/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
 mkdir -p /opt/ && cd  /opt/
-wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/releases/download/v0.2.2/ikuai-bypass-linux-amd64.zip
+wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/releases/download/v1.0.0-beta2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm -rf README.md
 # 使用版本内的配置文件
 mv config.yml  ikuai-bypass.yml 

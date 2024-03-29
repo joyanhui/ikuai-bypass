@@ -1,4 +1,6 @@
 cn.bing.com
+leiyanhui.com
 cf-cdn-ns.work
 mirror.ghproxy.com
-dev.leiyanhui.com
+ghproxy.net
+kkgithub.com

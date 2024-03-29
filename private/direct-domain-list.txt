@@ -5,3 +5,5 @@ cf-cdn-ns.work
 mirror.ghproxy.com
 ghproxy.net
 kkgithub.com
+nixos.wiki
+search.nixos.org

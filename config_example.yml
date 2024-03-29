@@ -1,15 +1,14 @@
-## 爱快管理页面的 URL，结尾不要加 "/"，
-## 如果在爱快自带 docker 运行，网关就是爱快地址，可以不写  如不填写，则使用第一个接口的网关地址作为爱快地址，
-ikuai-url: http://10.1.1.1 # 爱快网页控制台登陆地址
-username: admin # 爱快用户名
-password: admin888  # 爱快密码
-cron: 0 7 * * * # 执行更新的周期 格式为 crontab
+## 
+ikuai-url: http://10.1.1.1 # 爱快网页控制台登陆地址 结尾不要加 "/"，如在爱快docker内运行，网关就是爱快地址，可以不写，如不填写，则使用第一个接口的网关地址，
+username: admin # ikuai username 爱快登陆用户名
+password: admin888  # ikuai user password爱快登陆密码
+cron: 0 7 * * * # crontab 执行更新的周期 格式为 crontab
 AddErrRetryWait: 10s # 自动重试时间间隔 时间格式为 10s  120s
 AddWait: 1s # 添加规则后等待时间 等待爱快释放性能
 custom-isp:     # 自定义运营商  IP分流
   - name: 国内IP列表  # 自定义运营商名称
     ## 自定义运营商 cidr 列表网址，每行一个，超过5000行会自动分为多个，ipv6 地址会被删除 
-    ## 下面演示规则使用了ghproxy.com的代理，如果失效请自行更换或另外想办法
+    ## 下面演示规则使用了ghproxy.com的代理，如果失效请自行更换或另外想办法，建议使用https://github.com/hunshcn/gh-proxy自建
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
     tag: ipcn # 规则的备注标签后缀 如果留空默认为自定义运营商名称
   - name: telegram

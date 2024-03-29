@@ -1,4 +1,5 @@
 cn.bing.com
+s.cn.bing.net
 leiyanhui.com
 cf-cdn-ns.work
 mirror.ghproxy.com

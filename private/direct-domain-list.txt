@@ -7,6 +7,7 @@ ghproxy.net
 kkgithub.com
 nixos.wiki
 search.nixos.org
+tarballs.nixos.org
 ly729.out.airtime.pro
 c20.radioboss.fm
 listen.729ly.net

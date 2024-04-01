@@ -7,7 +7,7 @@ ghproxy.net
 kkgithub.com
 nixos.wiki
 search.nixos.org
-tarballs.nixos.org
+tarballs.nixos.org-del
 plugins.jetbrains.com
 download.jetbrains.com
 ly729.out.airtime.pro

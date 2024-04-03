@@ -76,11 +76,12 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml
 ```
 ###  windows
-请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压 cmd下cd到解压后的目录运行里面的exe程序
+请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    
+或许因ikuai-bypass需要获取在线数据,并使用了upx压缩,也没有另外加壳,部分杀软可能会报毒或者安全风险，[[#6]](https://github.com/joyanhui/ikuai-bypass/issues/6) 请自行决定是否信任,或者安装go环境后git clone后自行编译。我没有WIN环境,也不打算解决此类问题。
 ### macos下
-下载 darwin-arm64.zip 或者darwin-amd64.zip,unzip 后 在shell运行
+下载 darwin-arm64.zip 或者darwin-amd64.zip,unzip 后在shell运行
 ## v0.1.15 升级0.2版
-v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`，会根据tag添加指定的后缀，所以升级到0.2.x后最好清理掉旧的分流规则重新添加。
+v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加指定的后缀,所以升级到0.2.x后最好清理掉旧的分流规则重新添加。
 另外新版配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
 ```sh
 ./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则

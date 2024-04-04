@@ -1,4 +1,5 @@
 cn.bing.com
+www.bing.com
 s.cn.bing.net
 dl.google.com
 www2.bing.com

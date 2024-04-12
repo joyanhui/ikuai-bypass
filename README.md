@@ -4,7 +4,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流。  
 > 如有问题或建议都可以提[issues](https://github.com/joyanhui/ikuai-bypass/issues)，我会尽快处理。给个star我会很开心。
 ## 分流模式简单说明
-ikuai可以是物理机也可以是虚拟机。openwrt同样可以是物理机也可以是虚拟机，也可以是lxc/docker也可以部署到爱快内。   
+通常是爱快+opensrt的双路由方式，ikuai可以是物理机也可以是虚拟机。openwrt同样可以是物理机也可以是虚拟机，也可以是lxc/docker也可以部署到爱快内。   
 ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2个（wan和lan）。可以是物理网卡也可以是虚拟网卡。  
 <details>
 <summary>点击这里展开查看详细图文说明</summary>
@@ -13,11 +13,12 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 
 ## 主要修改点
 - 两个协程并发处理运营商/IP分流和域名分流,更新速度更快。  
-- 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了，这也是自己下手修改的主要原因。   
-- 支持无docker运行，当然也支持docker运行。    
-- 编译了 linux  macos windows freebsd 的二进制，当然也支持openwrt、老毛子和有shell权限其他系统。   
-- 编译了 arm5-7 arm64  mipsle mips64le ppc64le amd64 386 等架构并用upx压缩，覆盖多数路由器和os系统。    
+- 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了，这也是自己下手修改的主要原因。  
 - 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。
+- 支持域名分流规则直接导出为爱快可导入的txt格式 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5) 
+- 支持无docker运行，当然也支持docker运行。    
+- 编译了 linux  macos windows freebsd 系统下arm5-7 arm64  mipsle mips64le ppc64le amd64 386 架构二进制，当然也支持openwrt、老毛子和有shell权限其他系统。   
+
 
 ## 参数说明
 - `-c` : 配置文件路径  默认为`config.yml` 可用相对路径或者绝对路径
@@ -79,7 +80,7 @@ chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cr
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    
 或许因ikuai-bypass需要获取在线数据,并使用了upx压缩,也没有另外加壳,部分杀软可能会报毒或者安全风险，[[#6]](https://github.com/joyanhui/ikuai-bypass/issues/6) 请自行决定是否信任,或者安装go环境后git clone后自行编译。我没有WIN环境,也不打算解决此类问题。
 ### macos下
-下载 darwin-arm64.zip 或者darwin-amd64.zip,unzip 后在shell运行
+下载 darwin-arm64.zip 或者darwin-amd64.zip,unzip 后在shell运行。其他参考上文linux
 ## v0.1.15 升级0.2版
 v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加指定的后缀,所以升级到0.2.x后最好清理掉旧的分流规则重新添加。
 另外新版配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
@@ -87,6 +88,11 @@ v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加�
 ./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则
 ./ikuai-bypass -c /路径/config.yml -r cron #先运行一次 而后等待计划任务触发 
 ```
+## 我自用过的环境
+单网口/双网口
+- pve宿主 kvm 运行ikuai,然后opewrt在kvm/lxc下，ikuai-bypass 部署在openwrt。
+- windows宿主 + vmware 桥接网卡 ,openwrt在vmware的ikuai内的vm内，ikuai-bypass 部署在openwrt。
+- nixos宿主 + virtualbox 桥接网卡,openwrt在vbox的ikuai内的vm内，ikuai-bypass 部署在openwrt。
 
 ## 其他相关说明
 [https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)

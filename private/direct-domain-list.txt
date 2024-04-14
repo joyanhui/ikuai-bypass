@@ -17,3 +17,4 @@ download.jetbrains.com
 ly729.out.airtime.pro
 c20.radioboss.fm
 listen.729ly.net
+plugins.jetbrains.com

@@ -40,12 +40,17 @@ stream-domain:      # 域名分流
     src-addr: 10.1.1.2-10.1.1.254
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
     tag: gfw
+  - interface: wan2
+    src-addr: 10.1.1.2-10.1.1.254
+    # 作者自己维护的自定义的域名列表 强制走代理的域名
+    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
+    tag: private_bypass
   # 下面是自动走wan1直连的，
   - interface: wan1
     src-addr: 10.1.1.2-10.1.1.254
-    # private1 是一个作者自己维护的自定义的域名列表 主要存放github的镜像网站等国内可以直连的镜像或其他类型域名
+    # 作者自己维护的自定义的域名列表 主要存放github的镜像网站等国内可以直连的镜像或其他类型域名
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
-    tag: private1
+    tag: private_direct
   #- interface: wan1
   #  src-addr: 10.1.1.2-10.1.1.254 
   #  china-list 网址列表较大，不建议启用,在部分ikuai设备上可能会导致维护的时候超时出错。

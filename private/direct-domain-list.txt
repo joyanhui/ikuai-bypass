@@ -18,4 +18,5 @@ ly729.out.airtime.pro
 c20.radioboss.fm
 listen.729ly.net
 plugins.jetbrains.com
+downloads.marketplace.jetbrains.com
 download.fedoraproject.org

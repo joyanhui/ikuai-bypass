@@ -91,8 +91,9 @@ v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加�
 ## 我自用过的环境
 单网口/双网口
 - pve宿主 kvm 运行ikuai,然后opewrt在kvm/lxc下，ikuai-bypass 部署在openwrt。
-- windows宿主 + vmware 桥接网卡 ,openwrt在vmware的ikuai内的vm内，ikuai-bypass 部署在openwrt。
-- nixos宿主 + virtualbox 桥接网卡,openwrt在vbox的ikuai内的vm内，ikuai-bypass 部署在openwrt。
+- windows宿主 + vmware 桥接网卡爱快 ,openwrt在vmware的ikuai内的vm内，ikuai-bypass 部署在openwrt。
+- windows宿主 + hyperv 桥接网卡爱快,openwrt在vbox的ikuai内的vm内，ikuai-bypass 使用instsrv+srvany部署到windows。 
+- nixos宿主 + virtualbox 桥接网卡爱快,openwrt在vbox的ikuai内的vm内，ikuai-bypass 部署在openwrt。 
 
 ## 其他相关说明
 [https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)

@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -121,4 +122,45 @@ func group(arr []string, subGroupLength int64) [][]string {
 		segmens = append(segmens, arr[i*subGroupLength:i*subGroupLength+remainder])
 	}
 	return segmens
+}
+
+// 更新ip分组
+func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	if resp.StatusCode != 200 {
+		err = errors.New(resp.Status)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	ips := strings.Split(string(body), "\n")
+	ips = removeIpv6(ips)
+	ipGroups := group(ips, 1000)
+	for index, ig := range ipGroups {
+		ipGroup := strings.Join(ig, ",")
+		iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
+	}
+	return
+}
+
+// 更新ip端口分流
+func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string) (err error) {
+
+	var ipGroupList []string
+	for _, ipGroupItem := range strings.Split(ipGroup, ",") {
+		var data []string
+		data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(ipGroupItem)
+		if err != nil {
+			return
+		}
+		ipGroupList = append(ipGroupList, data...)
+	}
+
+	iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop)
+	return
 }

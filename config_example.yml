@@ -5,6 +5,24 @@ password: admin888  # ikuai user password爱快登陆密码
 cron: 0 7 * * * # crontab 执行更新的周期 格式为 crontab
 AddErrRetryWait: 10s # 自动重试时间间隔 时间格式为 10s  120s
 AddWait: 1s # 添加规则后等待时间 等待爱快释放性能
+
+ip-group:     # IP分组 和端口分流配合使用
+  - name: 国内  # IP分组名称，分为多个时在名称后面拼接“序号”，如“国内_1”
+    ## IP分组 cidr 列表网址，每行一个，超过1000行会自动分为多个，ipv6 地址会被删除
+    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
+  - name: Telegram
+    url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
+stream-ipport:      # 端口分流，与IP分组组合使用
+  - type: 0 # 分流方式：0-外网线路，1-下一跳网关
+    interface: wan2 # 分流线路
+    src-addr: 192.168.1.100-192.168.1.250   # 分流的源地址
+    ## 域名列表网址，每行一个，超过1000行会自动分为多个
+    ip-group: 国内 # 前面填写的IP分组名称，多个用逗号隔开
+  - type: 1 # 分流方式：0-外网线路，1-下一跳网关
+    nexthop: 192.168.1.2 # 下一跳网关
+    src-addr: 192.168.1.100-192.168.1.250
+    ip-group: Telegram
+
 custom-isp:     # 自定义运营商  IP分流
   - name: 国内IP列表  # 自定义运营商名称
     ## 自定义运营商 cidr 列表网址，每行一个，超过5000行会自动分为多个，ipv6 地址会被删除 
@@ -30,7 +48,7 @@ custom-isp:     # 自定义运营商  IP分流
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt
   #  tag: ipnf
   
-stream-domain:      # 域名分流
+stream-domain:      # 域名分流 可选功能，优先级比ip分流高
   #- interface: wan2 # 分流线路
   #  src-addr: 10.1.1.2-10.1.1.254    # 分流的源地址 多ip段用“,”分开 参考 https://github.com/joyanhui/ikuai-bypass/issues/1#issuecomment-1892763993
   #  ## 域名列表网址，每行一个，超过1000行会自动分为多个

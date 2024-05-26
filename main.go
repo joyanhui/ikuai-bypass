@@ -11,6 +11,7 @@ import (
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
 var runMode = flag.String("r", "cron", "运行模式")
+var isAcIpgroup = flag.String("m", "0", "启用ip分组和下一条网关模式")
 var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
 var exportPath = flag.String("exportPath", "/tmp", "导出文件路径")
 
@@ -79,6 +80,15 @@ func main() {
 		osSignals := make(chan os.Signal, 1)
 		signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
 		<-osSignals
+	}
+
+}
+
+func update() {
+	if *isAcIpgroup == "1" {
+		updateIpgroup()
+	} else {
+		updateIspRule()
 	}
 
 }

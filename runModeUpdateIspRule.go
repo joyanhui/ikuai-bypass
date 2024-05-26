@@ -9,10 +9,10 @@ import (
 	"github.com/joyanhui/ikuai-bypass/router"
 )
 
-func update() {
+func updateIspRule() {
 	err := readConf(*confPath)
 	if err != nil {
-		log.Println("更新配置文件失败：", err)
+		log.Println("读取配置文件失败：", err)
 		return
 	}
 	baseurl := conf.IkuaiURL

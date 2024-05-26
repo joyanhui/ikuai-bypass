@@ -26,6 +26,17 @@ var conf struct {
 		URL       string `yaml:"url"`
 		Tag       string `yaml:"tag"`
 	} `yaml:"stream-domain"`
+	IpGroup []struct {
+		Name string `yaml:"name"`
+		URL  string `yaml:"url"`
+	} `yaml:"ip-group"`
+	StreamIpPort []struct {
+		Type      string `yaml:"type"`
+		Interface string `yaml:"interface"`
+		Nexthop   string `yaml:"nexthop"`
+		SrcAddr   string `yaml:"src-addr"`
+		IpGroup   string `yaml:"ip-group"`
+	} `yaml:"stream-ipport"`
 }
 
 func readConf(filename string) error {

@@ -140,7 +140,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
 			return
 		}
 		id := strings.Join(ids, ",")
-		err = i.DelStreamDomain(id)
+		err = i.DelStreamIpPort(id)
 		if err != nil {
 			return
 		}

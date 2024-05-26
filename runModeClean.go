@@ -2,39 +2,16 @@ package main
 
 import (
 	"log"
-
-	"github.com/joyanhui/ikuai-bypass/api"
-	"github.com/joyanhui/ikuai-bypass/router"
 )
 
 // 清理旧分流规则
 func clean() {
-	err := readConf(*confPath)
+	iKuai, err := loginToIkuai()
 	if err != nil {
-		log.Println("更新配置文件失败：", err)
+		log.Println("登录爱快失败：", err)
 		return
 	}
 
-	baseurl := conf.IkuaiURL
-	if baseurl == "" {
-		gateway, err := router.GetGateway()
-		if err != nil {
-			log.Println("获取默认网关失败：", err)
-			return
-		}
-		baseurl = "http://" + gateway
-		log.Println("使用默认网关地址：", baseurl)
-	}
-
-	iKuai := api.NewIKuai(baseurl)
-
-	err = iKuai.Login(conf.Username, conf.Password)
-	if err != nil {
-		log.Println("ikuai 登陆失败：", baseurl, err)
-		return
-	} else {
-		log.Println("ikuai 登录成功", baseurl)
-	}
 	//删除旧的自定义运营商
 	err = iKuai.DelCustomIspAll(*cleanTag)
 	if err != nil {
@@ -49,5 +26,18 @@ func clean() {
 	} else {
 		log.Println("移除旧的域名分流成功 tag:" + *cleanTag)
 	}
-
+	//删除旧的ip组
+	err = iKuai.DelIKuaiBypassIpGroup()
+	if err != nil {
+		log.Println("移除旧的IP分组失败：", err)
+	} else {
+		log.Println("移除旧的IP分组成功")
+	}
+	//删除端口分流规则
+	err = iKuai.DelIKuaiBypassStreamIpPort()
+	if err != nil {
+		log.Println("移除旧的端口分流失败：", err)
+	} else {
+		log.Println("移除旧的端口分流成功")
+	}
 }

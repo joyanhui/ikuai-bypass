@@ -15,12 +15,12 @@ ip-group:     # IP分组 和端口分流配合使用
 stream-ipport:      # 端口分流，与IP分组组合使用
   - type: 0 # 分流方式：0-外网线路，1-下一跳网关
     interface: wan2 # 分流线路
-    src-addr: 192.168.1.100-192.168.1.250   # 分流的源地址
+    src-addr: 10.1.1.10-10.1.1.254   # 分流的源地址
     ## 域名列表网址，每行一个，超过1000行会自动分为多个
     ip-group: 国内 # 前面填写的IP分组名称，多个用逗号隔开
   - type: 1 # 分流方式：0-外网线路，1-下一跳网关
-    nexthop: 192.168.1.2 # 下一跳网关
-    src-addr: 192.168.1.100-192.168.1.250
+    nexthop: 10.1.1.2 # 下一跳网关
+    src-addr: 10.1.1.10-10.1.1.254
     ip-group: Telegram
 
 custom-isp:     # 自定义运营商  IP分流
@@ -50,38 +50,38 @@ custom-isp:     # 自定义运营商  IP分流
   
 stream-domain:      # 域名分流 可选功能，优先级比ip分流高
   #- interface: wan2 # 分流线路
-  #  src-addr: 10.1.1.2-10.1.1.254    # 分流的源地址 多ip段用“,”分开 参考 https://github.com/joyanhui/ikuai-bypass/issues/1#issuecomment-1892763993
+  #  src-addr: 10.1.1.10-10.1.1.254    # 分流的源地址 多ip段用“,”分开 参考 https://github.com/joyanhui/ikuai-bypass/issues/1#issuecomment-1892763993
   #  ## 域名列表网址，每行一个，超过1000行会自动分为多个
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/greatfire.txt
   # 下面是强制走wan2的
   - interface: wan2
-    src-addr: 10.1.1.2-10.1.1.254
+    src-addr: 10.1.1.10-10.1.1.254
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
     tag: gfw
   - interface: wan2
-    src-addr: 10.1.1.2-10.1.1.254
+    src-addr: 10.1.1.10-10.1.1.254
     # 作者自己维护的自定义的域名列表 强制走代理的域名
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
     tag: private_bypass
   # 下面是自动走wan1直连的，
   - interface: wan1
-    src-addr: 10.1.1.2-10.1.1.254
+    src-addr: 10.1.1.10-10.1.1.254
     # 作者自己维护的自定义的域名列表 主要存放github的镜像网站等国内可以直连的镜像或其他类型域名
     url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
     tag: private_direct
   #- interface: wan1
-  #  src-addr: 10.1.1.2-10.1.1.254 
+  #  src-addr: 10.1.1.10-10.1.1.254 
   #  china-list 网址列表较大，不建议启用,在部分ikuai设备上可能会导致维护的时候超时出错。
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/china-list.txt
   #  tag: cn
   #- interface: wan1
-  #  src-addr: 10.1.1.2-10.1.1.254 
+  #  src-addr: 10.1.1.10-10.1.1.254 
   #  url:  https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/apple-cn.txt
   #  tag: apple
   #  下面是去广告的
   #  todo 以后会使用爱快的域名黑名单模式来实现广告过滤，暂时用线路分流功能屏蔽
   #  wan99是一个不可用或者不通的线路。因为reject-list网址列表较大，如爱快性能不佳不建议启用。
   #- interface: wan99
-  #  src-addr: 10.1.1.2-10.1.1.254 
+  #  src-addr: 10.1.1.10-10.1.1.254 
   #  url: https://mirror.ghproxy.com/https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/reject-list.txt
   #  tag: adFilter

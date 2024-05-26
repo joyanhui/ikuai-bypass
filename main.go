@@ -86,10 +86,19 @@ func main() {
 }
 
 func update() {
-	if *isAcIpgroup == "1" {
-		updateIpgroup()
-	} else {
+	switch *isAcIpgroup {
+	case "ispdomain":
+		log.Println("启动 ... 自定义isp和域名分流模式 模式")
 		updateIspRule()
+	case "ipgroup":
+		log.Println("启动 ... ip分组和下一条网关模式")
+		updateIpgroup()
+	case "ii":
+		log.Println("启动 ...  自定义isp和域名分流模式 模式")
+		log.Println("启动 ... ip分组和下一条网关模式")
+
+		updateIspRule()
+		updateIpgroup()
 	}
 
 }

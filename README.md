@@ -1,7 +1,7 @@
 ## iKuai Bypass
 通过自定义运营商分流或者端口分流的方式实现非旁路由方式的自动分流，并定时更新规则。实现国内ip或者指定的ip或者指定的域名列表走直连或者经过openwrt等另外处理。
 ### ip分组和端口分流方式
-国内ip直连，非国内ip指定下一条网关到openwrt。openwrt出口流量直连。实现方式
+国内ip直连，非国内ip指定下一条网关到openwrt。openwrt出口流量直连。实现方式参考[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7)  [[恩山y2kji]](https://www.right.com.cn/forum/thread-8288009-1-1.html)
 ### 自定义运营商分流方式说明：
 ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级虚拟运营商，同时作为ikuai的下级路由，再把openwrt的出口流量绑回到爱快实际的运营商，实现无感分流：国内网站访问速度更好、不用单独配置网关、openwrt炸了不影响正常上网、openwrt恢复后网络自愈。[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或者查看  [恩山eezz](https://www.right.com.cn/forum/thread-8252571-1-1.html) 或者下文 [分流模式的简单说明](https://github.com/joyanhui/ikuai-bypass?tab=readme-ov-file#%E5%88%86%E6%B5%81%E6%A8%A1%E5%BC%8F%E7%AE%80%E5%8D%95%E8%AF%B4%E6%98%8E)。
 这种方式比传统用openwrt的作为旁路由的指定网关的方案，或者only openwrt的方案更加稳定，速度更好。 `缺点是 网络top看起来有一些复杂，非开箱即用`    

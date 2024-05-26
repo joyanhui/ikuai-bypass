@@ -14,6 +14,7 @@ var runMode = flag.String("r", "cron", "运行模式")
 var isAcIpgroup = flag.String("m", "0", "启用ip分组和下一条网关模式")
 var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
 var exportPath = flag.String("exportPath", "/tmp", "导出文件路径")
+var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址|用户名|密码")
 
 func main() {
 	flag.Parse()

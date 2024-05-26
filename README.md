@@ -43,6 +43,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 - 2024-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则   
 - 旧的更新记录没啥价值也未单独记，小工具代码简单，请参考commit记录
 ## todo list
+- ip分组的下一跳网关[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7)
 - 在性能受限制的爱快上域名分流过多导致爱快接口超时，进一步导致ikuai-bypass出错的bug [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
 ## 简要使用说明
 从 Releases [[下载]](https://github.com/joyanhui/ikuai-bypass/releases)  解压后得到一个可执行文件`ikuai-bypass`和一个通用配置文件 `config.yml` [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)      

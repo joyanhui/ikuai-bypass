@@ -13,6 +13,7 @@ func updateIpgroup() {
 	err = iKuai.DelIKuaiBypassIpGroup()
 	if err != nil {
 		log.Println("ip分组== 移除旧的IP分组失败：", err)
+		return
 	} else {
 		log.Println("ip分组== 移除旧的IP分组成功")
 	}
@@ -28,6 +29,7 @@ func updateIpgroup() {
 	err = iKuai.DelIKuaiBypassStreamIpPort()
 	if err != nil {
 		log.Println("端口分流== 移除旧的端口分流失败：", err)
+		return
 	} else {
 		log.Println("端口分流== 移除旧的端口分流成功")
 	}

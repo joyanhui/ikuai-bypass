@@ -175,9 +175,10 @@ func loginToIkuai() (*api.IKuai, error) {
 	}
 	if *ikuaiLoginInfo != "" {
 		log.Println("使用命令行参数登陆爱快")
-		ikuaiLoginInfoArr := strings.Split(*ikuaiLoginInfo, "|")
+		ikuaiLoginInfoArr := strings.Split(*ikuaiLoginInfo, ",")
 		if len(ikuaiLoginInfoArr) != 3 {
-			log.Println("命令行参数格式错误，请使用 -login=\"http://ip|username|password\"")
+			log.Println(*ikuaiLoginInfo)
+			log.Println("命令行参数格式错误，请使用 -login http://ip|username|password ")
 			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip|username|password\"")
 		}
 		iKuai := api.NewIKuai(ikuaiLoginInfoArr[0])

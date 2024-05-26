@@ -4,36 +4,14 @@ import (
 	"fmt"
 	"log"
 	"time"
-
-	"github.com/joyanhui/ikuai-bypass/api"
-	"github.com/joyanhui/ikuai-bypass/router"
 )
 
 func updateIspRule() {
-	err := readConf(*confPath)
+	iKuai, err := loginToIkuai()
 	if err != nil {
-		log.Println("读取配置文件失败：", err)
+		log.Println("登录爱快失败：", err)
 		return
 	}
-	baseurl := conf.IkuaiURL
-	if baseurl == "" {
-		gateway, err := router.GetGateway()
-		if err != nil {
-			log.Println("获取默认网关失败：", err)
-			return
-		}
-		baseurl = "http://" + gateway
-		log.Println("使用默认网关地址：", baseurl)
-	}
-	iKuai := api.NewIKuai(baseurl)
-	err = iKuai.Login(conf.Username, conf.Password)
-	if err != nil {
-		log.Println("ikuai 登陆失败：", baseurl, err)
-		return
-	} else {
-		log.Println("ikuai 登录成功", baseurl)
-	}
-
 	var GoroutineEnd1 bool = false
 	var GoroutineEnd2 bool = false
 	go func() {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"github.com/joyanhui/ikuai-bypass/router"
 	"io"
 	"log"
 	"net/http"
@@ -163,4 +164,50 @@ func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, next
 
 	iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop)
 	return
+}
+
+// 登陆爱快
+func loginToIkuai() (*api.IKuai, error) {
+	err := readConf(*confPath)
+	if err != nil {
+		log.Println("读取配置文件失败：", err)
+		return nil, err
+	}
+	if *ikuaiLoginInfo != "" {
+		log.Println("使用命令行参数登陆爱快")
+		ikuaiLoginInfoArr := strings.Split(*ikuaiLoginInfo, "|")
+		if len(ikuaiLoginInfoArr) != 3 {
+			log.Println("命令行参数格式错误，请使用 -login=\"http://ip|username|password\"")
+			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip|username|password\"")
+		}
+		iKuai := api.NewIKuai(ikuaiLoginInfoArr[0])
+		err = iKuai.Login(ikuaiLoginInfoArr[1], ikuaiLoginInfoArr[2])
+		if err != nil {
+			log.Println("ikuai 登陆失败：", *ikuaiLoginInfo, err)
+			return nil, err
+		} else {
+			log.Println("ikuai 登录成功", ikuaiLoginInfoArr[0])
+			return iKuai, nil
+		}
+	} else {
+		baseurl := conf.IkuaiURL
+		if baseurl == "" {
+			gateway, err := router.GetGateway()
+			if err != nil {
+				log.Println("获取默认网关失败：", err)
+				return nil, err
+			}
+			baseurl = "http://" + gateway
+			log.Println("使用默认网关地址：", baseurl)
+		}
+		iKuai := api.NewIKuai(baseurl)
+		err = iKuai.Login(conf.Username, conf.Password)
+		if err != nil {
+			log.Println("ikuai 登陆失败：", baseurl, err)
+			return iKuai, err
+		} else {
+			log.Println("ikuai 登录成功", baseurl)
+			return iKuai, nil
+		}
+	}
 }

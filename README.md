@@ -85,9 +85,13 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 因为ikuai 无法直接执行shell命令,实在懒得给这种小工具打包镜像，尤其是基于的golang根本没有外部依赖只是一个可执行文件。
 如果您要在ikuai的docker内运行。请自行下载 linux版本。解压后 上传可执行文件和配置文件 到ikuai数据盘。例如/data0/ikuai-bypass/ikuai-bypass  /data0/ikuai-bypass/config.yml
 而后在ikuai的docker中随便下载一个通用的linux镜像,例如 alpine:3.18.4 。创建docker 目录挂载 `/data0/ikuai-bypass/` 到容器内 `/opt/ikuai-bypass/`
-入口命令修改为:
+启动命令修改为:
 ```sh
 chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml
+```
+如启动失败可尝试以下命令
+```sh
+/opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron
 ```
 ###  windows
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    

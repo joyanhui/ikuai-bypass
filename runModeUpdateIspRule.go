@@ -17,7 +17,7 @@ func updateIspRule() {
 	go func() {
 		for _, customIsp := range conf.CustomIsp {
 			//记录旧的自定义运营商
-			preIds, err := iKuai.PrepareDelCustomIspAll(customIsp.Tag)
+			preIds, err := iKuai.GetCustomIspAll(customIsp.Tag)
 			if err != nil {
 				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表失败：", customIsp.Name, customIsp.Tag, err)
 				//return
@@ -69,7 +69,7 @@ func updateIspRule() {
 
 		for _, streamDomain := range conf.StreamDomain {
 			//记录旧的域名分流
-			preIds, err := iKuai.PrepareDelStreamDomainAll(streamDomain.Tag)
+			preIds, err := iKuai.GetStreamDomainAll(streamDomain.Tag)
 			if err != nil {
 				log.Println("域名分流== 获取准备更新的域名列表失败：", streamDomain.Tag, err)
 				break

@@ -91,8 +91,8 @@ func (i *IKuai) DelCustomIsp(id string) error {
 	return nil
 }
 
-// PrepareDelCustomIspAll 预备删除
-func (i *IKuai) PrepareDelCustomIspAll(tag string) (preIds string, err error) {
+// GetCustomIspAll 预备删除
+func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
 	log.Println("运营商/IP分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的运营商配置规则")
 	preIds = ""
 	err = nil
@@ -120,7 +120,7 @@ func (i *IKuai) PrepareDelCustomIspAll(tag string) (preIds string, err error) {
 	return
 }
 
-// 删除
+// DelCustomIspFromPreIds 删除
 func (i *IKuai) DelCustomIspFromPreIds(preIds string) (err error) {
 	arr := strings.Split(preIds, "||")
 	for _, id := range arr {

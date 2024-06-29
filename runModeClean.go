@@ -27,14 +27,14 @@ func clean() {
 		log.Println("移除旧的域名分流成功 tag:" + *cleanTag)
 	}
 	//删除旧的ip组
-	err = iKuai.DelIKuaiBypassIpGroup()
+	err = iKuai.DelIKuaiBypassIpGroup(*cleanTag)
 	if err != nil {
 		log.Println("移除旧的IP分组失败：", err)
 	} else {
 		log.Println("移除旧的IP分组成功")
 	}
 	//删除端口分流规则
-	err = iKuai.DelIKuaiBypassStreamIpPort()
+	err = iKuai.DelIKuaiBypassStreamIpPort(*cleanTag)
 	if err != nil {
 		log.Println("移除旧的端口分流失败：", err)
 	} else {

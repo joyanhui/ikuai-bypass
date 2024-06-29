@@ -1,13 +1,13 @@
 ## iKuai Bypass
 通过自定义运营商分流或者端口分流的方式实现非旁路由方式的自动分流，并定时更新规则。实现国内ip或者指定的ip或者指定的域名列表走直连或者经过openwrt等另外处理。
-### ip分组和端口分流方式
+### ip分组和端口分流方式 说明：
 国内ip直连，非国内ip指定下一条网关到openwrt。openwrt出口流量直连。实现方式参考[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7)  [[恩山y2kji]](https://www.right.com.cn/forum/thread-8288009-1-1.html)
-### 自定义运营商分流方式说明：
+### 自定义运营商分流方式 说明：
 ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级虚拟运营商，同时作为ikuai的下级路由，再把openwrt的出口流量绑回到爱快实际的运营商，实现无感分流：国内网站访问速度更好、不用单独配置网关、openwrt炸了不影响正常上网、openwrt恢复后网络自愈。[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或者查看  [恩山eezz](https://www.right.com.cn/forum/thread-8252571-1-1.html) 或者下文 [分流模式的简单说明](https://github.com/joyanhui/ikuai-bypass?tab=readme-ov-file#%E5%88%86%E6%B5%81%E6%A8%A1%E5%BC%8F%E7%AE%80%E5%8D%95%E8%AF%B4%E6%98%8E)。
 这种方式比传统用openwrt的作为旁路由的指定网关的方案，或者only openwrt的方案更加稳定，速度更好。 `缺点是 网络top看起来有一些复杂，非开箱即用`    
 但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流。  
 > 如有问题或建议都可以提[issues](https://github.com/joyanhui/ikuai-bypass/issues)，我会尽快处理。给个star我会很开心。
-#### 分流模式简单说明
+#### 运营商和域名分流模式简单说明
 通常是爱快+openwrt的双路由方式，ikuai可以是物理机也可以是虚拟机。openwrt同样可以是物理机也可以是虚拟机，也可以是lxc/docker也可以部署到爱快内。   
 ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2个（wan和lan）。可以是物理网卡也可以是虚拟网卡。  
 <details>
@@ -17,7 +17,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 
 ## 主要修改点
 - 两个协程并发处理运营商/IP分流和域名分流,更新速度更快。  
-- 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了，这也是自己下手修改的主要原因。  
+- 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了，这也是自己下手修改的主要原因。  v2.0.1后版本增加参数调整更新后删除还是更新之前删除。 [[#15]](https://github.com/joyanhui/ikuai-bypass/issues/15)
 - 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。
 - 支持域名分流规则直接导出为爱快可导入的txt格式 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5) 
 - 支持无docker运行，当然也支持docker运行。    
@@ -32,11 +32,11 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
   - `ii` : 同时使用 上面两种模式
 - `-r` : 运行模式 默认为`cron`
     - `cron` : 先运行一次 而后等待计划任务触发
-    - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就退出结束
+    - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就直接退出结束，适合调试使用或者使用系统自带的计划任务或serverless/函数计算等方式触发。
     - `cronAft` : 先不运行等计划任务触发
     - `clean` : 清理模式 默认可选附加参数为 `-tag cleanAll`
-    - `exportDomainSteamToTxt` : 导出域名分流规则到txt文件模式  方便手动从爱快导入 默认可选附加参数为 `-exportPath /tmp`
-- `-tag` : 备注信息 清理模式下的附加参数 
+    - `exportDomainSteamToTxt` : 导出域名分流规则到txt文件模式  方便手动从爱快导入 默认可选附加参数为 `-exportPath /tmp` 暂时只支持域名分流功能导出，
+- `-tag` : 备注信息 `clean`清理模式下的附加参数 
     - 默认为cleanAll(即清理所有备注中包含`IKUAI_BYPASS`字符的规则) 
     - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 - `-exportPath` : 导出域名分流规则的路径

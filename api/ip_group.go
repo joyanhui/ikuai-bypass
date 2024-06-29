@@ -159,14 +159,21 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 
 }
 
-func (i *IKuai) DelIKuaiBypassIpGroup() (err error) {
+func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
+
 	for {
 		var data []IpGroupData
 		data, err = i.ShowIpGroupByComment(COMMENT_IKUAI_BYPASS)
 		var ids []string
 		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
-				ids = append(ids, strconv.Itoa(d.ID))
+			if cleanTag == "cleanAll" {
+				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
+			} else {
+				if d.Comment == COMMENT_IKUAI_BYPASS {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
 			}
 		}
 		if len(ids) <= 0 {

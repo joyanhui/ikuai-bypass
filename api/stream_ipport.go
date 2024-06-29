@@ -123,7 +123,7 @@ func (i *IKuai) DelStreamIpPort(id string) error {
 	return nil
 }
 
-func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
+func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	for {
 		var data []StreamIpPortData
 		data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
@@ -132,9 +132,17 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-			if d.Comment == COMMENT_IKUAI_BYPASS {
-				ids = append(ids, strconv.Itoa(d.ID))
+
+			if cleanTag == "cleanAll" {
+				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
+			} else {
+				if d.Comment == COMMENT_IKUAI_BYPASS {
+					ids = append(ids, strconv.Itoa(d.ID))
+				}
 			}
+
 		}
 		if len(ids) <= 0 {
 			return

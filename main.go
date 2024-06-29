@@ -11,7 +11,7 @@ import (
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
 var runMode = flag.String("r", "cron", "运行模式")
-var isAcIpgroup = flag.String("m", "0", "启用ip分组和下一条网关模式")
+var isAcIpgroup = flag.String("m", "ispdomain", "启用ip分组和下一条网关模式")
 var cleanTag = flag.String("tag", "cleanAll", "规则名称") //COMMENT_IKUAI_BYPASS
 var exportPath = flag.String("exportPath", "/tmp", "导出文件路径")
 var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码")
@@ -96,7 +96,6 @@ func update() {
 	case "ii":
 		log.Println("启动 ...  自定义isp和域名分流模式 模式")
 		log.Println("启动 ... ip分组和下一条网关模式")
-
 		updateIspRule()
 		updateIpgroup()
 	}

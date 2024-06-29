@@ -40,7 +40,7 @@ func main() {
 		exportDomainSteamToTxt()
 		return
 	case "cron":
-		log.Println("cronA 模式,执行一次，然后进入定时执行模式")
+		log.Println("cron 模式,执行一次，然后进入定时执行模式")
 		update()
 	case "cronAft":
 		log.Println("cronAft 模式稍后定时执行")

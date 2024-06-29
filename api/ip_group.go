@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -127,6 +128,35 @@ func (i *IKuai) DelIpGroup(id string) error {
 		return errors.New(resp.ErrMsg)
 	}
 	return nil
+}
+func (i *IKuai) PrepareDelIpGroup(tag string) (preIds string, err error) {
+	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
+	var tagComment = ""
+	if tag == "" {
+		tagComment = COMMENT_IKUAI_BYPASS
+	} else {
+		tagComment = COMMENT_IKUAI_BYPASS + "_" + tag
+	}
+	for {
+
+		var data []IpGroupData
+		data, err = i.ShowIpGroupByComment(tagComment)
+		var ids []string
+		for _, d := range data {
+			if d.Comment == tagComment {
+				ids = append(ids, strconv.Itoa(d.ID))
+			}
+		}
+		if len(ids) <= 0 {
+			return preIds, err
+		}
+		preIds = strings.Join(ids, ",")
+		//err = i.DelIpGroup(preIds)
+		//if err != nil {
+		//return
+		//}
+	}
+
 }
 
 func (i *IKuai) DelIKuaiBypassIpGroup() (err error) {

@@ -10,12 +10,21 @@ func updateIpgroup() {
 		log.Println("登录爱快失败：", err)
 		return
 	}
-	err = iKuai.DelIKuaiBypassIpGroup()
+	preDelIds, err := iKuai.PrepareDelIpGroup("")
 	if err != nil {
-		log.Println("ip分组== 移除旧的IP分组失败：", err)
+		log.Println("ip分组== 预删除旧的IP分组失败：", err)
 		return
 	} else {
-		log.Println("ip分组== 移除旧的IP分组成功")
+		log.Println("ip分组== 预删除旧的IP分组成功")
+	}
+	if *delOldRule == "before" {
+		err = iKuai.DelIpGroup(preDelIds)
+		if err != nil {
+			log.Println("ip分组== 删除旧的IP分组失败：", err)
+			return
+		} else {
+			log.Println("ip分组== 删除旧的IP分组成功")
+		}
 	}
 	for _, ipGroup := range conf.IpGroup {
 		err = updateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
@@ -23,6 +32,15 @@ func updateIpgroup() {
 			log.Printf("ip分组== 添加IP分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
 		} else {
 			log.Printf("ip分组== 添加IP分组'%s@%s'成功\n", ipGroup.Name, ipGroup.URL)
+			if *delOldRule == "after" {
+				err = iKuai.DelIpGroup(preDelIds)
+				if err != nil {
+					log.Println("ip分组== 移除旧的IP分组失败：", err)
+					return
+				} else {
+					log.Println("ip分组== 移除旧的IP分组成功")
+				}
+			}
 		}
 	}
 

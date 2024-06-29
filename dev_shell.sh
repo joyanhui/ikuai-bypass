@@ -23,6 +23,7 @@ go run *.go  -r 1 -m ispdomain -delOldRule before  -c  /home/yh/workspace/ikuai-
 
 git tag -d v2.0.0-beta2
 git tag -d v2.0.0-beta1
+git tag -d v2.0.1-alpha1
 
 git push origin --tags
 

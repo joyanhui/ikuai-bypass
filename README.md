@@ -1,9 +1,7 @@
 ## iKuai Bypass
 通过自定义运营商分流或者端口分流的方式实现非旁路由方式的自动分流，并定时更新规则。实现国内ip或者指定的ip或者指定的域名列表走直连或者经过openwrt等另外处理。
 
-> 如有问题或建议都可以提[issues](https://github.com/joyanhui/ikuai-bypass/issues)，我会尽快处理。给个star我会很开心。
-
-使用问题尽量不要提issues，建议恩山或聊天群交流。
+> 如有bug反馈和建议都可以提[issues](https://github.com/joyanhui/ikuai-bypass/issues)，我会尽快处理。给个star我会很开心。
 
 ### ip分组和端口分流方式 说明：
 国内ip直连，非国内ip指定下一条网关到openwrt。openwrt出口流量直连。实现方式参考[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7)  [[恩山y2kji]](https://www.right.com.cn/forum/thread-8288009-1-1.html)

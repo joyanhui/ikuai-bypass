@@ -43,7 +43,7 @@ func main() {
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
 		updateEntrance()
 	case "cronAft":
-		log.Println("cronAft 模式稍后定时执行")
+		log.Println("cronAft 模式，暂时不执行，稍后定时执行")
 	case "nocron", "once", "1":
 		updateEntrance()
 		log.Println("once 模式 执行完毕自动退出")
@@ -61,7 +61,7 @@ func main() {
 		log.Println("-r 参数错误")
 		return
 	}
-
+	// 定时任务启动和检查  ================= start
 	if conf.Cron == "" {
 		log.Println("Cron配为空 自动推出")
 		return
@@ -82,6 +82,7 @@ func main() {
 		signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM)
 		<-osSignals
 	}
+	// 定时任务启动和检查  ================= end
 
 }
 

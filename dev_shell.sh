@@ -12,7 +12,11 @@ go run *.go  -r clean -c  /home/yh/workspace/ikuai-bypass/config_example.yml  -l
 
 git tag -d v2.0.0-beta1
 
+git tag -a v2.0.0-beta2 -m "修复不添加-m参数无法执行的bug"
 
 git tag -a v2.0.0-beta1 -m "增加ip分组和端口分流模式，增加命令行覆盖ikuai登陆参数模式。其他更新请参考readme或commit"
+
+
+
 
 git push origin --tags

@@ -43,6 +43,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 - `-login` : ikuai登陆地址和账户密码，优先级比配置文件的优先级更高。格式: `http://10.1.1.1,admin,password` 为空则使用配置文件内地址
 
 ## 更新日志
+- 2024-06-29 修改-m参数默认值错误导致的不配置-m参数无法执行的问题
 - 2024-05-26 修复OLOrz996分支里端口分流规则模式无法删除的bug   
 - 2024-05-26 合并ztc1997的ip分组和下一跳网关功能[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7) 增加了 `-m`参数  
 - 2024-05-26 命令行参数增加-login参数，可以覆盖配置文件内的爱快地址和用户名密码  
@@ -57,6 +58,8 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 - 旧的更新记录没啥价值也未单独记，小工具代码简单，请参考commit记录
 ## todo list
 - 在性能受限制的爱快上域名分流过多导致爱快接口超时，进一步导致ikuai-bypass出错的bug [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
+- 优化ip分组和下一跳网关功能 可能存在的bug问题
+- 时区问题需要检查
 ## 简要使用说明
 从 Releases [[下载]](https://github.com/joyanhui/ikuai-bypass/releases)  解压后得到一个可执行文件`ikuai-bypass`和一个通用配置文件 `config.yml` [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)      
 编辑一下`config.yml`里面ikuai的地址用户名和密码，然后在可以访问到ikuai的设备上执行命令格式如下: ` ./ikuai-bypass -c /配置文件路径/config.yml -r 运行模式`即可。      

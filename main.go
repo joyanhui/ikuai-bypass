@@ -41,11 +41,11 @@ func main() {
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
-		update()
+		updateEntrance()
 	case "cronAft":
 		log.Println("cronAft 模式稍后定时执行")
 	case "nocron", "once", "1":
-		update()
+		updateEntrance()
 		log.Println("once 模式 执行完毕自动退出")
 		return
 	case "clean":
@@ -68,7 +68,7 @@ func main() {
 	}
 
 	c := cron.New()
-	_, err = c.AddFunc(conf.Cron, update)
+	_, err = c.AddFunc(conf.Cron, updateEntrance)
 	if err != nil {
 		log.Println("启动计划任务失败：", err)
 		return
@@ -85,7 +85,7 @@ func main() {
 
 }
 
-func update() {
+func updateEntrance() {
 	switch *isAcIpgroup {
 	case "ispdomain":
 		log.Println("启动 ... 自定义isp和域名分流模式 模式")

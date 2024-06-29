@@ -1,4 +1,4 @@
-name: Release mosdns
+name: Release ikuai-bypass
 
 on:
   push:

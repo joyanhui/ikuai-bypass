@@ -129,7 +129,7 @@ func (i *IKuai) DelIpGroup(id string) error {
 	}
 	return nil
 }
-func (i *IKuai) PrepareDelIpGroup(tag string) (preIds string, err error) {
+func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
 	var tagComment = ""
 	if tag == "" {

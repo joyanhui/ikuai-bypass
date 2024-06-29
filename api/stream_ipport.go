@@ -146,3 +146,24 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort() (err error) {
 		}
 	}
 }
+
+func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
+	for {
+		var data []StreamIpPortData
+		data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
+		if err != nil {
+			return
+		}
+		var ids []string
+		for _, d := range data {
+			if d.Comment == COMMENT_IKUAI_BYPASS {
+				ids = append(ids, strconv.Itoa(d.ID))
+			}
+		}
+		if len(ids) <= 0 {
+			return preDelIds, err
+		}
+		preDelIds = strings.Join(ids, ",")
+
+	}
+}

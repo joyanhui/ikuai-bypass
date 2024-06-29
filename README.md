@@ -46,7 +46,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
   - `before` : 先删除旧规则再更新新规则，如果更新失败会丢失规则
 
 ## 更新日志
-- 2024-06-29 增加运营商和域名分流规则旧规则删除模式参数 `-delOldRule`  ，端口分流模式的旧规则删除模式暂时不支持
+- 2024-06-29 增加运营商和域名分流规则旧规则删除模式参数 `-delOldRule` [[#15]](https://github.com/joyanhui/ikuai-bypass/issues/15)
 - 2024-06-29 修改-m参数默认值错误导致的不配置-m参数无法执行的问题 构建 v2.0.0-beta2 版本 这是一个未经过详细测试的版本，请谨慎使用。 
 - 2024-05-26 修复OLOrz996分支里端口分流规则模式无法删除的bug   
 - 2024-05-26 合并ztc1997的ip分组和下一跳网关功能[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7) 增加了 `-m`参数  

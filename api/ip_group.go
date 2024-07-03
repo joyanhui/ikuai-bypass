@@ -171,7 +171,13 @@ func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			} else {
-				if d.Comment == COMMENT_IKUAI_BYPASS {
+				if cleanTag == "" {
+					cleanTag = COMMENT_IKUAI_BYPASS
+				} else {
+					cleanTag = COMMENT_IKUAI_BYPASS + "_" + cleanTag
+				}
+
+				if d.Comment == cleanTag {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}

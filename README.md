@@ -41,7 +41,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
     - 默认为cleanAll(即清理所有备注中包含`IKUAI_BYPASS`字符的规则) 
     - 单独指定备注的关键词 可以不添写`IKUAI_BYPASS_`前缀 例如`-r clean -tag ipcn` 或 `-r clean -tag IKUAI_BYPASS_ipcn`
 - `-exportPath` : 导出域名分流规则的路径
-- `-login` : ikuai登陆地址和账户密码，优先级比配置文件的优先级更高。格式: `http://10.1.1.1,admin,password` 为空则使用配置文件内地址
+- `-login` : ikuai登陆地址和账户密码，优先级比配置文件的优先级更高。格式: `http://10.1.1.1,admin,password` 为空则使用配置文件内登陆信息
 - `-delOldRule` : 删除旧规则顺序，默认为  `after` 
   - `after` : 先更新规则成功后再删除旧规则
   - `before` : 先删除旧规则再更新新规则，如果更新失败会丢失规则 

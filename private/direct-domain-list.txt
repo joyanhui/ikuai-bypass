@@ -20,6 +20,9 @@ listen.729ly.net
 plugins.jetbrains.com
 downloads.marketplace.jetbrains.com
 download.fedoraproject.org
+vmware.com
+mozilla.org
+by.Missing_Love.start.ooooooooooooooooooooooooooooooo
 kp.m-team.cc
 kp.m-team.io
 tracker.m-team.io
@@ -37,5 +40,4 @@ tracker.hdsky.me
 tracker.pterclub.com
 tracker.wintersakura.net
 www.pttime.org
-vmware.com
-mozilla.org
+by.Missing_Love.end.ooooooooooooooooooooooooooooooo

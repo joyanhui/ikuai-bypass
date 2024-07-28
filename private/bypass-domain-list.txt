@@ -1,3 +1,5 @@
 dl.google.com-del
 cache.nixos.org
 copilot.microsoft.com
+vmware.com
+mozilla.org

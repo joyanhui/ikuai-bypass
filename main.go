@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"os/signal"
@@ -10,12 +9,12 @@ import (
 )
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
-var runMode = flag.String("r", "cron", "运行模式")
-var isAcIpgroup = flag.String("m", "ispdomain", "启用ip分组和下一条网关模式")
-var cleanTag = flag.String("tag", "cleanAll", "规则备注") //COMMENT_IKUAI_BYPASS
-var exportPath = flag.String("exportPath", "/tmp", "导出文件路径")
-var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码")
-var delOldRule = flag.String("delOldRule", "after", "删除旧规则顺序")
+var runMode = flag.String("r", "cron", "运行模式，马上执行 或者定时执行 或者执行一次")
+var isAcIpgroup = flag.String("m", "ispdomain", "ipgroup(启用ip分组和下一条网关模式) 或者 ispdomain(isp和域名分流模式)")
+var cleanTag = flag.String("tag", "cleanAll", "要清理的分流规则备注名或关键词") //COMMENT_IKUAI_BYPASS
+var exportPath = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
+var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
+var delOldRule = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
 
 func main() {
 	flag.Parse()

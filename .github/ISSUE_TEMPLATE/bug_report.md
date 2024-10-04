@@ -21,6 +21,6 @@ ikuai-bypass运行环境：amd64/386/arm7/mips-softfloat/ppc64le
 
 务必提供 完整命令 配置文件 以及运行日志，否则很有可能无法判断问题
 
-
+爱快本身的使用问题，还有网络top结构问题，在移步 爱快官方论坛或恩山或者discussions  https://github.com/joyanhui/ikuai-bypass/discussions  
 
 > 

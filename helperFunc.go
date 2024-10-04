@@ -34,7 +34,7 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = removeIpv6(ips)
+	ips = removeIpv6AndRemoveEmptyLine(ips)
 	log.Println("运营商/IP分流== ", name, tag, " 获取到", len(ips), "个ip")
 	ipGroups := group(ips, 5000) //5000条
 
@@ -99,12 +99,18 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 	return
 }
 
-func removeIpv6(ips []string) []string {
+func removeIpv6AndRemoveEmptyLine(ips []string) []string {
+	log.Println("移除ipv6地址 和删除空行....")
 	i := 0
 	for _, ip := range ips {
 		if !strings.Contains(ip, ":") {
-			ips[i] = ip
-			i++
+			//删除空行
+			ip = strings.Trim(strings.Trim(ip, "\n"), "\r")
+			if ip != "" {
+				ips[i] = ip
+				i++
+			}
+
 		}
 	}
 	return ips[:i]
@@ -127,6 +133,7 @@ func group(arr []string, subGroupLength int64) [][]string {
 
 // 更新ip分组
 func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
+	log.Println("ip分组==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return
@@ -140,11 +147,17 @@ func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = removeIpv6(ips)
+	ips = removeIpv6AndRemoveEmptyLine(ips)
 	ipGroups := group(ips, 1000)
 	for index, ig := range ipGroups {
+		log.Println("ip分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
-		iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
+		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
+		if err != nil {
+			log.Println("ip分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
+			time.Sleep(conf.AddWait)
+		}
+
 	}
 	return
 }
@@ -162,7 +175,11 @@ func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, next
 		ipGroupList = append(ipGroupList, data...)
 	}
 
-	iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop)
+	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop)
+	if err != nil {
+		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
+		time.Sleep(conf.AddErrRetryWait)
+	}
 	return
 }
 

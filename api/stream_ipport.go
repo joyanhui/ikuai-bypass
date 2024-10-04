@@ -140,11 +140,9 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 			} else {
 				if cleanTag == "" {
 					cleanTag = COMMENT_IKUAI_BYPASS
-				} else {
-					cleanTag = COMMENT_IKUAI_BYPASS + "_" + cleanTag
 				}
 
-				if d.Comment == cleanTag {
+				if d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}

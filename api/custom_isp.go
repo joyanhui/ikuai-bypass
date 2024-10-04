@@ -44,6 +44,9 @@ func (i *IKuai) ShowCustomIspByComment() (result []CustomIspData, err error) {
 }
 
 func (i *IKuai) AddCustomIsp(name, tag, ipgroup string) error {
+	// https://github.com/joyanhui/ikuai-bypass/issues/24
+	// 去掉末尾空行
+	ipgroup = strings.Trim(strings.Trim(ipgroup, "\n"), "\r")
 	param := struct {
 		Name    string `json:"name"`
 		Ipgroup string `json:"ipgroup"`

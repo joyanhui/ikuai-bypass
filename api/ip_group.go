@@ -88,7 +88,7 @@ func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
 	}{
 		GroupName: groupName,
 		AddrPool:  addrPool,
-		Comment:   COMMENT_IKUAI_BYPASS,
+		Comment:   COMMENT_IKUAI_BYPASS + "_" + groupName, //自定义的备注无效的问题
 		NewRow:    true,
 		Type:      0,
 	}
@@ -129,7 +129,10 @@ func (i *IKuai) DelIpGroup(id string) error {
 	}
 	return nil
 }
+
+// GetIpGroup 此函数弃用
 func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
+	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
 	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
 	var tagComment = ""
 	if tag == "" {
@@ -166,6 +169,7 @@ func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 		data, err = i.ShowIpGroupByComment(COMMENT_IKUAI_BYPASS)
 		var ids []string
 		for _, d := range data {
+			//log.Println("在判断:", d.GroupName, d.Comment)
 			if cleanTag == "cleanAll" {
 				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
 					ids = append(ids, strconv.Itoa(d.ID))
@@ -173,11 +177,8 @@ func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 			} else {
 				if cleanTag == "" {
 					cleanTag = COMMENT_IKUAI_BYPASS
-				} else {
-					cleanTag = COMMENT_IKUAI_BYPASS + "_" + cleanTag
 				}
-
-				if d.Comment == cleanTag {
+				if d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}

@@ -29,15 +29,15 @@ func clean() {
 	//删除旧的ip组
 	err = iKuai.DelIKuaiBypassIpGroup(*cleanTag)
 	if err != nil {
-		log.Println("移除旧的IP分组失败：", err)
+		log.Println("移除旧的IP分组失败 tag:"+*cleanTag+"：", err)
 	} else {
-		log.Println("移除旧的IP分组成功")
+		log.Println("移除旧的IP分组成功 tag:" + *cleanTag)
 	}
 	//删除端口分流规则
 	err = iKuai.DelIKuaiBypassStreamIpPort(*cleanTag)
 	if err != nil {
-		log.Println("移除旧的端口分流失败：", err)
+		log.Println("移除旧的端口分流失败 tag:"+*cleanTag+"：", err)
 	} else {
-		log.Println("移除旧的端口分流成功")
+		log.Println("移除旧的端口分流成功 tag:" + *cleanTag)
 	}
 }

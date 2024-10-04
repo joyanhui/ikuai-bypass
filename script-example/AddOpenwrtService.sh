@@ -13,7 +13,7 @@ unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm 
 mv config.yml  ikuai-bypass.yml 
 # 或者用最新的演示配置
 rm -rf ikuai-bypass.yml && rm -rf config.yml
-wget ${GhProxy}https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/config_example.yml -O ikuai-bypass.yml
+wget ${GhProxy}https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/config.yml -O ikuai-bypass.yml
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== end
 # 手动执行一次 检查执行结果
 #   /opt/ikuai-bypass -r 1 -c /opt/ikuai-bypass.yml

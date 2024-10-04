@@ -1,3 +1,25 @@
+go run *.go  -r clean -c  config.yml
+
+go run *.go  -r 1 -c config.yml -m ii
+
+
+ go run *.go  -r 1 -c config.yml -m ipgroup -delOldRule before
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 go run *.go  -r 1 -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login http://10.1.1.1,admin,123
 
 

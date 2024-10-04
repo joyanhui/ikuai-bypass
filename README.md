@@ -47,9 +47,9 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
   - `before` : 先删除旧规则再更新新规则，如果更新失败会丢失规则 
 
 ## 更新日志
-- 2024-10-04 修复清理模式的删除规则问题 
+- 2024-10-04 修复清理模式的删除规则问题 [[#27#issuecomment-2388114699]](https://kkgithub.com/joyanhui/ikuai-bypass/issues/27#issuecomment-2388114699)
 - 2024-10-04 ip分组第一行的备注问题 [[#22]](https://github.com/joyanhui/ikuai-bypass/issues/22)
-- 2024-10-04 修复 卡`ip分组== 正在查询  备注为: IKUAI_BYPASS_ 的ip分组规则` 的bug  [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+- 2024-10-04 修复 卡`ip分组== 正在查询  备注为: IKUAI_BYPASS_ 的ip分组规则` 的bug  [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24) [[#27]](https://github.com/joyanhui/ikuai-bypass/issues/27)
 - 2024-10-04 修复运营商分流的ip列表会添加一个空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
 - 2024-06-29 修复清理模式无法清理ip分组和端口分流规则的问题 v2.0.1以后版本有效
 - 2024-06-29 增加运营商和域名分流规则旧规则删除模式参数 `-delOldRule` [[#15]](https://github.com/joyanhui/ikuai-bypass/issues/15)  v2.0.1以后版本有效
@@ -70,6 +70,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 - 在性能受限制的爱快上域名分流过多导致爱快接口超时，进一步导致ikuai-bypass出错的bug [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
 - 优化ip分组和下一跳网关功能 可能存在的bug问题
 - 时区问题需要检查
+- ip分组和端口分流规则 修改为成功后再删除旧规则
 ## 简要使用说明
 从 Releases [[下载]](https://github.com/joyanhui/ikuai-bypass/releases)  解压后得到一个可执行文件`ikuai-bypass`和一个通用配置文件 `config.yml` [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)      
 编辑一下`config.yml`里面ikuai的地址用户名和密码，然后在可以访问到ikuai的设备上执行命令格式如下: ` ./ikuai-bypass -c /配置文件路径/config.yml -r 运行模式`即可。      

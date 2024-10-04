@@ -32,17 +32,20 @@ go run *.go  -r 1 -m ispdomain -c  /home/yh/workspace/ikuai-bypass/config_exampl
 
 go run *.go  -r clean -c  /home/yh/workspace/ikuai-bypass/config_example.yml  -login http://10.1.1.1,admin,123
 
-git tag -a v2.0.1-alpha3 -m "- 修复不添加-m参数无法执行的bug
-- 增加删除旧规则的顺序的开关控制参数
-- 修复清理模式无法清理端口分流和ip分组的bug
-- 修复修ip分组和端口分流按照指定标签清理规则无法清理的bug
-
-此版本未经过测试，请谨慎使用"
+git tag -a v2.0.3-alpha1 -m "- 2024-10-04 修复清理模式的删除规则问题
+                             - 2024-10-04 ip分组第一行的备注问题 [[#22]](https://github.com/joyanhui/ikuai-bypass/issues/22)
+                             - 2024-10-04 修复 卡`ip分组== 正在查询  备注为: IKUAI_BYPASS_ 的ip分组规则` 的bug  [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+                             - 2024-10-04 修复运营商分流的ip列表会添加一个空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+                             此版本未经过测试，请谨慎使用"
 
 
 git tag -a v2.0.1-alpha1 -m "增加删除旧规则的顺序的开关控制参数，此版本未经过测试，请谨慎使用"
 git tag -a v2.0.0-beta2 -m "修复不添加-m参数无法执行的bug"
 git tag -a v2.0.0-beta1 -m "增加ip分组和端口分流模式，增加命令行覆盖ikuai登陆参数模式。其他更新请参考readme或commit"
+
+
+
+
 
 go run *.go  -r 1 -m ispdomain -delOldRule before  -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login http://10.1.1.1,admin,123
 

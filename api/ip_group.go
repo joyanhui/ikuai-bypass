@@ -198,6 +198,8 @@ func (i *IKuai) GetAllIKuaiBypassIpGroupNamesByName(name string) (names []string
 	data, err = i.ShowIpGroupByName(name)
 
 	for _, d := range data {
+		// for https://github.com/joyanhui/ikuai-bypass/issues/30
+		// fix 前面修改ip分组的备注导致的 无法甄别ip分组的问题
 		//match, _ := regexp.MatchString(name+`_\d+`, d.GroupName)
 		//log.Println(d.GroupName)
 		match := strings.Contains(d.GroupName, name)

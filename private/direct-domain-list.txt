@@ -40,4 +40,11 @@ tracker.hdsky.me
 tracker.pterclub.com
 tracker.wintersakura.net
 www.pttime.org
+kamept.com
+kame.gay
+test-ipv6.com
+stun.syncthing.net
+stun.hot-chilli.net
+stun.fitauto.ru
+stun.miwifi.com
 by.Missing_Love.end.ooooooooooooooooooooooooooooooo

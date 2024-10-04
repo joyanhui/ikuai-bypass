@@ -174,8 +174,7 @@ func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, next
 		}
 		ipGroupList = append(ipGroupList, data...)
 	}
-
-	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop)
+	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop, ipGroup)
 	if err != nil {
 		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 		time.Sleep(conf.AddErrRetryWait)

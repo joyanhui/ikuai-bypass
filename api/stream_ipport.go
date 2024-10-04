@@ -26,7 +26,7 @@ type StreamIpPortData struct {
 	Type      int    `json:"type"`
 }
 
-func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string) error {
+func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string) error {
 
 	param := struct {
 		Interface string `json:"interface"`
@@ -53,7 +53,7 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		Type:      forwardType,
 		Nexthop:   nexthop,
 		IfaceBand: 0,
-		Comment:   COMMENT_IKUAI_BYPASS,
+		Comment:   COMMENT_IKUAI_BYPASS + "_" + tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,

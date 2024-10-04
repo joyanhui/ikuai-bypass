@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"log"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -199,8 +198,10 @@ func (i *IKuai) GetAllIKuaiBypassIpGroupNamesByName(name string) (names []string
 	data, err = i.ShowIpGroupByName(name)
 
 	for _, d := range data {
-		match, _ := regexp.MatchString(name+`_\d+`, d.GroupName)
-		if d.Comment == COMMENT_IKUAI_BYPASS && match {
+		//match, _ := regexp.MatchString(name+`_\d+`, d.GroupName)
+		//log.Println(d.GroupName)
+		match := strings.Contains(d.GroupName, name)
+		if (d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS)) && match {
 			names = append(names, d.GroupName)
 		}
 	}

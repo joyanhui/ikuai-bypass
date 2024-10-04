@@ -10,7 +10,7 @@ func updateIpgroup() {
 		log.Println("登录爱快失败：", err)
 		return
 	}
-	log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ip分组和端口分流，不受delOldRule参数影响 2024-10-04 by joyanhui")
+	log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ip分组和端口分流，不受delOldRule参数影响,后续版本会尝试完善 2024-10-04 by joyanhui")
 
 	err = iKuai.DelIKuaiBypassIpGroup("cleanAll")
 	if err != nil {

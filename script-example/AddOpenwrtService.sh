@@ -5,7 +5,7 @@
 # 最好逐行运行
 # opkg update
 # opkg install wget unzip 
-export GhProxy=https://mirror.ghproxy.com/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
+export GhProxy=https://ghp.ci/  # 配置github代理 如果不可用请自行更换如果已经有直连github环境也可以去掉这行
 mkdir -p /opt/ && cd  /opt/
 wget ${GhProxy}https://github.com/joyanhui/ikuai-bypass/releases/download/v1.0.0-beta2/ikuai-bypass-linux-amd64.zip
 unzip ikuai-bypass-linux-amd64.zip && rm -rf ikuai-bypass-linux-amd64.zip && rm -rf README.md

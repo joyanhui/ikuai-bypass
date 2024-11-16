@@ -1,5 +1,7 @@
+# start : bash   : nix run .#dev
+# 或者 nix shell .#dev --command 'dev-shell'
 {
-  description = "A Nix-flake-based golang development environment . pls run nix run .#dev 或者 nix shell .#dev --command 'dev-shell'";
+  description = "A Nix-flake-based golang development environment .";
 
   inputs = {
     #nixpkgs.url = "github:NixOS/nixpkgs/23.11";
@@ -38,4 +40,3 @@
     '';
   };
 }
-

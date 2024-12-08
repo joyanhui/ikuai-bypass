@@ -1,7 +1,5 @@
 cn.bing.com
-www.bing.com
 s.cn.bing.net
-www2.bing.com
 dl.google.com
 pub.dev
 leiyanhui.com

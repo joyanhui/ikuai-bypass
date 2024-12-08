@@ -100,17 +100,26 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
     alpine:3.18.4  /opt/ikuai-bypass/ikuai-bypass -c  /opt/ikuai-bypass/config.yml -r cron
 ```
 ### ikuai docker下
-因为ikuai 无法直接执行shell命令,实在懒得给这种小工具打包镜像，尤其是基于的golang根本没有外部依赖只是一个可执行文件。
-如果您要在ikuai的docker内运行。请自行下载 linux版本。解压后 上传可执行文件和配置文件 到ikuai数据盘。例如/data0/ikuai-bypass/ikuai-bypass  /data0/ikuai-bypass/config.yml
-而后在ikuai的docker中随便下载一个通用的linux镜像,例如 alpine:3.18.4 。创建docker 目录挂载 `/data0/ikuai-bypass/` 到容器内 `/opt/ikuai-bypass/`
-启动命令修改为:
-```sh
-chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml
+`ikuai`无法直接执行`shell`命令，基于`golang`的`ikuai-bypass`没有外部依赖只是一个可执行文件。
+
+如果您要在`ikuai`的`docker`内运行，请自行下载`linux`版本的Release，解压后，上传可执行文件和修改后的配置文件到`ikuai`。
+
+例如创建对应的docker目录并上传：
 ```
-如启动失败可尝试以下命令
-```sh
-/opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron
+/data0/Docker/ikuai-bypass/ikuai-bypass
+/data0/Docker/ikuai-bypass/config.yml
 ```
+
+而后在`ikuai`的`docker`中下载通用`linux`镜像，推荐`alpine:lastest`（实测Ubuntu，busybox等镜像不安装证书扩展会报github加速代理的证书问题）。
+
+创建`docker`目录挂载`/data0/Docker/ikuai-bypass/`到容器内`/opt/ikuai-bypass/`
+
+启动命令设置为:
+```sh
+/bin/sh -c "chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml"
+```
+再启动即可。
+
 ###  windows
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    
 或许因ikuai-bypass需要获取在线数据,并使用了upx压缩,也没有另外加壳,部分杀软可能会报毒或者安全风险，[[#6]](https://github.com/joyanhui/ikuai-bypass/issues/6) 请自行决定是否信任,或者安装go环境后git clone后自行编译。我没有WIN环境,也不打算解决此类问题。

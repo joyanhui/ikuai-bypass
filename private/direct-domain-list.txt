@@ -20,6 +20,9 @@ downloads.marketplace.jetbrains.com
 download.fedoraproject.org
 vmware.com
 mozilla.org
+#允许cursor.com直连
+cursor.com
+cursor.sh
 by.Missing_Love.start.ooooooooooooooooooooooooooooooo
 kp.m-team.cc
 kp.m-team.io

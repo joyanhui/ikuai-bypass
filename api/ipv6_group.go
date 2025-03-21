@@ -17,7 +17,7 @@ type Ipv6GroupData struct {
 	Type      int    `json:"type"`
 }
 
-func (i *IKuai) ShowIpV6GroupByComment(comment string) (result []Ipv6GroupData, err error) {
+func (i *IKuai) ShowIpv6GroupByComment(comment string) (result []Ipv6GroupData, err error) {
 	param := struct {
 		Finds    string `json:"FINDS"`
 		Keywords string `json:"KEYWORDS"`
@@ -47,7 +47,7 @@ func (i *IKuai) ShowIpV6GroupByComment(comment string) (result []Ipv6GroupData, 
 	return
 }
 
-func (i *IKuai) ShowIpV6GroupByName(name string) (result []Ipv6GroupData, err error) {
+func (i *IKuai) ShowIpv6GroupByName(name string) (result []Ipv6GroupData, err error) {
 	param := struct {
 		Finds    string `json:"FINDS"`
 		Keywords string `json:"KEYWORDS"`
@@ -77,7 +77,7 @@ func (i *IKuai) ShowIpV6GroupByName(name string) (result []Ipv6GroupData, err er
 	return
 }
 
-func (i *IKuai) AddIpV6Group(groupName, addrPool string) error {
+func (i *IKuai) AddIpv6Group(groupName, addrPool string) error {
 	param := struct {
 		AddrPool  string `json:"addr_pool"`
 		Comment   string `json:"comment"`
@@ -107,7 +107,7 @@ func (i *IKuai) AddIpV6Group(groupName, addrPool string) error {
 	return nil
 }
 
-func (i *IKuai) DelIpV6Group(id string) error {
+func (i *IKuai) DelIpv6Group(id string) error {
 	param := struct {
 		Id string `json:"id"`
 	}{
@@ -130,7 +130,7 @@ func (i *IKuai) DelIpV6Group(id string) error {
 }
 
 // GetIpv6Group 此函数弃用
-func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
+func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
 	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
 	log.Println("ipv6分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ipv6分组规则")
 	var tagComment = ""
@@ -161,7 +161,7 @@ func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
 
 }
 
-func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
+func (i *IKuai) DelIKuaiBypassIpv6Group(cleanTag string) (err error) {
 
 	for {
 		var data []Ipv6GroupData
@@ -193,7 +193,7 @@ func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
 	}
 }
 
-func (i *IKuai) GetAllIKuaiBypassIpV6GroupNamesByName(name string) (names []string, err error) {
+func (i *IKuai) GetAllIKuaiBypassIpv6GroupNamesByName(name string) (names []string, err error) {
 	var data []Ipv6GroupData
 	data, err = i.ShowIpv6GroupByName(name)
 

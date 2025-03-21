@@ -9,7 +9,7 @@ import (
 
 const FUNC_NAME_IPV6_GROUP = "ipv6group"
 
-type IpGroupData struct {
+type Ipv6GroupData struct {
 	AddrPool  string `json:"addr_pool"`
 	Comment   string `json:"comment"`
 	GroupName string `json:"group_name"`
@@ -17,7 +17,7 @@ type IpGroupData struct {
 	Type      int    `json:"type"`
 }
 
-func (i *IKuai) ShowIpV6GroupByComment(comment string) (result []IpGroupData, err error) {
+func (i *IKuai) ShowIpV6GroupByComment(comment string) (result []Ipv6GroupData, err error) {
 	param := struct {
 		Finds    string `json:"FINDS"`
 		Keywords string `json:"KEYWORDS"`
@@ -47,7 +47,7 @@ func (i *IKuai) ShowIpV6GroupByComment(comment string) (result []IpGroupData, er
 	return
 }
 
-func (i *IKuai) ShowIpV6GroupByName(name string) (result []IpGroupData, err error) {
+func (i *IKuai) ShowIpV6GroupByName(name string) (result []Ipv6GroupData, err error) {
 	param := struct {
 		Finds    string `json:"FINDS"`
 		Keywords string `json:"KEYWORDS"`
@@ -141,7 +141,7 @@ func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
 	}
 	for {
 
-		var data []IpGroupData
+		var data []Ipv6GroupData
 		data, err = i.ShowIpGroupByComment(tagComment)
 		var ids []string
 		for _, d := range data {
@@ -164,7 +164,7 @@ func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
 func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
 
 	for {
-		var data []IpGroupData
+		var data []Ipv6GroupData
 		data, err = i.ShowIpGroupByComment(COMMENT_IKUAI_BYPASS)
 		var ids []string
 		for _, d := range data {
@@ -194,7 +194,7 @@ func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
 }
 
 func (i *IKuai) GetAllIKuaiBypassIpV6GroupNamesByName(name string) (names []string, err error) {
-	var data []IpGroupData
+	var data []Ipv6GroupData
 	data, err = i.ShowIpGroupByName(name)
 
 	for _, d := range data {

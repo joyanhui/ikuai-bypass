@@ -129,10 +129,10 @@ func (i *IKuai) DelIpV6Group(id string) error {
 	return nil
 }
 
-// GetIpGroup 此函数弃用
+// GetIpv6Group 此函数弃用
 func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
 	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
-	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
+	log.Println("ipv6分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ipv6分组规则")
 	var tagComment = ""
 	if tag == "" {
 		tagComment = COMMENT_IKUAI_BYPASS
@@ -142,7 +142,7 @@ func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
 	for {
 
 		var data []Ipv6GroupData
-		data, err = i.ShowIpGroupByComment(tagComment)
+		data, err = i.ShowIpv6GroupByComment(tagComment)
 		var ids []string
 		for _, d := range data {
 			if d.Comment == tagComment {
@@ -153,7 +153,7 @@ func (i *IKuai) GetIpV6Group(tag string) (preIds string, err error) {
 			return preIds, err
 		}
 		preIds = strings.Join(ids, ",")
-		//err = i.DelIpGroup(preIds)
+		//err = i.DelIpv6Group(preIds)
 		//if err != nil {
 		//return
 		//}
@@ -165,7 +165,7 @@ func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
 
 	for {
 		var data []Ipv6GroupData
-		data, err = i.ShowIpGroupByComment(COMMENT_IKUAI_BYPASS)
+		data, err = i.ShowIpv6GroupByComment(COMMENT_IKUAI_BYPASS)
 		var ids []string
 		for _, d := range data {
 			//log.Println("在判断:", d.GroupName, d.Comment)
@@ -186,7 +186,7 @@ func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
 			return
 		}
 		id := strings.Join(ids, ",")
-		err = i.DelIpGroup(id)
+		err = i.DelIpv6Group(id)
 		if err != nil {
 			return
 		}
@@ -195,7 +195,7 @@ func (i *IKuai) DelIKuaiBypassIpV6Group(cleanTag string) (err error) {
 
 func (i *IKuai) GetAllIKuaiBypassIpV6GroupNamesByName(name string) (names []string, err error) {
 	var data []Ipv6GroupData
-	data, err = i.ShowIpGroupByName(name)
+	data, err = i.ShowIpv6GroupByName(name)
 
 	for _, d := range data {
 		// for https://github.com/joyanhui/ikuai-bypass/issues/30

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const FUNC_NAME_IP_GROUP = "ipv6group"
+const FUNC_NAME_IPV6_GROUP = "ipv6group"
 
 type IpGroupData struct {
 	AddrPool  string `json:"addr_pool"`
@@ -31,7 +31,7 @@ func (i *IKuai) ShowIpV6GroupByComment(comment string) (result []IpGroupData, er
 		Type:     "data",
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "show",
 		Param:    &param,
 	}
@@ -61,7 +61,7 @@ func (i *IKuai) ShowIpV6GroupByName(name string) (result []IpGroupData, err erro
 		Type:     "data",
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "show",
 		Param:    &param,
 	}
@@ -92,7 +92,7 @@ func (i *IKuai) AddIpV6Group(groupName, addrPool string) error {
 		Type:      0,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "add",
 		Param:    &param,
 	}
@@ -114,7 +114,7 @@ func (i *IKuai) DelIpV6Group(id string) error {
 		Id: id,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IP_GROUP,
+		FuncName: FUNC_NAME_IPV6_GROUP,
 		Action:   "del",
 		Param:    &param,
 	}

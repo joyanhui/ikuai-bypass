@@ -29,6 +29,24 @@ func updateIpgroup() {
 		}
 	}
 
+	err = iKuai.DelIKuaiBypassIpv6Group("cleanAll")
+	if err != nil {
+		log.Println("ipv6分组== 删除旧的IPV6分组失败,退出：", err)
+		return
+	} else {
+		log.Println("ipv6分组== 删除旧的IPV6分组成功")
+	}
+	for _, ipGroup := range conf.IpGroup {
+		err = updateIpv6Group(iKuai, ipGroup.Name, ipGroup.URL)
+		if err != nil {
+			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
+		} else {
+			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'成功\n", ipGroup.Name, ipGroup.URL)
+
+		}
+	}
+	
+
 	err = iKuai.DelIKuaiBypassStreamIpPort("cleanAll")
 	if err != nil {
 		log.Println("端口分流== 删除旧的端口分流失败,退出：", err)
@@ -45,4 +63,30 @@ func updateIpgroup() {
 		}
 	}
 
+}
+
+func updateIpvygroup() {
+	iKuai, err := loginToIkuai()
+	if err != nil {
+		log.Println("登录爱快失败：", err)
+		return
+	}
+	log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ipv6分组")
+
+	err = iKuai.DelIKuaiBypassIpv6Group("cleanAll")
+	if err != nil {
+		log.Println("ipv6分组== 删除旧的IPV6分组失败,退出：", err)
+		return
+	} else {
+		log.Println("ipv6分组== 删除旧的IPV6分组成功")
+	}
+	for _, ipv6Group := range conf.Ipv6Group {
+		err = updateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
+		if err != nil {
+			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
+		} else {
+			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'成功\n", ipGroup.Name, ipGroup.URL)
+
+		}
+	}
 }

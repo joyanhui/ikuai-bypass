@@ -179,7 +179,7 @@ func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 }
 
 // 更新ipv6分组
-func updateIpV6Group(iKuai *api.IKuai, name, url string) (err error) {
+func updateIpv6Group(iKuai *api.IKuai, name, url string) (err error) {
 	log.Println("ipv6分组==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -199,7 +199,7 @@ func updateIpV6Group(iKuai *api.IKuai, name, url string) (err error) {
 	for index, ig := range ipGroups {
 		log.Println("ipv6分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpV6Group(name+"_"+strconv.Itoa(index), ipGroup)
+		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
 			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(conf.AddWait)

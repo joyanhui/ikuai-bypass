@@ -65,7 +65,7 @@ func updateIpv6group() {
 	for _, ipv6Group := range conf.Ipv6Group {
 		err = updateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
 		if err != nil {
-			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipGroup.Name, ipv6Group.URL, err)
+			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipv6Group.Name, ipv6Group.URL, err)
 		} else {
 			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'成功\n", ipv6Group.Name, ipv6Group.URL)
 

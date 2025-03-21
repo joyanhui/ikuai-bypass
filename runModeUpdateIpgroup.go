@@ -65,7 +65,7 @@ func updateIpgroup() {
 
 }
 
-func updateIpvygroup() {
+func updateIpv6group() {
 	iKuai, err := loginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)

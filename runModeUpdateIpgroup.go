@@ -29,24 +29,6 @@ func updateIpgroup() {
 		}
 	}
 
-	err = iKuai.DelIKuaiBypassIpv6Group("cleanAll")
-	if err != nil {
-		log.Println("ipv6分组== 删除旧的IPV6分组失败,退出：", err)
-		return
-	} else {
-		log.Println("ipv6分组== 删除旧的IPV6分组成功")
-	}
-	for _, ipGroup := range conf.IpGroup {
-		err = updateIpv6Group(iKuai, ipGroup.Name, ipGroup.URL)
-		if err != nil {
-			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
-		} else {
-			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'成功\n", ipGroup.Name, ipGroup.URL)
-
-		}
-	}
-	
-
 	err = iKuai.DelIKuaiBypassStreamIpPort("cleanAll")
 	if err != nil {
 		log.Println("端口分流== 删除旧的端口分流失败,退出：", err)

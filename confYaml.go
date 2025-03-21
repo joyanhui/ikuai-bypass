@@ -30,6 +30,10 @@ var conf struct {
 		Name string `yaml:"name"`
 		URL  string `yaml:"url"`
 	} `yaml:"ip-group"`
+	Ipv6Group []struct {
+		Name string `yaml:"name"`
+		URL  string `yaml:"url"`
+	} `yaml:"ipv6-group"`
 	StreamIpPort []struct {
 		Type      string `yaml:"type"`
 		Interface string `yaml:"interface"`

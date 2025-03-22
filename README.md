@@ -31,8 +31,10 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 - `-c` : 配置文件路径  默认为当前目录下`config.yml` 可用相对路径或者绝对路径
 - `-m` : 是否启用ip分组和下一跳网关模式（端口分流）v2.0以后版本有效    
   - `ispdomain` : 使用isp和域名分流功能(默认，为了兼容v1.x版本)   
-  - `ipgroup` : 使用ip分组和下一跳网关模式（端口分流)   
-  - `ii` : 同时使用 上面两种模式
+  - `ipgroup` : 使用ip分组和下一跳网关模式（端口分流)
+  - `ipv6group` : 使用ipv6分组(配合acl控制使用优先允许国内ipv6，次要不允许所有ipv6)  
+  - `ii` : 同时使用 ispdomain 和 ipgroup 两种模式
+  - `ip` : 同时使用 ipgroup 和ipv6group 两种模式
 - `-r` : 运行模式 默认为`cron`
     - `cron` : 先运行一次 而后等待计划任务触发
     - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就直接退出结束，适合调试使用或者使用系统自带的计划任务或serverless/函数计算等方式触发。

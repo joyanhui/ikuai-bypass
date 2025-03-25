@@ -130,7 +130,6 @@ func (i *IKuai) DelIpGroup(id string) error {
 }
 
 func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
-	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
 	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
 	var tagComment = ""
 	if tag == "" {
@@ -152,10 +151,9 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 			return preIds, err
 		}
 		preIds = strings.Join(ids, ",")
-		//err = i.DelIpGroup(preIds)
-		//if err != nil {
-		//return
-		//}
+		log.Println("ip分组== 旧的id为：", preIds)
+		return
+		
 	}
 
 }

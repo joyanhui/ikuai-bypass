@@ -124,8 +124,10 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 ```
 再启动即可。
 
-同时运行多个配置文件示例：
-···version: '3.8'
+### 群晖或compose:
+请自行下载`linux`版本的Release，解压后，上传可执行文件和修改后的配置文件到`/volume1/docker/ikuai-bypass/data/`。
+群晖项目或compose同时运行多个配置文件示例：
+```version: '3.8'
 
 services:
   ikuai-bypass:
@@ -136,7 +138,7 @@ services:
       - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
     command: sh -c "/opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ip & sleep 30 ; /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ip  ; wait"
     tty: true
-···
+```
 
 ###  windows
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    

@@ -13,7 +13,7 @@ func updateIpgroup() {
 
 	//添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ip分组和端口分流，效率更高，但如果添加失败原来的分组数据会丢失。
 	if *delOldRule == "before" {
-		log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ip分组和端口分流“）
+		log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ip分组和端口分流"）
 		err = iKuai.DelIKuaiBypassIpGroup("cleanAll")
 		if err != nil {
 			log.Println("ip分组== 删除旧的IP分组失败,退出：", err)

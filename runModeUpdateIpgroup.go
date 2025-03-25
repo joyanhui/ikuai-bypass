@@ -37,8 +37,8 @@ func updateIpgroup() {
 		log.Println("端口分流== 删除旧的端口分流成功")
 	}
 	for _, streamIpPort := range conf.StreamIpPort {
-	    mode := SetValue(streamIpPort.mode)
-	    ifaceband := SetValue(streamIpPort.ifaceband)
+	    mode := SetValue(streamIpPort.Mode)
+	    ifaceband := SetValue(streamIpPort.IfaceBand)
 	
 	    err = updateStreamIpPort(
 	        iKuai, 

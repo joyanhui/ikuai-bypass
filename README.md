@@ -51,6 +51,7 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
   - `before` : 先删除旧规则再更新新规则，如果更新失败会丢失规则 
 
 ## 更新日志
+- 2025-03-25 增加端口分流时能够选择更多参数：负载模式、线路绑定
 - 2025-03-23 增加ipv6分组
 - 2024-10-04 提供完整的最新的config.yml 文件，供参考
 - 2024-10-04 修复端口分流规则自动添加未能关联ip分组的bug，本次修改更新了一下config.yml的默认内容，请注意更新您的配置文件。[[#30]](https://github.com/joyanhui/ikuai-bypass/issues/30) 
@@ -122,6 +123,20 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 /bin/sh -c "chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml"
 ```
 再启动即可。
+
+同时运行多个配置文件示例：
+···version: '3.8'
+
+services:
+  ikuai-bypass:
+    image: alpine:3.18.4
+    container_name: ikuai-bypass
+    privileged: true
+    volumes:
+      - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
+    command: sh -c "/opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ip & sleep 30 ; /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ip  ; wait"
+    tty: true
+···
 
 ###  windows
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    

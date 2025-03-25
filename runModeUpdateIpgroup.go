@@ -26,7 +26,7 @@ func updateIpgroup() {
 	for _, ipGroup := range conf.IpGroup {
 		if *delOldRule == "after" {
 			//记录旧的ip分组
-			var preIds []string
+			var preIds string
 			preIds, err = iKuai.GetIpGroup(ipGroup.Name)
 			if err != nil {
 				log.Println("ip分组== 获取准备更新的IP分组列表失败：", ipGroup.Name, err)
@@ -67,7 +67,7 @@ func updateIpgroup() {
 	for _, streamIpPort := range conf.StreamIpPort {
 		if *delOldRule == "after" {
 			//记录旧的ip分组
-			var preIds []string
+			var preIds string
 			preIds, err = iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
 			if err != nil {
 				log.Println("端口分流== 获取准备更新的端口分流列表失败：", streamIpPort.IpGroup, err)
@@ -134,7 +134,7 @@ func updateIpv6group() {
 	for _, ipv6Group := range conf.Ipv6Group {
 		if *delOldRule == "after" {
 			//记录旧的ipv6分组
-			var preIds []string
+			var preIds string
 			preIds, err = iKuai.GetIpv6Group(ipv6Group.Name)
 			if err != nil {
 				log.Println("ipv6分组== 获取准备更新的IPv6分组列表失败：", ipv6Group.Name, err)

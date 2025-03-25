@@ -26,7 +26,7 @@ type StreamIpPortData struct {
 	Type      int    `json:"type"`
 }
 
-func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string) error {
+func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error {
 
 	param := struct {
 		Interface string `json:"interface"`
@@ -44,7 +44,7 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 	}{
 		Interface: iface,
 		Protocol:  "any",
-		Mode:      0,
+		Mode:      mode,
 		DstAddr:   dstAddr,
 		SrcAddr:   srcAddr,
 		Week:      "1234567",
@@ -52,7 +52,7 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		Enabled:   "yes",
 		Type:      forwardType,
 		Nexthop:   nexthop,
-		IfaceBand: 0,
+		IfaceBand: ifaceband,
 		Comment:   COMMENT_IKUAI_BYPASS + "_" + tag,
 	}
 	req := CallReq{

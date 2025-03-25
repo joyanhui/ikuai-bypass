@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -161,15 +162,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 
 func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
 	log.Println("端口分流== 正在查询 备注为:", COMMENT_IKUAI_BYPASS, "的端口分流规则")
-	var tagComment = ""
-	if tag == "" {
-		tagComment = COMMENT_IKUAI_BYPASS
-	} else {
-		tagComment = COMMENT_IKUAI_BYPASS + "_" + tag
-	}
-
 	var ids []string // 初始化 ids 切片
-
 	var data []StreamIpPortData
 	data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
 	if err != nil {
@@ -185,8 +178,8 @@ func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
 		return "", nil // 返回空字符串和 nil 错误
 	}
 
-	preIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
+	preDelIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
 
-	return preIds, nil   // 返回 IDs 和 nil 错误
+	return preDelIds, nil   // 返回 IDs 和 nil 错误
 }
 

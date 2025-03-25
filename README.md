@@ -90,7 +90,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 ## todo list
 
 - 在性能受限制的爱快上域名分流过多导致爱快接口超时，进一步导致ikuai-bypass出错的bug [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
-- ip分组和端口分流规则 修改为成功后再删除旧规则
+- [[done]]ip分组和端口分流规则 修改为成功后再删除旧规则
 - [[done]]优化ip分组和下一跳网关功能 可能存在的bug问题
 - [[done]](https://github.com/joyanhui/ikuai-bypass/issues/33)时区问题需要检查
 

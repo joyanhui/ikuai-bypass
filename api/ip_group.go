@@ -137,25 +137,31 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 	} else {
 		tagComment = COMMENT_IKUAI_BYPASS + "_" + tag
 	}
-	for {
 
-		var data []IpGroupData
-		data, err = i.ShowIpGroupByComment(tagComment)
-		var ids []string
-		for _, d := range data {
-			if d.Comment == tagComment {
-				ids = append(ids, strconv.Itoa(d.ID))
-			}
-		}
-		if len(ids) <= 0 {
-			return preIds, err
-		}
-		preIds = strings.Join(ids, ",")
-		log.Println("ip分组== 旧的id为：", preIds)
-		return
-		
+	var ids []string // 初始化 ids 切片
+
+	var data []IpGroupData
+	data, err = i.ShowIpGroupByComment(tagComment)  // 获取数据并处理错误
+	if err != nil {
+		return "", err // 返回错误
 	}
 
+
+	for _, d := range data {
+		if d.Comment == tagComment {
+			ids = append(ids, strconv.Itoa(d.ID))
+		}
+	}
+
+        // 如果没有找到匹配的IP分组，则返回空字符串和nil error
+	if len(ids) <= 0 {
+		return "", nil // 返回空字符串和 nil 错误
+	}
+
+	preIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
+	log.Println("ip分组== 旧的id为：", preIds)
+
+	return preIds, nil   // 返回 IDs 和 nil 错误
 }
 
 func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {

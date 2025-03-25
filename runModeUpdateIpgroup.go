@@ -26,7 +26,8 @@ func updateIpgroup() {
 	for _, ipGroup := range conf.IpGroup {
 		if *delOldRule == "after" {
 			//记录旧的ip分组
-			preIds, err := iKuai.GetIpGroup(ipGroup.Name)
+			var preIds []string
+			preIds, err = iKuai.GetIpGroup(ipGroup.Name)
 			if err != nil {
 				log.Println("ip分组== 获取准备更新的IP分组列表失败：", ipGroup.Name, err)
 				//return
@@ -54,7 +55,7 @@ func updateIpgroup() {
 	}
 
 	if *delOldRule == "before" {
-		//在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的端口分流“）
+		//在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的端口分流
 		err = iKuai.DelIKuaiBypassStreamIpPort("cleanAll")
 		if err != nil {
 			log.Println("端口分流== 删除旧的端口分流失败,退出：", err)
@@ -66,7 +67,8 @@ func updateIpgroup() {
 	for _, streamIpPort := range conf.StreamIpPort {
 		if *delOldRule == "after" {
 			//记录旧的ip分组
-			preIds, err := iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
+			var preIds []string
+			preIds, err = iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
 			if err != nil {
 				log.Println("端口分流== 获取准备更新的端口分流列表失败：", streamIpPort.IpGroup, err)
 				//return
@@ -132,7 +134,8 @@ func updateIpv6group() {
 	for _, ipv6Group := range conf.Ipv6Group {
 		if *delOldRule == "after" {
 			//记录旧的ipv6分组
-			preIds, err := iKuai.GetIpv6Group(ipv6Group.Name)
+			var preIds []string
+			preIds, err = iKuai.GetIpv6Group(ipv6Group.Name)
 			if err != nil {
 				log.Println("ipv6分组== 获取准备更新的IPv6分组列表失败：", ipv6Group.Name, err)
 				//return

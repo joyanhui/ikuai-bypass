@@ -129,7 +129,6 @@ func (i *IKuai) DelIpGroup(id string) error {
 	return nil
 }
 
-// GetIpGroup 此函数弃用
 func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
 	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")

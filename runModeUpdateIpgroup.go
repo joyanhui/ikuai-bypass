@@ -97,7 +97,7 @@ func updateIpgroup() {
 				)
 				err = iKuai.DelStreamIpPort(preIds)
 				if err == nil {
-					log.Println("端口分流== 删除旧的端口分流列表成功", streamIpPort.IpGroup)
+					log.Println("端口分流== 删除旧的端口分流列表成功", streamIpPort.IpGroup, preIds)
 					log.Println("端口分流== 更新完成", streamIpPort.IpGroup)
 				} else {
 					log.Println("端口分流== 删除旧的端口分流列表有错误", streamIpPort.IpGroup, err)

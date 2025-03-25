@@ -146,11 +146,8 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 		return "", err // 返回错误
 	}
 
-
 	for _, d := range data {
-		if d.Comment == tagComment {
-			ids = append(ids, strconv.Itoa(d.ID))
-		}
+		ids = append(ids, strconv.Itoa(d.ID))
 	}
 
         // 如果没有找到匹配的IP分组，则返回空字符串和nil error

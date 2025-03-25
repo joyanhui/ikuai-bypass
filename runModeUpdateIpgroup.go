@@ -36,15 +36,32 @@ func updateIpgroup() {
 	} else {
 		log.Println("端口分流== 删除旧的端口分流成功")
 	}
-	mode = SetValue(streamIpPort.mode)
-	ifaceband = SetValue(streamIpPort.ifaceband)
 	for _, streamIpPort := range conf.StreamIpPort {
-		err = updateStreamIpPort(iKuai, streamIpPort.Type, streamIpPort.Interface, streamIpPort.Nexthop, streamIpPort.SrcAddr, streamIpPort.IpGroup, mode, ifaceband)
-		if err != nil {
-			log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n", streamIpPort.Interface+streamIpPort.Nexthop, streamIpPort.IpGroup, err)
-		} else {
-			log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n", streamIpPort.Interface+streamIpPort.Nexthop, streamIpPort.IpGroup)
-		}
+	    mode := SetValue(streamIpPort.mode)
+	    ifaceband := SetValue(streamIpPort.ifaceband)
+	
+	    err = updateStreamIpPort(
+	        iKuai, 
+	        streamIpPort.Type, 
+	        streamIpPort.Interface, 
+	        streamIpPort.Nexthop, 
+	        streamIpPort.SrcAddr, 
+	        streamIpPort.IpGroup, 
+	        mode,
+	        ifaceband,
+	    )
+	    if err != nil {
+	        log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n", 
+	            streamIpPort.Interface+streamIpPort.Nexthop, 
+	            streamIpPort.IpGroup, 
+	            err,
+	        )
+	    } else {
+	        log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n", 
+	            streamIpPort.Interface+streamIpPort.Nexthop, 
+	            streamIpPort.IpGroup,
+	        )
+	    }
 	}
 
 }

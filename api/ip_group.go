@@ -156,7 +156,6 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 	}
 
 	preIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
-	log.Println("ip分组== 旧的id为：", preIds)
 
 	return preIds, nil   // 返回 IDs 和 nil 错误
 }

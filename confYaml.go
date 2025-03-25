@@ -40,6 +40,8 @@ var conf struct {
 		Nexthop   string `yaml:"nexthop"`
 		SrcAddr   string `yaml:"src-addr"`
 		IpGroup   string `yaml:"ip-group"`
+		Mode   string `yaml:"mode"`
+		IfaceBand   string `yaml:"ifaceband"`
 	} `yaml:"stream-ipport"`
 }
 

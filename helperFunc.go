@@ -2,15 +2,14 @@ package main
 
 import (
 	"errors"
-	"github.com/joyanhui/ikuai-bypass/router"
+	"github.com/dscao/ikuai-bypass/router"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/joyanhui/ikuai-bypass/api"
+	"github.com/dscao/ikuai-bypass/api"
 )
 
 // 读取配置文件 到 conf
@@ -116,6 +115,22 @@ func removeIpv6AndRemoveEmptyLine(ips []string) []string {
 	return ips[:i]
 }
 
+func removeIpv4AndRemoveEmptyLine(ips []string) []string {
+	log.Println("移除ipv4地址 和删除空行....")
+	i := 0
+	for _, ip := range ips {
+		if strings.Contains(ip, ":") { // 检查IPv6地址特征
+			// 清理首尾的空白字符和换行符
+			ip = strings.TrimSpace(ip)
+			if ip != "" {
+				ips[i] = ip
+				i++
+			}
+		}
+	}
+	return ips[:i]
+}
+
 func group(arr []string, subGroupLength int64) [][]string {
 	groupMax := int64(len(arr))
 	var segmens = make([][]string, 0)
@@ -162,8 +177,39 @@ func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 	return
 }
 
+// 更新ipv6分组
+func updateIpv6Group(iKuai *api.IKuai, name, url string) (err error) {
+	log.Println("ipv6分组==  http.get ...", url)
+	resp, err := http.Get(url)
+	if err != nil {
+		return
+	}
+	if resp.StatusCode != 200 {
+		err = errors.New(resp.Status)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	ips := strings.Split(string(body), "\n")
+	ips = removeIpv4AndRemoveEmptyLine(ips)
+	ipGroups := group(ips, 1000)
+	for index, ig := range ipGroups {
+		log.Println("ipv6分组== ", index, " 正在添加 .... ")
+		ipGroup := strings.Join(ig, ",")
+		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index), ipGroup)
+		if err != nil {
+			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
+			time.Sleep(conf.AddWait)
+		}
+
+	}
+	return
+}
+
 // 更新ip端口分流
-func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string) (err error) {
+func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string, mode int, ifaceband int) (err error) {
 
 	var ipGroupList []string
 	for _, ipGroupItem := range strings.Split(ipGroup, ",") {
@@ -174,7 +220,7 @@ func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, next
 		}
 		ipGroupList = append(ipGroupList, data...)
 	}
-	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop, ipGroup)
+	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop, ipGroup, mode, ifaceband)
 	if err != nil {
 		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 		time.Sleep(conf.AddErrRetryWait)

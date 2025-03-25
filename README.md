@@ -31,8 +31,10 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
 - `-c` : 配置文件路径  默认为当前目录下`config.yml` 可用相对路径或者绝对路径
 - `-m` : 是否启用ip分组和下一跳网关模式（端口分流）v2.0以后版本有效    
   - `ispdomain` : 使用isp和域名分流功能(默认，为了兼容v1.x版本)   
-  - `ipgroup` : 使用ip分组和下一跳网关模式（端口分流)   
-  - `ii` : 同时使用 上面两种模式
+  - `ipgroup` : 使用ip分组和下一跳网关模式（端口分流)
+  - `ipv6group` : 使用ipv6分组(配合acl控制使用优先允许国内ipv6，次要不允许所有ipv6)  
+  - `ii` : 同时使用 ispdomain 和 ipgroup 两种模式
+  - `ip` : 同时使用 ipgroup 和ipv6group 两种模式
 - `-r` : 运行模式 默认为`cron`
     - `cron` : 先运行一次 而后等待计划任务触发
     - `nocron` 或 `once`或 `1`: 忽略配置文件的cron定时配置配置 运行一次然后就直接退出结束，适合调试使用或者使用系统自带的计划任务或serverless/函数计算等方式触发。
@@ -49,6 +51,8 @@ ikuai需要分配3个网口（分别绑定到wan1 wan2 lan1），openwrt需要2�
   - `before` : 先删除旧规则再更新新规则，如果更新失败会丢失规则 
 
 ## 更新日志
+- 2025-03-25 增加端口分流时能够选择更多参数：负载模式、线路绑定
+- 2025-03-23 增加ipv6分组
 - 2024-10-04 提供完整的最新的config.yml 文件，供参考
 - 2024-10-04 修复端口分流规则自动添加未能关联ip分组的bug，本次修改更新了一下config.yml的默认内容，请注意更新您的配置文件。[[#30]](https://github.com/joyanhui/ikuai-bypass/issues/30) 
 - 2024-10-04 修复清理模式的删除规则问题 [[#27#issuecomment-2388114699]](https://github.com/joyanhui/ikuai-bypass/issues/27#issuecomment-2388114699)
@@ -119,6 +123,22 @@ docker run -itd  --name ikuai-bypass  --privileged=true --restart=always   \
 /bin/sh -c "chmod +x /opt/ikuai-bypass/ikuai-bypass  && /opt/ikuai-bypass/ikuai-bypass -r cron -c  /opt/ikuai-bypass/config.yml"
 ```
 再启动即可。
+
+### 群晖或compose:
+请自行下载`linux`版本的Release，解压后，上传可执行文件和修改后的配置文件到`/volume1/docker/ikuai-bypass/data/`。
+群晖项目或compose同时运行多个配置文件示例：
+```version: '3.8'
+
+services:
+  ikuai-bypass:
+    image: alpine:3.18.4
+    container_name: ikuai-bypass
+    privileged: true
+    volumes:
+      - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
+    command: sh -c "/opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ip & sleep 30 ; /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ip  ; wait"
+    tty: true
+```
 
 ###  windows
 请在 releases 里面点击 `show all xx assets` 可以看到windows的包 下载解压cmd下cd到解压后的目录运行里面的exe程序。    

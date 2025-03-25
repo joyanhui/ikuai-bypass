@@ -30,12 +30,18 @@ var conf struct {
 		Name string `yaml:"name"`
 		URL  string `yaml:"url"`
 	} `yaml:"ip-group"`
+	Ipv6Group []struct {
+		Name string `yaml:"name"`
+		URL  string `yaml:"url"`
+	} `yaml:"ipv6-group"`
 	StreamIpPort []struct {
 		Type      string `yaml:"type"`
 		Interface string `yaml:"interface"`
 		Nexthop   string `yaml:"nexthop"`
 		SrcAddr   string `yaml:"src-addr"`
 		IpGroup   string `yaml:"ip-group"`
+		Mode   int `yaml:"mode"`
+		IfaceBand   int `yaml:"ifaceband"`
 	} `yaml:"stream-ipport"`
 }
 

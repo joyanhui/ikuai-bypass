@@ -33,6 +33,13 @@ func clean() {
 	} else {
 		log.Println("移除旧的IP分组成功 tag:" + *cleanTag)
 	}
+	//删除旧的ipv6组
+	err = iKuai.DelIKuaiBypassIpv6Group(*cleanTag)
+	if err != nil {
+		log.Println("移除旧的IPV6分组失败 tag:"+*cleanTag+"：", err)
+	} else {
+		log.Println("移除旧的IPV6分组成功 tag:" + *cleanTag)
+	}
 	//删除端口分流规则
 	err = iKuai.DelIKuaiBypassStreamIpPort(*cleanTag)
 	if err != nil {

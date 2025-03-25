@@ -95,11 +95,19 @@ func updateEntrance() {
 	case "ipgroup":
 		log.Println("启动 ... ip分组和下一条网关模式")
 		updateIpgroup()
+	case "ipv6group":
+		log.Println("启动 ... ipv6分组")
+		updateIpv6group()
 	case "ii":
 		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
 		log.Println("再 启动 ... ip分组和下一条网关模式")
 		updateIspRule()
 		updateIpgroup()
+	case "ip":
+		log.Println("先 启动 ...  ip分组和下一条网关模式")
+		log.Println("再 启动 ... ipv6分组")
+		updateIpgroup()
+		updateIpv6group()
 	}
 
 }

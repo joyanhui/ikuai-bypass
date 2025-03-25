@@ -71,7 +71,7 @@ func updateIpgroup() {
 				log.Println("端口分流== 获取准备更新的端口分流列表失败：", streamIpPort.IpGroup, err)
 				continue
 			} else {
-				log.Println("端口分流== 获取准备更新的端口分流列表成功", streamIpPort.IpGroup)
+				log.Println("端口分流== 获取准备更新的端口分流列表成功", streamIpPort.IpGroup, preIds)
 			}
 
 			err = updateStreamIpPort(

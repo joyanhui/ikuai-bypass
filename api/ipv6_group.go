@@ -130,34 +130,34 @@ func (i *IKuai) DelIpv6Group(id string) error {
 }
 
 func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
-	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
-	log.Println("ipv6分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ipv6分组规则")
+	log.Println("ipv6分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的IPv6分组规则")
 	var tagComment = ""
 	if tag == "" {
 		tagComment = COMMENT_IKUAI_BYPASS
 	} else {
 		tagComment = COMMENT_IKUAI_BYPASS + "_" + tag
 	}
-	for {
 
-		var data []Ipv6GroupData
-		data, err = i.ShowIpv6GroupByComment(tagComment)
-		var ids []string
-		for _, d := range data {
-			if d.Comment == tagComment {
-				ids = append(ids, strconv.Itoa(d.ID))
-			}
-		}
-		if len(ids) <= 0 {
-			return preIds, err
-		}
-		preIds = strings.Join(ids, ",")
-		//err = i.DelIpv6Group(preIds)
-		//if err != nil {
-		//return
-		//}
+	var ids []string // 初始化 ids 切片
+
+	var data []Ipv6GroupData
+	data, err = i.ShowIpv6GroupByComment(tagComment)  // 获取数据并处理错误
+	if err != nil {
+		return "", err // 返回错误
 	}
 
+	for _, d := range data {
+		ids = append(ids, strconv.Itoa(d.ID))
+	}
+
+        // 如果没有找到匹配的IP分组，则返回空字符串和nil error
+	if len(ids) <= 0 {
+		return "", nil // 返回空字符串和 nil 错误
+	}
+
+	preIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
+
+	return preIds, nil   // 返回 IDs 和 nil 错误
 }
 
 func (i *IKuai) DelIKuaiBypassIpv6Group(cleanTag string) (err error) {

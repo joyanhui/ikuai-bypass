@@ -2,14 +2,14 @@ package main
 
 import (
 	"errors"
-	"github.com/joyanhui/ikuai-bypass/router"
+	"github.com/dscao/ikuai-bypass/router"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-	"github.com/joyanhui/ikuai-bypass/api"
+	"github.com/dscao/ikuai-bypass/api"
 )
 
 // 读取配置文件 到 conf

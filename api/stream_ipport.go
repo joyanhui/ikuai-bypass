@@ -162,7 +162,6 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 
 func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
 	log.Println("端口分流== 正在查询 备注为:", COMMENT_IKUAI_BYPASS, "的端口分流规则")
-	var ids []string // 初始化 ids 切片
 	var data []StreamIpPortData
 	data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
 	if err != nil {

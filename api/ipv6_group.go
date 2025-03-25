@@ -129,7 +129,6 @@ func (i *IKuai) DelIpv6Group(id string) error {
 	return nil
 }
 
-// GetIpv6Group 此函数弃用
 func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
 	log.Println("http://YourIkuaiIp/#/behavior/ip-group")
 	log.Println("ipv6分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ipv6分组规则")

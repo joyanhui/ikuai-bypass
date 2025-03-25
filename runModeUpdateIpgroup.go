@@ -29,7 +29,7 @@ func updateIpgroup() {
 				log.Println("ip分组== 获取准备更新的IP分组列表失败：", ipGroup.Name, err)
 				continue
 			} else {
-				log.Println("ip分组== 获取准备更新的IP分组列表成功", ipGroup.Name)
+				log.Println("ip分组== 获取准备更新的IP分组列表成功", ipGroup.Name, preIds)
 			}
 
 			err = updateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
@@ -153,7 +153,7 @@ func updateIpv6group() {
 				log.Println("ipv6分组== 获取准备更新的IPv6分组列表失败：", ipv6Group.Name, err)
 				continue
 			} else {
-				log.Println("ipv6分组== 获取准备更新的IPv6分组列表成功", ipv6Group.Name)
+				log.Println("ipv6分组== 获取准备更新的IPv6分组列表成功", ipv6Group.Name, preIds)
 			}
 
 			err = updateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
@@ -163,7 +163,7 @@ func updateIpv6group() {
 				log.Printf("ipv6分组== 添加IPV6分组'%s@%s'成功\n", ipv6Group.Name, ipv6Group.URL)
 				err = iKuai.DelIpv6Group(preIds)
 				if err == nil {
-					log.Println("ipv6分组== 删除旧的IPv6分组列表成功", ipv6Group.Name)
+					log.Println("ipv6分组== 删除旧的IPv6分组列表成功", ipv6Group.Name, preIds)
 					log.Println("ipv6分组== 更新完成", ipv6Group.Name)
 				} else {
 					log.Println("ipv6分组== 删除旧的IPv6分组列表有错误", ipv6Group.Name, err)

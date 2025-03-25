@@ -164,10 +164,13 @@ func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 	ips := strings.Split(string(body), "\n")
 	ips = removeIpv6AndRemoveEmptyLine(ips)
 	ipGroups := group(ips, 1000)
+	timestamp := time.Now().Unix() // 秒级时间戳（10位，如 1620000000）
+	str := strconv.FormatInt(timestamp, 10)
+	last4 := str[len(str)-4:] // 截取字符串最后4位，防止分组名重复导致无法先增加后删除，分组名称最多20个字符，除去 _0_1234 分组名设置中最多13个。
 	for index, ig := range ipGroups {
 		log.Println("ip分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
+		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index)+"_"+last4, ipGroup)
 		if err != nil {
 			log.Println("ip分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(conf.AddWait)
@@ -195,10 +198,13 @@ func updateIpv6Group(iKuai *api.IKuai, name, url string) (err error) {
 	ips := strings.Split(string(body), "\n")
 	ips = removeIpv4AndRemoveEmptyLine(ips)
 	ipGroups := group(ips, 1000)
+	timestamp := time.Now().Unix() // 秒级时间戳（10位，如 1620000000）
+	str := strconv.FormatInt(timestamp, 10)
+	last4 := str[len(str)-4:] // 截取字符串最后4位，防止分组名重复导致无法先增加后删除，分组名称最多20个字符，除去 _0_1234 分组名设置中最多13个。
 	for index, ig := range ipGroups {
 		log.Println("ipv6分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index), ipGroup)
+		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index)+"_"+last4, ipGroup)
 		if err != nil {
 			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(conf.AddWait)

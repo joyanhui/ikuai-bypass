@@ -63,7 +63,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 
 ## 更新日志
 
-- 2025-03-25 增加端口分流时能够选择更多参数：负载模式、线路绑定
+- 2025-03-25 增加端口分流时能够选择更多参数：负载模式、线路绑定，修复完善delOldRule参数，对于ip分组、ipv6分组及端口分流都默认为先增加后删除，防止增加失败导致原来的规则丢失。
 - 2025-03-23 增加ipv6分组
 - 2024-10-04 提供完整的最新的config.yml 文件，供参考
 - 2024-10-04 修复端口分流规则自动添加未能关联ip分组的bug，本次修改更新了一下config.yml的默认内容，请注意更新您的配置文件。[[#30]](https://github.com/joyanhui/ikuai-bypass/issues/30)
@@ -90,7 +90,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 ## todo list
 
 - 在性能受限制的爱快上域名分流过多导致爱快接口超时，进一步导致ikuai-bypass出错的bug [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
-- ip分组和端口分流规则 修改为成功后再删除旧规则
+- [[done]]ip分组和端口分流规则 修改为成功后再删除旧规则
 - [[done]]优化ip分组和下一跳网关功能 可能存在的bug问题
 - [[done]](https://github.com/joyanhui/ikuai-bypass/issues/33)时区问题需要检查
 

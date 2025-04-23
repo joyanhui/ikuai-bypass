@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/robfig/cron/v3"
 )
 
 var confPath = flag.String("c", "./config.yml", "配置文件路径")
@@ -16,6 +17,7 @@ var cleanTag = flag.String("tag", "cleanAll", "要清理的分流规则备注名
 var exportPath = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
 var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
 var delOldRule = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
+var isIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加") //#issues/76
 
 func main() {
 	flag.Parse()

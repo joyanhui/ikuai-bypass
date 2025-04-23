@@ -30,11 +30,11 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 
 ## 主要修改点
 
-- 两个协程并发处理运营商/IP分流和域名分流,更新速度更快。
+- 使用协程并发处理运营商/IP分流和域名分流/ip分组,更新速度更快。
 - 更新成功后再删除旧规则,原版会先删除,如果更新失败就全部丢了，这也是自己下手修改的主要原因。 v2.0.1后版本增加参数调整更新后删除还是更新之前删除。 [[#15]](https://github.com/joyanhui/ikuai-bypass/issues/15)
 - 支持清理模式，单次更新模式，先更新一次再等计划任务触发模式，等待计划任务触发模式。
 - 支持域名分流规则直接导出为爱快可导入的txt格式 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
-- 支持无docker运行，当然也支持docker运行。
+- 支持无docker环境运行，当然也支持docker运行。
 - 编译了 linux macos windows freebsd 系统下arm5-7 arm64 mipsle mips64le ppc64le amd64 386 架构二进制，当然也支持openwrt、老毛子和有shell权限其他系统。
 
 ## 参数说明
@@ -60,7 +60,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 - `-delOldRule` : 删除旧规则顺序，默认为 `after`
   - `after` : 先更新规则成功后再删除旧规则
   - `before` : 先删除旧规则再更新新规则，如果更新失败会丢失规则
-- `- isIpGroupNameAddRandomSuff` ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加
+- `- isIpGroupNameAddRandomSuff` ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加 [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)
 
 ## 更新日志
 

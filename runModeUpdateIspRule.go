@@ -43,21 +43,17 @@ func updateIspRule() {
 				log.Printf("运营商/IP分流== 添加自定义运营商'%s'失败：%s\n", customIsp.Name, err)
 			} else {
 				log.Printf("运营商/IP分流== 添加自定义运营商'%s'成功\n", customIsp.Name)
-				if err == nil {
-					if *delOldRule == "after" {
-						//删除旧的自定义运营商
-						err = iKuai.DelCustomIspFromPreIds(preIds)
-						if err == nil {
-							log.Println("运营商/IP分流== 删除旧的运营商列表成功", customIsp.Name, customIsp.Tag)
-							log.Println("运营商/IP分流== 更新完成", customIsp.Name, customIsp.Tag)
-						} else {
-							log.Println("运营商/IP分流== 删除旧的运营商列表有错误", customIsp.Name, customIsp.Tag, err)
-						}
+				if *delOldRule == "after" {
+					//删除旧的自定义运营商
+					err = iKuai.DelCustomIspFromPreIds(preIds)
+					if err == nil {
+						log.Println("运营商/IP分流== 删除旧的运营商列表成功", customIsp.Name, customIsp.Tag)
+						log.Println("运营商/IP分流== 更新完成", customIsp.Name, customIsp.Tag)
+					} else {
+						log.Println("运营商/IP分流== 删除旧的运营商列表有错误", customIsp.Name, customIsp.Tag, err)
 					}
-
-				} else {
-					log.Println("运营商/IP分流== 添加运营商的时候有错误", customIsp.Name, customIsp.Tag, err)
 				}
+
 			}
 
 		}
@@ -92,19 +88,16 @@ func updateIspRule() {
 				log.Printf("域名分流== 添加域名分流 '%s' 失败：%s\n", streamDomain.Interface, err)
 			} else {
 				log.Printf("域名分流== 添加域名分流 '%s' 成功\n", streamDomain.Interface)
-				if err == nil {
-					if *delOldRule == "after" {
-						//删除旧的域名分流
-						err = iKuai.DelStreamDomainFromPreIds(preIds)
-						if err == nil {
-							log.Println("域名分流==  删除旧的运营商列表成功")
-						} else {
-							log.Println("域名分流==  删除旧的运营商列表有错误", err)
-						}
+				if *delOldRule == "after" {
+					//删除旧的域名分流
+					err = iKuai.DelStreamDomainFromPreIds(preIds)
+					if err == nil {
+						log.Println("域名分流==  删除旧的运营商列表成功")
+					} else {
+						log.Println("域名分流==  删除旧的运营商列表有错误", err)
 					}
-				} else {
-					log.Println("域名分流==  添加运营商的时候有错误", err)
 				}
+
 			}
 		}
 

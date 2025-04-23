@@ -23,7 +23,7 @@ mozilla.org
 #允许cursor.com直连
 cursor.com
 cursor.sh
-by.Missing_Love.start.ooooooooooooooooooooooooooooooo
+#by.Missing_Love.start.ooooooooooooooooooooooooooooooo
 kp.m-team.cc
 kp.m-team.io
 tracker.m-team.io
@@ -48,4 +48,4 @@ stun.syncthing.net
 stun.hot-chilli.net
 stun.fitauto.ru
 stun.miwifi.com
-by.Missing_Love.end.ooooooooooooooooooooooooooooooo
+#by.Missing_Love.end.ooooooooooooooooooooooooooooooo

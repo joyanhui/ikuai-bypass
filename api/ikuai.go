@@ -51,6 +51,7 @@ func NewIKuai(baseurl string) *IKuai {
 	return &IKuai{baseurl, &http.Client{Jar: cookieJar, Timeout: time.Second * 10}}
 }
 
+// https://github.com/joyanhui/ikuai-bypass/issues/55 疑似有bug但是无法复现
 func (i *IKuai) Login(username, password string) error {
 	passwd := md5String(password)
 	pass := base64.StdEncoding.EncodeToString([]byte("salt_11" + password))

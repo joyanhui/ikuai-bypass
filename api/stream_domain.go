@@ -21,6 +21,9 @@ type StreamDomainData struct {
 }
 
 func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
+	// https://github.com/joyanhui/ikuai-bypass/issues/24
+	// 去掉末尾空行
+	domains = strings.Trim(strings.Trim(domains, "\n"), "\r")
 	param := struct {
 		Interface string `json:"interface"`
 		SrcAddr   string `json:"src_addr"`

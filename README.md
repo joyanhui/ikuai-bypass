@@ -194,12 +194,12 @@ v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加�
 - windows宿主 + hyperv 桥接网卡爱快,openwrt在vbox的ikuai内的vm内，ikuai-bypass 使用instsrv+srvany部署到windows.
 - nixos宿主 + virtualbox 桥接网卡爱快,openwrt在vbox的ikuai内的vm内，ikuai-bypass 部署在openwrt.
 
-## 其他相关说明
+## 其他参考文档
 
 [https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)
 
 ## 致谢
 
-- [恩山ztc1997](https://github.com/ztc1997/ikuai-bypass/): 本项目fork自ztc1997, 感谢原作者实现的核心功能，我只是简单缝补了几个小地方.
+- [恩山 ztc1997](https://github.com/ztc1997/ikuai-bypass/): 本项目fork自ztc1997, 感谢原作者实现的核心功能，我只是简单缝补了几个小地方.
 - [JetBrains](https://jb.gg/OpenSourceSupport): 为本项目提供免费的开源许可证
 - [neovim](https://neovim.io/),[NvChad](https://github.com/NvChad/NvChad),[elulcao](https://github.com/elulcao/NvChad-custom)

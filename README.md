@@ -2,7 +2,11 @@
 
 通过自定义运营商分流或者端口分流的方式实现非旁路由方式的自动分流，并定时更新规则.实现国内ip或者指定的ip或者指定的域名列表走直连或者经过openwrt等另外处理.爱快有简单易用的分流功能可以实现诸多功能，但是因为大家喜闻乐见的分流规则数据可能几万条，在ikuai上维护更新比较麻烦，这个工具就是为了自动从订阅地址更新爱快的分流规则的域名分流和运营商分流.
 
-> 如有bug反馈和建议都可以提[issues](https://github.com/joyanhui/ikuai-bypass/issues)，我会尽快处理.给个star我会很开心.
+> 使用问题交流请去恩山或[discussions](https://github.com/joyanhui/ikuai-bypass/discussions)
+
+> bug反馈和建议都可以提[issues](https://github.com/joyanhui/ikuai-bypass/issues)，我会尽快处理.给个star我会很开心.
+
+> PR请尽量通过一次commit提交过来.
 
 > 关于dns部分，建议用mosdns自建，这里有一个本人维护的支持自动更新相关规则文件的mosdns的docker.[[joyanhui/mosdns]](https://github.com/joyanhui/mosdns).可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
 

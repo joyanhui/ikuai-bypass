@@ -84,8 +84,8 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 - 2024-03-23 增加域名分流规则导出为爱快兼容的可导入的txt文件 [[5#2016320900]](https://github.com/joyanhui/ikuai-bypass/issues/5#issuecomment-2016320900)
 - 2024-03-23 尝试修复列表太多导致爱快处理超时的问题 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
 - 2024-03-07 openwrt服务安装脚本增加无代理环境安装
-- 2024-02-25 增加去广告功能演示规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
-- 2024-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
+- 2024-02-25 增加去广告功能演示规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)
+- 2024-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh)
 - 2024-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
 - 2024-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)
 - 2024-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则
@@ -100,13 +100,13 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 
 ## 简要使用说明
 
-从 Releases [[下载]](https://github.com/joyanhui/ikuai-bypass/releases) 解压后得到一个可执行文件`ikuai-bypass`和一个通用配置文件 `config.yml` [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml) 编辑一下`config.yml`里面ikuai的地址用户名和密码，然后在可以访问到ikuai的设备上执行命令格式如下: ` ./ikuai-bypass -c /配置文件路径/config.yml -r 运行模式`即可。example: `./ikuai-bypass` 等同 `./ikuai-bypass -c config.yml -r cron`: 将根据配置文件的内容更新分流规则更新成功后删除旧的分流规则 并在配置文件的cron的时间按照计划任务 重新更新。 `./ikuai-bypas -r clean` 等同 `./ikuai-bypass -c config.yml -r clean -tag  cleanAll` : 删除所有备注包含 `IKUAI_BYPASS`的规则 `./ikuai-bypas -r clean  -tag IKUAI_BYPASS_ipcn` 等同 `./ikuai-bypas -r clean  -tag ipcn`: 删除备注为 `IKUAI_BYPASS_ipcn` 的分流规则
+从 Releases [[下载]](https://github.com/joyanhui/ikuai-bypass/releases) 解压后得到一个可执行文件`ikuai-bypass`和一个通用配置文件 `config.yml` [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml) 编辑一下`config.yml`里面ikuai的地址用户名和密码，然后在可以访问到ikuai的设备上执行命令格式如下: ` ./ikuai-bypass -c /配置文件路径/config.yml -r 运行模式`即可。example: `./ikuai-bypass` 等同 `./ikuai-bypass -c config.yml -r cron`: 将根据配置文件的内容更新分流规则更新成功后删除旧的分流规则 并在配置文件的cron的时间按照计划任务 重新更新。 `./ikuai-bypas -r clean` 等同 `./ikuai-bypass -c config.yml -r clean -tag  cleanAll` : 删除所有备注包含 `IKUAI_BYPASS`的规则 `./ikuai-bypas -r clean  -tag IKUAI_BYPASS_ipcn` 等同 `./ikuai-bypas -r clean  -tag ipcn`: 删除备注为 `IKUAI_BYPASS_ipcn` 的分流规则
 
 ## 不同平台下
 
 ### linux(推荐openwrt内直接运行)
 
-下载 linux-xxx.zip,unzip 后在shell运行。 建议把ikuai-bypass作为服务安装到openwrt [[参考安装脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/script-example/AddOpenwrtService.sh)
+下载 linux-xxx.zip,unzip 后在shell运行。 建议把ikuai-bypass作为服务安装到openwrt [[参考安装脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh)
 
 ### docker
 
@@ -176,7 +176,7 @@ services:
 
 ## v0.1.15 升级0.2版
 
-v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加指定的后缀,所以升级到0.2.x后最好清理掉旧的分流规则重新添加。另外新版配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config_example.yml)
+v0.2.x 以后规则的备注不再只有字符`IKUAI_BYPASS`,会根据tag添加指定的后缀,所以升级到0.2.x后最好清理掉旧的分流规则重新添加。另外新版配置文件中每条规则都多了一个 `tag: 备注后缀` 用于区分不同的规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)
 
 ```sh
 ./ikuai-bypass -c /路径/config.yml -r clean -tag cleanAll # 清理所有备注名包含`IKUAI_BYPASS`的分流规则

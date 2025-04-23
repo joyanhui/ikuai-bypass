@@ -67,13 +67,13 @@ stream-domain: # 域名分流 可选功能，优先级比ip分流高
     tag: gfw
   - interface: wan2
     src-addr: 192.168.1.10-192.168.1.254
-    # 作者自己维护的自定义的域名列表 强制走代理的域名
+    # 作者自己维护的自定义的域名列表(只是演示,请自行维护) 强制走代理的域名
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
     tag: private_bypass
   # 下面是自动走wan1直连的，
   - interface: wan1
     src-addr: 192.168.1.10-192.168.1.254
-    # 作者自己维护的自定义的域名列表 主要存放github的镜像网站等国内可以直连的镜像或其他类型域名
+    # 作者自己维护的自定义的域名列表(只是演示,请自行维护) 主要存放github的镜像网站等国内可以直连的镜像或其他类型域名
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
     tag: private_direct
   #- interface: wan1

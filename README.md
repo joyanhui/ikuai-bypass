@@ -8,7 +8,7 @@
 
 > PR请尽量通过一次commit提交过来.
 
-> 关于dns部分，建议用mosdns自建，这里有一个本人维护的支持自动更新相关规则文件的mosdns的docker.[[joyanhui/mosdns]](https://github.com/joyanhui/mosdns).可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
+> 关于dns分流解析，建议用ADGuard home自建，这里有一个本人维护的支持自动更新相关规则文件的mosdns的docker.[[joyanhui/adguardhome-rules]](https://github.com/joyanhui/adguardhome-rules).可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
 
 ## 版本选择
 

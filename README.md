@@ -56,8 +56,8 @@
 
 ### 版本选择
 
-- v4.0.0-Pre-alpha 重构了项目结构，修复了端口分流只保留一条的bug，这是一个未经过严格测试的版本。我只在我本地（nixos+qemu-kvm+ikuai 3.7.21 x64 Build202508211345 ）使用默认规则的ispdomain和 ipgroup 执行了once测试
-- v3.0.0 版本 增加了ipv6分组 由 [[dscao]](https://github.com/dscao) 提供
+- v4.0.0-Pre-alpha 重构了项目结构，修复了端口分流只保留一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)，这是一个未经过严格测试的版本。我只在我本地（nixos+qemu-kvm+ikuai 3.7.21 x64 Build202508211345 ）使用默认规则的ispdomain和 ipgroup 执行了once测试
+- v3.0.0 版本 增加了ipv6分组 由 [[dscao]](https://github.com/dscao) 提供。功能完备但是存在一处bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
 - v2.1.2-alpha1 虽然是alpha版，但是功能已经稳定 存在少量不影响使用的bug
 
 ### 1. 下载与配置

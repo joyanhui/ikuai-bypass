@@ -4,7 +4,7 @@
   description = "A Nix-flake-based golang development environment .";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/25.11";
   };
 
   outputs =
@@ -20,11 +20,12 @@
             config.allowUnfree = true;
           };
           packages = with pkgs; [
-            go_1_23
+            go
             gopls
             gcc
             upx
             nushell
+            fyne
           ];
         in
         pkgs.runCommand "dev-shell"

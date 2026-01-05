@@ -13,9 +13,9 @@
 - **默认策略**: 采用“先增后删” (`-delOldRule after`)。即先成功添加新规则，再删除带有旧标识的规则，以确保在列表下载失败或 API 调用出错时，路由器原有的分流功能不中断。
 
 ### 3. iKuai API 交互
-- 逻辑位于 `api/` 目录。
+- 逻辑位于 `pkg/ikuai-api/` 目录。
 - 工具并非使用官方公开 SDK，而是通过模拟 Web 登录并发送 JSON POST 请求到 `/Action/call` 等内部接口实现。
-- `api/utils.go` 封装了核心的 HTTP 通讯逻辑。
+- `pkg/ikuai-api/utils.go` 封装了核心的 HTTP 通讯逻辑。
 
 ## 调试与运行 (CLI Flags)
 
@@ -26,7 +26,7 @@
     - `cron`: 常驻运行，按设定的定时任务执行。
     - `once` / `1`: 立即执行一次并退出（开发调试最常用）。
     - `clean`: 清理所有带 `IKUAI_BYPASS_` 备注的规则。
-    - `exportDomainSteamToTxt`: 导出域名分流规则为 iKuai 可导入的 TXT 格式。
+    - `exportDomainSteamToTxt`: 导出域名分流规则为 iKuai 可导入的 TXT 格式 旨在解决部分特殊硬件的ikuai无法处理太多数据导入的bug。
 - `-m`: 模块选择。
     - `ispdomain`: 自定义 ISP 和域名分流。
     - `ipgroup`: IP 分组和端口分流 (Next-hop)。

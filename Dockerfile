@@ -1,11 +1,18 @@
 FROM alpine:latest
- 
-WORKDIR /app
-RUN wget --no-check-certificate -c -t3 -T60 -O ikuai-bypass.tar.gz https://github.com/dscao/ikuai-bypass/releases/download/v4.0.0/ikuai-bypass-${os}-${arch}.zip && \
-  tar -zxvf ikuai-bypass.tar.gz && \
-  rm -f ikuai-bypass.tar.gz
 
-RUN apk add --no-cache tzdata
+ARG VERSION
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /app
+RUN apk add --no-cache tzdata unzip wget
+
+RUN echo "Downloading version: ${VERSION} for ${TARGETOS}/${TARGETARCH}" && \
+    wget --no-check-certificate -c -t3 -T60 -O ikuai-bypass.zip \
+    "https://github.com/dscao/ikuai-bypass/releases/download/${VERSION}/ikuai-bypass-${TARGETOS}-${TARGETARCH}.zip" && \
+    unzip ikuai-bypass.zip && \
+    rm -f ikuai-bypass.zip
+
 ENV TZ=Asia/Shanghai
 
 CMD ["./ikuai-bypass", "-c", "/etc/ikuai-bypass/config.yml"]

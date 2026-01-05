@@ -102,11 +102,11 @@
 <details>
 <summary><b>Docker 部署</b></summary>
 我没有专门去维护一个docker镜像，因为这个项目没有任何外部依赖只需要一个二进制程序和一个配置文件就可以运行了。你需要先从 [Releases](https://github.com/joyanhui/ikuai-bypass/releases) 下载对应系统的二进制文件。然后随便找一个linux的docker镜像就可以了。
-```sh
+<code>
 docker run -itd --name ikuai-bypass --privileged=true --restart=always \
     -v ~/ikuai-bypass/:/opt/ikuai-bypass/ \
     alpine:latest /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron
-```
+</code>
 </details>
 
 <details>

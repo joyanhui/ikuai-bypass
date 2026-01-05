@@ -148,7 +148,7 @@ services:
       TZ: "Asia/Shanghai"
     volumes:
       - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
-    command: sh -c "/app/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ipv6group & sleep 30 ; /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ii ; wait"
+    command: sh -c "/app/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ipv6group & sleep 30 ; /app/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ii ; wait"
     tty: true
 ```
 

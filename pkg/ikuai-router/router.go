@@ -1,4 +1,4 @@
-package router
+package ikuairouter
 
 import (
 	"errors"

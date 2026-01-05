@@ -1,7 +1,7 @@
 //go:build !linux
 // +build !linux
 
-package router
+package ikuairouter
 
 import "errors"
 

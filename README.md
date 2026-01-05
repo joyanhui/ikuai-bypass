@@ -1,6 +1,6 @@
 # iKuai Bypass
 
-![iKuai](https://img.shields.io/badge/Router-iKuai-brightgreen) ![License](https://img.shields.io/badge/License-MIT-blue) ![Go](https://img.shields.io/badge/Language-Go-blue)
+![iKuai](https://img.shields.io/badge/Router-iKuai-brightgreen) ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg) ![Go](https://img.shields.io/badge/Language-Go-blue)
 
 **iKuai Bypass** 是一个专为爱快（iKuai）路由器开发的自动化分流规则同步工具。它通过模拟 Web 管理界面行为，将远程订阅的 IP/域名列表自动同步到路由器的分流设置中，实现精准、高效的自动化流量调度。 [旧版本说明](README_bakcup.md)
 
@@ -87,7 +87,7 @@
 | `-r` | 运行模式 | `cron`, `once`, `clean`, `exportDomainSteamToTxt` |
 | `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll` |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
-| `-delOldRule`| 删除旧规则的时机 | `after` (更新后删), `before` (更新前删) |
+| `-delOldRule`| 删除旧规则时机 | `after` (更新后删), `before` (更新前删) |
 
 ---
 
@@ -97,6 +97,17 @@
 <summary><b>Linux / OpenWrt (推荐)</b></summary>
 建议通过服务脚本安装为开机自启。
 <a href="https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh">参考安装脚本</a>
+</details>
+
+<details>
+<summary><b>Windows</b></summary>
+从 Releases 下载 Windows 版本的压缩包，解压后通过命令提示符 (CMD) 或 PowerShell 运行即可。<br>
+注意：由于使用了 UPX 压缩且未加壳，部分杀软可能会误报。如果不信任，建议自行克隆代码并编译。作者没有 Windows 环境，不负责处理此类误报问题。详见 <a href="https://github.com/joyanhui/ikuai-bypass/issues/6">#6</a>。
+</details>
+
+<details>
+<summary><b>macOS</b></summary>
+根据您的芯片架构（Apple Silicon 下载 <code>darwin-arm64</code>，Intel 下载 <code>darwin-amd64</code>）下载对应的压缩包，解压后在终端运行。
 </details>
 
 <details>

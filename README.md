@@ -95,19 +95,19 @@
 
 <details>
 <summary><b>Linux / OpenWrt (推荐)</b></summary>
-建议通过服务脚本安装为开机自启。
-<a href="https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh">参考安装脚本</a>
+建议通过服务脚本安装为开机自启。(或者使用系统自带的crontab 配合参数 `-r once` 实现自动运行)
+<a href="https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh">参考安装openwrt脚本</a>
 </details>
 
 <details>
 <summary><b>Windows</b></summary>
-从 Releases 下载 Windows 版本的压缩包，解压后通过命令提示符 (CMD) 或 PowerShell 运行即可。<br>
+从 Releases 下载 Windows 版本的压缩包，解压后通过命令提示符 (CMD) 或 PowerShell 运行即可。（或者使用系统自带的 计划任务管理器 配合参数 `-r once` 实现自动运行）<br> 
 注意：由于使用了 UPX 压缩且未加壳，部分杀软可能会误报。如果不信任，建议自行克隆代码并编译。作者没有 Windows 环境，不负责处理此类误报问题。详见 <a href="https://github.com/joyanhui/ikuai-bypass/issues/6">#6</a>。
 </details>
 
 <details>
 <summary><b>macOS</b></summary>
-根据您的芯片架构（Apple Silicon 下载 <code>darwin-arm64</code>，Intel 下载 <code>darwin-amd64</code>）下载对应的压缩包，解压后在终端运行。
+根据您的芯片架构（Apple Silicon 下载 <code>darwin-arm64</code>，Intel 下载 <code>darwin-amd64</code>）下载对应的压缩包，解压后在终端运行。(或者使用系统自带的crontab 配合参数 `-r once` 实现自动运行)
 </details>
 
 <details>
@@ -129,11 +129,33 @@ docker run -itd --name ikuai-bypass --privileged=true --restart=always \
 ---
 
 ## 更新日志
-
--   **2026-01-05 (v4.0.0)**: 重构项目目录结构，采用标准 pkg 布局；修复了端口分流在多规则下可能被覆盖的 Bug。
--   **2025-03-23**: 增加 IPv6 分组支持。
--   **2024-10-04**: 优化了大规模域名列表同步的稳定性。
-
+- 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
+- 2025-04-23 部分代码规范性处理以及nilness的逻辑修复
+- 2025-04-23 增加开关isIpGroupNameAddRandomSuff [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)
+- 2025-04-23 修复域名分流规则末行空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+- 2025-03-25 增加端口分流时能够选择更多参数：负载模式、线路绑定，修复完善delOldRule参数，对于ip分组、ipv6分组及端口分流都默认为先增加后删除，防止增加失败导致原来的规则丢失.
+- 2025-03-23 增加ipv6分组
+- 2024-10-04 提供完整的最新的config.yml 文件，供参考
+- 2024-10-04 修复端口分流规则自动添加未能关联ip分组的bug，本次修改更新了一下config.yml的默认内容，请注意更新您的配置文件.[[#30]](https://github.com/joyanhui/ikuai-bypass/issues/30)
+- 2024-10-04 修复清理模式的删除规则问题 [[#27#issuecomment-2388114699]](https://github.com/joyanhui/ikuai-bypass/issues/27#issuecomment-2388114699)
+- 2024-10-04 ip分组第一行的备注问题 [[#22]](https://github.com/joyanhui/ikuai-bypass/issues/22)
+- 2024-10-04 修复 卡`ip分组== 正在查询  备注为: IKUAI_BYPASS_ 的ip分组规则` 的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24) [[#27]](https://github.com/joyanhui/ikuai-bypass/issues/27)
+- 2024-10-04 修复运营商分流的ip列表会添加一个空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+- 2024-06-29 修复清理模式无法清理ip分组和端口分流规则的问题 v2.0.1以后版本有效
+- 2024-06-29 增加运营商和域名分流规则旧规则删除模式参数 `-delOldRule` [[#15]](https://github.com/joyanhui/ikuai-bypass/issues/15) v2.0.1以后版本有效
+- 2024-06-29 修改-m参数默认值错误导致的不配置-m参数无法执行的问题 构建 v2.0.0-beta2 版本 这是一个未经过详细测试的版本，请谨慎使用.
+- 2024-05-26 修复OLOrz996分支里端口分流规则模式无法删除的bug
+- 2024-05-26 合并ztc1997的ip分组和下一跳网关功能[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7) 增加了 `-m`参数
+- 2024-05-26 命令行参数增加-login参数，可以覆盖配置文件内的爱快地址和用户名密码
+- 2024-03-23 增加域名分流规则导出为爱快兼容的可导入的txt文件 [[5#2016320900]](https://github.com/joyanhui/ikuai-bypass/issues/5#issuecomment-2016320900)
+- 2024-03-23 尝试修复列表太多导致爱快处理超时的问题 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
+- 2024-03-07 openwrt服务安装脚本增加无代理环境安装
+- 2024-02-25 增加去广告功能演示规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)
+- 2024-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh)
+- 2024-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
+- 2024-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)
+- 2024-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则
+- 旧的更新记录没啥价值也未单独记，小工具代码简单，请参考commit记录
 ---
 
 ## 交流与反馈

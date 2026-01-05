@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"errors"
@@ -10,13 +10,12 @@ import (
 	"time"
 
 	"github.com/dscao/ikuai-bypass/api"
+	"github.com/dscao/ikuai-bypass/pkg/config"
 	"github.com/dscao/ikuai-bypass/router"
 )
 
-// 读取配置文件 到 conf
-
-// updateCustomIsp 更新运营商分流规则
-func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err error) {
+// UpdateCustomIsp 更新运营商分流规则
+func UpdateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err error) {
 	log.Println("运营商/IP分流==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -34,30 +33,30 @@ func updateCustomIsp(iKuai *api.IKuai, name string, tag string, url string) (err
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = removeIpv6AndRemoveEmptyLine(ips)
+	ips = RemoveIpv6AndRemoveEmptyLine(ips)
 	log.Println("运营商/IP分流== ", name, tag, " 获取到", len(ips), "个ip")
-	ipGroups := group(ips, 5000) //5000条
+	ipGroups := Group(ips, 5000) //5000条
 
 	for _, ig := range ipGroups {
 		ipGroup := strings.Join(ig, ",")
 		err = iKuai.AddCustomIsp(name, tag, ipGroup)
 		if err != nil {
-			log.Println("运营商/IP分流==  ", name, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
-			time.Sleep(conf.AddErrRetryWait)
+			log.Println("运营商/IP分流==  ", name, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			time.Sleep(config.GlobalConfig.AddErrRetryWait)
 			err = iKuai.AddCustomIsp(name, tag, ipGroup)
 			if err != nil {
 				log.Println("运营商/IP分流==  ", name, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
 				break
 			}
 		}
-		log.Println("运营商/IP分流==  添加ip:", len(ig), " 个,等待", conf.AddWait, "秒继续处理")
-		time.Sleep(conf.AddWait)
+		log.Println("运营商/IP分流==  添加ip:", len(ig), " 个,等待", config.GlobalConfig.AddWait, "秒继续处理")
+		time.Sleep(config.GlobalConfig.AddWait)
 	}
 	return
 }
 
-// updateStreamDomain 更新域名分流规则
-func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err error) {
+// UpdateStreamDomain 更新域名分流规则
+func UpdateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err error) {
 	log.Println("域名分流==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -76,7 +75,7 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 	}
 	domains := strings.Split(string(body), "\n")
 	log.Println("域名分流== ", iface, tag, "获取到", len(domains), "个域名")
-	domainGroup := group(domains, 1000) //1000条
+	domainGroup := Group(domains, 1000) //1000条
 	var countFor int = 0
 	for _, d := range domainGroup {
 		countFor = countFor + 1
@@ -84,22 +83,22 @@ func updateStreamDomain(iKuai *api.IKuai, iface, tag, srcAddr, url string) (err 
 		domain := strings.Join(d, ",")
 		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
 		if err != nil {
-			log.Println("域名分流==  ", countFor, "/", len(domainGroup), iface, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
-			time.Sleep(conf.AddErrRetryWait)
+			log.Println("域名分流==  ", countFor, "/", len(domainGroup), iface, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			time.Sleep(config.GlobalConfig.AddErrRetryWait)
 			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
 			if err != nil {
 				log.Println("域名分流=  ", countFor, "/", len(domainGroup), iface, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
 				break
 			}
 		} else {
-			log.Println("域名分流== ", iface, tag, " 添加域名:", len(d), " 个成功,等待", conf.AddWait, "秒继续处理")
-			time.Sleep(conf.AddWait)
+			log.Println("域名分流== ", iface, tag, " 添加域名:", len(d), " 个成功,等待", config.GlobalConfig.AddWait, "秒继续处理")
+			time.Sleep(config.GlobalConfig.AddWait)
 		}
 	}
 	return
 }
 
-func removeIpv6AndRemoveEmptyLine(ips []string) []string {
+func RemoveIpv6AndRemoveEmptyLine(ips []string) []string {
 	log.Println("移除ipv6地址 和删除空行....")
 	i := 0
 	for _, ip := range ips {
@@ -116,7 +115,7 @@ func removeIpv6AndRemoveEmptyLine(ips []string) []string {
 	return ips[:i]
 }
 
-func removeIpv4AndRemoveEmptyLine(ips []string) []string {
+func RemoveIpv4AndRemoveEmptyLine(ips []string) []string {
 	log.Println("移除ipv4地址 和删除空行....")
 	i := 0
 	for _, ip := range ips {
@@ -132,7 +131,7 @@ func removeIpv4AndRemoveEmptyLine(ips []string) []string {
 	return ips[:i]
 }
 
-func group(arr []string, subGroupLength int64) [][]string {
+func Group(arr []string, subGroupLength int64) [][]string {
 	groupMax := int64(len(arr))
 	var segmens = make([][]string, 0)
 	quantity := groupMax / subGroupLength
@@ -147,8 +146,8 @@ func group(arr []string, subGroupLength int64) [][]string {
 	return segmens
 }
 
-// 更新ip分组
-func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
+// UpdateIpGroup 更新ip分组
+func UpdateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 	log.Println("ip分组==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -163,13 +162,13 @@ func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = removeIpv6AndRemoveEmptyLine(ips)
-	ipGroups := group(ips, 1000)
+	ips = RemoveIpv6AndRemoveEmptyLine(ips)
+	ipGroups := Group(ips, 1000)
 	last4 := ""
-	if *isIpGroupNameAddRandomSuff == "1" { //https://github.com/joyanhui/ikuai-bypass/issues/76
-		timestamp := time.Now().Unix() // 秒级时间戳（10位，如 1620000000）
+	if *config.IsIpGroupNameAddRandomSuff == "1" {
+		timestamp := time.Now().Unix()
 		str := strconv.FormatInt(timestamp, 10)
-		last4 = "_" + str[len(str)-4:] // 截取字符串最后4位，防止分组名重复导致无法先增加后删除，分组名称最多20个字符，除去 _0_1234 分组名设置中最多13个。
+		last4 = "_" + str[len(str)-4:]
 	}
 
 	for index, ig := range ipGroups {
@@ -177,16 +176,16 @@ func updateIpGroup(iKuai *api.IKuai, name, url string) (err error) {
 		ipGroup := strings.Join(ig, ",")
 		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index)+last4, ipGroup)
 		if err != nil {
-			log.Println("ip分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
-			time.Sleep(conf.AddWait)
+			log.Println("ip分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			time.Sleep(config.GlobalConfig.AddWait)
 		}
 
 	}
 	return
 }
 
-// 更新ipv6分组
-func updateIpv6Group(iKuai *api.IKuai, name, url string) (err error) {
+// UpdateIpv6Group 更新ipv6分组
+func UpdateIpv6Group(iKuai *api.IKuai, name, url string) (err error) {
 	log.Println("ipv6分组==  http.get ...", url)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -201,28 +200,28 @@ func updateIpv6Group(iKuai *api.IKuai, name, url string) (err error) {
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = removeIpv4AndRemoveEmptyLine(ips)
-	ipGroups := group(ips, 1000)
+	ips = RemoveIpv4AndRemoveEmptyLine(ips)
+	ipGroups := Group(ips, 1000)
 	last4 := ""
-	if *isIpGroupNameAddRandomSuff == "1" { //https://github.com/joyanhui/ikuai-bypass/issues/76
-		timestamp := time.Now().Unix() // 秒级时间戳（10位，如 1620000000）
+	if *config.IsIpGroupNameAddRandomSuff == "1" {
+		timestamp := time.Now().Unix()
 		str := strconv.FormatInt(timestamp, 10)
-		last4 = "_" + str[len(str)-4:] // 截取字符串最后4位，防止分组名重复导致无法先增加后删除，分组名称最多20个字符，除去 _0_1234 分组名设置中最多13个。
+		last4 = "_" + str[len(str)-4:]
 	}
 	for index, ig := range ipGroups {
 		log.Println("ipv6分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
 		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index)+last4, ipGroup)
 		if err != nil {
-			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
-			time.Sleep(conf.AddWait)
+			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			time.Sleep(config.GlobalConfig.AddWait)
 		}
 	}
 	return
 }
 
-// 更新ip端口分流
-func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string, mode int, ifaceband int) (err error) {
+// UpdateStreamIpPort 更新ip端口分流
+func UpdateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string, mode int, ifaceband int) (err error) {
 
 	var ipGroupList []string
 	for _, ipGroupItem := range strings.Split(ipGroup, ",") {
@@ -235,38 +234,38 @@ func updateStreamIpPort(iKuai *api.IKuai, forwardType string, iface string, next
 	}
 	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop, ipGroup, mode, ifaceband)
 	if err != nil {
-		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", conf.AddErrRetryWait, "秒后重试", err)
-		time.Sleep(conf.AddErrRetryWait)
+		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+		time.Sleep(config.GlobalConfig.AddErrRetryWait)
 	}
 	return
 }
 
-// 登陆爱快
-func loginToIkuai() (*api.IKuai, error) {
-	err := readConf(*confPath)
+// LoginToIkuai 登陆爱快
+func LoginToIkuai() (*api.IKuai, error) {
+	err := config.Read(*config.ConfPath)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
 		return nil, err
 	}
-	if *ikuaiLoginInfo != "" {
+	if *config.IkuaiLoginInfo != "" {
 		log.Println("使用命令行参数登陆爱快")
-		ikuaiLoginInfoArr := strings.Split(*ikuaiLoginInfo, ",")
+		ikuaiLoginInfoArr := strings.Split(*config.IkuaiLoginInfo, ",")
 		if len(ikuaiLoginInfoArr) != 3 {
-			log.Println(*ikuaiLoginInfo)
-			log.Println("命令行参数格式错误，请使用 -login http://ip|username|password ")
-			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip|username|password\"")
+			log.Println(*config.IkuaiLoginInfo)
+			log.Println("命令行参数格式错误，请使用 -login http://ip,username,password ")
+			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip,username,password\"")
 		}
 		iKuai := api.NewIKuai(ikuaiLoginInfoArr[0])
 		err = iKuai.Login(ikuaiLoginInfoArr[1], ikuaiLoginInfoArr[2])
 		if err != nil {
-			log.Println("ikuai 登陆失败：", *ikuaiLoginInfo, err)
+			log.Println("ikuai 登陆失败：", *config.IkuaiLoginInfo, err)
 			return nil, err
 		} else {
 			log.Println("ikuai 登录成功", ikuaiLoginInfoArr[0])
 			return iKuai, nil
 		}
 	} else {
-		baseurl := conf.IkuaiURL
+		baseurl := config.GlobalConfig.IkuaiURL
 		if baseurl == "" {
 			gateway, err := router.GetGateway()
 			if err != nil {
@@ -277,7 +276,7 @@ func loginToIkuai() (*api.IKuai, error) {
 			log.Println("使用默认网关地址：", baseurl)
 		}
 		iKuai := api.NewIKuai(baseurl)
-		err = iKuai.Login(conf.Username, conf.Password)
+		err = iKuai.Login(config.GlobalConfig.Username, config.GlobalConfig.Password)
 		if err != nil {
 			log.Println("ikuai 登陆失败：", baseurl, err)
 			return iKuai, err

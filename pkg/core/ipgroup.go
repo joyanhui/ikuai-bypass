@@ -1,17 +1,20 @@
-package main
+package core
 
 import (
 	"log"
+
+	"github.com/dscao/ikuai-bypass/pkg/config"
+	"github.com/dscao/ikuai-bypass/pkg/utils"
 )
 
-func updateIpgroup() {
-	iKuai, err := loginToIkuai()
+func UpdateIpgroup() {
+	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)
 		return
 	}
 
-	if *delOldRule == "before" {
+	if *config.DelOldRule == "before" {
 		log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ip分组和端口分流")
 		err = iKuai.DelIKuaiBypassIpGroup("cleanAll")
 		if err != nil {
@@ -22,8 +25,8 @@ func updateIpgroup() {
 		}
 	}
 
-	for _, ipGroup := range conf.IpGroup {
-		if *delOldRule == "after" {
+	for _, ipGroup := range config.GlobalConfig.IpGroup {
+		if *config.DelOldRule == "after" {
 			preIds, err := iKuai.GetIpGroup(ipGroup.Name)
 			if err != nil {
 				log.Println("ip分组== 获取准备更新的IP分组列表失败：", ipGroup.Name, err)
@@ -32,7 +35,7 @@ func updateIpgroup() {
 				log.Println("ip分组== 获取准备更新的IP分组列表成功", ipGroup.Name, preIds)
 			}
 
-			err = updateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
+			err = utils.UpdateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
 			if err != nil {
 				log.Printf("ip分组== 添加IP分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
 			} else {
@@ -46,7 +49,7 @@ func updateIpgroup() {
 				}
 			}
 		} else {
-			err := updateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
+			err := utils.UpdateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
 			if err != nil {
 				log.Printf("ip分组== 添加IP分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
 			} else {
@@ -55,7 +58,7 @@ func updateIpgroup() {
 		}
 	}
 
-	if *delOldRule == "before" {
+	if *config.DelOldRule == "before" {
 		err = iKuai.DelIKuaiBypassStreamIpPort("cleanAll")
 		if err != nil {
 			log.Println("端口分流== 删除旧的端口分流失败,退出：", err)
@@ -64,8 +67,8 @@ func updateIpgroup() {
 			log.Println("端口分流== 删除旧的端口分流成功")
 		}
 	}
-	for _, streamIpPort := range conf.StreamIpPort {
-		if *delOldRule == "after" {
+	for _, streamIpPort := range config.GlobalConfig.StreamIpPort {
+		if *config.DelOldRule == "after" {
 			preIds, err := iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
 			if err != nil {
 				log.Println("端口分流== 获取准备更新的端口分流列表失败：", streamIpPort.IpGroup, err)
@@ -74,7 +77,7 @@ func updateIpgroup() {
 				log.Println("端口分流== 获取准备更新的端口分流列表成功", streamIpPort.IpGroup, preIds)
 			}
 
-			err = updateStreamIpPort(
+			err = utils.UpdateStreamIpPort(
 				iKuai,
 				streamIpPort.Type,
 				streamIpPort.Interface,
@@ -104,7 +107,7 @@ func updateIpgroup() {
 				}
 			}
 		} else {
-			err := updateStreamIpPort(
+			err := utils.UpdateStreamIpPort(
 				iKuai,
 				streamIpPort.Type,
 				streamIpPort.Interface,
@@ -130,13 +133,13 @@ func updateIpgroup() {
 	}
 }
 
-func updateIpv6group() {
-	iKuai, err := loginToIkuai()
+func UpdateIpv6group() {
+	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)
 		return
 	}
-	if *delOldRule == "before" {
+	if *config.DelOldRule == "before" {
 		log.Println("Tips: 在添加之前会强制删除所有备注包含 IKUAI_BYPASS 字符的ipv6分组")
 		err = iKuai.DelIKuaiBypassIpv6Group("cleanAll")
 		if err != nil {
@@ -146,8 +149,8 @@ func updateIpv6group() {
 			log.Println("ipv6分组== 删除旧的IPV6分组成功")
 		}
 	}
-	for _, ipv6Group := range conf.Ipv6Group {
-		if *delOldRule == "after" {
+	for _, ipv6Group := range config.GlobalConfig.Ipv6Group {
+		if *config.DelOldRule == "after" {
 			preIds, err := iKuai.GetIpv6Group(ipv6Group.Name)
 			if err != nil {
 				log.Println("ipv6分组== 获取准备更新的IPv6分组列表失败：", ipv6Group.Name, err)
@@ -156,7 +159,7 @@ func updateIpv6group() {
 				log.Println("ipv6分组== 获取准备更新的IPv6分组列表成功", ipv6Group.Name, preIds)
 			}
 
-			err = updateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
+			err = utils.UpdateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
 			if err != nil {
 				log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipv6Group.Name, ipv6Group.URL, err)
 			} else {
@@ -170,7 +173,7 @@ func updateIpv6group() {
 				}
 			}
 		} else {
-			err := updateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
+			err := utils.UpdateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
 			if err != nil {
 				log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipv6Group.Name, ipv6Group.URL, err)
 			} else {

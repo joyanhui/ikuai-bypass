@@ -7,40 +7,32 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/dscao/ikuai-bypass/pkg/config"
+	"github.com/dscao/ikuai-bypass/pkg/core"
 	"github.com/robfig/cron/v3"
 )
-
-var confPath = flag.String("c", "./config.yml", "配置文件路径")
-var runMode = flag.String("r", "cron", "运行模式，马上执行 或者定时执行 或者执行一次")
-var isAcIpgroup = flag.String("m", "ispdomain", "ipgroup(启用ip分组和下一条网关模式) 或者 ispdomain(isp和域名分流模式)")
-var cleanTag = flag.String("tag", "cleanAll", "要清理的分流规则备注名或关键词") //COMMENT_IKUAI_BYPASS
-var exportPath = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
-var ikuaiLoginInfo = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
-var delOldRule = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
-var isIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加") //#issues/76
 
 func main() {
 	flag.Parse()
 
-	if *cleanTag != "cleanAll" {
-		//检查规则名称中是否包含前缀 COMMENT_IKUAI_BYPASS，如果没有添加上
-		if len(*cleanTag) < len("IKUAI_BYPASS") || (*cleanTag)[:len("IKUAI_BYPASS")] != "IKUAI_BYPASS" {
-			*cleanTag = "IKUAI_BYPASS_" + *cleanTag
+	if *config.CleanTag != "cleanAll" {
+		//检查规则名称中是否包含前缀 IKUAI_BYPASS，如果没有添加上
+		if len(*config.CleanTag) < len("IKUAI_BYPASS") || (*config.CleanTag)[:len("IKUAI_BYPASS")] != "IKUAI_BYPASS" {
+			*config.CleanTag = "IKUAI_BYPASS_" + *config.CleanTag
 		}
 	}
 
-	log.Println("运行模式", *runMode, "配置文件", *confPath)
-	err := readConf(*confPath)
-	//log.Println(conf)
+	log.Println("运行模式", *config.RunMode, "配置文件", *config.ConfPath)
+	err := config.Read(*config.ConfPath)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
 		return
 	}
-	switch *runMode { //运行模式选择
+	switch *config.RunMode { //运行模式选择
 	case "exportDomainSteamToTxt":
 		log.Println("导出域名分流规则到txt,可以从爱快内导入 ")
-		log.Println("导出路径:", *exportPath)
-		exportDomainSteamToTxt()
+		log.Println("导出路径:", *config.ExportPath)
+		core.ExportDomainSteamToTxt()
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
@@ -53,30 +45,30 @@ func main() {
 		return
 	case "clean":
 		log.Println("清理模式")
-		if *cleanTag == "cleanAll" {
+		if *config.CleanTag == "cleanAll" {
 			log.Println("清理所有备注中包含", "IKUAI_BYPASS", "的规则")
 		} else {
-			log.Println("清理规则备注为：", *cleanTag, "的规则")
+			log.Println("清理规则备注为：", *config.CleanTag, "的规则")
 		}
-		clean()
+		core.Clean()
 		return
 	default:
 		log.Println("-r 参数错误")
 		return
 	}
 	// 定时任务启动和检查  ================= start
-	if conf.Cron == "" {
-		log.Println("Cron配为空 自动推出")
+	if config.GlobalConfig.Cron == "" {
+		log.Println("Cron配为空 自动退出")
 		return
 	}
 
 	c := cron.New()
-	_, err = c.AddFunc(conf.Cron, updateEntrance)
+	_, err = c.AddFunc(config.GlobalConfig.Cron, updateEntrance)
 	if err != nil {
 		log.Println("启动计划任务失败：", err)
 		return
 	} else {
-		log.Println("已启动计划任务", conf.Cron)
+		log.Println("已启动计划任务", config.GlobalConfig.Cron)
 	}
 	c.Start()
 
@@ -90,26 +82,26 @@ func main() {
 }
 
 func updateEntrance() {
-	switch *isAcIpgroup {
+	switch *config.IsAcIpgroup {
 	case "ispdomain":
 		log.Println("启动 ... 自定义isp和域名分流模式 模式")
-		updateIspRule()
+		core.UpdateIspRule()
 	case "ipgroup":
 		log.Println("启动 ... ip分组和下一条网关模式")
-		updateIpgroup()
+		core.UpdateIpgroup()
 	case "ipv6group":
 		log.Println("启动 ... ipv6分组")
-		updateIpv6group()
+		core.UpdateIpv6group()
 	case "ii":
 		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
 		log.Println("再 启动 ... ip分组和下一条网关模式")
-		updateIspRule()
-		updateIpgroup()
+		core.UpdateIspRule()
+		core.UpdateIpgroup()
 	case "ip":
 		log.Println("先 启动 ...  ip分组和下一条网关模式")
 		log.Println("再 启动 ... ipv6分组")
-		updateIpgroup()
-		updateIpv6group()
+		core.UpdateIpgroup()
+		core.UpdateIpv6group()
 	}
 
 }

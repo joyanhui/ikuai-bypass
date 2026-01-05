@@ -90,7 +90,7 @@
 | 参数 | 说明 | 示例/取值 |
 | :--- | :--- | :--- |
 | `-c` | 配置文件路径 | `-c ./config.yml` |
-| `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合) |
+| `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合), `ip` (ipv4和ipv6分组) |
 | `-r` | 运行模式 | `cron`, `once`, `clean`, `exportDomainSteamToTxt` |
 | `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll` |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |

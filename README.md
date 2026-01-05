@@ -68,7 +68,7 @@ ikuai 可以通过分流规则 把openwrt或者其他路由作为爱快的上级
 - `- isIpGroupNameAddRandomSuff` ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加 [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)
 
 ## 更新日志
-
+- 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
 - 2025-04-23 部分代码规范性处理以及nilness的逻辑修复
 - 2025-04-23 增加开关isIpGroupNameAddRandomSuff [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)
 - 2025-04-23 修复域名分流规则末行空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)

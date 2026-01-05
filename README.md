@@ -14,7 +14,8 @@
 
 - v2.1.2-alpha1 虽然是alpha版，但是功能已经稳定 存在少量不影响使用的bug
 - v3.0.0 版本 增加了ipv6分组 由 [[dscao]](https://github.com/dscao) 提供
-
+- v4.0.0-Pre-alpha 重构了项目结构，修复了端口分流只保留一条的bug，这是一个未经过严格测试的版本。我只在我本地（nixos+qemu-kvm+ikuai 3.7.21 x64 Build202508211345 ）使用默认规则的ispdomain和 ipgroup 执行了once测试
+。
 ### ip分组和端口分流方式 说明：
 
 ikuai 可以通过分流规则 让国内ip直连（或其他ip范围），非国内ip指定下一跳网关通常是openwrt.再把出口流量给上游运营商.实现方式参考[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7) 或者 [[恩山y2kji]](https://www.right.com.cn/forum/thread-8288009-1-1.html) 或B站网友的教程

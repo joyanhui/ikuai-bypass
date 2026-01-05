@@ -161,24 +161,27 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 }
 
 func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
-	log.Println("端口分流== 正在查询 备注为:", COMMENT_IKUAI_BYPASS, "的端口分流规则")
+	fullComment := COMMENT_IKUAI_BYPASS + "_" + tag
+	log.Println("端口分流== 正在查询 备注为:", fullComment, "的端口分流规则")
 	var data []StreamIpPortData
-	data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
+	data, err = i.ShowStreamIpPortByComment(fullComment)
 	if err != nil {
 		return
 	}
 	var ids []string
 
 	for _, d := range data {
-		ids = append(ids, strconv.Itoa(d.ID))
+		if d.Comment == fullComment {
+			ids = append(ids, strconv.Itoa(d.ID))
+		}
 	}
 
 	if len(ids) <= 0 {
-		return "", nil // 返回空字符串和 nil 错误
+		return "", nil
 	}
 
-	preDelIds = strings.Join(ids, ",")  // 将 IDs 连接成逗号分隔的字符串
+	preDelIds = strings.Join(ids, ",")
 
-	return preDelIds, nil   // 返回 IDs 和 nil 错误
+	return preDelIds, nil
 }
 

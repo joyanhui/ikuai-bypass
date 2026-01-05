@@ -5,12 +5,14 @@ ARG TARGETOS
 ARG TARGETARCH
 
 WORKDIR /app
+
 RUN apk add --no-cache tzdata unzip wget
 
-RUN echo "Downloading version: ${VERSION} for ${TARGETOS}/${TARGETARCH}" && \
+RUN echo "Downloading version: ${VERSION}" && \
     wget --no-check-certificate -c -t3 -T60 -O ikuai-bypass.zip \
     "https://github.com/dscao/ikuai-bypass/releases/download/${VERSION}/ikuai-bypass-${TARGETOS}-${TARGETARCH}.zip" && \
     unzip ikuai-bypass.zip && \
+    chmod +x ikuai-bypass && \
     rm -f ikuai-bypass.zip
 
 ENV TZ=Asia/Shanghai

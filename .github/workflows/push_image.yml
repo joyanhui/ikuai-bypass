@@ -16,10 +16,32 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Resolve Version
+        id: get_version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+        
+          INPUT_TAG="${{ github.event.inputs.tag }}"
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            INPUT_TAG="${{ github.ref_name }}"
+          fi
+
+
+          if [ "$INPUT_TAG" = "latest" ] || [ -z "$INPUT_TAG" ]; then
+            echo "Fetching latest release tag from GitHub..."
+            REAL_TAG=$(gh release view --repo dscao/ikuai-bypass --json tagName --jq .tagName)
+            echo "Resolved 'latest' to: $REAL_TAG"
+          else
+            REAL_TAG="$INPUT_TAG"
+            echo "Using specified tag: $REAL_TAG"
+          fi
+
+          echo "VERSION=$REAL_TAG" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -33,14 +55,11 @@ jobs:
         with:
           images: dscao/ikuai-bypass
           tags: |
-            type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=semver,pattern=v{{version}},enable=${{ github.event_name != 'workflow_dispatch' }}
-            type=semver,pattern=v{{major}}.{{minor}},enable=${{ github.event_name != 'workflow_dispatch' }}
+            # 这里也可以直接用我们解析出来的版本号
+            type=raw,value=${{ steps.get_version.outputs.VERSION }}
+            type=raw,value=latest
 
-      - name: Debug tags
-        run: echo "Generated tags： ${{ steps.meta.outputs.tags }}"
-
-      - name: Log in to DOCKERHUB
+      - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -54,5 +73,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          # --- 关键修改：传入解析后的具体版本号 ---
           build-args: |
-            VERSION=${{ github.event.inputs.tag || github.ref_name }}
+            VERSION=${{ steps.get_version.outputs.VERSION }}

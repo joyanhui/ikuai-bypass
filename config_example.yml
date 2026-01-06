@@ -5,7 +5,7 @@ password: admin888 # ikuai user password爱快登陆密码
 cron: 0 7 * * * # crontab 执行更新的周期 格式为linux crontab 格式 注意时区问题，也可以用  @every 24h00m00s  表示每间隔24小时执行一次 openwrt可能需要处理时区 https://github.com/joyanhui/ikuai-bypass/issues/33
 AddErrRetryWait: 10s # 自动重试时间间隔 时间格式为 10s  120s
 AddWait: 1s # 添加规则后等待时间 等待爱快反应 适合性能低的设备
-
+github-proxy: "https://gh-proxy.com/" # Github代理加速地址，例如 https://gh-proxy.com/ (留空不使用)
 webui:
   port: 19000 # WebUI 端口
   user: admin # WebUI 用户名，留空则禁用认证

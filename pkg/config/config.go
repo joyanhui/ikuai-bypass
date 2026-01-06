@@ -30,6 +30,7 @@ type Config struct {
 	Cron            string        `yaml:"cron" json:"cron"`
 	AddErrRetryWait time.Duration `yaml:"AddErrRetryWait" json:"AddErrRetryWait"`
 	AddWait         time.Duration `yaml:"AddWait" json:"AddWait"`
+	GithubProxy     string        `yaml:"github-proxy" json:"github-proxy"` // Github代理加速地址
 	CustomIsp       []struct {
 		Name string `yaml:"name" json:"name"`
 		URL  string `yaml:"url" json:"url"`
@@ -114,6 +115,7 @@ var TopLevelComments = map[string]string{
 	"cron":            "更新周期cron表达式，例如 0 7 * * *",
 	"AddErrRetryWait": "自动重试时间间隔 (10s, 120s)",
 	"AddWait":         "规则添加后的反应等待时间",
+	"github-proxy":    "Github代理加速地址，例如 https://gh-proxy.com/ (留空不使用) 可以通过bing搜索引擎搜索关键词 ghproxy 获取最新可用的，如果留空确定你的ikuai-bypass有良好的网络环境可以访问github",
 	"webui":           "WebUI 管理服务设置",
 	"custom-isp":      "自定义运营商分流 (IP分流)",
 	"stream-domain":   "域名分流 (优先级高于IP分流)",

@@ -14,10 +14,26 @@ import (
 	"github.com/dscao/ikuai-bypass/pkg/ikuai-router"
 )
 
+// GetFullUrl 根据配置的 GithubProxy 转换 URL
+func GetFullUrl(originalURL string) string {
+	proxy := config.GlobalConfig.GithubProxy
+	// 如果代理配置为空，或者原始 URL 不是以 raw.githubusercontent.com 开头，直接返回原始 URL
+	if proxy == "" || !strings.HasPrefix(originalURL, "https://raw.githubusercontent.com/") {
+		return originalURL
+	}
+
+	// 确保代理地址以 / 结尾
+	if !strings.HasSuffix(proxy, "/") {
+		proxy += "/"
+	}
+
+	return proxy + originalURL
+}
+
 // UpdateCustomIsp 更新运营商分流规则
 func UpdateCustomIsp(iKuai *ikuaiapi.IKuai, name string, tag string, url string) (err error) {
 	log.Println("运营商/IP分流==  http.get ...", url)
-	resp, err := http.Get(url)
+	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
 		return
 	}
@@ -58,7 +74,7 @@ func UpdateCustomIsp(iKuai *ikuaiapi.IKuai, name string, tag string, url string)
 // UpdateStreamDomain 更新域名分流规则
 func UpdateStreamDomain(iKuai *ikuaiapi.IKuai, iface, tag, srcAddr, url string) (err error) {
 	log.Println("域名分流==  http.get ...", url)
-	resp, err := http.Get(url)
+	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
 		return
 	}
@@ -149,7 +165,7 @@ func Group(arr []string, subGroupLength int64) [][]string {
 // UpdateIpGroup 更新ip分组
 func UpdateIpGroup(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 	log.Println("ip分组==  http.get ...", url)
-	resp, err := http.Get(url)
+	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
 		return
 	}
@@ -196,7 +212,7 @@ func UpdateIpGroup(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 // UpdateIpv6Group 更新ipv6分组
 func UpdateIpv6Group(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 	log.Println("ipv6分组==  http.get ...", url)
-	resp, err := http.Get(url)
+	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
 		return
 	}

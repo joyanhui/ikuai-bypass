@@ -14,8 +14,9 @@
 ### 2. 开发策略
 - **规则文件更新默认策略**: 默认采用“先增后删” (`-delOldRule after`)。即先成功添加新规则，再删除带有旧标识的规则，以确保在列表下载失败或 API 调用出错时，路由器原有的分流功能不中断。
 - **配置一致性要求**: 新增配置项时，必须确保 `config.yml`、`config_example.yml`、`pkg/config/config.go` 以及 `pkg/webui/webui.html` 四个位置同步更新，并确保 `Save` 函数中的注释注入功能覆盖到新字段。
-- **安全策略**: 任何的失败和错误都不应该导致用户数据丢失。
+- **安全策略**: 在模拟提交数据给ikuai的时候任何的失败和错误都不应该导致用户数据丢失。
 - **安全策略**: 配置文件的覆写 不能被利用来覆盖系统文件 ，只能是文本文件，只能是yaml格式的，后缀只是能yaml/yml，并且不可以有被写入cmd python shell 等危险命令的可能性。
+- **前端UI** ： pkg/webui/webui.html 使用cdn引入的taiwindcss alpine.js bootstrap-icons 使用CDN_PREFIX占位符统一管理cdn地址的前缀。要兼容pc端和移动端，并支持暗黑明亮模式。
 ### 3. iKuai API 交互
 - 逻辑位于 `pkg/ikuai-api/` 目录。
 - 工具并非使用官方公开 SDK，而是通过模拟 Web 登录并发送 JSON POST 请求到 `/Action/call` 等内部接口实现。

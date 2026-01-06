@@ -87,6 +87,9 @@
 ./ikuai-bypass -r clean
 ```
 
+### 3. WebUI 配置与使用
+在 `config.yml` 的 `webui` 配置项中设置端口、用户名和密码。运行 `./ikuai-bypass -r web` 启动后，浏览器访问 `http://IP:19000` 即可在线修改配置和生成命令参数。
+
 ---
 
 ## 参数说明 (CLI Flags)

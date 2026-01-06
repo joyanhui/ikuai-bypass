@@ -180,6 +180,7 @@ services:
 ---
 
 ## 更新日志
+- 2026-01-07 增加中文可视化界面 创建带参数的命令行 以及 在线可视化构建配置文件。
 - 2026-01-06 优化ip、ipv6分组的更新流程，先获取到新数据后删除旧分组，再增加新分组数据。分组名称保持统一。delOldRule与ip、ipv6分组不再有关联。[97](https://github.com/joyanhui/ikuai-bypass/pull/97)
 - 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
 - 2025-04-23 部分代码规范性处理以及nilness的逻辑修复

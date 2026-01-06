@@ -3,10 +3,11 @@ package config
 import (
 	"flag"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -55,14 +56,14 @@ type Config struct {
 		Mode      int    `yaml:"mode" json:"mode"`
 		IfaceBand int    `yaml:"ifaceband" json:"ifaceband"`
 	} `yaml:"stream-ipport" json:"stream-ipport"`
-	WebUI        WebUIConfig   `yaml:"webui" json:"webui"`
+	WebUI WebUIConfig `yaml:"webui" json:"webui"`
 }
 
 type WebUIConfig struct {
-	Port      string `yaml:"port" json:"port"`           // webui 端口
-	User      string `yaml:"user" json:"user"`           // webui 用户名
-	Pass      string `yaml:"pass" json:"pass"`           // webui 密码
-	Enable    bool   `yaml:"enable" json:"enable"`       // 是否启用 WebUI 服务
+	Port      string `yaml:"port" json:"port"`             // webui 端口
+	User      string `yaml:"user" json:"user"`             // webui 用户名
+	Pass      string `yaml:"pass" json:"pass"`             // webui 密码
+	Enable    bool   `yaml:"enable" json:"enable"`         // 是否启用 WebUI 服务
 	CDNPrefix string `yaml:"cdn-prefix" json:"cdn-prefix"` // CDN 前缀
 }
 
@@ -107,7 +108,7 @@ var TopLevelComments = map[string]string{
 	"ikuai-url":       "爱快控制台地址，结尾不要加 \"/\"",
 	"username":        "爱快登陆用户名",
 	"password":        "爱快登陆密码",
-	"cron":            "更新周期，例如 0 7 * * *",
+	"cron":            "更新周期cron表达式，例如 0 7 * * *",
 	"AddErrRetryWait": "自动重试时间间隔 (10s, 120s)",
 	"AddWait":         "规则添加后的反应等待时间",
 	"webui":           "WebUI 管理服务设置",
@@ -136,7 +137,7 @@ var WebuiComments = map[string]string{
 	"user":       "WebUI 用户名 (留空禁用认证)",
 	"pass":       "WebUI 密码",
 	"enable":     "是否启用 WebUI 服务",
-	"cdn-prefix": "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm)",
+	"cdn-prefix": "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm |  https://cdn.jsdmirror.com/npm（国内）)",
 }
 
 // Save 将配置保存到指定文件

@@ -137,15 +137,18 @@
 我没有专门去维护一个docker镜像，因为这个项目没有任何外部依赖只需要一个二进制程序和一个配置文件就可以运行了。你需要先从 Releases 下载对应系统的二进制文件。然后随便找一个linux的docker镜像就可以了。
 <code>
 docker run -itd --name ikuai-bypass --privileged=true --restart=always \
+    -p 19000:19000 \
     -v ~/ikuai-bypass/:/opt/ikuai-bypass/ \
     alpine:latest /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron
 </code>
+注意：<code>-p 19000:19000</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此参数。默认端口为 19000，可在配置文件中修改。
 </details>
 
 <details>
 <summary><b>iKuai Docker 环境</b></summary>
 使用 <code>alpine:latest</code> 镜像，挂载可执行文件，启动命令设置为：
 <code>/bin/sh -c "chmod +x /opt/ikuai-bypass/ikuai-bypass && /opt/ikuai-bypass/ikuai-bypass -r cron -c /opt/ikuai-bypass/config.yml"</code>
+注意：需要在 Docker 配置中添加端口映射 <code>19000:19000</code> 以访问 WebUI 管理界面。默认端口为 19000，可在配置文件中修改。
 </details>
 
 <details>
@@ -163,10 +166,12 @@ services:
       TZ: "Asia/Shanghai"
     volumes:
       - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
+    ports:
+      - "19000:19000"
     command: sh -c "/app/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ipv6group & sleep 30 ; /app/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ii ; wait"
     tty: true
 ```
-
+注意：<code>ports: - "19000:19000"</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此配置。默认端口为 19000，可在配置文件中修改。
 </details>
 
 ---

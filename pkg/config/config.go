@@ -59,10 +59,11 @@ type Config struct {
 }
 
 type WebUIConfig struct {
-	Port   string `yaml:"port" json:"port"`     // webui 端口
-	User   string `yaml:"user" json:"user"`     // webui 用户名
-	Pass   string `yaml:"pass" json:"pass"`     // webui 密码
-	Enable bool   `yaml:"enable" json:"enable"` // 是否启用 WebUI 服务
+	Port      string `yaml:"port" json:"port"`           // webui 端口
+	User      string `yaml:"user" json:"user"`           // webui 用户名
+	Pass      string `yaml:"pass" json:"pass"`           // webui 密码
+	Enable    bool   `yaml:"enable" json:"enable"`       // 是否启用 WebUI 服务
+	CDNPrefix string `yaml:"cdn-prefix" json:"cdn-prefix"` // CDN 前缀
 }
 
 var GlobalConfig Config
@@ -75,6 +76,11 @@ func Read(filename string) error {
 	err = yaml.Unmarshal(buf, &GlobalConfig)
 	if err != nil {
 		return fmt.Errorf("in file %q: %v", filename, err)
+	}
+
+	// 设置默认 CDN 前缀
+	if GlobalConfig.WebUI.CDNPrefix == "" {
+		GlobalConfig.WebUI.CDNPrefix = "https://cdn.jsdelivr.net/npm"
 	}
 
 	// 检查每个 CustomIsp 的 Tag，如果不存在，则使用 Name
@@ -166,10 +172,11 @@ func addCommentsToNode(node *yaml.Node) {
 
 	// WebUI 子项注释
 	webuiComments := map[string]string{
-		"port":   "WebUI 服务端口",
-		"user":   "WebUI 用户名 (留空禁用认证)",
-		"pass":   "WebUI 密码",
-		"enable": "是否启用 WebUI 服务",
+		"port":       "WebUI 服务端口",
+		"user":       "WebUI 用户名 (留空禁用认证)",
+		"pass":       "WebUI 密码",
+		"enable":     "是否启用 WebUI 服务",
+		"cdn-prefix": "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm)",
 	}
 
 	for i := 0; i < len(node.Content); i += 2 {

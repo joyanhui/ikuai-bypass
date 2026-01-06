@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dscao/ikuai-bypass/pkg/config"
@@ -59,7 +60,17 @@ func createServer(port string) *http.Server {
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(htmlContent)
+
+		cdnPrefix := config.GlobalConfig.WebUI.CDNPrefix
+		if cdnPrefix == "" {
+			cdnPrefix = "https://cdn.jsdelivr.net/npm"
+		}
+
+		content := string(htmlContent)
+		// 简单的模板替换
+		content = strings.ReplaceAll(content, "{{CDN_PREFIX}}", cdnPrefix)
+
+		w.Write([]byte(content))
 	})
 
 	// API: 获取配置

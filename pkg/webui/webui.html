@@ -4,20 +4,17 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>iKuai Bypass 配置助手</title>
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="{{CDN_PREFIX}}/@tailwindcss/browser@4"></script>
         <!-- Alpine.js -->
         <script
             defer
-            src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
+            src="{{CDN_PREFIX}}/alpinejs@3.13.3/dist/cdn.min.js"
         ></script>
-        <!-- Bootstrap Icons -->
         <link
             rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+            href="{{CDN_PREFIX}}/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
         />
-        <!-- JS-YAML -->
-        <script src=" https://cdn.jsdelivr.net/npm/js-yaml@4.1.1/dist/js-yaml.min.js "></script>
+        <script src="{{CDN_PREFIX}}/js-yaml@4.1.1/dist/js-yaml.min.js"></script>
         <style>
             [x-cloak] {
                 display: none !important;
@@ -86,11 +83,61 @@
                 <div x-show="currentTab === 'tool'" x-cloak class="space-y-12">
                     <!-- Section 1: Command Builder -->
                     <section class="space-y-6">
-                        <h2
-                            class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2"
-                        >
-                            <i class="bi bi-terminal"></i> 1. 运行命令生成
-                        </h2>
+                        <div class="flex items-center justify-between border-b pb-2">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <i class="bi bi-terminal"></i> 1. 运行命令生成
+                            </h2>
+                            <div class="flex gap-2">
+                                <button
+                                    @click="restoreDefaultCmd()"
+                                    class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition flex items-center gap-1"
+                                >
+                                    <i class="bi bi-arrow-counterclockwise"></i> 恢复默认
+                                </button>
+                                <div class="relative" x-data="{ open: false }">
+                                    <button
+                                        @click="open = !open"
+                                        class="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition flex items-center gap-1"
+                                    >
+                                        <i class="bi bi-bookmark-plus"></i> 命令预设 <span x-text="`(${presets.length}/5)`"></span>
+                                    </button>
+                                    <div
+                                        x-show="open"
+                                        @click.away="open = false"
+                                        class="absolute right-0 mt-2 w-72 bg-white border rounded-lg shadow-xl z-50 p-4 space-y-3"
+                                        x-cloak
+                                    >
+                                        <div class="flex justify-between items-center border-b pb-2">
+                                            <span class="font-bold text-sm">已存预设</span>
+                                            <button @click="savePreset()" :disabled="presets.length >= 5" class="text-blue-600 text-xs font-bold disabled:text-gray-400">
+                                                + 保存当前
+                                            </button>
+                                        </div>
+                                        <div class="max-h-60 overflow-y-auto space-y-2">
+                                            <template x-for="(p, index) in presets" :key="index">
+                                                <div class="group flex items-center justify-between p-2 hover:bg-gray-50 rounded border">
+                                                    <div class="flex-1 cursor-pointer" @click="loadPreset(index); open = false">
+                                                        <div class="text-xs font-bold text-gray-800" x-text="p.name"></div>
+                                                        <div class="text-[10px] text-gray-500 truncate w-40" x-text="p.runMode"></div>
+                                                    </div>
+                                                    <div class="flex gap-1">
+                                                        <button @click.stop="renamePreset(index)" class="text-gray-400 hover:text-blue-600 p-1">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                        <button @click.stop="deletePreset(index)" class="text-gray-400 hover:text-red-600 p-1">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <div x-show="presets.length === 0" class="text-center py-4 text-gray-400 text-xs">
+                                                暂无预设
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="grid md:grid-cols-2 gap-6">
                             <!-- Left: Form -->
                             <div class="space-y-4">
@@ -503,23 +550,32 @@
                                         placeholder="admin"
                                     />
                                 </div>
-                                <div>
-                                    <label
-                                        class="text-xs font-bold text-gray-500 uppercase"
-                                        >Password
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
-                                    <input
-                                        type="text"
-                                        x-model="config.webui.pass"
-                                        class="w-full border p-2 rounded text-sm"
-                                        placeholder="leave empty to disable auth"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                                                                <div>
+                                                                    <label
+                                                                        class="text-xs font-bold text-gray-500 uppercase"
+                                                                        >Password <span class="text-red-500">*</span></label
+                                                                    >
+                                                                    <input
+                                                                        type="text"
+                                                                        x-model="config.webui.pass"
+                                                                        class="w-full border p-2 rounded text-sm"
+                                                                        placeholder="leave empty to disable auth"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label
+                                                                        class="text-xs font-bold text-gray-500 uppercase"
+                                                                        >CDN Prefix <span class="text-red-500">*</span></label
+                                                                    >
+                                                                    <input
+                                                                        type="text"
+                                                                        x-model="config.webui.cdnPrefix"
+                                                                        class="w-full border p-2 rounded text-sm"
+                                                                        placeholder="https://cdn.jsdelivr.net/npm"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
 
                         <!-- Custom ISP -->
                         <div class="space-y-2">
@@ -695,6 +751,56 @@
                             </template>
                         </div>
 
+                        <!-- IPv6 Group -->
+                        <div class="space-y-2">
+                            <div
+                                class="flex justify-between items-center border-b pb-2"
+                            >
+                                <h3 class="font-bold text-gray-800">
+                                    IPv6 分组 (IPv6 Group)
+                                </h3>
+                                <button
+                                    @click="addItem('ipv6Group')"
+                                    class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                                >
+                                    <i class="bi bi-plus"></i> 添加
+                                </button>
+                            </div>
+                            <template
+                                x-for="(item, index) in config.ipv6Group"
+                                :key="index"
+                            >
+                                <div
+                                    class="grid md:grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded border border-gray-100"
+                                >
+                                    <div class="md:col-span-4">
+                                        <input
+                                            type="text"
+                                            x-model="item.name"
+                                            placeholder="Group Name (e.g., 国内v6)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-7">
+                                        <input
+                                            type="text"
+                                            x-model="item.url"
+                                            placeholder="URL"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-1 text-right">
+                                        <button
+                                            @click="removeItem('ipv6Group', index)"
+                                            class="text-red-500 hover:text-red-700"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
                         <!-- Stream IP Port -->
                         <div class="space-y-2">
                             <div
@@ -856,15 +962,26 @@
                     x-cloak
                     class="prose max-w-none text-gray-700 space-y-4"
                 >
-                    <h2 class="text-2xl font-bold text-gray-800">
-                        快速使用说明
-                    </h2>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 gap-4">
+                        <h2 class="text-2xl font-bold text-gray-800 m-0">
+                            快速使用说明
+                        </h2>
+                        <div class="flex gap-4">
+                            <a href="https://github.com/joyanhui/ikuai-bypass" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm font-medium">
+                                <i class="bi bi-github"></i> 项目主页
+                            </a>
+                            <a href="https://github.com/joyanhui/ikuai-bypass/blob/main/README.md" target="_blank" class="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm font-medium">
+                                <i class="bi bi-file-text"></i> 详细文档 (README)
+                            </a>
+                        </div>
+                    </div>
+
                     <div
                         class="bg-blue-50 p-4 rounded-lg border border-blue-100"
                     >
                         <p class="font-bold text-blue-800">第一步：配置准备</p>
                         <p>
-                            在“配置助手”下方，填写您的爱快路由器登录地址、用户名和密码。建议在“自定义运营商”或“域名分流”中添加您需要的订阅地址。
+                            在“配置助手”页面的下方，填写您的爱快路由器登录信息。根据需求在 <b>自定义运营商</b>、<b>域名分流</b> 或 <b>IP分组</b> 中添加订阅地址。
                         </p>
                     </div>
                     <div
@@ -872,11 +989,8 @@
                     >
                         <p class="font-bold text-green-800">第二步：保存配置</p>
                         <p>
-                            点击“复制完整配置”，将生成的内容保存到程序同目录下的
-                            <code class="bg-white px-1 border rounded"
-                                >config.yml</code
-                            >
-                            文件中。
+                            您可以直接点击页面底部的 <b>“保存到服务器”</b> 按钮，程序会自动将配置安全地写入当前的 <code>config.yml</code> 文件。
+                            或者点击“复制完整配置”，手动保存到程序同目录下的配置文件中。
                         </p>
                     </div>
                     <div
@@ -886,22 +1000,27 @@
                             第三步：执行程序
                         </p>
                         <p>
-                            根据您的需求在上方“运行命令生成”处选择模式。如果是首次运行，可以使用
-                            <code class="bg-white px-1 border rounded"
-                                >once</code
-                            >
-                            模式测试。如果是长期运行，建议使用
-                            <code class="bg-white px-1 border rounded"
-                                >cron</code
-                            >
-                            模式。
+                            在“运行命令生成”处选择运行模式：
+                            <ul class="list-disc pl-5 mt-2 text-sm">
+                                <li><b>cron</b>: 立即同步一次，随后根据 Cron 表达式定时运行。</li>
+                                <li><b>once</b>: 仅执行一次同步并立即退出（适合系统任务计划）。</li>
+                                <li><b>web</b>: 仅启动此管理后台，不执行同步。</li>
+                                <li><b>clean</b>: 清理所有由本工具创建的分流规则。</li>
+                            </ul>
+                            复制生成的命令并在终端/脚本中执行。
                         </p>
                     </div>
                     <hr />
                     <h3 class="font-bold text-lg">注意事项：</h3>
-                    <ul class="list-disc pl-5 space-y-2">
+                    <ul class="list-disc pl-5 space-y-2 text-sm">
                         <li>
-                            本界面只是提供参考命令和配置文件模板，不会实际修改配置文件
+                            <b>重启生效</b>：带有 <span class="text-red-500">*</span> 标注的配置项（如 Cron 表达式、WebUI 端口）在保存后，需要手动重启程序才能生效。
+                        </li>
+                        <li>
+                            <b>配置文件</b>：保存操作会保留关键注释说明，方便您日后手动编辑。
+                        </li>
+                        <li>
+                            <b>安全性</b>：建议在 WebUI 设置中配置用户名和密码，以保护您的配置信息。
                         </li>
                     </ul>
                 </div>
@@ -932,6 +1051,8 @@
                         randomSuff: "1",
                     },
 
+                    presets: [],
+
                     // Config Logic
                     config: {
                         ikuaiUrl: "http://192.168.1.1",
@@ -945,6 +1066,7 @@
                             port: "8080",
                             user: "",
                             pass: "",
+                            cdnPrefix: "https://cdn.jsdelivr.net/npm",
                         },
                         customIsp: [
                             {
@@ -961,6 +1083,74 @@
 
                     init() {
                         this.loadConfig();
+                        this.loadPresets();
+                    },
+
+                    loadPresets() {
+                        const saved = localStorage.getItem("cmd_presets");
+                        if (saved) {
+                            try {
+                                this.presets = JSON.parse(saved);
+                            } catch (e) {
+                                this.presets = [];
+                            }
+                        }
+                    },
+
+                    savePresetsToStorage() {
+                        localStorage.setItem("cmd_presets", JSON.stringify(this.presets));
+                    },
+
+                    savePreset() {
+                        if (this.presets.length >= 5) {
+                            alert("最多只能保存 5 个预设");
+                            return;
+                        }
+                        const name = prompt("请输入预设名称:", `预设 ${this.presets.length + 1}`);
+                        if (!name) return;
+
+                        this.presets.push({
+                            name: name,
+                            data: JSON.parse(JSON.stringify(this.cmd))
+                        });
+                        this.savePresetsToStorage();
+                    },
+
+                    loadPreset(index) {
+                        this.cmd = JSON.parse(JSON.stringify(this.presets[index].data));
+                    },
+
+                    deletePreset(index) {
+                        if (confirm(`确定要删除预设 "${this.presets[index].name}" 吗？`)) {
+                            this.presets.splice(index, 1);
+                            this.savePresetsToStorage();
+                        }
+                    },
+
+                    renamePreset(index) {
+                        const newName = prompt("请输入新的预设名称:", this.presets[index].name);
+                        if (newName) {
+                            this.presets[index].name = newName;
+                            this.savePresetsToStorage();
+                        }
+                    },
+
+                    restoreDefaultCmd() {
+                        if (confirm("确定要恢复命令生成的默认设置吗？")) {
+                            this.cmd = {
+                                exePath: this.cmd.exePath, // 保留从服务器获取的路径
+                                configPath: "./config.yml",
+                                runMode: "cron",
+                                module: "ispdomain",
+                                useCustomLogin: false,
+                                loginUrl: "",
+                                loginUser: "",
+                                loginPass: "",
+                                cleanTag: "",
+                                delOldRule: "after",
+                                randomSuff: "1",
+                            };
+                        }
                     },
 
                     async loadConfig() {
@@ -990,6 +1180,7 @@
                                     data.webui.port || "8080";
                                 this.config.webui.user = data.webui.user || "";
                                 this.config.webui.pass = data.webui.pass || "";
+                                this.config.webui.cdnPrefix = data.webui["cdn-prefix"] || "https://cdn.jsdelivr.net/npm";
                             }
 
                             // Arrays
@@ -1011,7 +1202,9 @@
                             this.config.ipGroup = (data["ip-group"] || []).map(
                                 (i) => ({ name: i.name, url: i.url }),
                             );
-                            // ipv6-group if needed
+                            this.config.ipv6Group = (data["ipv6-group"] || []).map(
+                                (i) => ({ name: i.name, url: i.url }),
+                            );
                             this.config.streamIpPort = (
                                 data["stream-ipport"] || []
                             ).map((i) => ({
@@ -1069,6 +1262,7 @@
                                     port: this.config.webui.port,
                                     user: this.config.webui.user,
                                     pass: this.config.webui.pass,
+                                    "cdn-prefix": this.config.webui.cdnPrefix,
                                 },
                                 "custom-isp": this.config.customIsp,
                                 "stream-domain": this.config.streamDomain.map(
@@ -1080,6 +1274,7 @@
                                     }),
                                 ),
                                 "ip-group": this.config.ipGroup,
+                                "ipv6-group": this.config.ipv6Group,
                                 "stream-ipport": this.config.streamIpPort.map(
                                     (x) => ({
                                         type: String(x.type),
@@ -1195,13 +1390,15 @@
                         if (
                             this.config.webui.enable ||
                             this.config.webui.port ||
-                            this.config.webui.user
+                            this.config.webui.user ||
+                            this.config.webui.cdnPrefix
                         ) {
                             cleanConfig["webui"] = {
                                 enable: this.config.webui.enable,
                                 port: this.config.webui.port,
                                 user: this.config.webui.user,
                                 pass: this.config.webui.pass,
+                                "cdn-prefix": this.config.webui.cdnPrefix,
                             };
                         }
 
@@ -1220,6 +1417,8 @@
                                 });
                         if (this.config.ipGroup.length > 0)
                             cleanConfig["ip-group"] = this.config.ipGroup;
+                        if (this.config.ipv6Group.length > 0)
+                            cleanConfig["ipv6-group"] = this.config.ipv6Group;
 
                         if (this.config.streamIpPort.length > 0) {
                             cleanConfig["stream-ipport"] =
@@ -1258,6 +1457,8 @@
                             });
                         if (arrayName === "ipGroup")
                             this.config.ipGroup.push({ name: "", url: "" });
+                        if (arrayName === "ipv6Group")
+                            this.config.ipv6Group.push({ name: "", url: "" });
                         if (arrayName === "streamIpPort")
                             this.config.streamIpPort.push({
                                 type: "0",

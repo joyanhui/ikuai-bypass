@@ -11,6 +11,7 @@ webui:
   user: admin # WebUI 用户名，留空则禁用认证
   pass: admin888 # WebUI 密码
   enable: true # 是否启用 WebUI 服务，true 启用，false 不启用
+  cdn-prefix: https://cdn.jsdelivr.net/npm # CDN 前缀
 
 ip-group: # IP分组 和端口分流配合使用
   - name: 国内 # IP分组名称，分为多个时在名称后面拼接“序号”，如“国内_1”  因为爱快的ip分组没有备注功能，这里使用  IKUAI_BYPASS_<国内>_<01>来区分，

@@ -39,6 +39,13 @@ func StartServer() {
 		log.Fatalf("WebUI Server failed: %v", err)
 	}
 }
+func IsAndStartWebUI() {
+	if ShouldStartWebUI() {
+		StartServer()
+	} else {
+		log.Println("WebUI 模式未启用")
+	}
+}
 
 // StartServerAsync 异步启动 WebUI 服务（非阻塞）
 func StartServerAsync() {
@@ -158,5 +165,3 @@ func basicAuth(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-		

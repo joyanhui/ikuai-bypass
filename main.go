@@ -36,27 +36,16 @@ func main() {
 		core.ExportDomainSteamToTxt()
 		return
 	case "web":
-		log.Println("启动 WebUI 配置界面...")
-		// 如果配置文件不存在，尝试创建一个空的或使用默认值，以免读取失败导致无法启动 WebUI
-			if config.GlobalConfig.WebUI.Port == "" {
-				config.GlobalConfig.WebUI.Port = "8080"
-			}
-		
-		webui.StartServer()
+		log.Println("WebUI 模式 不做其他操作")
+		go webui.IsAndStartWebUI()
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
-		updateEntrance()
-		// 检查是否需要启动 WebUI
-		if webui.ShouldStartWebUI() {
-			webui.StartServerAsync()
-		}
+		go webui.IsAndStartWebUI()
+		updateEntrance() //马上执行依次
 	case "cronAft":
 		log.Println("cronAft 模式，暂时不执行，稍后定时执行")
-		// 检查是否需要启动 WebUI
-		if webui.ShouldStartWebUI() {
-			webui.StartServerAsync()
-		}
+		go webui.IsAndStartWebUI()
 	case "nocron", "once", "1":
 		updateEntrance()
 		log.Println("once 模式 执行完毕自动退出")
@@ -70,6 +59,7 @@ func main() {
 		}
 		core.Clean()
 		return
+
 	default:
 		log.Println("-r 参数错误")
 		return

@@ -122,7 +122,7 @@ var TopLevelComments = map[string]string{
 // ItemComments 列表项内部字段注释映射
 var ItemComments = map[string]string{
 	"type":      "分流方式：0-外网线路，1-下一跳网关",
-	"mode":      "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP",
+	"mode":      "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式",
 	"ifaceband": "线路绑定：0-不勾选，1-勾选",
 	"interface": "分流线路 (如 wan1)",
 	"nexthop":   "下一跳网关地址",

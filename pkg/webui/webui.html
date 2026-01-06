@@ -21,22 +21,34 @@
             }
         </style>
     </head>
-    <body class="bg-gray-100 min-h-screen font-sans" x-data="appData()">
+    <body class="bg-gray-100 dark:bg-gray-900 min-h-screen font-sans transition-colors duration-300" x-data="appData()" :class="{ 'dark': isDark() }">
         <!-- Header -->
-        <header class="bg-blue-600 text-white shadow-lg">
+        <header class="bg-blue-600 dark:bg-blue-800 text-white shadow-lg">
             <div class="container mx-auto px-4 py-6">
                 <div
-                    class="flex flex-col md:flex-row justify-between items-center"
+                    class="flex flex-col md:flex-row justify-between items-center gap-4"
                 >
-                    <div>
-                        <h1 class="text-3xl font-bold flex items-center gap-2">
+                    <div class="text-center md:text-left">
+                        <h1 class="text-3xl font-bold flex items-center justify-center md:justify-start gap-2">
                             <i class="bi bi-router"></i> iKuai Bypass 助手
                         </h1>
                         <p class="mt-2 text-blue-100 text-sm">
-                            爱快路由器自动化分流规则同步工具配置生成器（这是一个测试功能，需谨慎使用）
+                            爱快路由器自动化分流规则同步工具配置生成器
                         </p>
                     </div>
-                    <div class="mt-4 md:mt-0 flex gap-3">
+                    <div class="flex flex-wrap justify-center gap-3">
+                        <!-- Theme Toggle -->
+                        <div class="bg-white/10 p-1 rounded-lg flex gap-1 mr-2">
+                            <button @click="setTheme('light')" :class="theme === 'light' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/20'" class="px-2 py-1 rounded text-xs transition flex items-center gap-1">
+                                <i class="bi bi-sun-fill"></i> <span class="hidden sm:inline">明亮</span>
+                            </button>
+                            <button @click="setTheme('dark')" :class="theme === 'dark' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/20'" class="px-2 py-1 rounded text-xs transition flex items-center gap-1">
+                                <i class="bi bi-moon-stars-fill"></i> <span class="hidden sm:inline">暗黑</span>
+                            </button>
+                            <button @click="setTheme('auto')" :class="theme === 'auto' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/20'" class="px-2 py-1 rounded text-xs transition flex items-center gap-1">
+                                <i class="bi bi-display"></i> <span class="hidden sm:inline">自动</span>
+                            </button>
+                        </div>
                         <a
                             href="https://github.com/joyanhui/ikuai-bypass"
                             target="_blank"
@@ -56,47 +68,67 @@
             </div>
         </header>
 
-        <!-- Main Content -->
-        <main class="container mx-auto px-4 py-8 max-w-6xl">
-            <!-- Tabs -->
-            <div class="bg-white rounded-t-xl shadow-sm border-b">
-                <nav class="flex overflow-x-auto">
-                    <button
-                        @click="currentTab = 'help'"
-                        :class="{'border-blue-500 text-blue-600': currentTab === 'help', 'border-transparent text-gray-500 hover:text-gray-700': currentTab !== 'help'}"
-                        class="px-4 md:px-6 py-4 text-sm font-medium border-b-2 transition flex items-center gap-2 whitespace-nowrap"
-                    >
-                        <i class="bi bi-question-circle"></i> 使用说明
-                    </button>
-                    <button
-                        @click="currentTab = 'tool'"
-                        :class="{'border-blue-500 text-blue-600': currentTab === 'tool', 'border-transparent text-gray-500 hover:text-gray-700': currentTab !== 'tool'}"
-                        class="px-4 md:px-6 py-4 text-sm font-medium border-b-2 transition flex items-center gap-2 whitespace-nowrap"
-                    >
-                        <i class="bi bi-gear-fill"></i> 配置助手
-                    </button>
-                </nav>
-            </div>
+                <!-- Main Content -->
 
-            <div
-                class="bg-white rounded-b-xl shadow-md p-4 md:p-6 min-h-[500px]"
-            >
-                <!-- Tab: Tool (Combined Command + Config) -->
-                <div
-                    x-show="currentTab === 'tool'"
-                    x-cloak
-                    class="space-y-8 md:space-y-12"
-                >
-                    <!-- Section 1: Command Builder -->
-                    <section class="space-y-6">
-                        <div
-                            class="flex flex-col md:flex-row md:items-center justify-between border-b pb-2 gap-4"
-                        >
-                            <h2
-                                class="text-xl font-bold text-gray-800 flex items-center gap-2"
+                <main class="container mx-auto px-4 py-8 max-w-6xl">
+
+                    <!-- Tabs -->
+
+                    <div class="bg-white dark:bg-gray-800 rounded-t-xl shadow-sm border-b dark:border-gray-700">
+
+                        <nav class="flex overflow-x-auto">
+
+                            <button
+
+                                @click="currentTab = 'help'"
+
+                                :class="{'border-blue-500 text-blue-600 dark:text-blue-400': currentTab === 'help', 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200': currentTab !== 'help'}"
+
+                                class="px-4 md:px-6 py-4 text-sm font-medium border-b-2 transition flex items-center gap-2 whitespace-nowrap"
+
                             >
-                                <i class="bi bi-terminal"></i> 1. 运行命令生成
-                            </h2>
+
+                                <i class="bi bi-question-circle"></i> 使用说明
+
+                            </button>
+
+                            <button
+
+                                @click="currentTab = 'tool'"
+
+                                :class="{'border-blue-500 text-blue-600 dark:text-blue-400': currentTab === 'tool', 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200': currentTab !== 'tool'}"
+
+                                class="px-4 md:px-6 py-4 text-sm font-medium border-b-2 transition flex items-center gap-2 whitespace-nowrap"
+
+                            >
+
+                                <i class="bi bi-gear-fill"></i> 配置助手
+
+                            </button>
+
+                        </nav>
+
+                    </div>
+
+        
+
+                    <div class="bg-white dark:bg-gray-800 rounded-b-xl shadow-md p-4 md:p-6 min-h-[500px]">
+
+                        <!-- Tab: Tool (Combined Command + Config) -->
+
+                        <div x-show="currentTab === 'tool'" x-cloak class="space-y-8 md:space-y-12">
+
+                            <!-- Section 1: Command Builder -->
+
+                            <section class="space-y-6">
+
+                                <div class="flex flex-col md:flex-row md:items-center justify-between border-b dark:border-gray-700 pb-2 gap-4">
+
+                                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+
+                                        <i class="bi bi-terminal"></i> 1. 运行命令生成
+
+                                    </h2>
                             <div class="flex flex-wrap gap-2">
                                 <button
                                     @click="restoreDefaultCmd()"
@@ -190,195 +222,161 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="grid lg:grid-cols-2 gap-6">
-                            <!-- Left: Form -->
-                            <div class="space-y-4">
-                                <div
-                                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
-                                >
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 mb-1"
-                                            >配置文件路径 (-c)</label
-                                        >
-                                        <input
-                                            type="text"
-                                            x-model="cmd.configPath"
-                                            class="w-full border p-2 rounded focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                            placeholder="./config.yml"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 mb-1"
-                                            >运行模式 (-r)</label
-                                        >
-                                        <select
-                                            x-model="cmd.runMode"
-                                            class="w-full border p-2 rounded text-sm"
-                                        >
-                                            <option value="cron">
-                                                cron (计划任务模式:
-                                                立即同步后定时)
-                                            </option>
-                                            <option value="cronAft">
-                                                cronAft (延迟计划任务:
-                                                直接进入定时)
-                                            </option>
-                                            <option value="once">
-                                                once (单次模式: 同步后退出)
-                                            </option>
-                                            <option value="web">
-                                                web (WebUI 模式: 仅启动 Web)
-                                            </option>
-                                            <option value="clean">
-                                                clean (清理模式: 删除规则)
-                                            </option>
-                                            <option
-                                                value="exportDomainSteamToTxt"
-                                            >
-                                                export (导出模式: 导出 TXT)
-                                            </option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label
-                                        class="block text-sm font-medium text-gray-700 mb-1"
-                                        >功能模块 (-m)</label
-                                    >
-                                    <select
-                                        x-model="cmd.module"
-                                        class="w-full border p-2 rounded text-sm"
-                                    >
-                                        <option value="ispdomain">
-                                            ispdomain (运营商+域名分流)
-                                        </option>
-                                        <option value="ipgroup">
-                                            ipgroup (IP分组+端口分流)
-                                        </option>
-                                        <option value="ipv6group">
-                                            ipv6group (IPv6分组)
-                                        </option>
-                                        <option value="ii">
-                                            ii (混合: ispdomain + ipgroup)
-                                        </option>
-                                        <option value="ip">
-                                            ip (混合: ipgroup + ipv6group)
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div
-                                    class="p-4 bg-gray-50 rounded border border-gray-200"
-                                >
-                                    <label
-                                        class="flex items-center gap-2 mb-2 cursor-pointer"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            x-model="cmd.useCustomLogin"
-                                            class="rounded text-blue-600"
-                                        />
-                                        <span
-                                            class="text-sm font-medium text-gray-700"
-                                            >覆盖配置文件的登录信息</span
-                                        >
-                                    </label>
-                                    <div
-                                        x-show="cmd.useCustomLogin"
-                                        class="space-y-2 mt-2"
-                                    >
-                                        <input
-                                            type="text"
-                                            x-model="cmd.loginUrl"
-                                            placeholder="http://192.168.1.1"
-                                            class="w-full text-sm border p-2 rounded"
-                                        />
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <input
-                                                type="text"
-                                                x-model="cmd.loginUser"
-                                                placeholder="admin"
-                                                class="w-full text-sm border p-2 rounded"
-                                            />
-                                            <input
-                                                type="text"
-                                                x-model="cmd.loginPass"
-                                                placeholder="password"
-                                                class="w-full text-sm border p-2 rounded"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div
-                                    x-show="cmd.runMode === 'clean'"
-                                    class="p-4 bg-red-50 rounded border border-red-200"
-                                >
-                                    <div
-                                        class="flex justify-between items-center mb-1"
-                                    >
-                                        <label
-                                            class="block text-sm font-medium text-red-700"
-                                            >清理标签 (-tag)</label
-                                        >
-                                        <button
-                                            @click="cmd.cleanTag = 'cleanAll'"
-                                            class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded hover:bg-red-200 transition"
-                                        >
-                                            使用 cleanAll
-                                        </button>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        x-model="cmd.cleanTag"
-                                        class="w-full text-sm border p-2 rounded border-red-300"
-                                        placeholder="默认为 cleanAll"
-                                    />
-                                </div>
-
-                                <div
-                                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
-                                >
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 mb-1"
-                                            >旧规则删除时机</label
-                                        >
-                                        <select
-                                            x-model="cmd.delOldRule"
-                                            class="w-full border p-2 rounded text-sm"
-                                        >
-                                            <option value="after">
-                                                after (更新成功后删)
-                                            </option>
-                                            <option value="before">
-                                                before (更新前先删)
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 mb-1"
-                                            >IP分组名随机后缀</label
-                                        >
-                                        <select
-                                            x-model="cmd.randomSuff"
-                                            class="w-full border p-2 rounded text-sm"
-                                        >
-                                            <option value="1">1 (开启)</option>
-                                            <option value="0">0 (关闭)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                                                <div class="grid lg:grid-cols-2 gap-6">
+                                                    <!-- Left: Form -->
+                                                    <div class="space-y-4">
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label
+                                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                                                    >配置文件路径 (-c)</label
+                                                                >
+                                                                <input
+                                                                    type="text"
+                                                                    x-model="cmd.configPath"
+                                                                    class="w-full border dark:border-gray-600 p-2 rounded focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                                                    placeholder="./config.yml"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label
+                                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                                                    >运行模式 (-r)</label
+                                                                >
+                                                                <select
+                                                                    x-model="cmd.runMode"
+                                                                    class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                                                >
+                                                                    <option value="cron">cron (计划任务: 立即同步后定时)</option>
+                                                                    <option value="cronAft">cronAft (延迟计划任务: 直接进入定时)</option>
+                                                                    <option value="once">once (单次模式: 同步后退出)</option>
+                                                                    <option value="web">web (WebUI 模式: 仅启动 Web)</option>
+                                                                    <option value="clean">clean (清理模式: 删除规则)</option>
+                                                                    <option value="exportDomainSteamToTxt">export (导出模式: 导出 TXT)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                        
+                                                        <div>
+                                                            <label
+                                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                                                >功能模块 (-m)</label
+                                                            >
+                                                            <select
+                                                                x-model="cmd.module"
+                                                                class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                                            >
+                                                                <option value="ispdomain">ispdomain (运营商+域名分流)</option>
+                                                                <option value="ipgroup">ipgroup (IP分组+端口分流)</option>
+                                                                <option value="ipv6group">ipv6group (IPv6分组)</option>
+                                                                <option value="ii">ii (混合: ispdomain + ipgroup)</option>
+                                                                <option value="ip">ip (混合: ipgroup + ipv6group)</option>
+                                                            </select>
+                                                        </div>
+                        
+                                                        <div
+                                                            class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600"
+                                                        >
+                                                            <label
+                                                                class="flex items-center gap-2 mb-2 cursor-pointer"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    x-model="cmd.useCustomLogin"
+                                                                    class="rounded text-blue-600"
+                                                                />
+                                                                <span
+                                                                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                                                                    >覆盖配置文件的登录信息</span
+                                                                >
+                                                            </label>
+                                                            <div
+                                                                x-show="cmd.useCustomLogin"
+                                                                class="space-y-2 mt-2"
+                                                            >
+                                                                <input
+                                                                    type="text"
+                                                                    x-model="cmd.loginUrl"
+                                                                    placeholder="http://192.168.1.1"
+                                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 dark:text-white"
+                                                                />
+                                                                <div class="grid grid-cols-2 gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        x-model="cmd.loginUser"
+                                                                        placeholder="admin"
+                                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 dark:text-white"
+                                                                    />
+                                                                    <input
+                                                                        type="text"
+                                                                        x-model="cmd.loginPass"
+                                                                        placeholder="password"
+                                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-700 dark:text-white"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                        
+                                                        <div
+                                                            x-show="cmd.runMode === 'clean'"
+                                                            class="p-4 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800"
+                                                        >
+                                                            <div
+                                                                class="flex justify-between items-center mb-1"
+                                                            >
+                                                                <label
+                                                                    class="block text-sm font-medium text-red-700 dark:text-red-400"
+                                                                    >清理标签 (-tag)</label
+                                                                >
+                                                                <button
+                                                                    @click="cmd.cleanTag = 'cleanAll'"
+                                                                    class="text-xs bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 px-2 py-0.5 rounded hover:bg-red-200 dark:hover:bg-red-700 transition"
+                                                                >
+                                                                    使用 cleanAll
+                                                                </button>
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                x-model="cmd.cleanTag"
+                                                                class="w-full text-sm border dark:border-gray-600 p-2 rounded border-red-300 bg-white dark:bg-gray-700 dark:text-white"
+                                                                placeholder="默认为 cleanAll"
+                                                            />
+                                                        </div>
+                        
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label
+                                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                                                    >旧规则删除时机</label
+                                                                >
+                                                                <select
+                                                                    x-model="cmd.delOldRule"
+                                                                    class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                                                >
+                                                                    <option value="after">after (更新成功后删)</option>
+                                                                    <option value="before">before (更新前先删)</option>
+                                                                </select>
+                                                            </div>
+                                                            <div>
+                                                                <label
+                                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                                                                    >IP分组名随机后缀</label
+                                                                >
+                                                                <select
+                                                                    x-model="cmd.randomSuff"
+                                                                    class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                                                >
+                                                                    <option value="1">1 (开启)</option>
+                                                                    <option value="0">0 (关闭)</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
                             <!-- Right: Output -->
                             <div class="space-y-4">
                                 <div
-                                    class="bg-gray-900 rounded-lg p-4 md:p-6 text-gray-100 font-mono relative group"
+                                    class="bg-gray-900 dark:bg-black rounded-lg p-4 md:p-6 text-gray-100 font-mono relative group"
                                 >
                                     <div
                                         class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
@@ -403,16 +401,16 @@
 
                                 <!-- Tips Area -->
                                 <div
-                                    class="bg-blue-50 border border-blue-200 rounded-lg p-4"
+                                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
                                 >
                                     <h4
-                                        class="text-sm font-bold text-blue-800 flex items-center gap-1 mb-1"
+                                        class="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1 mb-1"
                                     >
                                         <i class="bi bi-info-circle"></i>
                                         模式说明:
                                     </h4>
                                     <p
-                                        class="text-xs text-blue-700 leading-relaxed"
+                                        class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed"
                                         x-text="runModeDescription"
                                     ></p>
                                 </div>
@@ -437,171 +435,230 @@
                             </p>
                         </div>
 
-                                                <!-- Remote Config Loader -->
+                                                                        <!-- Remote Config Loader -->
 
-                                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                                                                        <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-6">
 
-                                                    <div class="flex justify-between items-center mb-2">
+                                                                            <div class="flex justify-between items-center mb-2">
 
-                                                        <label class="block text-xs font-bold text-gray-600 uppercase">加载远程配置文件 (从 URL 获取)</label>
+                                                                                <label class="block text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">加载远程配置文件 (从 URL 获取)</label>
 
-                                                        <button 
+                                                                                <button 
 
-                                                            @click="resetRemoteUrl()"
+                                                                                    @click="resetRemoteUrl()"
 
-                                                            class="text-[10px] text-blue-600 hover:text-blue-800 underline"
+                                                                                    class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline"
 
-                                                        >
+                                                                                >
 
-                                                            恢复默认地址
+                                                                                    恢复默认地址
 
-                                                        </button>
+                                                                                </button>
 
-                                                    </div>
+                                                                            </div>
 
-                                                    <div class="flex flex-col md:flex-row gap-2">
+                                                                            <div class="flex flex-col md:flex-row gap-2">
 
-                                                        <input
+                                                                                <input
 
-                                                            type="text"
+                                                                                    type="text"
 
-                                                            x-model="remoteConfigUrl"
+                                                                                    x-model="remoteConfigUrl"
 
-                                                            @input="saveRemoteUrl()"
+                                                                                    @input="saveRemoteUrl()"
 
-                                                            class="flex-1 border-gray-300 p-2 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+                                                                                    class="flex-1 border dark:border-gray-600 p-2 rounded text-sm focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white"
 
-                                                            placeholder="https://.../config.yml"
+                                                                                    placeholder="https://.../config.yml"
 
-                                                        />
+                                                                                />
 
-                                                        <button
+                                                                                <button
 
-                                                            @click="loadRemoteConfig()"
+                                                                                    @click="loadRemoteConfig()"
 
-                                                            class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 transition shadow-sm font-bold text-sm flex items-center justify-center gap-2"
+                                                                                    class="bg-gray-800 dark:bg-gray-600 text-white px-4 py-2 rounded hover:bg-black dark:hover:bg-gray-500 transition shadow-sm font-bold text-sm flex items-center justify-center gap-2"
 
-                                                            :disabled="loadingRemote"
+                                                                                    :disabled="loadingRemote"
 
-                                                        >
+                                                                                >
 
-                                                            <i class="bi bi-cloud-download" x-show="!loadingRemote"></i>
+                                                                                    <i class="bi bi-cloud-download" x-show="!loadingRemote"></i>
 
-                                                            <i class="bi bi-arrow-repeat animate-spin" x-show="loadingRemote"></i>
+                                                                                    <i class="bi bi-arrow-repeat animate-spin" x-show="loadingRemote"></i>
 
-                                                            加载远程配置
+                                                                                    加载远程配置
 
-                                                        </button>
+                                                                                </button>
 
-                                                    </div>
+                                                                            </div>
 
-                                                    <p class="text-[10px] text-gray-500 mt-2 leading-tight">
+                                                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-2 leading-tight">
 
-                                                        <i class="bi bi-exclamation-triangle"></i> 注意：加载远程配置将覆盖当前表单中的所有内容。
+                                                                                <i class="bi bi-exclamation-triangle text-orange-500"></i> 注意：加载远程配置将覆盖当前表单内容。
 
-                                                    </p>
+                                                                            </p>
 
-                                                </div>
+                                                                        </div>
 
-                        <div
-                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                        >
+                                                
+
+                                                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                                                                            <div class="space-y-4 col-span-1">
+
+                                                                                <h3
+
+                                                                                    class="font-bold text-gray-800 dark:text-gray-200 border-b dark:border-gray-700 pb-2 flex justify-between text-sm md:text-base"
+
+                                                                                >
+
+                                                                                    基础配置
+
+                                                                                </h3>
+
+                                                                                <div>
+
+                                                                                    <label
+
+                                                                                        class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase"
+
+                                                                                        >iKuai URL</label
+
+                                                                                    >
+
+                                                                                    <input
+
+                                                                                        type="text"
+
+                                                                                        x-model="config.ikuaiUrl"
+
+                                                                                        class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+
+                                                                                        placeholder="http://192.168.1.1"
+
+                                                                                    />
+
+                                                                                </div>
+
+                                                                                <div class="grid grid-cols-2 gap-2">
+
+                                                                                    <div>
+
+                                                                                        <label
+
+                                                                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase"
+
+                                                                                            >Username</label
+
+                                                                                        >
+
+                                                                                        <input
+
+                                                                                            type="text"
+
+                                                                                            x-model="config.username"
+
+                                                                                            class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+
+                                                                                        />
+
+                                                                                    </div>
+
+                                                                                    <div>
+
+                                                                                        <label
+
+                                                                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase"
+
+                                                                                            >Password</label
+
+                                                                                        >
+
+                                                                                        <input
+
+                                                                                            type="text"
+
+                                                                                            x-model="config.password"
+
+                                                                                            class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+
+                                                                                        />
+
+                                                                                    </div>
+
+                                                                                </div>
+
+                                                                                <div>
+
+                                                                                    <label
+
+                                                                                        class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase flex items-center gap-1"
+
+                                                                                        >计划任务表达式 <span class="text-red-500">*</span></label
+
+                                                                                    >
+
+                                                                                    <div class="flex gap-2">
+
+                                                                                        <input
+
+                                                                                            type="text"
+
+                                                                                            x-model="config.cron"
+
+                                                                                            class="flex-1 border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
+
+                                                                                            placeholder="0 7 * * *"
+
+                                                                                        />
+
+                                                                                        <a
+
+                                                                                            href="https://tooltool.net/zh/crontab" target="_blank"
+
+                                                                                            class="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-2 rounded border border-green-200 dark:border-green-800 hover:bg-green-100 transition text-xs flex items-center"
+
+                                                                                        >
+
+                                                                                             解析
+
+                                                                                        </a>
+
+                                                                                    </div>
+
+                                                                                </div>
+
+                                                                            </div>
+
                             <div class="space-y-4 col-span-1">
                                 <h3
-                                    class="font-bold text-gray-800 border-b pb-2 flex justify-between"
-                                >
-                                    基础配置
-                                </h3>
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-gray-500 uppercase"
-                                        >iKuai URL</label
-                                    >
-                                    <input
-                                        type="text"
-                                        x-model="config.ikuaiUrl"
-                                        class="w-full border p-2 rounded text-sm"
-                                        placeholder="http://192.168.1.1"
-                                    />
-                                </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <label
-                                            class="text-[10px] font-bold text-gray-500 uppercase"
-                                            >Username</label
-                                        >
-                                        <input
-                                            type="text"
-                                            x-model="config.username"
-                                            class="w-full border p-2 rounded text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label
-                                            class="text-[10px] font-bold text-gray-500 uppercase"
-                                            >Password</label
-                                        >
-                                        <input
-                                            type="text"
-                                            x-model="config.password"
-                                            class="w-full border p-2 rounded text-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1"
-                                        >计划任务表达式
-                                        <span class="text-red-500"
-                                            >*</span
-                                        ></label
-                                    >
-                                    <div class="flex gap-2">
-                                        <input
-                                            type="text"
-                                            x-model="config.cron"
-                                            class="flex-1 border p-2 rounded text-sm"
-                                            placeholder="0 7 * * *"
-                                        />
-                                        <a
-                                            href="https://tooltool.net/zh/crontab"
-                                            target="_blank"
-                                            class="bg-green-50 text-green-700 px-3 py-2 rounded border border-green-200 hover:bg-green-100 transition text-xs flex items-center"
-                                        >
-                                            在线解析
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="space-y-4 col-span-1">
-                                <h3
-                                    class="font-bold text-gray-800 border-b pb-2"
+                                    class="font-bold text-gray-800 dark:text-gray-200 border-b dark:border-gray-700 pb-2"
                                 >
                                     高级选项
                                 </h3>
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label
-                                            class="text-[10px] font-bold text-gray-500 uppercase"
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase"
                                             >Retry Wait</label
                                         >
                                         <input
                                             type="text"
                                             x-model="config.addErrRetryWait"
-                                            class="w-full border p-2 rounded text-sm"
+                                            class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
                                             placeholder="10s"
                                         />
                                     </div>
                                     <div>
                                         <label
-                                            class="text-[10px] font-bold text-gray-500 uppercase"
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase"
                                             >Add Wait</label
                                         >
                                         <input
                                             type="text"
                                             x-model="config.addWait"
-                                            class="w-full border p-2 rounded text-sm"
+                                            class="w-full border dark:border-gray-600 p-2 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
                                             placeholder="1s"
                                         />
                                     </div>
@@ -707,14 +764,14 @@
                         <!-- Custom ISP -->
                         <div class="space-y-2">
                             <div
-                                class="flex justify-between items-center border-b pb-2"
+                                class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
                             >
-                                <h3 class="font-bold text-gray-800">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-200">
                                     自定义运营商 (Custom ISP)
                                 </h3>
                                 <button
                                     @click="addItem('customIsp')"
-                                    class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                                    class="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 px-3 py-1 rounded transition"
                                 >
                                     <i class="bi bi-plus"></i> 添加
                                 </button>
@@ -724,7 +781,7 @@
                                 :key="index"
                             >
                                 <div
-                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded border border-gray-100"
+                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-100 dark:border-gray-700 shadow-sm"
                                 >
                                     <div class="md:col-span-3">
                                         <label
@@ -782,7 +839,7 @@
                             <div
                                 class="flex justify-between items-center border-b pb-2"
                             >
-                                <h3 class="font-bold text-gray-800">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-200">
                                     域名分流 (Stream Domain)
                                 </h3>
                                 <button
@@ -797,7 +854,7 @@
                                 :key="index"
                             >
                                 <div
-                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded border border-gray-100"
+                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-700/30 p-3 rounded border border-gray-100 dark:border-gray-700"
                                 >
                                     <div class="md:col-span-2">
                                         <label
@@ -867,7 +924,7 @@
                             <div
                                 class="flex justify-between items-center border-b pb-2"
                             >
-                                <h3 class="font-bold text-gray-800">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-200">
                                     IP 分组 (IP Group)
                                 </h3>
                                 <button
@@ -882,7 +939,7 @@
                                 :key="index"
                             >
                                 <div
-                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded border border-gray-100"
+                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-100 dark:border-gray-700"
                                 >
                                     <div class="md:col-span-4">
                                         <label
@@ -928,7 +985,7 @@
                             <div
                                 class="flex justify-between items-center border-b pb-2"
                             >
-                                <h3 class="font-bold text-gray-800">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-200">
                                     IPv6 分组 (IPv6 Group)
                                 </h3>
                                 <button
@@ -943,7 +1000,7 @@
                                 :key="index"
                             >
                                 <div
-                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 p-3 rounded border border-gray-100"
+                                    class="grid grid-cols-1 md:grid-cols-12 gap-2 items-center bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-100 dark:border-gray-700"
                                 >
                                     <div class="md:col-span-4">
                                         <label
@@ -989,7 +1046,7 @@
                             <div
                                 class="flex justify-between items-center border-b pb-2"
                             >
-                                <h3 class="font-bold text-gray-800">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-200">
                                     端口分流 (Stream IP/Port)
                                 </h3>
                                 <button
@@ -1140,7 +1197,7 @@
                             <div
                                 class="flex flex-col md:flex-row md:justify-between md:items-end mb-2 gap-2"
                             >
-                                <h3 class="font-bold text-gray-800">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-200">
                                     YAML 预览
                                 </h3>
                                 <label
@@ -1213,89 +1270,63 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-6">
-                        <div
-                            class="bg-blue-50 p-5 rounded-lg border border-blue-100 shadow-sm"
-                        >
-                            <div class="flex justify-between items-start mb-2">
-                                <p class="font-bold text-blue-800 m-0">
-                                    第一步：配置准备
-                                </p>
-                                <button
-                                    @click="currentTab = 'tool'"
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-bold text-sm flex items-center gap-2"
-                                >
-                                    开始配置
-                                    <i class="bi bi-arrow-right-short"></i>
-                                </button>
-                            </div>
-                            <p class="text-sm leading-relaxed m-0">
-                                在“配置助手”页面下方，填写您的爱快路由器登录信息。根据需求在
-                                <b>自定义运营商</b>、<b>域名分流</b> 或
-                                <b>IP分组</b> 中添加订阅地址。
-                            </p>
-                        </div>
-                        <div
-                            class="bg-green-50 p-5 rounded-lg border border-green-100 shadow-sm"
-                        >
-                            <p class="font-bold text-green-800 mb-2 m-0">
-                                第二步：保存配置
-                            </p>
-                            <p class="text-sm leading-relaxed m-0">
-                                您可以直接点击页面底部的
-                                <b>“保存到服务器”</b>
-                                按钮，程序会自动将配置安全地写入当前的配置文件。
-                                或者点击“复制完整配置”，手动保存到程序同目录下的配置文件中。
-                            </p>
-                        </div>
-                        <div
-                            class="bg-purple-50 p-5 rounded-lg border border-purple-100 shadow-sm"
-                        >
-                            <p class="font-bold text-purple-800 mb-2 m-0">
-                                第三步：执行程序
-                            </p>
-                            <div class="text-sm leading-relaxed">
-                                在“运行命令生成”处选择运行模式：
-                                <ul class="list-disc pl-5 mt-2 space-y-1">
-                                    <li>
-                                        <b>cron</b>: 立即同步一次，随后根据 Cron
-                                        表达式定时运行。
-                                    </li>
-                                    <li>
-                                        <b>once</b>:
-                                        仅执行一次同步并立即退出（适合系统任务计划）。
-                                    </li>
-                                    <li>
-                                        <b>web</b>:
-                                        仅启动此管理后台，不执行同步。
-                                    </li>
-                                    <li>
-                                        <b>clean</b>:
-                                        清理所有由本工具创建的分流规则。
-                                    </li>
-                                </ul>
-                                复制生成的命令并在终端/脚本中执行。
-                            </div>
-                        </div>
-                    </div>
-                    <hr class="my-6" />
-                    <h3 class="font-bold text-lg">注意事项：</h3>
-                    <ul class="list-disc pl-5 space-y-2 text-sm">
-                        <li>
-                            <b>重启生效</b>：带有
-                            <span class="text-red-500 font-bold">*</span>
-                            标注的配置项（如 Cron 表达式、WebUI
-                            端口）在保存后，需要手动重启程序才能生效。
-                        </li>
-                        <li>
-                            <b>配置文件</b
-                            >：保存操作会保留关键注释说明，方便您日后手动编辑。
-                        </li>
-                        <li>
-                            <b>安全性</b>：建议在 WebUI
-                            设置中配置用户名和密码，以保护您的配置信息。
-                        </li>
-                    </ul>
+                                        <div class="flex flex-col gap-6">
+                                            <div
+                                                class="bg-blue-50 dark:bg-blue-900/40 p-5 rounded-lg border border-blue-100 dark:border-blue-800 shadow-sm"
+                                            >
+                                                <div class="flex justify-between items-start mb-2">
+                                                    <p class="font-bold text-blue-800 dark:text-blue-200 m-0">第一步：配置准备</p>
+                                                    <button
+                                                        @click="currentTab = 'tool'"
+                                                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-bold text-sm flex items-center gap-2"
+                                                    >
+                                                        开始配置 <i class="bi bi-arrow-right-short"></i>
+                                                    </button>
+                                                </div>
+                                                <p class="text-sm leading-relaxed m-0 text-blue-700 dark:text-blue-100/80">
+                                                    在“配置助手”页面下方，填写您的爱快路由器登录信息。根据需求在 <b>自定义运营商</b>、<b>域名分流</b> 或 <b>IP分组</b> 中添加订阅地址。
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="bg-green-50 dark:bg-green-900/40 p-5 rounded-lg border border-green-100 dark:border-green-800 shadow-sm"
+                                            >
+                                                <p class="font-bold text-green-800 dark:text-green-200 mb-2 m-0">第二步：保存配置</p>
+                                                <p class="text-sm leading-relaxed m-0 text-green-700 dark:text-green-100/80">
+                                                    您可以直接点击页面底部的 <b>“保存到服务器”</b> 按钮，程序会自动将配置安全地写入当前的配置文件。
+                                                    或者点击“复制完整配置”，手动保存到程序同目录下的配置文件中。
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="bg-purple-50 dark:bg-purple-900/40 p-5 rounded-lg border border-purple-100 dark:border-purple-800 shadow-sm"
+                                            >
+                                                <p class="font-bold text-purple-800 dark:text-purple-200 mb-2 m-0">
+                                                    第三步：执行程序
+                                                </p>
+                                                <div class="text-sm leading-relaxed text-purple-700 dark:text-purple-100/80">
+                                                    在“运行命令生成”处选择运行模式：
+                                                    <ul class="list-disc pl-5 mt-2 space-y-1">
+                                                        <li><b>cron</b>: 立即同步一次，随后根据 Cron 表达式定时运行。</li>
+                                                        <li><b>once</b>: 仅执行一次同步并立即退出（适合系统任务计划）。</li>
+                                                        <li><b>web</b>: 仅启动此管理后台，不执行同步。</li>
+                                                        <li><b>clean</b>: 清理所有由本工具创建的分流规则。</li>
+                                                    </ul>
+                                                    复制生成的命令并在终端/脚本中执行。
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr class="my-6 dark:border-gray-700" />
+                                        <h3 class="font-bold text-lg dark:text-gray-100">注意事项：</h3>
+                                        <ul class="list-disc pl-5 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                                            <li>
+                                                <b>重启生效</b>：带有 <span class="text-red-500 font-bold">*</span> 标注的配置项（如 Cron 表达式、WebUI 端口）在保存后，需要手动重启程序才能生效。
+                                            </li>
+                                            <li>
+                                                <b>配置文件</b>：保存操作会保留关键注释说明，方便您日后手动编辑。
+                                            </li>
+                                            <li>
+                                                <b>安全性</b>：建议在 WebUI 设置中配置用户名和密码，以保护您的配置信息。
+                                            </li>
+                                        </ul>
                 </div>
             </div>
         </main>
@@ -1308,15 +1339,15 @@
             function appData() {
                 return {
                     currentTab: "help",
+                    theme: localStorage.getItem("ui_theme") || "auto",
                     showComments: true,
                     loadingRemote: false,
-                    remoteConfigUrl:
-                        "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config_example.yml",
+                    remoteConfigUrl: "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config_example.yml",
                     serverConfPath: "",
                     commentMaps: {
                         top: {},
                         item: {},
-                        webui: {},
+                        webui: {}
                     },
 
                     // Command Logic
@@ -1368,6 +1399,24 @@
                         this.loadConfig();
                         this.loadPresets();
                         this.loadSavedRemoteUrl();
+                        // 监听系统主题变化以同步更新
+                        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                            if (this.theme === 'auto') {
+                                // 强制重新计算 isDark
+                                this.theme = 'auto'; 
+                            }
+                        });
+                    },
+
+                    setTheme(t) {
+                        this.theme = t;
+                        localStorage.setItem("ui_theme", t);
+                    },
+
+                    isDark() {
+                        if (this.theme === 'dark') return true;
+                        if (this.theme === 'light') return false;
+                        return window.matchMedia('(prefers-color-scheme: dark)').matches;
                     },
 
                     loadSavedRemoteUrl() {

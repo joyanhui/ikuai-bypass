@@ -102,11 +102,45 @@ func Read(filename string) error {
 	return nil
 }
 
+// TopLevelComments 顶级字段注释映射
+var TopLevelComments = map[string]string{
+	"ikuai-url":       "爱快控制台地址，结尾不要加 \"/\"",
+	"username":        "爱快登陆用户名",
+	"password":        "爱快登陆密码",
+	"cron":            "更新周期，例如 0 7 * * *",
+	"AddErrRetryWait": "自动重试时间间隔 (10s, 120s)",
+	"AddWait":         "规则添加后的反应等待时间",
+	"webui":           "WebUI 管理服务设置",
+	"custom-isp":      "自定义运营商分流 (IP分流)",
+	"stream-domain":   "域名分流 (优先级高于IP分流)",
+	"ip-group":        "IP分组 (与端口分流配合使用)",
+	"ipv6-group":      "IPv6分组 (与端口分流配合使用)",
+	"stream-ipport":   "端口分流 (下一跳网关/外网线路)",
+}
+
+// ItemComments 列表项内部字段注释映射
+var ItemComments = map[string]string{
+	"type":      "分流方式：0-外网线路，1-下一跳网关",
+	"mode":      "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP",
+	"ifaceband": "线路绑定：0-不勾选，1-勾选",
+	"interface": "分流线路 (如 wan1)",
+	"nexthop":   "下一跳网关地址",
+	"tag":       "规则备注标签后缀",
+	"src-addr":  "分流源地址 (IP或范围)",
+	"ip-group":  "关联的IP分组名称",
+}
+
+// WebuiComments WebUI 子项注释
+var WebuiComments = map[string]string{
+	"port":       "WebUI 服务端口",
+	"user":       "WebUI 用户名 (留空禁用认证)",
+	"pass":       "WebUI 密码",
+	"enable":     "是否启用 WebUI 服务",
+	"cdn-prefix": "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm)",
+}
+
 // Save 将配置保存到指定文件
-// 包含安全校验：
-// 1. 强制检查文件后缀名必须为 .yml 或 .yaml
-// 2. 通过 yaml.Node 树操作注入注释说明，解决 WebUI 保存无注释的问题
-func Save(filename string, cfg *Config) error {
+func Save(filename string, cfg *Config, withComments bool) error {
 	// 1. 安全校验：文件后缀
 	ext := ""
 	if len(filename) > 4 {
@@ -126,7 +160,7 @@ func Save(filename string, cfg *Config) error {
 		return fmt.Errorf("marshal config failed: %v", err)
 	}
 
-	if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
+	if withComments && node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
 		doc := node.Content[0]
 		doc.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
 		addCommentsToNode(doc)
@@ -139,7 +173,6 @@ func Save(filename string, cfg *Config) error {
 	}
 
 	// 3. 写入文件
-	// 使用 0644 权限，避免赋予执行权限
 	err = os.WriteFile(filename, data, 0644)
 	if err != nil {
 		return fmt.Errorf("write file failed: %v", err)
@@ -154,48 +187,11 @@ func addCommentsToNode(node *yaml.Node) {
 		return
 	}
 
-	// 顶级字段注释映射 (对应 yaml tag)
-	topLevelComments := map[string]string{
-		"ikuai-url":       "爱快控制台地址，结尾不要加 \"/\"",
-		"username":        "爱快登陆用户名",
-		"password":        "爱快登陆密码",
-		"cron":            "更新周期，例如 0 7 * * *",
-		"AddErrRetryWait": "自动重试时间间隔 (10s, 120s)",
-		"AddWait":         "规则添加后的反应等待时间",
-		"webui":           "WebUI 管理服务设置",
-		"custom-isp":      "自定义运营商分流 (IP分流)",
-		"stream-domain":   "域名分流 (优先级高于IP分流)",
-		"ip-group":        "IP分组 (与端口分流配合使用)",
-		"ipv6-group":      "IPv6分组 (与端口分流配合使用)",
-		"stream-ipport":   "端口分流 (下一跳网关/外网线路)",
-	}
-
-	// 列表项内部字段注释映射
-	itemComments := map[string]string{
-		"type":      "分流方式：0-外网线路，1-下一跳网关",
-		"mode":      "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP",
-		"ifaceband": "线路绑定：0-不勾选，1-勾选",
-		"interface": "分流线路 (如 wan1)",
-		"nexthop":   "下一跳网关地址",
-		"tag":       "规则备注标签后缀",
-		"src-addr":  "分流源地址 (IP或范围)",
-		"ip-group":  "关联的IP分组名称",
-	}
-
-	// WebUI 子项注释
-	webuiComments := map[string]string{
-		"port":       "WebUI 服务端口",
-		"user":       "WebUI 用户名 (留空禁用认证)",
-		"pass":       "WebUI 密码",
-		"enable":     "是否启用 WebUI 服务",
-		"cdn-prefix": "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm)",
-	}
-
 	for i := 0; i < len(node.Content); i += 2 {
 		keyNode := node.Content[i]
 		valNode := node.Content[i+1]
 
-		if comment, ok := topLevelComments[keyNode.Value]; ok {
+		if comment, ok := TopLevelComments[keyNode.Value]; ok {
 			keyNode.LineComment = " " + comment
 		}
 
@@ -203,19 +199,19 @@ func addCommentsToNode(node *yaml.Node) {
 		if keyNode.Value == "webui" && valNode.Kind == yaml.MappingNode {
 			for j := 0; j < len(valNode.Content); j += 2 {
 				subKeyNode := valNode.Content[j]
-				if subComment, ok := webuiComments[subKeyNode.Value]; ok {
+				if subComment, ok := WebuiComments[subKeyNode.Value]; ok {
 					subKeyNode.LineComment = " " + subComment
 				}
 			}
 		}
 
-		// 处理列表项内部字段 (如 stream-ipport 中的 type, mode 等)
+		// 处理列表项内部字段
 		if valNode.Kind == yaml.SequenceNode {
 			for _, itemNode := range valNode.Content {
 				if itemNode.Kind == yaml.MappingNode {
 					for j := 0; j < len(itemNode.Content); j += 2 {
 						subKeyNode := itemNode.Content[j]
-						if subComment, ok := itemComments[subKeyNode.Value]; ok {
+						if subComment, ok := ItemComments[subKeyNode.Value]; ok {
 							subKeyNode.LineComment = " " + subComment
 						}
 					}

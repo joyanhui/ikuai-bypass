@@ -83,10 +83,16 @@ func createServer(port string) *http.Server {
 		exePath, _ := os.Executable()
 		resp := struct {
 			config.Config
-			ExePath string `json:"exe_path"`
+			ExePath          string            `json:"exe_path"`
+			TopLevelComments map[string]string `json:"top_level_comments"`
+			ItemComments     map[string]string `json:"item_comments"`
+			WebuiComments    map[string]string `json:"webui_comments"`
 		}{
-			Config:  config.GlobalConfig,
-			ExePath: exePath,
+			Config:           config.GlobalConfig,
+			ExePath:          exePath,
+			TopLevelComments: config.TopLevelComments,
+			ItemComments:     config.ItemComments,
+			WebuiComments:    config.WebuiComments,
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -100,8 +106,12 @@ func createServer(port string) *http.Server {
 			return
 		}
 
-		var newConfig config.Config
-		if err := json.NewDecoder(r.Body).Decode(&newConfig); err != nil {
+		var req struct {
+			config.Config `json:",inline"`
+			WithComments  bool `json:"with_comments"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -113,15 +123,15 @@ func createServer(port string) *http.Server {
 		}
 
 		// 使用 config.Save 进行安全保存
-		if err := config.Save(savePath, &newConfig); err != nil {
+		if err := config.Save(savePath, &req.Config, req.WithComments); err != nil {
 			log.Printf("Save config failed: %v", err)
 			http.Error(w, "Failed to save config: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		// 更新内存中的全局配置
-		config.GlobalConfig = newConfig
-		log.Printf("Configuration saved to %s by WebUI", savePath)
+		config.GlobalConfig = req.Config
+		log.Printf("Configuration saved to %s by WebUI (with_comments: %v)", savePath, req.WithComments)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status": "success", "message": "Configuration saved successfully"}`))

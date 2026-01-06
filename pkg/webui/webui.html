@@ -929,9 +929,15 @@
 
                         <!-- Result -->
                         <div class="mt-8">
-                            <h3 class="font-bold text-gray-800 mb-2">
-                                YAML 预览
-                            </h3>
+                            <div class="flex justify-between items-end mb-2">
+                                <h3 class="font-bold text-gray-800">
+                                    YAML 预览
+                                </h3>
+                                <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                                    <input type="checkbox" x-model="showComments" class="rounded text-blue-600">
+                                    显示详细注释
+                                </label>
+                            </div>
                             <textarea
                                 class="w-full h-96 bg-gray-900 text-gray-100 font-mono text-sm p-4 rounded-lg"
                                 readonly
@@ -1035,6 +1041,12 @@
             function appData() {
                 return {
                     currentTab: "tool",
+                    showComments: true,
+                    commentMaps: {
+                        top: {},
+                        item: {},
+                        webui: {}
+                    },
 
                     // Command Logic
                     cmd: {
@@ -1161,6 +1173,12 @@
 
                             if (data.exe_path) {
                                 this.cmd.exePath = data.exe_path;
+                            }
+
+                            if (data.top_level_comments) {
+                                this.commentMaps.top = data.top_level_comments;
+                                this.commentMaps.item = data.item_comments;
+                                this.commentMaps.webui = data.webui_comments;
                             }
 
                             // Map Go struct to JS object
@@ -1309,7 +1327,10 @@
                             const res = await fetch("/api/save", {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(payload),
+                                body: JSON.stringify({
+                                    ...payload,
+                                    with_comments: this.showComments
+                                }),
                             });
 
                             if (res.ok) {
@@ -1438,7 +1459,41 @@
                                 });
                         }
 
-                        return jsyaml.dump(cleanConfig, { lineWidth: -1 }); // prevent line folding
+                        const yamlStr = jsyaml.dump(cleanConfig, { lineWidth: -1 });
+                        if (!this.showComments) return yamlStr;
+
+                        // 注入注释逻辑
+                        const lines = yamlStr.split('\n');
+                        let inWebui = false;
+                        const result = ["# iKuai Bypass 配置文件", "# 详情参考: https://github.com/joyanhui/ikuai-bypass"];
+
+                        for (let line of lines) {
+                            if (!line.trim()) continue;
+                            
+                            // 检查顶级键
+                            const topMatch = line.match(/^([a-z0-9-]+):/);
+                            if (topMatch) {
+                                const key = topMatch[1];
+                                inWebui = (key === 'webui');
+                                if (this.commentMaps.top[key]) {
+                                    line += " # " + this.commentMaps.top[key];
+                                }
+                            } else if (inWebui) {
+                                // 检查 webui 子项
+                                const webuiMatch = line.match(/^  ([a-z0-9-]+):/);
+                                if (webuiMatch && this.commentMaps.webui[webuiMatch[1]]) {
+                                    line += " # " + this.commentMaps.webui[webuiMatch[1]];
+                                }
+                            } else {
+                                // 检查列表项子键
+                                const itemMatch = line.match(/^    ([a-z0-9-]+):/);
+                                if (itemMatch && this.commentMaps.item[itemMatch[1]]) {
+                                    line += " # " + this.commentMaps.item[itemMatch[1]];
+                                }
+                            }
+                            result.push(line);
+                        }
+                        return result.join('\n');
                     },
 
                     addItem(arrayName) {

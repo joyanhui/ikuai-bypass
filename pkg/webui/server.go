@@ -47,34 +47,6 @@ func IsAndStartWebUI() {
 	}
 }
 
-// StartServerAsync 异步启动 WebUI 服务（非阻塞）
-func StartServerAsync() {
-	if !ShouldStartWebUI() {
-		log.Println("WebUI is disabled in config, skipping startup")
-		return
-	}
-
-	port := config.GlobalConfig.WebUI.Port
-	if port == "" {
-		port = "8080" // 默认端口
-	}
-
-	server := createServer(port)
-
-	log.Printf("WebUI Server started on http://0.0.0.0:%s", port)
-	if config.GlobalConfig.WebUI.User != "" {
-		log.Println("Basic Auth enabled")
-	} else {
-		log.Println("Warning: Basic Auth is disabled (web-user is empty)")
-	}
-
-	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			log.Printf("WebUI Server failed: %v", err)
-		}
-	}()
-}
-
 // createServer 创建并配置 HTTP 服务器
 func createServer(port string) *http.Server {
 	mux := http.NewServeMux()

@@ -7,6 +7,64 @@
         <script src="{{CDN_PREFIX}}/@tailwindcss/browser@4"></script>
         <!-- Alpine.js -->
         <script defer src="{{CDN_PREFIX}}/alpinejs@3.13.3/dist/cdn.min.js"></script>
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.store('theme', {
+                    current: localStorage.getItem('ui_theme') || 'auto',
+
+                    init() {
+                        this.applyTheme();
+                        this.watchSystemTheme();
+                        return this;
+                    },
+
+                    set(theme) {
+                        this.current = theme;
+                        localStorage.setItem('ui_theme', theme);
+                        this.applyTheme();
+                        return this;
+                    },
+
+                    applyTheme() {
+                        const html = document.documentElement;
+                        const body = document.body;
+                        if (this.current === 'auto') {
+                            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                            if (prefersDark) {
+                                html.classList.add('dark');
+                                body.classList.add('dark');
+                                html.setAttribute('data-theme', 'dark');
+                            } else {
+                                html.classList.remove('dark');
+                                body.classList.remove('dark');
+                                html.setAttribute('data-theme', 'light');
+                            }
+                        } else {
+                            if (this.current === 'dark') {
+                                html.classList.add('dark');
+                                body.classList.add('dark');
+                                html.setAttribute('data-theme', 'dark');
+                            } else {
+                                html.classList.remove('dark');
+                                body.classList.remove('dark');
+                                html.setAttribute('data-theme', 'light');
+                            }
+                        }
+                        return this;
+                    },
+
+                    watchSystemTheme() {
+                        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                            if (this.current === 'auto') {
+                                this.applyTheme();
+                            }
+                        });
+                        return this;
+                    }
+                });
+                Alpine.store('theme').init();
+            });
+        </script>
         <!-- Bootstrap Icons -->
         <link rel="stylesheet" href="{{CDN_PREFIX}}/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
         <!-- JS-YAML -->
@@ -17,10 +75,10 @@
             .dark { color-scheme: dark; }
         </style>
     </head>
-    <body 
+    <body
         class="bg-gray-100 dark:bg-gray-900 min-h-screen font-sans transition-colors duration-300 dark:text-gray-100"
         x-data="appData()"
-        x-init="initTheme()"
+        x-init="init()"
     >
         <!-- Header -->
         <header class="bg-blue-600 dark:bg-blue-900 text-white shadow-lg sticky top-0 z-40">
@@ -37,13 +95,13 @@
                     <div class="flex flex-wrap justify-center items-center gap-3">
                         <!-- Theme Toggle -->
                         <div class="bg-black/20 p-1 rounded-lg flex gap-1 border border-white/10">
-                            <button @click="setTheme('light')" :class="theme === 'light' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'" class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1">
+                            <button @click="$store.theme.set('light')" :class="$store.theme.current === 'light' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'" class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1">
                                 <i class="bi bi-sun-fill"></i> <span class="hidden sm:inline">明亮</span>
                             </button>
-                            <button @click="setTheme('dark')" :class="theme === 'dark' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'" class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1">
+                            <button @click="$store.theme.set('dark')" :class="$store.theme.current === 'dark' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'" class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1">
                                 <i class="bi bi-moon-stars-fill"></i> <span class="hidden sm:inline">暗黑</span>
                             </button>
-                            <button @click="setTheme('auto')" :class="theme === 'auto' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'" class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1">
+                            <button @click="$store.theme.set('auto')" :class="$store.theme.current === 'auto' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'" class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1">
                                 <i class="bi bi-display"></i> <span class="hidden sm:inline">自动</span>
                             </button>
                         </div>
@@ -563,7 +621,6 @@
             function appData() {
                 return {
                     currentTab: "help",
-                    theme: localStorage.getItem("ui_theme") || "auto",
                     showComments: true,
                     loadingRemote: false,
                     remoteConfigUrl: "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config_example.yml",
@@ -583,25 +640,6 @@
                         this.loadConfig();
                         this.loadPresets();
                         this.loadSavedRemoteUrl();
-                    },
-                    initTheme() {
-                        this.applyTheme();
-                        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                            if (this.theme === 'auto') this.applyTheme();
-                        });
-                    },
-                    setTheme(t) {
-                        this.theme = t;
-                        localStorage.setItem("ui_theme", t);
-                        this.applyTheme();
-                    },
-                    applyTheme() {
-                        const isDark = this.theme === 'dark' || (this.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-                        if (isDark) {
-                            document.documentElement.classList.add('dark');
-                        } else {
-                            document.documentElement.classList.remove('dark');
-                        }
                     },
                     loadSavedRemoteUrl() {
                         const saved = localStorage.getItem("remote_config_url");

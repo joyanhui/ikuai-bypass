@@ -99,7 +99,7 @@ func Read(filename string) error {
 // Save 将配置保存到指定文件
 // 包含安全校验：
 // 1. 强制检查文件后缀名必须为 .yml 或 .yaml
-// 2. 通过 yaml.Marshal 重新序列化结构体，避免注入攻击
+// 2. 通过 yaml.Node 树操作注入注释说明，解决 WebUI 保存无注释的问题
 func Save(filename string, cfg *Config) error {
 	// 1. 安全校验：文件后缀
 	ext := ""
@@ -109,13 +109,25 @@ func Save(filename string, cfg *Config) error {
 	if len(filename) > 5 && filename[len(filename)-5:] == ".yaml" {
 		ext = ".yaml"
 	}
-	
+
 	if ext != ".yml" && ext != ".yaml" {
 		return fmt.Errorf("security violation: file extension must be .yml or .yaml")
 	}
 
-	// 2. 序列化 (清除可能的恶意脚本注入，强制转为合法的YAML格式)
-	data, err := yaml.Marshal(cfg)
+	// 2. 使用 Node 树注入注释
+	var node yaml.Node
+	if err := node.Encode(cfg); err != nil {
+		return fmt.Errorf("marshal config failed: %v", err)
+	}
+
+	if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
+		doc := node.Content[0]
+		doc.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
+		addCommentsToNode(doc)
+	}
+
+	// 序列化
+	data, err := yaml.Marshal(&node)
 	if err != nil {
 		return fmt.Errorf("marshal config failed: %v", err)
 	}
@@ -128,4 +140,55 @@ func Save(filename string, cfg *Config) error {
 	}
 
 	return nil
+}
+
+// addCommentsToNode 为 YAML 节点递归添加说明注释
+func addCommentsToNode(node *yaml.Node) {
+	if node.Kind != yaml.MappingNode {
+		return
+	}
+
+	// 顶级字段注释映射 (对应 yaml tag)
+	topLevelComments := map[string]string{
+		"ikuai-url":       "爱快控制台地址，结尾不要加 \"/\"",
+		"username":        "爱快登陆用户名",
+		"password":        "爱快登陆密码",
+		"cron":            "更新周期，例如 0 7 * * *",
+		"AddErrRetryWait": "自动重试时间间隔 (10s, 120s)",
+		"AddWait":         "规则添加后的反应等待时间",
+		"webui":           "WebUI 管理服务设置",
+		"custom-isp":      "自定义运营商分流 (IP分流)",
+		"stream-domain":   "域名分流 (优先级高于IP分流)",
+		"ip-group":        "IP分组 (与端口分流配合使用)",
+		"ipv6-group":      "IPv6分组 (与端口分流配合使用)",
+		"stream-ipport":   "端口分流 (下一跳网关/外网线路)",
+	}
+
+	// WebUI 子项注释
+	webuiComments := map[string]string{
+		"port":   "WebUI 服务端口",
+		"user":   "WebUI 用户名 (留空禁用认证)",
+		"pass":   "WebUI 密码",
+		"enable": "是否启用 WebUI 服务",
+	}
+
+	for i := 0; i < len(node.Content); i += 2 {
+		keyNode := node.Content[i]
+		if comment, ok := topLevelComments[keyNode.Value]; ok {
+			keyNode.LineComment = " " + comment
+		}
+
+		// 特殊处理 WebUI 内部
+		if keyNode.Value == "webui" && i+1 < len(node.Content) {
+			valNode := node.Content[i+1]
+			if valNode.Kind == yaml.MappingNode {
+				for j := 0; j < len(valNode.Content); j += 2 {
+					subKeyNode := valNode.Content[j]
+					if subComment, ok := webuiComments[subKeyNode.Value]; ok {
+						subKeyNode.LineComment = " " + subComment
+					}
+				}
+			}
+		}
+	}
 }

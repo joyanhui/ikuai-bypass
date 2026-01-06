@@ -17,7 +17,7 @@
             href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
         />
         <!-- JS-YAML -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+        <script src=" https://cdn.jsdelivr.net/npm/js-yaml@4.1.1/dist/js-yaml.min.js "></script>
         <style>
             [x-cloak] {
                 display: none !important;
@@ -117,24 +117,30 @@
                                             class="w-full border p-2 rounded"
                                         >
                                             <option value="cron">
-                                                cron (计划任务模式: 立即执行一次，随后定时)
+                                                cron (计划任务模式:
+                                                立即执行一次，随后定时)
                                             </option>
                                             <option value="cronAft">
-                                                cronAft (延迟计划任务: 不立即执行，直接进入定时)
+                                                cronAft (延迟计划任务:
+                                                不立即执行，直接进入定时)
                                             </option>
                                             <option value="once">
-                                                once (单次模式: 立即执行一次并退出)
+                                                once (单次模式:
+                                                立即执行一次并退出)
                                             </option>
                                             <option value="web">
-                                                web (WebUI 模式: 仅启动 Web 界面)
+                                                web (WebUI 模式: 仅启动 Web
+                                                界面)
                                             </option>
                                             <option value="clean">
-                                                clean (清理模式: 删除指定备注的规则)
+                                                clean (清理模式:
+                                                删除指定备注的规则)
                                             </option>
                                             <option
                                                 value="exportDomainSteamToTxt"
                                             >
-                                                exportDomainSteamToTxt (导出模式: 导出为爱快 TXT)
+                                                exportDomainSteamToTxt
+                                                (导出模式: 导出为爱快 TXT)
                                             </option>
                                         </select>
                                     </div>
@@ -215,9 +221,14 @@
                                     x-show="cmd.runMode === 'clean'"
                                     class="p-4 bg-red-50 rounded border border-red-200"
                                 >
-                                    <div class="flex justify-between items-center mb-1">
-                                        <label class="block text-sm font-medium text-red-700">清理标签 (-tag)</label>
-                                        <button 
+                                    <div
+                                        class="flex justify-between items-center mb-1"
+                                    >
+                                        <label
+                                            class="block text-sm font-medium text-red-700"
+                                            >清理标签 (-tag)</label
+                                        >
+                                        <button
                                             @click="cmd.cleanTag = 'cleanAll'"
                                             class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded hover:bg-red-200 transition"
                                         >
@@ -294,11 +305,19 @@
                                 </div>
 
                                 <!-- Tips Area -->
-                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <h4 class="text-sm font-bold text-blue-800 flex items-center gap-1 mb-1">
-                                        <i class="bi bi-info-circle"></i> 运行模式说明:
+                                <div
+                                    class="bg-blue-50 border border-blue-200 rounded-lg p-4"
+                                >
+                                    <h4
+                                        class="text-sm font-bold text-blue-800 flex items-center gap-1 mb-1"
+                                    >
+                                        <i class="bi bi-info-circle"></i>
+                                        运行模式说明:
                                     </h4>
-                                    <p class="text-xs text-blue-700 leading-relaxed" x-text="runModeDescription"></p>
+                                    <p
+                                        class="text-xs text-blue-700 leading-relaxed"
+                                        x-text="runModeDescription"
+                                    ></p>
                                 </div>
                             </div>
                         </div>
@@ -306,12 +325,18 @@
 
                     <!-- Section 2: Config Editor -->
                     <section class="space-y-6 pt-6">
-                        <div class="flex items-center justify-between border-b pb-2">
-                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <i class="bi bi-file-earmark-code"></i> 2. 配置文件生成 (Config.yml)
+                        <div
+                            class="flex items-center justify-between border-b pb-2"
+                        >
+                            <h2
+                                class="text-xl font-bold text-gray-800 flex items-center gap-2"
+                            >
+                                <i class="bi bi-file-earmark-code"></i> 2.
+                                配置文件生成 (Config.yml)
                             </h2>
                             <p class="text-xs text-gray-500">
-                                <span class="text-red-500 font-bold">*</span> 表示该项修改后需重启程序才可生效
+                                <span class="text-red-500 font-bold">*</span>
+                                表示该项修改后需重启程序才可生效
                             </p>
                         </div>
 
@@ -361,8 +386,19 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Cron Expression <span class="text-red-500">*</span></label
-                                    >
+                                        >计划任务表达式 <span
+                                            class="text-red-500 text-xs font-normal ml-1"
+                                            >(修改需重启)</span
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></label>
+
+                                        <a
+                                            href="https://tooltool.net/zh/crontab" target="_blank"
+                                            class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200 transition"
+                                        >
+                                             在线解析
+                                        </a>
                                     <input
                                         type="text"
                                         x-model="config.cron"
@@ -411,25 +447,39 @@
                                 <h3
                                     class="font-bold text-gray-800 border-b pb-2"
                                 >
-                                    WebUI 设置 <span class="text-red-500 text-xs font-normal ml-1">(修改需重启)</span>
+                                    WebUI 设置
+                                    <span
+                                        class="text-red-500 text-xs font-normal ml-1"
+                                        >(修改需重启)</span
+                                    >
                                 </h3>
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >启用 WebUI <span class="text-red-500">*</span></label
+                                        >启用 WebUI
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></label
                                     >
                                     <select
                                         x-model="config.webui.enable"
                                         class="w-full border p-2 rounded text-sm"
                                     >
-                                        <option :value="false">false (不启用)</option>
-                                        <option :value="true">true (启用)</option>
+                                        <option :value="false">
+                                            false (不启用)
+                                        </option>
+                                        <option :value="true">
+                                            true (启用)
+                                        </option>
                                     </select>
                                 </div>
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Port <span class="text-red-500">*</span></label
+                                        >Port
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></label
                                     >
                                     <input
                                         type="text"
@@ -441,7 +491,10 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Username <span class="text-red-500">*</span></label
+                                        >Username
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></label
                                     >
                                     <input
                                         type="text"
@@ -453,7 +506,10 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Password <span class="text-red-500">*</span></label
+                                        >Password
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></label
                                     >
                                     <input
                                         type="text"
@@ -926,10 +982,12 @@
                                 (data.AddErrRetryWait || 0) / 1000000000 + "s"; // ns to s approximation for display
                             this.config.addWait =
                                 (data.AddWait || 0) / 1000000000 + "s";
-                            
+
                             if (data.webui) {
-                                this.config.webui.enable = data.webui.enable || false;
-                                this.config.webui.port = data.webui.port || "8080";
+                                this.config.webui.enable =
+                                    data.webui.enable || false;
+                                this.config.webui.port =
+                                    data.webui.port || "8080";
                                 this.config.webui.user = data.webui.user || "";
                                 this.config.webui.pass = data.webui.pass || "";
                             }
@@ -1074,7 +1132,7 @@
                         let exe = this.cmd.exePath;
                         // 简单处理路径中的空格
                         if (exe.includes(" ")) exe = `"${exe}"`;
-                        
+
                         let c = `${exe} -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
                         if (
                             this.cmd.runMode !== "clean" &&
@@ -1108,14 +1166,19 @@
 
                     get runModeDescription() {
                         const descriptions = {
-                            "cron": "计划任务模式。程序启动后会立即执行一次分流规则更新，随后根据配置文件中的 cron 表达式进入定时等待模式，并在后台持续运行。",
-                            "cronAft": "延迟计划任务模式。程序启动后不会立即执行更新，而是直接根据 cron 表达式进入定时等待状态。适合在系统重启后不想立即占用大量带宽的场景。",
-                            "once": "单次运行模式。程序会立即执行一次完整的分流规则同步任务，执行完成后会自动退出。适合配合系统的 crontab 外部调度使用。",
-                            "web": "WebUI 模式。仅启动可视化配置界面，不执行任何分流同步任务。适合在需要安全修改配置文件时临时使用。",
-                            "clean": "清理模式。程序将连接爱快并删除所有备注中包含指定标签（默认为 IKUAI_BYPASS_）的分流规则。用于彻底移除本工具创建的配置。",
-                            "exportDomainSteamToTxt": "导出模式。将配置文件中定义的域名分流规则转换并导出为爱快支持的手动导入 TXT 格式，导出路径可通过 -exportPath 指定。"
+                            cron: "计划任务模式。程序启动后会立即执行一次分流规则更新，随后根据配置文件中的 cron 表达式进入定时等待模式，并在后台持续运行。",
+                            cronAft:
+                                "延迟计划任务模式。程序启动后不会立即执行更新，而是直接根据 cron 表达式进入定时等待状态。适合在系统重启后不想立即占用大量带宽的场景。",
+                            once: "单次运行模式。程序会立即执行一次完整的分流规则同步任务，执行完成后会自动退出。适合配合系统的 crontab 外部调度使用。",
+                            web: "WebUI 模式。仅启动可视化配置界面，不执行任何分流同步任务。适合在需要安全修改配置文件时临时使用。",
+                            clean: "清理模式。程序将连接爱快并删除所有备注中包含指定标签（默认为 IKUAI_BYPASS_）的分流规则。用于彻底移除本工具创建的配置。",
+                            exportDomainSteamToTxt:
+                                "导出模式。将配置文件中定义的域名分流规则转换并导出为爱快支持的手动导入 TXT 格式，导出路径可通过 -exportPath 指定。",
                         };
-                        return descriptions[this.cmd.runMode] || "请选择运行模式查看详细说明。";
+                        return (
+                            descriptions[this.cmd.runMode] ||
+                            "请选择运行模式查看详细说明。"
+                        );
                     },
 
                     get generatedYaml() {
@@ -1129,7 +1192,11 @@
                             AddWait: this.config.addWait,
                         };
 
-                        if (this.config.webui.enable || this.config.webui.port || this.config.webui.user) {
+                        if (
+                            this.config.webui.enable ||
+                            this.config.webui.port ||
+                            this.config.webui.user
+                        ) {
                             cleanConfig["webui"] = {
                                 enable: this.config.webui.enable,
                                 port: this.config.webui.port,

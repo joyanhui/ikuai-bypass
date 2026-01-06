@@ -94,10 +94,21 @@
 | :--- | :--- | :--- |
 | `-c` | 配置文件路径 | `-c ./config.yml` |
 | `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合), `ip` (ipv4和ipv6分组) |
-| `-r` | 运行模式 | `cron` (默认), `cronAft`, `nocron`, `once`, `1`, `clean`, `exportDomainSteamToTxt` |
+| `-r` | 运行模式 | 见下表 |
 | `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll` |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
 | `-delOldRule`| 删除旧规则时机 | `after` (默认-更新后删), `before` (更新前删) |
+
+### 运行模式 (`-r`) 详细说明
+
+| 模式 | 名称 | 说明 |
+| :--- | :--- | :--- |
+| `cron` | 计划任务模式 | **默认模式**。立即执行一次更新，随后进入定时任务等待模式。若启用了 WebUI 则同步启动。 |
+| `cronAft` | 延迟计划任务 | 不立即执行更新，直接进入定时任务等待模式。若启用了 WebUI 则同步启动。 |
+| `once` / `nocron` / `1` | 单次模式 | 立即执行一次规则更新，完成后立即退出程序。 |
+| `clean` | 清理模式 | 删除所有带有 `IKUAI_BYPASS_` 前缀（或 `-tag` 指定）的规则。 |
+| `web` | WebUI 模式 | 启动可视化 Web 管理界面，用于在线修改配置。不做其他操作 |
+| `exportDomainSteamToTxt` | 导出模式 | 将域名分流规则导出为爱快兼容的 TXT 格式，方便手动导入。 |
 
 ---
 

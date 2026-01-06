@@ -113,6 +113,13 @@ func createServer(port string) *http.Server {
 	})
 
 	// API: 保存配置
+	/*
+	   1. 严格的文件后缀白名单：强制检查文件扩展名必须为 .yml 或 .yaml（忽略大小写）。这直接阻止了覆盖或创建系统关键文件（如 /etc/passwd, /bin/sh）或可执行脚本（.sh, .py, .bat）。
+	   2. 防御符号链接攻击 (Symlink Attack)：在写入前使用 os.Lstat 检查目标路径。如果目标是一个符号链接，程序将直接拒绝写入。这防止了攻击者创建一个指向敏感文件（如
+	      /root/.ssh/authorized_keys）的软链接名为 config.yml，从而诱导程序覆盖该文件的风险。
+	   3. 内容格式锁定：文件内容通过 yaml.Marshal 生成。这意味着写入的数据严格遵循 YAML 语法结构。即使攻击者试图在配置值中注入 #!/bin/bash 或 import os 等代码，这些内容在 YAML
+	      中也只是被视为普通的字符串值，而被引用或转义，无法被操作系统识别为可执行脚本的头部。
+	*/
 	mux.HandleFunc("/api/save", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

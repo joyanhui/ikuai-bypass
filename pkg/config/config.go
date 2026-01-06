@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径")
+	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
 	RunMode                    = flag.String("r", "cron", "运行模式，马上执行 或者定时执行 或者执行一次")
 	IsAcIpgroup                = flag.String("m", "ispdomain", "ipgroup(启用ip分组和下一条网关模式) 或者 ispdomain(isp和域名分流模式)")
 	CleanTag                   = flag.String("tag", "cleanAll", "要清理的分流规则备注名或关键词")
@@ -143,19 +145,24 @@ var WebuiComments = map[string]string{
 // Save 将配置保存到指定文件
 func Save(filename string, cfg *Config, withComments bool) error {
 	// 1. 安全校验：文件后缀
-	ext := ""
-	if len(filename) > 4 {
-		ext = filename[len(filename)-4:]
-	}
-	if len(filename) > 5 && filename[len(filename)-5:] == ".yaml" {
-		ext = ".yaml"
-	}
-
+	ext := strings.ToLower(filepath.Ext(filename))
 	if ext != ".yml" && ext != ".yaml" {
 		return fmt.Errorf("security violation: file extension must be .yml or .yaml")
 	}
 
-	// 2. 使用 Node 树注入注释
+	// 2. 安全校验：检查是否为软链接 (防止符号链接攻击)
+	info, err := os.Lstat(filename)
+	if err == nil {
+		// 文件存在，检查是否为 Symlink
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("security violation: cannot write to a symbolic link")
+		}
+	} else if !os.IsNotExist(err) {
+		// 其他错误
+		return err
+	}
+
+	// 3. 使用 Node 树注入注释
 	var node yaml.Node
 	if err := node.Encode(cfg); err != nil {
 		return fmt.Errorf("marshal config failed: %v", err)
@@ -182,8 +189,8 @@ func Save(filename string, cfg *Config, withComments bool) error {
 		return fmt.Errorf("marshal config failed: %v", err)
 	}
 
-	// 3. 写入文件
-	err = os.WriteFile(filename, data, 0644)
+	// 4. 写入文件 (权限 0600: 仅所有者可读写)
+	err = os.WriteFile(filename, data, 0600)
 	if err != nil {
 		return fmt.Errorf("write file failed: %v", err)
 	}

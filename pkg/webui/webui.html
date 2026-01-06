@@ -270,10 +270,10 @@
                                         爱快连接配置
                                     </h3>
                                     <div class="space-y-4">
-                                        <div><label class="block mb-2 text-sm font-medium">爱快地址 (URL)</label><input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
+                                        <div><label class="block mb-2 text-sm font-medium">爱快地址 (URL)</label><input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-url']"></p></div>
                                         <div class="grid grid-cols-2 gap-4">
-                                            <div><label class="block mb-2 text-sm font-medium">用户名</label><input type="text" x-model="config.username" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
-                                            <div><label class="block mb-2 text-sm font-medium">密码</label><input type="password" x-model="config.password" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
+                                            <div><label class="block mb-2 text-sm font-medium">用户名</label><input type="text" x-model="config.username" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['username']"></p></div>
+                                            <div><label class="block mb-2 text-sm font-medium">密码</label><input type="password" x-model="config.password" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['password']"></p></div>
                                         </div>
                                     </div>
                                 </section>
@@ -291,11 +291,12 @@
                                                     ><a href="https://tooltool.net/zh/crontab" target="_blank" class="text-[10px] bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-1 rounded border border-green-200 dark:border-green-800 font-bold transition">解析器</a>
                                                 </div>
                                                 <input type="text" x-model="config.cron" placeholder="0 7 * * *" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" />
+                                                <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['cron']"></p>
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
-                                                <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">重试等待 (Retry Wait)</label><input type="text" x-model="config.addErrRetryWait" placeholder="10s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">添加等待 (Add Wait)</label><input type="text" x-model="config.addWait" placeholder="1s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
-                                            <div class="col-span-2"><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">Github 代理 (Proxy)</label><input type="text" x-model="config.githubProxy" placeholder="https://gh-proxy.com/" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
+                                                <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">重试等待 (Retry Wait)</label><input type="text" x-model="config.addErrRetryWait" placeholder="10s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['AddErrRetryWait']"></p></div>
+                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">添加等待 (Add Wait)</label><input type="text" x-model="config.addWait" placeholder="1s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['AddWait']"></p></div>
+                                            <div class="col-span-2"><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">Github 代理 (Proxy)</label><input type="text" x-model="config.githubProxy" placeholder="https://gh-proxy.com/" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['github-proxy']"></p></div>
                                         </div>
                                     </section>
 
@@ -318,11 +319,15 @@
                                                 <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用在线更新</span>
                                             </label>
                                         </div>
+                                        <div class="flex flex-col gap-1 mb-4 px-1">
+                                            <p class="text-[10px] text-gray-400" x-text="'管理界面: ' + commentMaps.webui['enable']"></p>
+                                            <p class="text-[10px] text-gray-400" x-text="'在线更新: ' + commentMaps.webui['enable-update']"></p>
+                                        </div>
                                         <div class="grid grid-cols-2 gap-4" x-show="config.webui.enable" x-transition>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">端口</label><input type="text" x-model="config.webui.port" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">CDN 前缀(用于加速前端第三方组件)</label><input type="text" x-model="config.webui.cdnPrefix" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理账号</label><input type="text" x-model="config.webui.user" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理密码</label><input type="password" x-model="config.webui.pass" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /></div>
+                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">端口</label><input type="text" x-model="config.webui.port" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['port']"></p></div>
+                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">CDN 前缀(用于加速前端第三方组件)</label><input type="text" x-model="config.webui.cdnPrefix" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['cdn-prefix']"></p></div>
+                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理账号</label><input type="text" x-model="config.webui.user" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['user']"></p></div>
+                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理密码</label><input type="password" x-model="config.webui.pass" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['pass']"></p></div>
                                         </div>
                                     </section>
                                 </div>
@@ -332,13 +337,14 @@
                             <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-10">
                                 <!-- ISP -->
                                 <div>
-                                    <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                                    <div class="flex justify-between items-center mb-2 border-b dark:border-gray-700 pb-2">
                                         <h3 class="text-lg font-bold flex items-center gap-2">
                                             <i class="bi bi-globe text-indigo-500"></i>
                                             自定义运营商 (ISP)
                                         </h3>
                                         <button type="button" @click="addItem('customIsp')" class="px-4 py-1.5 text-xs font-black text-white bg-indigo-600 rounded-xl shadow-md transition hover:bg-indigo-700 active:scale-95">+ 添加规则</button>
                                     </div>
+                                    <p class="mb-4 text-[10px] text-gray-400 italic" x-text="commentMaps.top['custom-isp']"></p>
                                     <div class="space-y-3">
                                         <template x-for="(item, index) in config.customIsp" :key="index"
                                             ><div class="grid grid-cols-1 md:grid-cols-12 gap-3 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border dark:border-gray-700 shadow-sm">
@@ -350,6 +356,7 @@
                                                 </div>
                                                 <div class="md:col-span-2">
                                                     <input type="text" x-model="item.tag" placeholder="备注标签" class="w-full text-xs bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg p-2 dark:text-white" />
+                                                    <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['tag']"></p>
                                                 </div>
                                                 <div class="md:col-span-1 text-right">
                                                     <button type="button" @click="removeItem('customIsp', index)" class="text-red-500 p-2">
@@ -369,6 +376,7 @@
                                             </h3>
                                             <button type="button" @click="addItem('ipGroup')" class="px-2 py-1 text-[10px] bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-lg font-black transition active:scale-90">+ 添加</button>
                                         </div>
+                                        <p class="text-[10px] text-gray-400 italic px-1" x-text="commentMaps.top['ip-group']"></p>
                                         <div class="space-y-2">
                                             <template x-for="(item, index) in config.ipGroup" :key="index"
                                                 ><div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl border dark:border-gray-700 flex gap-2 items-center shadow-sm">
@@ -391,6 +399,7 @@
                                             </h3>
                                             <button type="button" @click="addItem('ipv6Group')" class="px-2 py-1 text-[10px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-lg font-black transition active:scale-90">+ 添加</button>
                                         </div>
+                                        <p class="text-[10px] text-gray-400 italic px-1" x-text="commentMaps.top['ipv6-group']"></p>
                                         <div class="space-y-2">
                                             <template x-for="(item, index) in config.ipv6Group" :key="index"
                                                 ><div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl border dark:border-gray-700 flex gap-2 items-center shadow-sm">
@@ -408,20 +417,21 @@
                                 </div>
                                 <!-- Domain -->
                                 <div>
-                                    <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                                    <div class="flex justify-between items-center mb-2 border-b dark:border-gray-700 pb-2">
                                         <h3 class="text-lg font-bold flex items-center gap-2">
                                             <i class="bi bi-signpost-split text-orange-500"></i>
                                             域名分流 (Domain)
                                         </h3>
                                         <button type="button" @click="addItem('streamDomain')" class="px-4 py-1.5 text-xs font-black text-white bg-orange-500 rounded-xl shadow-md transition hover:bg-orange-600">+ 添加分流</button>
                                     </div>
+                                    <p class="mb-4 text-[10px] text-gray-400 italic" x-text="commentMaps.top['stream-domain']"></p>
                                     <div class="space-y-3">
                                         <template x-for="(item, index) in config.streamDomain" :key="index"
                                             ><div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 grid md:grid-cols-12 gap-3 relative group shadow-sm">
-                                                <div class="md:col-span-2"><label class="text-[10px] font-bold text-gray-400 uppercase">出站接口</label><input type="text" x-model="item.interface" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /></div>
-                                                <div class="md:col-span-3"><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" placeholder="内网地址" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /></div>
+                                                <div class="md:col-span-2"><label class="text-[10px] font-bold text-gray-400 uppercase">出站接口</label><input type="text" x-model="item.interface" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['interface']"></p></div>
+                                                <div class="md:col-span-3"><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" placeholder="内网地址" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr']"></p></div>
                                                 <div class="md:col-span-5"><label class="text-[10px] font-bold text-gray-400 uppercase">域名列表 URL</label><input type="text" x-model="item.url" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /></div>
-                                                <div class="md:col-span-1"><label class="text-[10px] font-bold text-gray-400 uppercase">Tag</label><input type="text" x-model="item.tag" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /></div>
+                                                <div class="md:col-span-1"><label class="text-[10px] font-bold text-gray-400 uppercase">Tag</label><input type="text" x-model="item.tag" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['tag']"></p></div>
                                                 <div class="md:col-span-1 text-right">
                                                     <button type="button" @click="removeItem('streamDomain', index)" class="text-red-500 hover:text-red-700 p-2">
                                                         <i class="bi bi-trash3-fill text-lg"></i>
@@ -432,13 +442,14 @@
                                 </div>
                                 <!-- Port -->
                                 <div>
-                                    <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                                    <div class="flex justify-between items-center mb-2 border-b dark:border-gray-700 pb-2">
                                         <h3 class="text-lg font-bold flex items-center gap-2">
                                             <i class="bi bi-usb-plug text-pink-500"></i>
                                             端口分流 (Port)
                                         </h3>
                                         <button type="button" @click="addItem('streamIpPort')" class="px-4 py-1.5 text-xs font-black text-white bg-pink-500 rounded-xl shadow-md transition hover:bg-pink-600">+ 添加规则</button>
                                     </div>
+                                    <p class="mb-4 text-[10px] text-gray-400 italic" x-text="commentMaps.top['stream-ipport']"></p>
                                     <div class="space-y-4">
                                         <template x-for="(item, index) in config.streamIpPort" :key="index"
                                             ><div class="bg-gray-50 dark:bg-gray-900/50 p-5 rounded-2xl border dark:border-gray-700 space-y-4 relative group shadow-sm">
@@ -449,14 +460,16 @@
                                                             <option value="0">外网线路</option>
                                                             <option value="1">下一跳网关</option>
                                                         </select>
+                                                        <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['type']"></p>
                                                     </div>
                                                     <div>
                                                         <label class="text-[10px] font-bold text-gray-400 uppercase" x-text="item.type == '0' ? '接口' : '下一跳 IP'"></label><input type="text" x-model="item.type == '0' ? item.interface : item.nexthop" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" />
+                                                        <p class="mt-1 text-[8px] text-gray-400" x-text="item.type == '0' ? commentMaps.item['interface'] : commentMaps.item['nexthop']"></p>
                                                     </div>
-                                                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">关联 IP 分组</label><input type="text" x-model="item.ipGroup" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /></div>
+                                                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">关联 IP 分组</label><input type="text" x-model="item.ipGroup" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['ip-group']"></p></div>
                                                 </div>
                                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /></div>
+                                                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr']"></p></div>
                                                     <div>
                                                         <label class="text-[10px] font-bold text-gray-400 uppercase">负载模式</label
                                                         ><select x-model="item.mode" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 outline-none focus:ring-1 focus:ring-primary-500">
@@ -467,15 +480,19 @@
                                                             <option value="4">4-源IP+目的IP+目的端口</option>
                                                             <option value="5">5-主备模式</option>
                                                         </select>
+                                                        <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['mode']"></p>
                                                     </div>
                                                     <div class="flex items-end">
-                                                        <label class="flex items-center gap-3 cursor-pointer pb-2 group/band"
-                                                            ><div class="relative w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full group-hover/band:ring-2 transition-all">
-                                                                <input type="checkbox" :checked="item.ifaceband == '1'" @change="item.ifaceband = $event.target.checked ? '1' : '0'" class="sr-only peer" />
-                                                                <div class="absolute left-1 w-3.5 h-3.5 bg-white rounded-full shadow-sm transition-transform" :class="item.ifaceband == '1' ? 'translate-x-4 bg-pink-400' : ''"></div>
-                                                            </div>
-                                                            <span class="text-xs font-black text-gray-500">线路绑定</span></label
-                                                        >
+                                                        <div class="flex flex-col gap-1 w-full">
+                                                            <label class="flex items-center gap-3 cursor-pointer pb-2 group/band"
+                                                                ><div class="relative w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full group-hover/band:ring-2 transition-all">
+                                                                    <input type="checkbox" :checked="item.ifaceband == '1'" @change="item.ifaceband = $event.target.checked ? '1' : '0'" class="sr-only peer" />
+                                                                    <div class="absolute left-1 w-3.5 h-3.5 bg-white rounded-full shadow-sm transition-transform" :class="item.ifaceband == '1' ? 'translate-x-4 bg-pink-400' : ''"></div>
+                                                                </div>
+                                                                <span class="text-xs font-black text-gray-500">线路绑定</span></label
+                                                            >
+                                                            <p class="text-[8px] text-gray-400" x-text="commentMaps.item['ifaceband']"></p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <button type="button" @click="removeItem('streamIpPort', index)" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 p-2 transition-all opacity-0 group-hover:opacity-100">

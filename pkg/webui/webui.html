@@ -110,21 +110,85 @@
 
             <div class="min-h-[60vh]">
                 <!-- Tab: Help -->
-                <div x-show="currentTab === 'help'" x-transition:enter.opacity.duration.300ms>
-                    <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div x-show="currentTab === 'help'" x-transition:enter.opacity.duration.300ms class="space-y-12">
+                    <!-- Steps -->
+                    <div class="grid md:grid-cols-2 gap-6">
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                             <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 text-xl font-bold">1</div>
                             <h3 class="text-lg font-bold mb-2">填写配置</h3>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">在“配置助手”中填入爱快信息及分流规则。系统会自动处理配置文件的读写逻辑。</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">在“配置助手”中填入爱快信息及分流规则。系统会自动处理配置文件的读写逻辑。建议先“加载远程数据”作为模板。</p>
                         </div>
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                             <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 flex items-center justify-center mb-4 text-xl font-bold">2</div>
                             <h3 class="text-lg font-bold mb-2">预览并保存</h3>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">点击底部的“预览并保存”。在模态框中核对配置后，点击“保存到服务器”即可。</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">点击底部的“预览并保存”。核对生成的 YAML 内容，确认无误后点击“带注释保存”写入服务器。</p>
                         </div>
                     </div>
+
+                    <!-- Flow Modes -->
+                    <section class="space-y-6">
+                        <h2 class="text-xl font-black flex items-center gap-2 border-l-4 border-primary-600 pl-4">
+                            <i class="bi bi-diagram-3-fill"></i>
+                            分流模式解析 (如何选择？)
+                        </h2>
+                        <div class="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Mode 1 -->
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-primary-600 dark:text-primary-400">1. 自定义运营商模式 (推荐)</h3>
+                                    <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-black rounded uppercase">极致稳定/网络自愈</span>
+                                </div>
+                                <div class="text-sm space-y-3 flex-1 text-gray-600 dark:text-gray-400">
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">适合将 OpenWrt 视为“虚拟上级运营商”的架构。</p>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>规则同步到 iKuai <span class="font-bold">“自定义运营商”</span></li>
+                                        <li>国内流量直连，性能损耗最低，旁路仅处理分流流量</li>
+                                        <li><span class="text-green-600">优势：</span>旁路宕机仅分流流量中断，普通上网不受影响</li>
+                                        <li><span class="text-green-600">优势：</span>终端设备无需修改网关，完全透明感</li>
+                                    </ul>
+                                </div>
+                                <div class="mt-6 pt-4 border-t dark:border-gray-700">
+                                    <a href="https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/" target="_blank" class="text-xs text-primary-600 hover:underline inline-flex items-center gap-1">查看详细教程 <i class="bi bi-box-arrow-up-right"></i></a>
+                                </div>
+                            </div>
+                            <!-- Mode 2 -->
+                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex flex-col">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-gray-700 dark:text-gray-200">2. IP分组与端口分流模式</h3>
+                                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-[10px] font-black rounded uppercase">传统旁路模式</span>
+                                </div>
+                                <div class="text-sm space-y-3 flex-1 text-gray-600 dark:text-gray-400">
+                                    <p class="font-medium text-gray-700 dark:text-gray-300">标准的策略路由方案，逻辑直接清晰。</p>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>规则同步到 iKuai <span class="font-bold">“IP分组”</span></li>
+                                        <li>利用“端口分流”指定 <span class="font-bold">“下一跳网关”</span> 为旁路 IP</li>
+                                        <li><span class="text-blue-600">特点：</span>配置直接，符合大多数人对旁路由的认知</li>
+                                        <li><span class="text-blue-600">特点：</span>支持更精细的负载模式和线路绑定控制</li>
+                                    </ul>
+                                </div>
+                                <div class="mt-6 pt-4 border-t dark:border-gray-700">
+                                    <a href="https://github.com/joyanhui/ikuai-bypass/issues/7" target="_blank" class="text-xs text-primary-600 hover:underline inline-flex items-center gap-1">查看讨论与参考 <i class="bi bi-box-arrow-up-right"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Important Note -->
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+                        <h3 class="text-amber-800 dark:text-amber-400 font-bold flex items-center gap-2 mb-2">
+                            <i class="bi bi-exclamation-octagon-fill"></i>
+                            规则识别标识 (关键)
+                        </h3>
+                        <p class="text-amber-700 dark:text-amber-500 text-xs leading-relaxed">
+                            本工具会自动在规则备注中添加 <code class="bg-amber-100 dark:bg-amber-900/50 px-1 rounded font-bold">IKUAI_BYPASS_</code> 前缀。
+                        </p>
+                    </div>
+
                     <div class="text-center">
-                        <button @click="currentTab = 'config'" class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-bold shadow-md">立即开始配置</button>
+                        <button @click="currentTab = 'config'" class="px-10 py-4 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl font-black shadow-xl shadow-primary-500/30 transition-all active:scale-95 flex items-center gap-3 mx-auto">
+                            <i class="bi bi-rocket-takeoff-fill text-xl"></i>
+                            立即进入配置助手
+                        </button>
                     </div>
                 </div>
 
@@ -187,8 +251,9 @@
                                         <option value="web">web (仅WebUI)</option>
                                         <option value="exportDomainSteamToTxt">export (导出规则)</option>
                                     </select>
+                                    <p class="mt-1 text-[9px] text-gray-400 italic" x-text="runModeDescription"></p>
                                 </div>
-                                <div><label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">配置文件 (-c)</label><input type="text" x-model="cmd.configPath" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-sm rounded-lg p-2 focus:ring-primary-500 dark:text-white" /></div>
+                                <div><label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">配置文件 (-c)</label><input type="text" x-model="cmd.configPath" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-sm rounded-lg p-2 focus:ring-primary-500 dark:text-white" /><p class="mt-1 text-[9px] text-gray-400 italic">指定要读取的 YAML 路径</p></div>
                                 <div>
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">功能模块 (-m)</label
                                     ><select x-model="cmd.module" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-sm rounded-lg p-2 focus:ring-primary-500 dark:text-white">
@@ -198,6 +263,7 @@
                                         <option value="ii">ii (混合模式)</option>
                                         <option value="ip">ip (v4+v6分组)</option>
                                     </select>
+                                    <p class="mt-1 text-[9px] text-gray-400 italic" x-text="moduleDescription"></p>
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">旧规则删除时机</label
@@ -205,6 +271,7 @@
                                         <option value="after">After (更新成功后删)</option>
                                         <option value="before">Before (更新前先删)</option>
                                     </select>
+                                    <p class="mt-1 text-[9px] text-gray-400 italic" x-text="cmd.delOldRule === 'after' ? '最稳妥：成功后再清理，确保无断网。' : '最干净：先腾出空间，适合低性能设备。'"></p>
                                 </div>
                             </div>
 
@@ -241,97 +308,135 @@
                             <span class="text-[10px] md:text-xs text-gray-400 font-mono italic" x-text="'[ ' + (serverConfPath || '{{CONF_PATH}}') + ' ]'"></span>
                         </div>
 
-                        <div class="space-y-8">
-                            <!-- Remote URL Picker -->
-                            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
-                                <div class="flex justify-between items-center mb-3">
-                                    <label class="text-xs font-black text-gray-500 uppercase tracking-widest">远程加载配置 (URL)</label>
-                                    <button type="button" @click="resetRemoteUrl()" class="text-[10px] text-primary-600 font-bold hover:underline">重置为默认地址</button>
-                                </div>
-                                <div class="flex flex-col md:flex-row gap-3">
-                                    <input type="text" x-model="remoteConfigUrl" @input="saveRemoteUrl()" class="flex-1 border dark:border-gray-600 p-3 rounded-xl text-sm bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary-500 outline-none dark:text-white shadow-inner" placeholder="https://.../config.yml" />
-                                    <button type="button" @click="loadRemoteConfig()" class="bg-gray-800 dark:bg-gray-600 text-white px-8 py-3 rounded-xl hover:bg-black transition font-bold shadow-md flex items-center justify-center gap-2" :disabled="loadingRemote">
-                                        <template x-if="!loadingRemote"><i class="bi bi-cloud-download"></i></template>
-                                        <template x-if="loadingRemote"><i class="bi bi-arrow-repeat animate-spin"></i></template>
-                                        加载数据
-                                    </button>
-                                </div>
-                                <div class="mt-2 text-[10px] text-gray-500 flex gap-2 items-center">
-                                    <span class="font-bold">全局加速:</span>
-                                    <span x-text="config.githubProxy ? '已启用 ('+config.githubProxy+')' : '未启用'"></span>
-                                    <span class="text-gray-400">- 远程加载时若配置了代理，将自动应用。</span>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 h-full">
-                                    <h3 class="text-lg font-bold flex items-center gap-2 mb-4 border-b dark:border-gray-700 pb-2 text-gray-700 dark:text-gray-200">
-                                        <i class="bi bi-router-fill text-blue-600"></i>
-                                        爱快连接配置
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            <!-- 1. Remote Config Section -->
+                            <section class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm h-full flex flex-col transition-all hover:shadow-md">
+                                <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                                    <h3 class="text-lg font-bold flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                        <i class="bi bi-cloud-arrow-down-fill text-primary-500"></i>
+                                        远程加载配置 (实例)
                                     </h3>
-                                    <div class="space-y-4">
-                                        <div><label class="block mb-2 text-sm font-medium">爱快地址 (URL)</label><input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-url']"></p></div>
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div><label class="block mb-2 text-sm font-medium">用户名</label><input type="text" x-model="config.username" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['username']"></p></div>
-                                            <div><label class="block mb-2 text-sm font-medium">密码</label><input type="password" x-model="config.password" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['password']"></p></div>
+                                    <button type="button" @click="resetRemoteUrl()" class="text-[10px] text-primary-600 font-bold hover:underline">重置为默认实例</button>
+                                </div>
+                                <div class="space-y-4 flex-1">
+                                    <div class="flex flex-col gap-3">
+                                        <input type="text" x-model="remoteConfigUrl" @input="saveRemoteUrl()" class="w-full border dark:border-gray-600 p-3 rounded-xl text-sm bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-primary-500 outline-none dark:text-white shadow-inner" placeholder="https://.../config.yml" />
+                                        <button type="button" @click="loadRemoteConfig()" class="w-full bg-gray-800 dark:bg-gray-600 text-white px-8 py-3 rounded-xl hover:bg-black transition font-bold shadow-md flex items-center justify-center gap-2" :disabled="loadingRemote">
+                                            <template x-if="!loadingRemote"><i class="bi bi-cloud-download"></i></template>
+                                            <template x-if="loadingRemote"><i class="bi bi-arrow-repeat animate-spin"></i></template>
+                                            加载远程数据
+                                        </button>
+                                    </div>
+                                    <div class="bg-primary-50 dark:bg-primary-900/20 p-3 rounded-xl border border-primary-100 dark:border-primary-800">
+                                        <div class="text-[10px] text-primary-700 dark:text-primary-300 flex flex-col gap-1">
+                                            <div class="flex items-center gap-2"><i class="bi bi-lightning-charge-fill"></i> <span class="font-bold">GitHub 全局加速状态</span></div>
+                                            <div class="flex justify-between items-center mt-1">
+                                                <span class="truncate pr-2" x-text="config.githubProxy ? '节点: ' + config.githubProxy : '未配置加速节点'"></span>
+                                                <span class="shrink-0 bg-white/50 dark:bg-black/20 px-1.5 py-0.5 rounded font-black uppercase" x-text="config.githubProxy ? 'Active' : 'Direct'"></span>
+                                            </div>
                                         </div>
                                     </div>
-                                </section>
-
-                                <div class="space-y-6">
-                                    <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                                        <h3 class="text-lg font-bold flex items-center gap-2 mb-4 border-b dark:border-gray-700 pb-2 text-gray-700 dark:text-gray-200">
-                                            <i class="bi bi-clock-fill text-green-600"></i>
-                                            任务调度与运行选项
-                                        </h3>
-                                        <div class="space-y-4">
-                                            <div>
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <label class="block text-sm font-medium">Cron 表达式 <span class="text-red-500">*</span></label
-                                                    ><a href="https://tooltool.net/zh/crontab" target="_blank" class="text-[10px] bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-1 rounded border border-green-200 dark:border-green-800 font-bold transition">解析器</a>
-                                                </div>
-                                                <input type="text" x-model="config.cron" placeholder="0 7 * * *" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" />
-                                                <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['cron']"></p>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-4">
-                                                <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">重试等待 (Retry Wait)</label><input type="text" x-model="config.addErrRetryWait" placeholder="10s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['AddErrRetryWait']"></p></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">添加等待 (Add Wait)</label><input type="text" x-model="config.addWait" placeholder="1s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['AddWait']"></p></div>
-                                            <div class="col-span-2"><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">Github 代理 (Proxy)</label><input type="text" x-model="config.githubProxy" placeholder="https://gh-proxy.com/" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['github-proxy']"></p></div>
-                                        </div>
-                                    </section>
-
-                                    <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                                        <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
-                                            <h3 class="text-lg font-bold flex items-center gap-2 text-gray-700 dark:text-gray-200">
-                                                <i class="bi bi-window-desktop text-purple-600"></i>
-                                                WebUI 设置
-                                            </h3>
-                                            <label class="relative inline-flex items-center cursor-pointer group">
-                                                <input type="checkbox" x-model="config.webui.enable" class="sr-only peer" />
-                                                <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700"></div>
-                                                <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
-                                                <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用管理界面</span>
-                                            </label>
-                                            <label class="relative inline-flex items-center cursor-pointer group">
-                                                <input type="checkbox" x-model="config.webui.enableUpdate" class="sr-only peer" />
-                                                <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700"></div>
-                                                <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
-                                                <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用在线更新</span>
-                                            </label>
-                                        </div>
-                                        <div class="flex flex-col gap-1 mb-4 px-1">
-                                            <p class="text-[10px] text-gray-400" x-text="'管理界面: ' + commentMaps.webui['enable']"></p>
-                                            <p class="text-[10px] text-gray-400" x-text="'在线更新: ' + commentMaps.webui['enable-update']"></p>
-                                        </div>
-                                        <div class="grid grid-cols-2 gap-4" x-show="config.webui.enable" x-transition>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">端口</label><input type="text" x-model="config.webui.port" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['port']"></p></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">CDN 前缀(用于加速前端第三方组件)</label><input type="text" x-model="config.webui.cdnPrefix" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['cdn-prefix']"></p></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理账号</label><input type="text" x-model="config.webui.user" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['user']"></p></div>
-                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理密码</label><input type="password" x-model="config.webui.pass" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['pass']"></p></div>
-                                        </div>
-                                    </section>
                                 </div>
-                            </div>
+                            </section>
+
+                            <!-- 2. Ikuai Connection Section -->
+                            <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 h-full flex flex-col transition-all hover:shadow-md">
+                                <h3 class="text-lg font-bold flex items-center gap-2 mb-4 border-b dark:border-gray-700 pb-2 text-gray-700 dark:text-gray-200">
+                                    <i class="bi bi-router-fill text-blue-600"></i>
+                                    爱快连接配置
+                                </h3>
+                                <div class="space-y-4 flex-1">
+                                    <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">爱快地址 (URL)</label><input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-url']"></p></div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">用户名</label><input type="text" x-model="config.username" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['username']"></p></div>
+                                        <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">密码</label><input type="password" x-model="config.password" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['password']"></p></div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- 3. Schedule Section -->
+                            <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 h-full flex flex-col transition-all hover:shadow-md">
+                                <h3 class="text-lg font-bold flex items-center gap-2 mb-4 border-b dark:border-gray-700 pb-2 text-gray-700 dark:text-gray-200">
+                                    <i class="bi bi-clock-fill text-green-600"></i>
+                                    任务调度与运行选项
+                                </h3>
+                                <div class="space-y-4 flex-1">
+                                    <div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Cron 表达式 <span class="text-red-500">*</span></label>
+                                            <a href="https://tooltool.net/zh/crontab" target="_blank" class="text-[10px] bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded border border-green-200 dark:border-green-800 font-bold transition">解析器</a>
+                                        </div>
+                                        <input type="text" x-model="config.cron" placeholder="0 7 * * *" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" />
+                                        <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['cron']"></p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">重试等待</label>
+                                            <input type="text" x-model="config.addErrRetryWait" placeholder="10s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white focus:ring-1 focus:ring-primary-500" />
+                                            <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['AddErrRetryWait']"></p>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">添加等待</label>
+                                            <input type="text" x-model="config.addWait" placeholder="1s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white focus:ring-1 focus:ring-primary-500" />
+                                            <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['AddWait']"></p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">Github 代理 (Proxy)</label>
+                                        <input type="text" x-model="config.githubProxy" placeholder="https://gh-proxy.com/" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white focus:ring-1 focus:ring-primary-500" />
+                                        <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['github-proxy']"></p>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- 4. WebUI Section -->
+                            <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 h-full flex flex-col transition-all hover:shadow-md">
+                                <div class="flex justify-between items-center mb-4 border-b dark:border-gray-700 pb-2">
+                                    <h3 class="text-lg font-bold flex items-center gap-2 text-gray-700 dark:text-gray-200">
+                                        <i class="bi bi-window-desktop text-purple-600"></i>
+                                        WebUI 设置
+                                    </h3>
+                                    <div class="flex items-center gap-3">
+                                        <label class="relative inline-flex items-center cursor-pointer group" title="管理界面">
+                                            <input type="checkbox" x-model="config.webui.enable" class="sr-only peer" />
+                                            <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700 border dark:border-gray-600 shadow-inner"></div>
+                                            <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
+                                        </label>
+                                        <label class="relative inline-flex items-center cursor-pointer group" title="在线更新">
+                                            <input type="checkbox" x-model="config.webui.enableUpdate" class="sr-only peer" />
+                                            <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-green-600 dark:bg-gray-700 border dark:border-gray-600 shadow-inner"></div>
+                                            <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-x-4 gap-y-1 mb-4 px-1">
+                                    <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full" :class="config.webui.enable ? 'bg-primary-500 animate-pulse' : 'bg-gray-400'"></span><span class="text-[10px] text-gray-500">管理界面</span></div>
+                                    <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full" :class="config.webui.enableUpdate ? 'bg-green-500 animate-pulse' : 'bg-gray-400'"></span><span class="text-[10px] text-gray-500">允许更新配置文件</span></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 flex-1" x-show="config.webui.enable" x-transition>
+                                    <div>
+                                        <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">端口</label>
+                                        <input type="text" x-model="config.webui.port" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white" />
+                                        <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['port']"></p>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">CDN 前缀</label>
+                                        <input type="text" x-model="config.webui.cdnPrefix" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white" />
+                                        <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['cdn-prefix']"></p>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理账号</label>
+                                        <input type="text" x-model="config.webui.user" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white" />
+                                        <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['user']"></p>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">管理密码</label>
+                                        <input type="password" x-model="config.webui.pass" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white" />
+                                        <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.webui['pass']"></p>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
 
                             <!-- List Tables -->
                             <section class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-10">
@@ -956,6 +1061,16 @@
                             exportDomainSteamToTxt: "导出模式。将规则导出为 TXT 格式。",
                         };
                         return ds[this.cmd.runMode] || "";
+                    },
+                    get moduleDescription() {
+                        const ds = {
+                            ispdomain: "传统模式：更新运营商(ISP)和域名分流规则。",
+                            ipgroup: "转发模式：更新IP分组及关联的端口分流(下一跳)。",
+                            ipv6group: "IPv6模式：仅更新IPv6地址分组。",
+                            ii: "混合模式：同时更新 ispdomain 和 ipgroup 规则。",
+                            ip: "分组模式：同时更新 IPv4 和 IPv6 地址分组。",
+                        };
+                        return ds[this.cmd.module] || "";
                     },
                     get generatedYaml() {
                         const c = {

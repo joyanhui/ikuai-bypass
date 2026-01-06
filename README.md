@@ -90,7 +90,7 @@
 | 参数 | 说明 | 示例/取值 |
 | :--- | :--- | :--- |
 | `-c` | 配置文件路径 | `-c ./config.yml` |
-| `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合) |
+| `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合), `ip` (ipv4和ipv6分组) |
 | `-r` | 运行模式 | `cron`, `once`, `clean`, `exportDomainSteamToTxt` |
 | `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll` |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
@@ -133,9 +133,31 @@ docker run -itd --name ikuai-bypass --privileged=true --restart=always \
 <code>/bin/sh -c "chmod +x /opt/ikuai-bypass/ikuai-bypass && /opt/ikuai-bypass/ikuai-bypass -r cron -c /opt/ikuai-bypass/config.yml"</code>
 </details>
 
+<details>
+<summary><b>群晖环境docker</b></summary>
+使用 <code>compose.yaml</code> 内容为：
+
+```
+version: '3.8'
+services:
+  ikuai-bypass:
+    image: dscao/ikuai-bypass
+    container_name: ikuai-bypass
+    privileged: true
+    environment:
+      TZ: "Asia/Shanghai"
+    volumes:
+      - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
+    command: sh -c "/app/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ipv6group & sleep 30 ; /app/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ii ; wait"
+    tty: true
+```
+
+</details>
+
 ---
 
 ## 更新日志
+- 2026-01-06 优化ip、ipv6分组的更新流程，先获取到新数据后删除旧分组，再增加新分组数据。分组名称保持统一。delOldRule与ip、ipv6分组不再有关联。
 - 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
 - 2025-04-23 部分代码规范性处理以及nilness的逻辑修复
 - 2025-04-23 增加开关isIpGroupNameAddRandomSuff [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)

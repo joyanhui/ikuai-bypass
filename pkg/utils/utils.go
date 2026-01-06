@@ -164,17 +164,26 @@ func UpdateIpGroup(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv6AndRemoveEmptyLine(ips)
 	ipGroups := Group(ips, 1000)
-	last4 := ""
-	if *config.IsIpGroupNameAddRandomSuff == "1" {
-		timestamp := time.Now().Unix()
-		str := strconv.FormatInt(timestamp, 10)
-		last4 = "_" + str[len(str)-4:]
+    log.Println("ip分组获取新数据成功", name)
+	preIds, err := iKuai.GetIpGroup(name)
+	if err != nil {
+		log.Println("ip分组== 获取准备更新的IP分组列表失败：", name, err)
+		return
+	} else {
+		log.Println("ip分组== 获取准备更新的IP分组列表成功", name, preIds)
 	}
-
+	err = iKuai.DelIpGroup(preIds)
+	if err == nil {
+		log.Println("ip分组== 删除旧的IP分组列表成功", name)
+	} else {
+		log.Println("ip分组== 删除旧的IP分组列表有错误", name, err)
+		return
+	}
+	preIds = ""
 	for index, ig := range ipGroups {
 		log.Println("ip分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index)+last4, ipGroup)
+		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
 			log.Println("ip分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(config.GlobalConfig.AddWait)
@@ -202,16 +211,26 @@ func UpdateIpv6Group(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv4AndRemoveEmptyLine(ips)
 	ipGroups := Group(ips, 1000)
-	last4 := ""
-	if *config.IsIpGroupNameAddRandomSuff == "1" {
-		timestamp := time.Now().Unix()
-		str := strconv.FormatInt(timestamp, 10)
-		last4 = "_" + str[len(str)-4:]
+	log.Println("ipv6分组获取新数据成功", name)
+	preIds, err := iKuai.GetIpv6Group(name)
+	if err != nil {
+		log.Println("ipv6分组== 获取准备更新的IPv6分组列表失败：", name, err)
+		return
+	} else {
+		log.Println("ipv6分组== 获取准备更新的IPv6分组列表成功", name, preIds)
 	}
+	err = iKuai.DelIpv6Group(preIds)
+	if err == nil {
+		log.Println("ipv6分组== 删除旧的IPv6分组列表成功", name, preIds)
+	} else {
+		log.Println("ipv6分组== 删除旧的IPv6分组列表有错误", name, err)
+		return
+	}
+	preIds = ""
 	for index, ig := range ipGroups {
 		log.Println("ipv6分组== ", index, " 正在添加 .... ")
 		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index)+last4, ipGroup)
+		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
 			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(config.GlobalConfig.AddWait)

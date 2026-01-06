@@ -4,11 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>iKuai Bypass 配置助手</title>
-
-        <!-- Tailwind CSS v4 CDN -->
         <script src="{{CDN_PREFIX}}/@tailwindcss/browser@4"></script>
-
-        <!-- Tailwind CSS v4 Configuration -->
         <style type="text/tailwindcss">
             @theme {
                 /* Map primary to blue */
@@ -23,7 +19,6 @@
                 --color-primary-800: var(--color-blue-800);
                 --color-primary-900: var(--color-blue-900);
                 --color-primary-950: var(--color-blue-950);
-
                 /* Map gray to slate */
                 --color-gray-50: var(--color-slate-50);
                 --color-gray-100: var(--color-slate-100);
@@ -37,18 +32,11 @@
                 --color-gray-900: var(--color-slate-900);
                 --color-gray-950: var(--color-slate-950);
             }
-
             /* Enable class-based dark mode */
             @custom-variant dark (&:where(.dark, .dark *));
         </style>
-
-        <!-- Bootstrap Icons -->
         <link rel="stylesheet" href="{{CDN_PREFIX}}/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
-
-        <!-- JS-YAML -->
         <script src="{{CDN_PREFIX}}/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-
-        <!-- Alpine.js -->
         <script defer src="{{CDN_PREFIX}}/alpinejs@3.13.3/dist/cdn.min.js"></script>
 
         <style>
@@ -313,7 +301,7 @@
                                                 WebUI 设置
                                             </h3>
                                             <label class="relative inline-flex items-center cursor-pointer group">
-                                                <input type="checkbox" x-model="config.webui.enable" class="sr-only peer">
+                                                <input type="checkbox" x-model="config.webui.enable" class="sr-only peer" />
                                                 <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700"></div>
                                                 <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
                                                 <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用管理界面</span>
@@ -508,6 +496,7 @@
                                         config.yml 预览
                                     </h3>
 
+
                                     <!-- Comment Switch (Big & Bold) -->
                                     <div class="flex items-center gap-4 bg-white dark:bg-gray-800 px-5 py-2 rounded-2xl border-2 border-primary-100 dark:border-primary-900/50 shadow-inner group">
                                         <span class="text-sm font-black text-primary-700 dark:text-primary-400">显示中文注释</span>
@@ -532,10 +521,14 @@
                                     </template>
                                 </div>
                                 <div class="flex gap-4 w-full md:w-auto">
-                                    <button @click="copyText(generatedYaml)" class="flex-1 md:flex-initial px-8 py-3.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-2xl font-black hover:bg-gray-300 transition active:scale-95 flex items-center justify-center gap-2"><i class="bi bi-clipboard"></i> 复制代码</button>
-                                    <button @click="saveConfig()" class="flex-1 md:flex-initial px-14 py-3.5 bg-green-600 text-white rounded-2xl font-black hover:bg-green-700 shadow-2xl shadow-green-500/30 transition active:scale-95 flex items-center justify-center gap-3">
-                                        <i class="bi bi-cloud-upload-fill text-xl"></i>
-                                        立即保存到服务器
+                                    <button @click="copyText(generatedYaml)" class="flex-1 md:flex-initial px-6 py-3.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-2xl font-black hover:bg-gray-300 transition active:scale-95 flex items-center justify-center gap-2"><i class="bi bi-clipboard"></i> 复制代码</button>
+                                    <button @click="saveConfig(false)" class="flex-1 md:flex-initial px-6 py-3.5 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
+                                        <i class="bi bi-save"></i>
+                                        无注释保存
+                                    </button>
+                                    <button @click="saveConfig(true)" class="flex-1 md:flex-initial px-6 py-3.5 bg-green-600 text-white rounded-2xl font-black hover:bg-green-700 shadow-xl shadow-green-500/30 transition active:scale-95 flex items-center justify-center gap-2">
+                                        <i class="bi bi-chat-text-fill"></i>
+                                        带注释保存
                                     </button>
                                 </div>
                             </div>
@@ -547,7 +540,7 @@
 
         <footer class="bg-gray-100 dark:bg-gray-900 py-16 text-center text-gray-400 border-t border-gray-200 dark:border-gray-800 mt-12">
             <p class="text-xs uppercase tracking-[0.3em] font-black text-gray-500 dark:text-gray-600">iKuai Bypass 配置助手</p>
-            <p class="text-[10px] mt-3 opacity-40 font-mono tracking-widest">BUILD 2026.01.06 • TAILWIND V4 READY</p>
+            <p class="text-[10px] mt-3 opacity-40 font-mono tracking-widest">(C) joyanhui 2026.01.06 • <a href="https://github.com/joyanhui/ikuai-bypass/" target="_blank">iKuai Bypass</a> • <a href="https://dev.leiyanhui.com" target="_blank">dev.leiyanhui.com</a></p>
         </footer>
 
         <script>
@@ -746,7 +739,7 @@
                         }
                     },
 
-                    async saveConfig() {
+                    async saveConfig(withComments) {
                         this.saveStatus = "正在发送请求...";
                         try {
                             const payload = {
@@ -773,7 +766,7 @@
                                 "ip-group": this.config.ipGroup,
                                 "ipv6-group": this.config.ipv6Group,
                                 "stream-ipport": this.config.streamIpPort.map((i) => ({
-                                    type: parseInt(i.type),
+                                    type: String(i.type),
                                     interface: i.interface,
                                     nexthop: i.nexthop,
                                     "src-addr": i.srcAddr,
@@ -781,7 +774,7 @@
                                     mode: parseInt(i.mode),
                                     ifaceband: parseInt(i.ifaceband),
                                 })),
-                                with_comments: this.showComments,
+                                with_comments: withComments,
                             };
                             const res = await fetch("/api/save", {
                                 method: "POST",

@@ -161,10 +161,19 @@ func Save(filename string, cfg *Config, withComments bool) error {
 		return fmt.Errorf("marshal config failed: %v", err)
 	}
 
-	if withComments && node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
-		doc := node.Content[0]
-		doc.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
-		addCommentsToNode(doc)
+	if withComments {
+		var rootNode *yaml.Node
+		if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
+			rootNode = node.Content[0]
+			node.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
+		} else if node.Kind == yaml.MappingNode {
+			rootNode = &node
+			node.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
+		}
+
+		if rootNode != nil {
+			addCommentsToNode(rootNode)
+		}
 	}
 
 	// 序列化
@@ -193,7 +202,7 @@ func addCommentsToNode(node *yaml.Node) {
 		valNode := node.Content[i+1]
 
 		if comment, ok := TopLevelComments[keyNode.Value]; ok {
-			keyNode.LineComment = " " + comment
+			keyNode.LineComment = comment
 		}
 
 		// 处理 WebUI 对象
@@ -201,7 +210,7 @@ func addCommentsToNode(node *yaml.Node) {
 			for j := 0; j < len(valNode.Content); j += 2 {
 				subKeyNode := valNode.Content[j]
 				if subComment, ok := WebuiComments[subKeyNode.Value]; ok {
-					subKeyNode.LineComment = " " + subComment
+					subKeyNode.LineComment = subComment
 				}
 			}
 		}
@@ -213,7 +222,7 @@ func addCommentsToNode(node *yaml.Node) {
 					for j := 0; j < len(itemNode.Content); j += 2 {
 						subKeyNode := itemNode.Content[j]
 						if subComment, ok := ItemComments[subKeyNode.Value]; ok {
-							subKeyNode.LineComment = " " + subComment
+							subKeyNode.LineComment = subComment
 						}
 					}
 				}

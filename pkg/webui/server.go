@@ -136,6 +136,12 @@ func createServer(port string) *http.Server {
 			return
 		}
 
+		// 安全校验：是否启用了在线更新功能
+		if !config.GlobalConfig.WebUI.EnableUpdate {
+			http.Error(w, "Forbidden: Online update is disabled in configuration", http.StatusForbidden)
+			return
+		}
+
 		// 保存到当前使用的配置文件路径
 		savePath := *config.ConfPath
 		if savePath == "" {

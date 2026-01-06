@@ -11,6 +11,7 @@ webui:
   user: admin # WebUI 用户名，留空则禁用认证
   pass: admin888 # WebUI 密码
   enable: true # 是否启用 WebUI 服务，true 启用，false 不启用
+  enable-update: true # 是否启用配置文件在线更新功能 (只读模式)
   cdn-prefix: https://cdn.jsdelivr.net/npm # CDN 前缀
 
 ip-group: # IP分组 和端口分流配合使用

@@ -57,4 +57,5 @@ webui: # WebUI 管理服务设置
     user: admin # WebUI 用户名 (留空禁用认证)
     pass: admin888 # WebUI 密码
     enable: true # 是否启用 WebUI 服务
+    enable-update: true # 是否启用配置文件在线更新功能 (只读模式)
     cdn-prefix: https://cdn.jsdelivr.net/npm # CDN 前缀 (例如: https://cdn.jsdelivr.net/npm |  https://cdn.jsdmirror.com/npm（国内）)

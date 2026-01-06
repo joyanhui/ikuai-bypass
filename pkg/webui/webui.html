@@ -306,6 +306,12 @@
                                                 <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
                                                 <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用管理界面</span>
                                             </label>
+                                            <label class="relative inline-flex items-center cursor-pointer group">
+                                                <input type="checkbox" x-model="config.webui.enableUpdate" class="sr-only peer" />
+                                                <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700"></div>
+                                                <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
+                                                <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用在线更新</span>
+                                            </label>
                                         </div>
                                         <div class="grid grid-cols-2 gap-4" x-show="config.webui.enable" x-transition>
                                             <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">端口</label><input type="text" x-model="config.webui.port" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white" /></div>
@@ -519,14 +525,19 @@
                                     <template x-if="saveStatus">
                                         <span class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 px-5 py-2 rounded-xl border-2 border-primary-200 dark:border-primary-800 font-bold animate-bounce shadow-lg"><i class="bi bi-check-circle-fill"></i> <span x-text="saveStatus"></span></span>
                                     </template>
+                                    <template x-if="!config.webui.enableUpdate">
+                                        <span class="flex items-center gap-2 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-5 py-2 rounded-xl border-2 border-red-200 dark:border-red-800 font-bold shadow-lg animate-pulse">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> 在线更新已禁用，请在设置中开启后再保存
+                                        </span>
+                                    </template>
                                 </div>
                                 <div class="flex gap-4 w-full md:w-auto">
                                     <button @click="copyText(generatedYaml)" class="flex-1 md:flex-initial px-6 py-3.5 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-2xl font-black hover:bg-gray-300 transition active:scale-95 flex items-center justify-center gap-2"><i class="bi bi-clipboard"></i> 复制代码</button>
-                                    <button @click="saveConfig(false)" class="flex-1 md:flex-initial px-6 py-3.5 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
+                                    <button @click="saveConfig(false)" :disabled="!config.webui.enableUpdate" :class="!config.webui.enableUpdate ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'" class="flex-1 md:flex-initial px-6 py-3.5 text-white rounded-2xl font-black shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
                                         <i class="bi bi-save"></i>
                                         无注释保存
                                     </button>
-                                    <button @click="saveConfig(true)" class="flex-1 md:flex-initial px-6 py-3.5 bg-green-600 text-white rounded-2xl font-black hover:bg-green-700 shadow-xl shadow-green-500/30 transition active:scale-95 flex items-center justify-center gap-2">
+                                    <button @click="saveConfig(true)" :disabled="!config.webui.enableUpdate" :class="!config.webui.enableUpdate ? 'opacity-50 cursor-not-allowed bg-gray-400' : 'bg-green-600 hover:bg-green-700 shadow-green-500/30'" class="flex-1 md:flex-initial px-6 py-3.5 text-white rounded-2xl font-black shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
                                         <i class="bi bi-chat-text-fill"></i>
                                         带注释保存
                                     </button>
@@ -582,6 +593,7 @@
                         streamIpPort: [],
                         webui: {
                             enable: false,
+                            enableUpdate: true,
                             port: "8080",
                             user: "",
                             pass: "",
@@ -702,6 +714,7 @@
                             if (data.webui) {
                                 this.config.webui = {
                                     enable: !!data.webui.enable,
+                                    enableUpdate: !!data.webui["enable-update"],
                                     port: String(data.webui.port),
                                     user: data.webui.user || "",
                                     pass: data.webui.pass || "",
@@ -751,6 +764,7 @@
                                 AddWait: parseInt(parseFloat(this.config.addWait) * 1e9),
                                 webui: {
                                     enable: this.config.webui.enable,
+                                    "enable-update": this.config.webui.enableUpdate,
                                     port: this.config.webui.port,
                                     user: this.config.webui.user,
                                     pass: this.config.webui.pass,
@@ -807,6 +821,7 @@
                                 if (doc.webui) {
                                     this.config.webui = {
                                         enable: !!doc.webui.enable,
+                                        enableUpdate: !!doc.webui["enable-update"],
                                         port: String(doc.webui.port),
                                         user: doc.webui.user || "",
                                         pass: doc.webui.pass || "",

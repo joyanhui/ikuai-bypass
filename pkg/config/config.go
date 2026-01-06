@@ -62,11 +62,12 @@ type Config struct {
 }
 
 type WebUIConfig struct {
-	Port      string `yaml:"port" json:"port"`             // webui 端口
-	User      string `yaml:"user" json:"user"`             // webui 用户名
-	Pass      string `yaml:"pass" json:"pass"`             // webui 密码
-	Enable    bool   `yaml:"enable" json:"enable"`         // 是否启用 WebUI 服务
-	CDNPrefix string `yaml:"cdn-prefix" json:"cdn-prefix"` // CDN 前缀
+	Port         string `yaml:"port" json:"port"`
+	User         string `yaml:"user" json:"user"`
+	Pass         string `yaml:"pass" json:"pass"`
+	Enable       bool   `yaml:"enable" json:"enable"`
+	EnableUpdate bool   `yaml:"enable-update" json:"enable-update"` // 是否启用配置文件在线更新功能
+	CDNPrefix    string `yaml:"cdn-prefix" json:"cdn-prefix"`
 }
 
 var GlobalConfig Config
@@ -135,11 +136,12 @@ var ItemComments = map[string]string{
 
 // WebuiComments WebUI 子项注释
 var WebuiComments = map[string]string{
-	"port":       "WebUI 服务端口",
-	"user":       "WebUI 用户名 (留空禁用认证)",
-	"pass":       "WebUI 密码",
-	"enable":     "是否启用 WebUI 服务",
-	"cdn-prefix": "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm |  https://cdn.jsdmirror.com/npm（国内）)",
+	"port":          "WebUI 服务端口",
+	"user":          "WebUI 用户名 (留空禁用认证)",
+	"pass":          "WebUI 密码",
+	"enable":        "是否启用 WebUI 服务",
+	"enable-update": "是否启用配置文件在线更新功能",
+	"cdn-prefix":    "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm |  https://cdn.jsdmirror.com/npm（国内）)",
 }
 
 // Save 将配置保存到指定文件

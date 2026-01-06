@@ -285,12 +285,14 @@
 
                     <!-- Section 2: Config Editor -->
                     <section class="space-y-6 pt-6">
-                        <h2
-                            class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2"
-                        >
-                            <i class="bi bi-file-earmark-code"></i> 2.
-                            配置文件生成 (Config.yml)
-                        </h2>
+                        <div class="flex items-center justify-between border-b pb-2">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <i class="bi bi-file-earmark-code"></i> 2. 配置文件生成 (Config.yml)
+                            </h2>
+                            <p class="text-xs text-gray-500">
+                                <span class="text-red-500 font-bold">*</span> 表示该项修改后需重启程序才可生效
+                            </p>
+                        </div>
 
                         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div class="space-y-4 col-span-1">
@@ -338,7 +340,7 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Cron Expression</label
+                                        >Cron Expression <span class="text-red-500">*</span></label
                                     >
                                     <input
                                         type="text"
@@ -388,12 +390,12 @@
                                 <h3
                                     class="font-bold text-gray-800 border-b pb-2"
                                 >
-                                    WebUI 设置
+                                    WebUI 设置 <span class="text-red-500 text-xs font-normal ml-1">(修改需重启)</span>
                                 </h3>
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >启用 WebUI</label
+                                        >启用 WebUI <span class="text-red-500">*</span></label
                                     >
                                     <select
                                         x-model="config.webui.enable"
@@ -406,7 +408,7 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Port</label
+                                        >Port <span class="text-red-500">*</span></label
                                     >
                                     <input
                                         type="text"
@@ -418,7 +420,7 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Username</label
+                                        >Username <span class="text-red-500">*</span></label
                                     >
                                     <input
                                         type="text"
@@ -430,7 +432,7 @@
                                 <div>
                                     <label
                                         class="text-xs font-bold text-gray-500 uppercase"
-                                        >Password</label
+                                        >Password <span class="text-red-500">*</span></label
                                     >
                                     <input
                                         type="text"

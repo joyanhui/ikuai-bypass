@@ -256,6 +256,11 @@
                                         加载数据
                                     </button>
                                 </div>
+                                <div class="mt-2 text-[10px] text-gray-500 flex gap-2 items-center">
+                                    <span class="font-bold">全局加速:</span>
+                                    <span x-text="config.githubProxy ? '已启用 ('+config.githubProxy+')' : '未启用'"></span>
+                                    <span class="text-gray-400">- 远程加载时若配置了代理，将自动应用。</span>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -289,8 +294,8 @@
                                             </div>
                                             <div class="grid grid-cols-2 gap-4">
                                                 <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">重试等待 (Retry Wait)</label><input type="text" x-model="config.addErrRetryWait" placeholder="10s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
-                                                <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">添加等待 (Add Wait)</label><input type="text" x-model="config.addWait" placeholder="1s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
-                                            </div>
+                                            <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">添加等待 (Add Wait)</label><input type="text" x-model="config.addWait" placeholder="1s" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
+                                            <div class="col-span-2"><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">Github 代理 (Proxy)</label><input type="text" x-model="config.githubProxy" placeholder="https://gh-proxy.com/" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2 w-full dark:text-white focus:ring-1 focus:ring-primary-500" /></div>
                                         </div>
                                     </section>
 
@@ -586,6 +591,7 @@
                         username: "",
                         password: "",
                         cron: "",
+                        githubProxy: "",
                         customIsp: [],
                         streamDomain: [],
                         ipGroup: [],
@@ -709,6 +715,7 @@
                             this.config.username = data.username || "";
                             this.config.password = data.password || "";
                             this.config.cron = data.cron || "";
+                            this.config.githubProxy = data["github-proxy"] || "";
                             if (data.AddErrRetryWait) this.config.addErrRetryWait = typeof data.AddErrRetryWait === "number" ? data.AddErrRetryWait / 1e9 + "s" : data.AddErrRetryWait;
                             if (data.AddWait) this.config.addWait = typeof data.AddWait === "number" ? data.AddWait / 1e9 + "s" : data.AddWait;
                             if (data.webui) {
@@ -760,6 +767,7 @@
                                 username: this.config.username,
                                 password: this.config.password,
                                 cron: this.config.cron,
+                                "github-proxy": this.config.githubProxy,
                                 AddErrRetryWait: parseInt(parseFloat(this.config.addErrRetryWait) * 1e9),
                                 AddWait: parseInt(parseFloat(this.config.addWait) * 1e9),
                                 webui: {
@@ -805,17 +813,26 @@
                         }
                     },
 
+                    getFullUrl(url) {
+                        const proxy = this.config.githubProxy;
+                        if (!proxy || !url.startsWith("https://raw.githubusercontent.com/")) return url;
+                        return proxy.endsWith("/") ? proxy + url : proxy + "/" + url;
+                    },
+
                     async loadRemoteConfig() {
                         if (!this.remoteConfigUrl || !confirm("确定从远程覆盖当前表单吗？")) return;
                         this.loadingRemote = true;
                         try {
-                            const res = await fetch(this.remoteConfigUrl);
+                            // Apply proxy if configured
+                            const finalUrl = this.getFullUrl(this.remoteConfigUrl);
+                            const res = await fetch(finalUrl);
                             const doc = jsyaml.load(await res.text());
                             if (doc) {
                                 this.config.ikuaiUrl = doc["ikuai-url"] || "";
                                 this.config.username = doc.username || "";
                                 this.config.password = doc.password || "";
                                 this.config.cron = doc.cron || "";
+                                this.config.githubProxy = doc["github-proxy"] || "";
                                 if (doc.AddErrRetryWait) this.config.addErrRetryWait = String(doc.AddErrRetryWait);
                                 if (doc.AddWait) this.config.addWait = String(doc.AddWait);
                                 if (doc.webui) {
@@ -931,6 +948,7 @@
                             cron: this.config.cron,
                             AddErrRetryWait: this.config.addErrRetryWait,
                             AddWait: this.config.addWait,
+                            "github-proxy": this.config.githubProxy,
                         };
                         c["webui"] = {
                             enable: this.config.webui.enable,

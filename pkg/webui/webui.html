@@ -117,18 +117,24 @@
                                             class="w-full border p-2 rounded"
                                         >
                                             <option value="cron">
-                                                cron (标准: 先跑一次后定时)
+                                                cron (计划任务模式: 立即执行一次，随后定时)
+                                            </option>
+                                            <option value="cronAft">
+                                                cronAft (延迟计划任务: 不立即执行，直接进入定时)
                                             </option>
                                             <option value="once">
-                                                once (单次运行)
+                                                once (单次模式: 立即执行一次并退出)
+                                            </option>
+                                            <option value="web">
+                                                web (WebUI 模式: 仅启动 Web 界面)
                                             </option>
                                             <option value="clean">
-                                                clean (清理规则)
+                                                clean (清理模式: 删除指定备注的规则)
                                             </option>
                                             <option
                                                 value="exportDomainSteamToTxt"
                                             >
-                                                exportDomainSteamToTxt (导出)
+                                                exportDomainSteamToTxt (导出模式: 导出为爱快 TXT)
                                             </option>
                                         </select>
                                     </div>
@@ -209,15 +215,20 @@
                                     x-show="cmd.runMode === 'clean'"
                                     class="p-4 bg-red-50 rounded border border-red-200"
                                 >
-                                    <label
-                                        class="block text-sm font-medium text-red-700 mb-1"
-                                        >清理标签 (-tag)</label
-                                    >
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="block text-sm font-medium text-red-700">清理标签 (-tag)</label>
+                                        <button 
+                                            @click="cmd.cleanTag = 'cleanAll'"
+                                            class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded hover:bg-red-200 transition"
+                                        >
+                                            使用 cleanAll
+                                        </button>
+                                    </div>
                                     <input
                                         type="text"
                                         x-model="cmd.cleanTag"
                                         class="w-full text-sm border p-2 rounded border-red-300"
-                                        placeholder="cleanAll"
+                                        placeholder="默认为 cleanAll"
                                     />
                                 </div>
 
@@ -257,28 +268,38 @@
                             </div>
 
                             <!-- Right: Output -->
-                            <div
-                                class="bg-gray-900 rounded-lg p-6 text-gray-100 font-mono relative group self-start"
-                            >
+                            <div class="space-y-4">
                                 <div
-                                    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
+                                    class="bg-gray-900 rounded-lg p-6 text-gray-100 font-mono relative group"
                                 >
-                                    <button
-                                        @click="copyToClipboard(generatedCommand)"
-                                        class="bg-white/20 hover:bg-white/30 text-white text-xs px-2 py-1 rounded"
+                                    <div
+                                        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
                                     >
-                                        <i class="bi bi-clipboard"></i> 复制
-                                    </button>
+                                        <button
+                                            @click="copyToClipboard(generatedCommand)"
+                                            class="bg-white/20 hover:bg-white/30 text-white text-xs px-2 py-1 rounded"
+                                        >
+                                            <i class="bi bi-clipboard"></i> 复制
+                                        </button>
+                                    </div>
+                                    <h3
+                                        class="text-gray-400 text-xs uppercase font-bold mb-2"
+                                    >
+                                        Generated Command
+                                    </h3>
+                                    <div
+                                        class="break-all whitespace-pre-wrap text-sm"
+                                        x-text="generatedCommand"
+                                    ></div>
                                 </div>
-                                <h3
-                                    class="text-gray-400 text-xs uppercase font-bold mb-2"
-                                >
-                                    Generated Command
-                                </h3>
-                                <div
-                                    class="break-all whitespace-pre-wrap"
-                                    x-text="generatedCommand"
-                                ></div>
+
+                                <!-- Tips Area -->
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h4 class="text-sm font-bold text-blue-800 flex items-center gap-1 mb-1">
+                                        <i class="bi bi-info-circle"></i> 运行模式说明:
+                                    </h4>
+                                    <p class="text-xs text-blue-700 leading-relaxed" x-text="runModeDescription"></p>
+                                </div>
                             </div>
                         </div>
                     </section>
@@ -842,6 +863,7 @@
 
                     // Command Logic
                     cmd: {
+                        exePath: "./ikuai-bypass",
                         configPath: "./config.yml",
                         runMode: "cron",
                         module: "ispdomain",
@@ -890,6 +912,10 @@
                             const response = await fetch("/api/config");
                             if (!response.ok) return; // Might be running in standalone/file mode
                             const data = await response.json();
+
+                            if (data.exe_path) {
+                                this.cmd.exePath = data.exe_path;
+                            }
 
                             // Map Go struct to JS object
                             this.config.ikuaiUrl = data["ikuai-url"] || "";
@@ -1045,10 +1071,15 @@
                     },
 
                     get generatedCommand() {
-                        let c = `./ikuai-bypass -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
+                        let exe = this.cmd.exePath;
+                        // 简单处理路径中的空格
+                        if (exe.includes(" ")) exe = `"${exe}"`;
+                        
+                        let c = `${exe} -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
                         if (
                             this.cmd.runMode !== "clean" &&
-                            this.cmd.runMode !== "exportDomainSteamToTxt"
+                            this.cmd.runMode !== "exportDomainSteamToTxt" &&
+                            this.cmd.runMode !== "web"
                         ) {
                             c += ` -m ${this.cmd.module}`;
                         }
@@ -1073,6 +1104,18 @@
                         }
 
                         return c;
+                    },
+
+                    get runModeDescription() {
+                        const descriptions = {
+                            "cron": "计划任务模式。程序启动后会立即执行一次分流规则更新，随后根据配置文件中的 cron 表达式进入定时等待模式，并在后台持续运行。",
+                            "cronAft": "延迟计划任务模式。程序启动后不会立即执行更新，而是直接根据 cron 表达式进入定时等待状态。适合在系统重启后不想立即占用大量带宽的场景。",
+                            "once": "单次运行模式。程序会立即执行一次完整的分流规则同步任务，执行完成后会自动退出。适合配合系统的 crontab 外部调度使用。",
+                            "web": "WebUI 模式。仅启动可视化配置界面，不执行任何分流同步任务。适合在需要安全修改配置文件时临时使用。",
+                            "clean": "清理模式。程序将连接爱快并删除所有备注中包含指定标签（默认为 IKUAI_BYPASS_）的分流规则。用于彻底移除本工具创建的配置。",
+                            "exportDomainSteamToTxt": "导出模式。将配置文件中定义的域名分流规则转换并导出为爱快支持的手动导入 TXT 格式，导出路径可通过 -exportPath 指定。"
+                        };
+                        return descriptions[this.cmd.runMode] || "请选择运行模式查看详细说明。";
                     },
 
                     get generatedYaml() {

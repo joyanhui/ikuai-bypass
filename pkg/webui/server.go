@@ -67,8 +67,18 @@ func createServer(port string) *http.Server {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
+
+		exePath, _ := os.Executable()
+		resp := struct {
+			config.Config
+			ExePath string `json:"exe_path"`
+		}{
+			Config:  config.GlobalConfig,
+			ExePath: exePath,
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(config.GlobalConfig)
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	// API: 保存配置

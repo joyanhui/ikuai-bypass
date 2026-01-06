@@ -312,11 +312,11 @@
                                                 <i class="bi bi-window-desktop text-purple-600"></i>
                                                 WebUI 设置
                                             </h3>
-                                            <label class="inline-flex items-center cursor-pointer group">
-                                                <input type="checkbox" x-model="config.webui.enable" class="sr-only peer" />
-                                                <div class="relative w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700"></div>
-                                                <div class="absolute left-1 w-3.5 h-3.5 bg-white rounded-full shadow-sm transition-transform transform" :class="config.webui.enable ? 'translate-x-5' : ''"></div>
-                                                <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600">启用管理界面</span>
+                                            <label class="relative inline-flex items-center cursor-pointer group">
+                                                <input type="checkbox" x-model="config.webui.enable" class="sr-only peer">
+                                                <div class="w-10 h-5 bg-gray-200 rounded-full transition-colors peer-checked:bg-primary-600 dark:bg-gray-700"></div>
+                                                <div class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-transform transform peer-checked:translate-x-5 shadow-sm"></div>
+                                                <span class="ml-3 text-xs font-black text-gray-500 group-hover:text-primary-600 transition-colors">启用管理界面</span>
                                             </label>
                                         </div>
                                         <div class="grid grid-cols-2 gap-4" x-show="config.webui.enable" x-transition>

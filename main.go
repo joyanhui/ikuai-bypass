@@ -38,16 +38,25 @@ func main() {
 	case "web":
 		log.Println("启动 WebUI 配置界面...")
 		// 如果配置文件不存在，尝试创建一个空的或使用默认值，以免读取失败导致无法启动 WebUI
-		if config.GlobalConfig.WebPort == "" {
-			config.GlobalConfig.WebPort = "8080"
-		}
+			if config.GlobalConfig.WebUI.Port == "" {
+				config.GlobalConfig.WebUI.Port = "8080"
+			}
+		
 		webui.StartServer()
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
 		updateEntrance()
+		// 检查是否需要启动 WebUI
+		if webui.ShouldStartWebUI() {
+			webui.StartServerAsync()
+		}
 	case "cronAft":
 		log.Println("cronAft 模式，暂时不执行，稍后定时执行")
+		// 检查是否需要启动 WebUI
+		if webui.ShouldStartWebUI() {
+			webui.StartServerAsync()
+		}
 	case "nocron", "once", "1":
 		updateEntrance()
 		log.Println("once 模式 执行完毕自动退出")

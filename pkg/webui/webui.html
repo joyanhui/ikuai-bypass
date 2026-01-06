@@ -36,7 +36,7 @@
                             <i class="bi bi-router"></i> iKuai Bypass 助手
                         </h1>
                         <p class="mt-2 text-blue-100 text-sm">
-                            爱快路由器自动化分流规则同步工具配置生成器
+                            爱快路由器自动化分流规则同步工具配置生成器（这是一个测试功能，需谨慎使用）
                         </p>
                     </div>
                     <div class="mt-4 md:mt-0 flex gap-3">
@@ -382,21 +382,62 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- WebUI Settings -->
                             <div class="space-y-4 col-span-1">
-                                <h3 class="font-bold text-gray-800 border-b pb-2">WebUI 设置</h3>
+                                <h3
+                                    class="font-bold text-gray-800 border-b pb-2"
+                                >
+                                    WebUI 设置
+                                </h3>
                                 <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase">Port</label>
-                                    <input type="text" x-model="config.webPort" class="w-full border p-2 rounded text-sm" placeholder="8080">
+                                    <label
+                                        class="text-xs font-bold text-gray-500 uppercase"
+                                        >启用 WebUI</label
+                                    >
+                                    <select
+                                        x-model="config.webui.enable"
+                                        class="w-full border p-2 rounded text-sm"
+                                    >
+                                        <option :value="false">false (不启用)</option>
+                                        <option :value="true">true (启用)</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
-                                    <input type="text" x-model="config.webUser" class="w-full border p-2 rounded text-sm" placeholder="admin">
+                                    <label
+                                        class="text-xs font-bold text-gray-500 uppercase"
+                                        >Port</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.webui.port"
+                                        class="w-full border p-2 rounded text-sm"
+                                        placeholder="8080"
+                                    />
                                 </div>
                                 <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
-                                    <input type="text" x-model="config.webPass" class="w-full border p-2 rounded text-sm" placeholder="leave empty to disable auth">
+                                    <label
+                                        class="text-xs font-bold text-gray-500 uppercase"
+                                        >Username</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.webui.user"
+                                        class="w-full border p-2 rounded text-sm"
+                                        placeholder="admin"
+                                    />
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-xs font-bold text-gray-500 uppercase"
+                                        >Password</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.webui.pass"
+                                        class="w-full border p-2 rounded text-sm"
+                                        placeholder="leave empty to disable auth"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -722,7 +763,8 @@
                                     @click="saveConfig()"
                                     class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition flex-1"
                                 >
-                                    <i class="bi bi-hdd"></i> 保存到服务器 (config.yml)
+                                    <i class="bi bi-hdd"></i> 保存到服务器
+                                    (config.yml)
                                 </button>
                             </div>
                         </div>
@@ -818,9 +860,12 @@
                         cron: "0 7 * * *",
                         addErrRetryWait: "10s",
                         addWait: "1s",
-                        webPort: "8080",
-                        webUser: "",
-                        webPass: "",
+                        webui: {
+                            enable: false,
+                            port: "8080",
+                            user: "",
+                            pass: "",
+                        },
                         customIsp: [
                             {
                                 name: "国内IP列表",
@@ -840,49 +885,79 @@
 
                     async loadConfig() {
                         try {
-                            const response = await fetch('/api/config');
+                            const response = await fetch("/api/config");
                             if (!response.ok) return; // Might be running in standalone/file mode
                             const data = await response.json();
-                            
+
                             // Map Go struct to JS object
-                            this.config.ikuaiUrl = data['ikuai-url'] || "";
+                            this.config.ikuaiUrl = data["ikuai-url"] || "";
                             this.config.username = data.username || "";
                             this.config.password = data.password || "";
                             this.config.cron = data.cron || "";
-                            this.config.addErrRetryWait = (data.AddErrRetryWait || 0) / 1000000000 + "s"; // ns to s approximation for display
-                            this.config.addWait = (data.AddWait || 0) / 1000000000 + "s";
-                            this.config.webPort = data['web-port'] || "8080";
-                            this.config.webUser = data['web-user'] || "";
-                            this.config.webPass = data['web-pass'] || "";
+                            this.config.addErrRetryWait =
+                                (data.AddErrRetryWait || 0) / 1000000000 + "s"; // ns to s approximation for display
+                            this.config.addWait =
+                                (data.AddWait || 0) / 1000000000 + "s";
+                            
+                            if (data.webui) {
+                                this.config.webui.enable = data.webui.enable || false;
+                                this.config.webui.port = data.webui.port || "8080";
+                                this.config.webui.user = data.webui.user || "";
+                                this.config.webui.pass = data.webui.pass || "";
+                            }
 
                             // Arrays
-                            this.config.customIsp = (data['custom-isp'] || []).map(i => ({name: i.name, url: i.url, tag: i.tag}));
-                            this.config.streamDomain = (data['stream-domain'] || []).map(i => ({interface: i.interface, srcAddr: i['src-addr'], url: i.url, tag: i.tag}));
-                            this.config.ipGroup = (data['ip-group'] || []).map(i => ({name: i.name, url: i.url}));
+                            this.config.customIsp = (
+                                data["custom-isp"] || []
+                            ).map((i) => ({
+                                name: i.name,
+                                url: i.url,
+                                tag: i.tag,
+                            }));
+                            this.config.streamDomain = (
+                                data["stream-domain"] || []
+                            ).map((i) => ({
+                                interface: i.interface,
+                                srcAddr: i["src-addr"],
+                                url: i.url,
+                                tag: i.tag,
+                            }));
+                            this.config.ipGroup = (data["ip-group"] || []).map(
+                                (i) => ({ name: i.name, url: i.url }),
+                            );
                             // ipv6-group if needed
-                            this.config.streamIpPort = (data['stream-ipport'] || []).map(i => ({
+                            this.config.streamIpPort = (
+                                data["stream-ipport"] || []
+                            ).map((i) => ({
                                 type: i.type,
                                 interface: i.interface,
                                 nexthop: i.nexthop,
-                                srcAddr: i['src-addr'],
-                                ipGroup: i['ip-group'],
+                                srcAddr: i["src-addr"],
+                                ipGroup: i["ip-group"],
                                 mode: i.mode,
-                                ifaceband: i.ifaceband
+                                ifaceband: i.ifaceband,
                             }));
-                            
+
                             // Fix time duration string format if it came back as number from JSON unmarshal
-                            if (typeof data.AddErrRetryWait === 'string') this.config.addErrRetryWait = data.AddErrRetryWait;
-                            if (typeof data.AddWait === 'string') this.config.addWait = data.AddWait;
+                            if (typeof data.AddErrRetryWait === "string")
+                                this.config.addErrRetryWait =
+                                    data.AddErrRetryWait;
+                            if (typeof data.AddWait === "string")
+                                this.config.addWait = data.AddWait;
 
                             // Update Command Generator defaults if custom login is not checked yet
                             // Optional: pre-fill command generator login info with config info for convenience
-                            if (!this.cmd.loginUrl) this.cmd.loginUrl = this.config.ikuaiUrl;
-                            if (!this.cmd.loginUser) this.cmd.loginUser = this.config.username;
-                            if (!this.cmd.loginPass) this.cmd.loginPass = this.config.password;
-
-
+                            if (!this.cmd.loginUrl)
+                                this.cmd.loginUrl = this.config.ikuaiUrl;
+                            if (!this.cmd.loginUser)
+                                this.cmd.loginUser = this.config.username;
+                            if (!this.cmd.loginPass)
+                                this.cmd.loginPass = this.config.password;
                         } catch (e) {
-                            console.log("Not running in server mode or fetch failed:", e);
+                            console.log(
+                                "Not running in server mode or fetch failed:",
+                                e,
+                            );
                         }
                     },
 
@@ -891,61 +966,78 @@
                             // Construct the payload matching the Go struct JSON tags
                             const payload = {
                                 "ikuai-url": this.config.ikuaiUrl,
-                                "username": this.config.username,
-                                "password": this.config.password,
-                                "cron": this.config.cron,
-                                "AddErrRetryWait": this.config.addErrRetryWait.endsWith('s') ? parseInt(this.config.addErrRetryWait) * 1000000000 : 10000000000, // naive conv
-                                "AddWait": this.config.addWait.endsWith('s') ? parseInt(this.config.addWait) * 1000000000 : 1000000000,
-                                "web-port": this.config.webPort,
-                                "web-user": this.config.webUser,
-                                "web-pass": this.config.webPass,
+                                username: this.config.username,
+                                password: this.config.password,
+                                cron: this.config.cron,
+                                AddErrRetryWait:
+                                    this.config.addErrRetryWait.endsWith("s")
+                                        ? parseInt(
+                                              this.config.addErrRetryWait,
+                                          ) * 1000000000
+                                        : 10000000000, // naive conv
+                                AddWait: this.config.addWait.endsWith("s")
+                                    ? parseInt(this.config.addWait) * 1000000000
+                                    : 1000000000,
+                                webui: {
+                                    enable: this.config.webui.enable,
+                                    port: this.config.webui.port,
+                                    user: this.config.webui.user,
+                                    pass: this.config.webui.pass,
+                                },
                                 "custom-isp": this.config.customIsp,
-                                "stream-domain": this.config.streamDomain.map(x => ({
-                                    "interface": x.interface,
-                                    "src-addr": x.srcAddr,
-                                    "url": x.url,
-                                    "tag": x.tag
-                                })),
+                                "stream-domain": this.config.streamDomain.map(
+                                    (x) => ({
+                                        interface: x.interface,
+                                        "src-addr": x.srcAddr,
+                                        url: x.url,
+                                        tag: x.tag,
+                                    }),
+                                ),
                                 "ip-group": this.config.ipGroup,
-                                "stream-ipport": this.config.streamIpPort.map(x => ({
-                                    "type": String(x.type),
-                                    "interface": x.interface,
-                                    "nexthop": x.nexthop,
-                                    "src-addr": x.srcAddr,
-                                    "ip-group": x.ipGroup,
-                                    "mode": parseInt(x.mode),
-                                    "ifaceband": parseInt(x.ifaceband)
-                                }))
+                                "stream-ipport": this.config.streamIpPort.map(
+                                    (x) => ({
+                                        type: String(x.type),
+                                        interface: x.interface,
+                                        nexthop: x.nexthop,
+                                        "src-addr": x.srcAddr,
+                                        "ip-group": x.ipGroup,
+                                        mode: parseInt(x.mode),
+                                        ifaceband: parseInt(x.ifaceband),
+                                    }),
+                                ),
                             };
 
-                            // Hack: JSON unmarshal in Go for time.Duration expects number (ns) usually if no custom unmarshaler, 
+                            // Hack: JSON unmarshal in Go for time.Duration expects number (ns) usually if no custom unmarshaler,
                             // OR string "10s" if using yaml/json unmarshaler that supports it.
                             // Since we are sending JSON to a handler that uses json.Decoder, we should send appropriate format.
                             // Let's rely on string format if the backend supports it, otherwise numbers.
                             // The Go standard lib json unmarshal for time.Duration expects Nanoseconds (int64).
                             // Let's fix the payload to send strings and hope user doesn't break it, or send NS.
-                            // To be safe, let's just send the strings and handle them in backend? 
+                            // To be safe, let's just send the strings and handle them in backend?
                             // Wait, standard `json` package does NOT support "10s" string for time.Duration. It expects int64 nanoseconds.
                             // However, `gopkg.in/yaml.v3` DOES support strings.
-                            // BUT our API endpoint uses `json.NewDecoder`. 
+                            // BUT our API endpoint uses `json.NewDecoder`.
                             // We should probably change the backend to custom decode or use a struct with proper tags or just strings.
                             // For now, let's send Nanoseconds to be safe with standard JSON.
-                            payload.AddErrRetryWait = parseInt(this.config.addErrRetryWait) * 1000000000;
-                            payload.AddWait = parseInt(this.config.addWait) * 1000000000;
+                            payload.AddErrRetryWait =
+                                parseInt(this.config.addErrRetryWait) *
+                                1000000000;
+                            payload.AddWait =
+                                parseInt(this.config.addWait) * 1000000000;
 
-                            const res = await fetch('/api/save', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
+                            const res = await fetch("/api/save", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(payload),
                             });
-                            
+
                             if (res.ok) {
                                 alert("保存成功！Server config updated.");
                             } else {
                                 const txt = await res.text();
                                 alert("保存失败: " + txt);
                             }
-                        } catch(e) {
+                        } catch (e) {
                             alert("保存错误: " + e);
                         }
                     },
@@ -991,6 +1083,15 @@
                             AddErrRetryWait: this.config.addErrRetryWait,
                             AddWait: this.config.addWait,
                         };
+
+                        if (this.config.webui.enable || this.config.webui.port || this.config.webui.user) {
+                            cleanConfig["webui"] = {
+                                enable: this.config.webui.enable,
+                                port: this.config.webui.port,
+                                user: this.config.webui.user,
+                                pass: this.config.webui.pass,
+                            };
+                        }
 
                         if (this.config.customIsp.length > 0)
                             cleanConfig["custom-isp"] = this.config.customIsp;

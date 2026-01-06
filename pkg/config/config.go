@@ -55,9 +55,14 @@ type Config struct {
 		Mode      int    `yaml:"mode" json:"mode"`
 		IfaceBand int    `yaml:"ifaceband" json:"ifaceband"`
 	} `yaml:"stream-ipport" json:"stream-ipport"`
-	WebPort string `yaml:"web-port" json:"web-port"` // webui 端口
-	WebUser string `yaml:"web-user" json:"web-user"` // webui 用户名
-	WebPass string `yaml:"web-pass" json:"web-pass"` // webui 密码
+	WebUI        WebUIConfig   `yaml:"webui" json:"webui"`
+}
+
+type WebUIConfig struct {
+	Port   string `yaml:"port" json:"port"`     // webui 端口
+	User   string `yaml:"user" json:"user"`     // webui 用户名
+	Pass   string `yaml:"pass" json:"pass"`     // webui 密码
+	Enable bool   `yaml:"enable" json:"enable"` // 是否启用 WebUI 服务
 }
 
 var GlobalConfig Config

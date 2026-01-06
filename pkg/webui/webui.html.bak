@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>iKuai Bypass 配置助手</title>
+        <script src="{{CDN_PREFIX}}/@tailwindcss/browser@4"></script>
+        <!-- Alpine.js -->
+        <script
+            defer
+            src="{{CDN_PREFIX}}/alpinejs@3.13.3/dist/cdn.min.js"
+        ></script>
+        <script>
+            document.addEventListener("alpine:init", () => {
+                Alpine.store("theme", {
+                    current: localStorage.getItem("ui_theme") || "auto",
+
+                    init() {
+                        this.applyTheme();
+                        this.watchSystemTheme();
+                        return this;
+                    },
+
+                    set(theme) {
+                        this.current = theme;
+                        localStorage.setItem("ui_theme", theme);
+                        this.applyTheme();
+                        return this;
+                    },
+
+                    applyTheme() {
+                        const html = document.documentElement;
+                        const body = document.body;
+                        if (this.current === "auto") {
+                            const prefersDark = window.matchMedia(
+                                "(prefers-color-scheme: dark)",
+                            ).matches;
+                            if (prefersDark) {
+                                html.classList.add("dark");
+                                body.classList.add("dark");
+                                html.setAttribute("data-theme", "dark");
+                            } else {
+                                html.classList.remove("dark");
+                                body.classList.remove("dark");
+                                html.setAttribute("data-theme", "light");
+                            }
+                        } else {
+                            if (this.current === "dark") {
+                                html.classList.add("dark");
+                                body.classList.add("dark");
+                                html.setAttribute("data-theme", "dark");
+                            } else {
+                                html.classList.remove("dark");
+                                body.classList.remove("dark");
+                                html.setAttribute("data-theme", "light");
+                            }
+                        }
+                        return this;
+                    },
+
+                    watchSystemTheme() {
+                        window
+                            .matchMedia("(prefers-color-scheme: dark)")
+                            .addEventListener("change", () => {
+                                if (this.current === "auto") {
+                                    this.applyTheme();
+                                }
+                            });
+                        return this;
+                    },
+                });
+                Alpine.store("theme").init();
+            });
+        </script>
+        <!-- Bootstrap Icons -->
+        <link
+            rel="stylesheet"
+            href="{{CDN_PREFIX}}/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        />
+        <!-- JS-YAML -->
+        <script src="{{CDN_PREFIX}}/js-yaml@4.1.1/dist/js-yaml.min.js"></script>
+        <style type="text/css">
+            @custom-variant dark (&:where(.dark, .dark *));
+            [x-cloak] {
+                display: none !important;
+            }
+            /* Tailwind 4 dark mode compatibility helper */
+            .dark {
+                color-scheme: dark;
+            }
+        </style>
+    </head>
+    <body
+        class="bg-gray-100 dark:bg-gray-900 min-h-screen font-sans transition-colors duration-300 dark:text-gray-100"
+        x-data="appData()"
+        x-init="init()"
+    >
+        <!-- Header -->
+        <header
+            class="bg-blue-600 dark:bg-blue-900 text-white shadow-lg sticky top-0 z-40"
+        >
+            <div class="container mx-auto px-4 py-4 md:py-6">
+                <div
+                    class="flex flex-col md:flex-row justify-between items-center gap-4"
+                >
+                    <div class="text-center md:text-left">
+                        <h1
+                            class="text-2xl md:text-3xl font-bold flex items-center justify-center md:justify-start gap-2"
+                        >
+                            <i class="bi bi-router"></i> iKuai Bypass 助手
+                        </h1>
+                        <p class="mt-1 text-blue-100 text-xs md:text-sm">
+                            爱快路由器自动化分流规则同步工具配置生成器
+                        </p>
+                    </div>
+                    <div
+                        class="flex flex-wrap justify-center items-center gap-3"
+                    >
+                        <!-- Theme Toggle -->
+                        <div
+                            class="bg-black/20 p-1 rounded-lg flex gap-1 border border-white/10"
+                        >
+                            <button
+                                @click="$store.theme.set('light')"
+                                :class="$store.theme.current === 'light' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'"
+                                class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1"
+                            >
+                                <i class="bi bi-sun-fill"></i>
+                                <span class="hidden sm:inline">明亮</span>
+                            </button>
+                            <button
+                                @click="$store.theme.set('dark')"
+                                :class="$store.theme.current === 'dark' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'"
+                                class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1"
+                            >
+                                <i class="bi bi-moon-stars-fill"></i>
+                                <span class="hidden sm:inline">暗黑</span>
+                            </button>
+                            <button
+                                @click="$store.theme.set('auto')"
+                                :class="$store.theme.current === 'auto' ? 'bg-white text-blue-600' : 'text-white hover:bg-white/10'"
+                                class="px-2 py-1 rounded text-[10px] md:text-xs transition flex items-center gap-1"
+                            >
+                                <i class="bi bi-display"></i>
+                                <span class="hidden sm:inline">自动</span>
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <a
+                                href="https://github.com/joyanhui/ikuai-bypass"
+                                target="_blank"
+                                class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition text-xs flex items-center gap-1"
+                            >
+                                <i class="bi bi-github"></i> GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-6 md:py-8 max-w-6xl">
+            <!-- Tabs -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-t-xl shadow-sm border-b dark:border-gray-700"
+            >
+                <nav class="flex overflow-x-auto scrollbar-hide">
+                    <button
+                        @click="currentTab = 'help'"
+                        :class="{'border-blue-500 text-blue-600 dark:text-blue-400': currentTab === 'help', 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200': currentTab !== 'help'}"
+                        class="px-6 py-4 text-sm font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap"
+                    >
+                        <i class="bi bi-question-circle"></i> 使用说明
+                    </button>
+                    <button
+                        @click="currentTab = 'tool'"
+                        :class="{'border-blue-500 text-blue-600 dark:text-blue-400': currentTab === 'tool', 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200': currentTab !== 'tool'}"
+                        class="px-6 py-4 text-sm font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap"
+                    >
+                        <i class="bi bi-gear-fill"></i> 配置助手
+                    </button>
+                </nav>
+            </div>
+
+            <div
+                class="bg-white dark:bg-gray-800 rounded-b-xl shadow-md p-4 md:p-8 min-h-[500px]"
+            >
+                <!-- Tab: Help -->
+                <div
+                    x-show="currentTab === 'help'"
+                    x-cloak
+                    class="prose dark:prose-invert max-w-none space-y-6"
+                >
+                    <div
+                        class="flex flex-col md:flex-row justify-between items-start md:items-center border-b dark:border-gray-700 pb-4 gap-4"
+                    >
+                        <h2
+                            class="text-2xl font-bold text-gray-800 dark:text-gray-100 m-0"
+                        >
+                            快速使用说明
+                        </h2>
+                        <div class="flex flex-wrap gap-3">
+                            <a
+                                href="https://github.com/joyanhui/ikuai-bypass/blob/main/README.md"
+                                target="_blank"
+                                class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm font-medium"
+                            >
+                                <i class="bi bi-file-text"></i> 详细文档
+                                (README)
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6">
+                        <div
+                            class="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-xl border border-blue-100 dark:border-blue-800 shadow-sm"
+                        >
+                            <div class="flex justify-between items-start mb-3">
+                                <p
+                                    class="font-bold text-blue-800 dark:text-blue-200 m-0 text-lg"
+                                >
+                                    第一步：配置准备
+                                </p>
+                                <button
+                                    @click="currentTab = 'tool'"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md font-bold text-sm flex items-center gap-2"
+                                >
+                                    开始配置
+                                    <i class="bi bi-arrow-right-short"></i>
+                                </button>
+                            </div>
+                            <p
+                                class="text-sm leading-relaxed m-0 text-blue-700 dark:text-blue-300"
+                            >
+                                在“配置助手”页面填写爱快路由器信息。根据需求在<b>自定义运营商</b>、<b>域名分流</b>或<b>IP分组</b>中添加规则。
+                            </p>
+                        </div>
+                        <div
+                            class="bg-green-50 dark:bg-green-900/30 p-6 rounded-xl border border-green-100 dark:border-green-800 shadow-sm"
+                        >
+                            <p
+                                class="font-bold text-green-800 dark:text-green-200 mb-3 m-0 text-lg"
+                            >
+                                第二步：保存配置
+                            </p>
+                            <p
+                                class="text-sm leading-relaxed m-0 text-green-700 dark:text-green-300"
+                            >
+                                点击底部的<b>“保存到服务器”</b>按钮，配置将写入当前的
+                                <code>config.yml</code>。带有
+                                <span class="text-red-500 font-bold">*</span>
+                                的项修改后需重启程序生效。
+                            </p>
+                        </div>
+                        <div
+                            class="bg-purple-50 dark:bg-purple-900/30 p-6 rounded-xl border border-purple-100 dark:border-purple-800 shadow-sm"
+                        >
+                            <p
+                                class="font-bold text-purple-800 dark:text-purple-200 mb-3 m-0 text-lg"
+                            >
+                                第三步：执行程序
+                            </p>
+                            <div
+                                class="text-sm leading-relaxed text-purple-700 dark:text-purple-300"
+                            >
+                                在“运行命令生成”处选择模式（如
+                                <b>cron</b>），复制生成的命令并在终端执行。
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700"
+                    >
+                        <h3
+                            class="font-bold text-gray-800 dark:text-gray-100 mt-0 mb-4 flex items-center gap-2"
+                        >
+                            <i class="bi bi-info-circle text-blue-500"></i>
+                            注意事项
+                        </h3>
+                        <ul
+                            class="space-y-3 text-sm text-gray-600 dark:text-gray-400 p-0 m-0 list-none"
+                        >
+                            <li class="flex gap-2">
+                                <i
+                                    class="bi bi-check2-circle text-green-500"
+                                ></i>
+                                <b>安全性</b>：建议在 WebUI 设置中配置密码。
+                            </li>
+                            <li class="flex gap-2">
+                                <i
+                                    class="bi bi-check2-circle text-green-500"
+                                ></i>
+                                <b>自动备份</b>：保存时程序会自动保留关键注释。
+                            </li>
+                            <li class="flex gap-2">
+                                <i
+                                    class="bi bi-check2-circle text-green-500"
+                                ></i>
+                                <b>浏览器兼容性</b>：建议使用 Chrome、Edge 或
+                                Safari 访问。
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tab: Tool -->
+                <div
+                    x-show="currentTab === 'tool'"
+                    x-cloak
+                    class="space-y-8 md:space-y-12"
+                >
+                    <!-- Section 1: Command Builder -->
+                    <section class="space-y-6">
+                        <div
+                            class="flex flex-col md:flex-row md:items-center justify-between border-b dark:border-gray-700 pb-3 gap-4"
+                        >
+                            <h2
+                                class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"
+                            >
+                                <i class="bi bi-terminal"></i> 1. 运行命令生成
+                            </h2>
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    @click="restoreDefaultCmd()"
+                                    class="text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition flex items-center gap-1"
+                                >
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                    恢复默认
+                                </button>
+                                <div class="relative" x-data="{ open: false }">
+                                    <button
+                                        @click="open = !open"
+                                        class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition flex items-center gap-1"
+                                    >
+                                        <i class="bi bi-bookmark-plus"></i>
+                                        命令预设
+                                        <span
+                                            x-text="`(${presets.length}/5)`"
+                                        ></span>
+                                    </button>
+                                    <div
+                                        x-show="open"
+                                        @click.away="open = false"
+                                        class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 p-4 space-y-3"
+                                        x-cloak
+                                    >
+                                        <div
+                                            class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
+                                        >
+                                            <span
+                                                class="font-bold text-sm dark:text-gray-200"
+                                                >已存预设</span
+                                            >
+                                            <button
+                                                @click="savePreset()"
+                                                :disabled="presets.length >= 5"
+                                                class="text-blue-600 dark:text-blue-400 text-xs font-bold disabled:text-gray-400"
+                                            >
+                                                + 保存当前
+                                            </button>
+                                        </div>
+                                        <div
+                                            class="max-h-60 overflow-y-auto space-y-2"
+                                        >
+                                            <template
+                                                x-for="(p, index) in presets"
+                                                :key="index"
+                                            >
+                                                <div
+                                                    class="group flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded border dark:border-gray-700"
+                                                >
+                                                    <div
+                                                        class="flex-1 cursor-pointer"
+                                                        @click="loadPreset(index); open = false"
+                                                    >
+                                                        <div
+                                                            class="text-xs font-bold text-gray-800 dark:text-gray-200"
+                                                            x-text="p.name"
+                                                        ></div>
+                                                        <div
+                                                            class="text-[10px] text-gray-500 dark:text-gray-400 truncate w-40"
+                                                            x-text="p.data.runMode"
+                                                        ></div>
+                                                    </div>
+                                                    <div class="flex gap-1">
+                                                        <button
+                                                            @click.stop="renamePreset(index)"
+                                                            class="text-gray-400 hover:text-blue-600 p-1"
+                                                        >
+                                                            <i
+                                                                class="bi bi-pencil-square"
+                                                            ></i>
+                                                        </button>
+                                                        <button
+                                                            @click.stop="deletePreset(index)"
+                                                            class="text-gray-400 hover:text-red-600 p-1"
+                                                        >
+                                                            <i
+                                                                class="bi bi-trash"
+                                                            ></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <div
+                                                x-show="presets.length === 0"
+                                                class="text-center py-4 text-gray-400 text-xs"
+                                            >
+                                                暂无预设
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid lg:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <div
+                                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                >
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
+                                            >配置文件路径 (-c)</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="cmd.configPath"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
+                                            >运行模式 (-r)</label
+                                        >
+                                        <select
+                                            x-model="cmd.runMode"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                        >
+                                            <option value="cron">
+                                                cron (计划任务模式)
+                                            </option>
+                                            <option value="cronAft">
+                                                cronAft (延迟计划模式)
+                                            </option>
+                                            <option value="once">
+                                                once (单次同步模式)
+                                            </option>
+                                            <option value="web">
+                                                web (仅启动管理界面)
+                                            </option>
+                                            <option value="clean">
+                                                clean (清理规则模式)
+                                            </option>
+                                            <option
+                                                value="exportDomainSteamToTxt"
+                                            >
+                                                export (导出规则模式)
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
+                                        >功能模块 (-m)</label
+                                    >
+                                    <select
+                                        x-model="cmd.module"
+                                        class="w-full border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                    >
+                                        <option value="ispdomain">
+                                            ispdomain (运营商+域名分流)
+                                        </option>
+                                        <option value="ipgroup">
+                                            ipgroup (IP分组+端口分流)
+                                        </option>
+                                        <option value="ipv6group">
+                                            ipv6group (IPv6分组模式)
+                                        </option>
+                                        <option value="ii">
+                                            ii (ispdomain + ipgroup)
+                                        </option>
+                                        <option value="ip">
+                                            ip (ipgroup + ipv6group)
+                                        </option>
+                                    </select>
+                                </div>
+                                <div
+                                    class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border dark:border-gray-700"
+                                >
+                                    <label
+                                        class="flex items-center gap-2 mb-3 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            x-model="cmd.useCustomLogin"
+                                            class="rounded text-blue-600 w-4 h-4"
+                                        />
+                                        <span
+                                            class="text-sm font-bold text-gray-700 dark:text-gray-200"
+                                            >覆盖登录信息 (-login)</span
+                                        >
+                                    </label>
+                                    <div
+                                        x-show="cmd.useCustomLogin"
+                                        class="space-y-3 mt-2"
+                                        x-cloak
+                                    >
+                                        <input
+                                            type="text"
+                                            x-model="cmd.loginUrl"
+                                            placeholder="http://192.168.1.1"
+                                            class="w-full text-sm border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input
+                                                type="text"
+                                                x-model="cmd.loginUser"
+                                                placeholder="admin"
+                                                class="w-full text-sm border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                            />
+                                            <input
+                                                type="password"
+                                                x-model="cmd.loginPass"
+                                                placeholder="password"
+                                                class="w-full text-sm border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div
+                                    x-show="cmd.runMode === 'clean'"
+                                    class="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50"
+                                    x-cloak
+                                >
+                                    <div
+                                        class="flex justify-between items-center mb-2"
+                                    >
+                                        <label
+                                            class="text-xs font-bold text-red-700 dark:text-red-400 uppercase"
+                                            >清理标签 (-tag)</label
+                                        >
+                                        <button
+                                            @click="cmd.cleanTag = 'cleanAll'"
+                                            class="text-[10px] bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 px-2 py-1 rounded hover:bg-red-200 transition"
+                                        >
+                                            使用 cleanAll
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        x-model="cmd.cleanTag"
+                                        class="w-full text-sm border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                        placeholder="默认为 cleanAll"
+                                    />
+                                </div>
+                                <div
+                                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                >
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
+                                            >旧规则删除时机</label
+                                        >
+                                        <select
+                                            x-model="cmd.delOldRule"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                        >
+                                            <option value="after">
+                                                after (更新成功后删)
+                                            </option>
+                                            <option value="before">
+                                                before (更新前先删)
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1"
+                                            >IP分组名随机后缀</label
+                                        >
+                                        <select
+                                            x-model="cmd.randomSuff"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg bg-white dark:bg-gray-700 dark:text-white text-sm"
+                                        >
+                                            <option value="1">1 (开启)</option>
+                                            <option value="0">0 (关闭)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div
+                                    class="bg-gray-900 dark:bg-black rounded-xl p-5 text-gray-100 dark:text-gray-200 font-mono relative group border dark:border-gray-800"
+                                >
+                                    <button
+                                        @click="copyToClipboard(generatedCommand)"
+                                        class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition bg-white/10 hover:bg-white/20 text-white text-[10px] px-2 py-1 rounded border border-white/10"
+                                    >
+                                        <i class="bi bi-clipboard"></i> 复制
+                                    </button>
+                                    <h3
+                                        class="text-gray-500 dark:text-gray-600 text-[10px] uppercase font-bold mb-3 tracking-widest"
+                                    >
+                                        Generated Command
+                                    </h3>
+                                    <div
+                                        class="break-all whitespace-pre-wrap text-sm leading-relaxed"
+                                        x-text="generatedCommand"
+                                    ></div>
+                                </div>
+                                <div
+                                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-5"
+                                >
+                                    <h4
+                                        class="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center gap-2 mb-2"
+                                    >
+                                        <i class="bi bi-info-circle-fill"></i>
+                                        模式说明
+                                    </h4>
+                                    <p
+                                        class="text-xs text-blue-700 dark:text-blue-400 leading-relaxed"
+                                        x-text="runModeDescription"
+                                    ></p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 2: Config Editor -->
+                    <section class="space-y-6 pt-6">
+                        <div
+                            class="flex flex-col md:flex-row md:items-center justify-between border-b dark:border-gray-700 pb-3 gap-2"
+                        >
+                            <h2
+                                class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"
+                            >
+                                <i class="bi bi-file-earmark-code"></i> 2.
+                                配置文件管理
+                            </h2>
+                            <p
+                                class="text-[10px] md:text-xs text-gray-500 dark:text-gray-400"
+                            >
+                                <span class="text-red-500 font-bold">*</span>
+                                表示需重启程序生效
+                            </p>
+                        </div>
+
+                        <!-- Remote Config -->
+                        <div
+                            class="bg-gray-50 dark:bg-gray-900/50 border dark:border-gray-700 rounded-xl p-5"
+                        >
+                            <div class="flex justify-between items-center mb-3">
+                                <label
+                                    class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
+                                    >从远程加载配置 (URL)</label
+                                >
+                                <button
+                                    @click="resetRemoteUrl()"
+                                    class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline"
+                                >
+                                    恢复默认地址
+                                </button>
+                            </div>
+                            <div class="flex flex-col md:flex-row gap-3">
+                                <input
+                                    type="text"
+                                    x-model="remoteConfigUrl"
+                                    @input="saveRemoteUrl()"
+                                    class="flex-1 border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                                    placeholder="https://.../config.yml"
+                                />
+                                <button
+                                    @click="loadRemoteConfig()"
+                                    class="bg-gray-800 dark:bg-gray-600 text-white px-6 py-2.5 rounded-lg hover:bg-black dark:hover:bg-gray-500 transition shadow-sm font-bold text-sm flex items-center justify-center gap-2"
+                                    :disabled="loadingRemote"
+                                >
+                                    <template x-if="!loadingRemote"
+                                        ><i class="bi bi-cloud-download"></i
+                                    ></template>
+                                    <template x-if="loadingRemote"
+                                        ><i
+                                            class="bi bi-arrow-repeat animate-spin"
+                                        ></i
+                                    ></template>
+                                    加载远程配置
+                                </button>
+                            </div>
+                            <p
+                                class="text-[10px] text-gray-500 dark:text-gray-400 mt-3 flex items-center gap-1 leading-tight"
+                            >
+                                <i
+                                    class="bi bi-exclamation-triangle text-orange-500"
+                                ></i>
+                                加载远程配置将覆盖当前表单所有未保存的内容。
+                            </p>
+                        </div>
+
+                        <div
+                            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                        >
+                            <!-- Basic Config -->
+                            <div class="space-y-4">
+                                <h3
+                                    class="font-bold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wider"
+                                >
+                                    基础配置
+                                </h3>
+                                <div>
+                                    <label
+                                        class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                        >iKuai URL</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.ikuaiUrl"
+                                        class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >Username</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.username"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >Password</label
+                                        >
+                                        <input
+                                            type="password"
+                                            x-model="config.password"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                        >计划任务
+                                        <span class="text-red-500"
+                                            >*</span
+                                        ></label
+                                    >
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            x-model="config.cron"
+                                            class="flex-1 border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                        <a
+                                            href="https://tooltool.net/zh/crontab"
+                                            target="_blank"
+                                            class="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-3 py-2 rounded-lg border dark:border-green-800 hover:bg-green-100 transition text-[10px] flex items-center font-bold"
+                                            >解析</a
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Config -->
+                            <div class="space-y-4">
+                                <h3
+                                    class="font-bold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wider"
+                                >
+                                    高级选项
+                                </h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >Retry Wait</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.addErrRetryWait"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >Add Wait</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.addWait"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- WebUI Settings -->
+                            <div class="space-y-4">
+                                <h3
+                                    class="font-bold text-gray-800 dark:text-gray-100 border-b dark:border-gray-700 pb-2 text-sm uppercase tracking-wider flex items-center gap-2"
+                                >
+                                    WebUI 设置
+                                    <span
+                                        class="text-red-500 text-[10px] font-normal"
+                                        >*</span
+                                    >
+                                </h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >启用 WebUI</label
+                                        >
+                                        <select
+                                            x-model="config.webui.enable"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        >
+                                            <option :value="false">
+                                                false
+                                            </option>
+                                            <option :value="true">true</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >端口</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.webui.port"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >用户名</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.webui.user"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                            >密码</label
+                                        >
+                                        <input
+                                            type="password"
+                                            x-model="config.webui.pass"
+                                            class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase block mb-1"
+                                        >CDN Prefix</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.webui.cdnPrefix"
+                                        class="w-full border dark:border-gray-600 p-2.5 rounded-lg text-sm bg-white dark:bg-gray-700 dark:text-white"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Config Lists -->
+                        <div class="space-y-8 mt-8">
+                            <!-- Custom ISP -->
+                            <div class="space-y-3">
+                                <div
+                                    class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
+                                >
+                                    <h3
+                                        class="font-bold text-gray-800 dark:text-gray-100 text-sm uppercase tracking-wider"
+                                    >
+                                        自定义运营商 (Custom ISP)
+                                    </h3>
+                                    <button
+                                        @click="addItem('customIsp')"
+                                        class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition"
+                                    >
+                                        + 添加规则
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 gap-3">
+                                    <template
+                                        x-for="(item, index) in config.customIsp"
+                                        :key="index"
+                                    >
+                                        <div
+                                            class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-gray-50 dark:bg-gray-900/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm"
+                                        >
+                                            <div class="md:col-span-3">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >名称</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.name"
+                                                    placeholder="名称"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div class="md:col-span-6">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >URL</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.url"
+                                                    placeholder="URL"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div class="md:col-span-2">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >备注标签</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.tag"
+                                                    placeholder="Tag"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div
+                                                class="md:col-span-1 text-right"
+                                            >
+                                                <button
+                                                    @click="removeItem('customIsp', index)"
+                                                    class="text-red-500 hover:text-red-700 p-2 transition"
+                                                >
+                                                    <i
+                                                        class="bi bi-trash text-lg md:text-base"
+                                                    ></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Stream Domain -->
+                            <div class="space-y-3">
+                                <div
+                                    class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
+                                >
+                                    <h3
+                                        class="font-bold text-gray-800 dark:text-gray-100 text-sm uppercase tracking-wider"
+                                    >
+                                        域名分流 (Stream Domain)
+                                    </h3>
+                                    <button
+                                        @click="addItem('streamDomain')"
+                                        class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition"
+                                    >
+                                        + 添加规则
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 gap-3">
+                                    <template
+                                        x-for="(item, index) in config.streamDomain"
+                                        :key="index"
+                                    >
+                                        <div
+                                            class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center bg-gray-50 dark:bg-gray-900/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm"
+                                        >
+                                            <div class="md:col-span-2">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >接口</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.interface"
+                                                    placeholder="接口"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div class="md:col-span-3">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >源地址</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.srcAddr"
+                                                    placeholder="源地址"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div class="md:col-span-5">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >URL</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.url"
+                                                    placeholder="URL"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div class="md:col-span-1">
+                                                <label
+                                                    class="text-[10px] md:hidden text-gray-400 uppercase block mb-1"
+                                                    >Tag</label
+                                                >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.tag"
+                                                    placeholder="Tag"
+                                                    class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+                                            <div
+                                                class="md:col-span-1 text-right"
+                                            >
+                                                <button
+                                                    @click="removeItem('streamDomain', index)"
+                                                    class="text-red-500 hover:text-red-700 p-2 transition"
+                                                >
+                                                    <i
+                                                        class="bi bi-trash text-lg md:text-base"
+                                                    ></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- IP Groups -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-3">
+                                    <div
+                                        class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
+                                    >
+                                        <h3
+                                            class="font-bold text-gray-800 dark:text-gray-100 text-sm uppercase tracking-wider"
+                                        >
+                                            IP 分组 (IPv4)
+                                        </h3>
+                                        <button
+                                            @click="addItem('ipGroup')"
+                                            class="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-lg"
+                                        >
+                                            + 添加
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <template
+                                            x-for="(item, index) in config.ipGroup"
+                                            :key="index"
+                                        >
+                                            <div
+                                                class="bg-gray-50 dark:bg-gray-900/30 p-3 rounded-xl border dark:border-gray-700 flex flex-col gap-2"
+                                            >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.name"
+                                                    placeholder="分组名"
+                                                    class="text-xs border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                                <div class="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        x-model="item.url"
+                                                        placeholder="URL"
+                                                        class="flex-1 text-[10px] border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    />
+                                                    <button
+                                                        @click="removeItem('ipGroup', index)"
+                                                        class="text-red-500 p-1"
+                                                    >
+                                                        <i
+                                                            class="bi bi-trash"
+                                                        ></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <div
+                                        class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
+                                    >
+                                        <h3
+                                            class="font-bold text-gray-800 dark:text-gray-100 text-sm uppercase tracking-wider"
+                                        >
+                                            IPv6 分组
+                                        </h3>
+                                        <button
+                                            @click="addItem('ipv6Group')"
+                                            class="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-lg"
+                                        >
+                                            + 添加
+                                        </button>
+                                    </div>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <template
+                                            x-for="(item, index) in config.ipv6Group"
+                                            :key="index"
+                                        >
+                                            <div
+                                                class="bg-gray-50 dark:bg-gray-900/30 p-3 rounded-xl border dark:border-gray-700 flex flex-col gap-2"
+                                            >
+                                                <input
+                                                    type="text"
+                                                    x-model="item.name"
+                                                    placeholder="分组名"
+                                                    class="text-xs border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                />
+                                                <div class="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        x-model="item.url"
+                                                        placeholder="URL"
+                                                        class="flex-1 text-[10px] border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    />
+                                                    <button
+                                                        @click="removeItem('ipv6Group', index)"
+                                                        class="text-red-500 p-1"
+                                                    >
+                                                        <i
+                                                            class="bi bi-trash"
+                                                        ></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stream IP Port -->
+                            <div class="space-y-3">
+                                <div
+                                    class="flex justify-between items-center border-b dark:border-gray-700 pb-2"
+                                >
+                                    <h3
+                                        class="font-bold text-gray-800 dark:text-gray-100 text-sm uppercase tracking-wider"
+                                    >
+                                        端口分流 (Stream IP/Port)
+                                    </h3>
+                                    <button
+                                        @click="addItem('streamIpPort')"
+                                        class="text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition"
+                                    >
+                                        + 添加规则
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <template
+                                        x-for="(item, index) in config.streamIpPort"
+                                        :key="index"
+                                    >
+                                        <div
+                                            class="bg-gray-50 dark:bg-gray-900/30 p-5 rounded-xl border border-gray-100 dark:border-gray-700 space-y-4 shadow-sm"
+                                        >
+                                            <div
+                                                class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+                                            >
+                                                <div class="md:col-span-2">
+                                                    <label
+                                                        class="text-[10px] font-bold text-gray-400 uppercase block mb-1"
+                                                        >类型</label
+                                                    >
+                                                    <select
+                                                        x-model="item.type"
+                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    >
+                                                        <option value="0">
+                                                            外网线路
+                                                        </option>
+                                                        <option value="1">
+                                                            下一跳网关
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <div class="md:col-span-3">
+                                                    <label
+                                                        class="text-[10px] font-bold text-gray-400 uppercase block mb-1"
+                                                        x-text="item.type == '0' ? '接口' : '下一跳'"
+                                                    ></label>
+                                                    <input
+                                                        x-show="item.type == '0'"
+                                                        type="text"
+                                                        x-model="item.interface"
+                                                        placeholder="wan1"
+                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    />
+                                                    <input
+                                                        x-show="item.type == '1'"
+                                                        type="text"
+                                                        x-model="item.nexthop"
+                                                        placeholder="IP 地址"
+                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    />
+                                                </div>
+                                                <div class="md:col-span-3">
+                                                    <label
+                                                        class="text-[10px] font-bold text-gray-400 uppercase block mb-1"
+                                                        >源地址</label
+                                                    >
+                                                    <input
+                                                        type="text"
+                                                        x-model="item.srcAddr"
+                                                        placeholder="源 IP"
+                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    />
+                                                </div>
+                                                <div class="md:col-span-3">
+                                                    <label
+                                                        class="text-[10px] font-bold text-gray-400 uppercase block mb-1"
+                                                        >IP分组</label
+                                                    >
+                                                    <input
+                                                        type="text"
+                                                        x-model="item.ipGroup"
+                                                        placeholder="分组名"
+                                                        class="w-full text-sm border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    />
+                                                </div>
+                                                <div
+                                                    class="md:col-span-1 text-right md:pt-5"
+                                                >
+                                                    <button
+                                                        @click="removeItem('streamIpPort', index)"
+                                                        class="text-red-500 hover:text-red-700 p-2 transition"
+                                                    >
+                                                        <i
+                                                            class="bi bi-trash text-lg"
+                                                        ></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t dark:border-gray-700"
+                                            >
+                                                <div
+                                                    class="flex items-center gap-3"
+                                                >
+                                                    <label
+                                                        class="text-[10px] font-bold text-gray-400 uppercase"
+                                                        >负载模式</label
+                                                    >
+                                                    <select
+                                                        x-model="item.mode"
+                                                        class="flex-1 text-xs border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    >
+                                                        <option value="0">
+                                                            0-新建连接数
+                                                        </option>
+                                                        <option value="1">
+                                                            1-源IP
+                                                        </option>
+                                                        <option value="2">
+                                                            2-源IP+源端口
+                                                        </option>
+                                                        <option value="3">
+                                                            3-源IP+目的IP
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <div
+                                                    class="flex items-center gap-3"
+                                                >
+                                                    <label
+                                                        class="text-[10px] font-bold text-gray-400 uppercase"
+                                                        >线路绑定</label
+                                                    >
+                                                    <select
+                                                        x-model="item.ifaceband"
+                                                        class="flex-1 text-xs border dark:border-gray-600 p-2 rounded-lg bg-white dark:bg-gray-700 dark:text-white"
+                                                    >
+                                                        <option value="0">
+                                                            0-不勾选
+                                                        </option>
+                                                        <option value="1">
+                                                            1-勾选
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- YAML Preview & Actions -->
+                        <div class="mt-12 space-y-4">
+                            <div
+                                class="flex flex-col md:flex-row md:justify-between md:items-end gap-3"
+                            >
+                                <h3
+                                    class="font-bold text-gray-800 dark:text-gray-100 text-lg uppercase tracking-wider flex items-center gap-2"
+                                >
+                                    <i class="bi bi-eye"></i> YAML 预览
+                                </h3>
+                                <label
+                                    class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-lg border dark:border-gray-600"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        x-model="showComments"
+                                        class="rounded text-blue-600 w-4 h-4"
+                                    />
+                                    <span class="font-bold">显示详细注释</span>
+                                </label>
+                            </div>
+                            <textarea
+                                class="w-full h-96 bg-gray-900 dark:bg-black text-gray-100 dark:text-gray-200 font-mono text-xs p-5 rounded-xl border dark:border-gray-700 shadow-inner focus:ring-2 focus:ring-blue-500 outline-none"
+                                readonly
+                                x-text="generatedYaml"
+                            ></textarea>
+                            <div class="flex flex-col md:flex-row gap-4 pt-2">
+                                <button
+                                    @click="copyToClipboard(generatedYaml)"
+                                    class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition flex-1 flex items-center justify-center gap-2 font-bold shadow-lg shadow-blue-500/20"
+                                >
+                                    <i class="bi bi-clipboard"></i> 复制完整配置
+                                </button>
+                                <div class="flex-1 flex flex-col gap-2">
+                                    <button
+                                        @click="saveConfig()"
+                                        class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition w-full flex items-center justify-center gap-2 font-bold shadow-lg shadow-green-500/20"
+                                    >
+                                        <i class="bi bi-hdd"></i> 保存到服务器
+                                    </button>
+                                    <p
+                                        class="text-[10px] text-gray-400 dark:text-gray-500 truncate text-center"
+                                        x-text="`物理路径: ${serverConfPath || '...'}`"
+                                    ></p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <footer
+            class="bg-gray-800 text-gray-400 py-10 text-center mt-12 border-t border-gray-700"
+        >
+            <p class="mb-2 font-bold uppercase tracking-widest text-xs">
+                iKuai Bypass Helper Tool
+            </p>
+            <p class="text-[10px] opacity-50">
+                © 2026 iKuai Bypass Project. All resources loaded via CDN.
+            </p>
+        </footer>
+
+        <script>
+            function appData() {
+                return {
+                    currentTab: "help",
+                    showComments: true,
+                    loadingRemote: false,
+                    remoteConfigUrl:
+                        "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config_example.yml",
+                    serverConfPath: "",
+                    commentMaps: { top: {}, item: {}, webui: {} },
+                    cmd: {
+                        exePath: "./ikuai-bypass",
+                        configPath: "./config.yml",
+                        runMode: "cron",
+                        module: "ispdomain",
+                        useCustomLogin: false,
+                        loginUrl: "",
+                        loginUser: "",
+                        loginPass: "",
+                        cleanTag: "",
+                        delOldRule: "after",
+                        randomSuff: "1",
+                    },
+                    presets: [],
+                    config: {
+                        ikuaiUrl: "",
+                        username: "",
+                        password: "",
+                        cron: "",
+                        addErrRetryWait: "10s",
+                        addWait: "1s",
+                        webui: {
+                            enable: false,
+                            port: "8080",
+                            user: "",
+                            pass: "",
+                            cdnPrefix: "https://cdn.jsdelivr.net/npm",
+                        },
+                        customIsp: [],
+                        streamDomain: [],
+                        ipGroup: [],
+                        ipv6Group: [],
+                        streamIpPort: [],
+                    },
+                    init() {
+                        this.loadConfig();
+                        this.loadPresets();
+                        this.loadSavedRemoteUrl();
+                    },
+                    loadSavedRemoteUrl() {
+                        const saved = localStorage.getItem("remote_config_url");
+                        if (saved) this.remoteConfigUrl = saved;
+                    },
+                    saveRemoteUrl() {
+                        localStorage.setItem(
+                            "remote_config_url",
+                            this.remoteConfigUrl,
+                        );
+                    },
+                    resetRemoteUrl() {
+                        this.remoteConfigUrl =
+                            "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config_example.yml";
+                        this.saveRemoteUrl();
+                    },
+                    loadPresets() {
+                        const saved = localStorage.getItem("cmd_presets");
+                        if (saved) {
+                            try {
+                                this.presets = JSON.parse(saved);
+                            } catch (e) {
+                                this.presets = [];
+                            }
+                        }
+                    },
+                    savePresetsToStorage() {
+                        localStorage.setItem(
+                            "cmd_presets",
+                            JSON.stringify(this.presets),
+                        );
+                    },
+                    savePreset() {
+                        if (this.presets.length >= 5) {
+                            alert("最多只能保存 5 个预设");
+                            return;
+                        }
+                        const name = prompt(
+                            "请输入预设名称:",
+                            `预设 ${this.presets.length + 1}`,
+                        );
+                        if (!name) return;
+                        this.presets.push({
+                            name: name,
+                            data: JSON.parse(JSON.stringify(this.cmd)),
+                        });
+                        this.savePresetsToStorage();
+                    },
+                    loadPreset(index) {
+                        this.cmd = JSON.parse(
+                            JSON.stringify(this.presets[index].data),
+                        );
+                    },
+                    deletePreset(index) {
+                        if (
+                            confirm(
+                                `确定要删除预设 "${this.presets[index].name}" 吗？`,
+                            )
+                        ) {
+                            this.presets.splice(index, 1);
+                            this.savePresetsToStorage();
+                        }
+                    },
+                    renamePreset(index) {
+                        const newName = prompt(
+                            "请输入新的预设名称:",
+                            this.presets[index].name,
+                        );
+                        if (newName) {
+                            this.presets[index].name = newName;
+                            this.savePresetsToStorage();
+                        }
+                    },
+                    restoreDefaultCmd() {
+                        if (confirm("确定要恢复默认设置吗？")) {
+                            this.cmd = {
+                                exePath: this.cmd.exePath,
+                                configPath: "./config.yml",
+                                runMode: "cron",
+                                module: "ispdomain",
+                                useCustomLogin: false,
+                                loginUrl: "",
+                                loginUser: "",
+                                loginPass: "",
+                                cleanTag: "",
+                                delOldRule: "after",
+                                randomSuff: "1",
+                            };
+                        }
+                    },
+                    async loadRemoteConfig() {
+                        if (!this.remoteConfigUrl) return;
+                        if (
+                            !confirm(
+                                "加载远程配置将覆盖当前所有内容，是否继续？",
+                            )
+                        )
+                            return;
+                        this.loadingRemote = true;
+                        try {
+                            const res = await fetch(this.remoteConfigUrl);
+                            if (!res.ok)
+                                throw new Error(
+                                    `HTTP error! status: ${res.status}`,
+                                );
+                            const yamlText = await res.text();
+                            const data = jsyaml.load(yamlText);
+                            if (!data) throw new Error("无效内容");
+                            this.config.ikuaiUrl = data["ikuai-url"] || "";
+                            this.config.username = data.username || "";
+                            this.config.password = data.password || "";
+                            this.config.cron = data.cron || "";
+                            if (data.AddErrRetryWait)
+                                this.config.addErrRetryWait = String(
+                                    data.AddErrRetryWait,
+                                );
+                            if (data.AddWait)
+                                this.config.addWait = String(data.AddWait);
+                            if (data.webui) {
+                                this.config.webui.enable = !!data.webui.enable;
+                                if (data.webui.port)
+                                    this.config.webui.port = String(
+                                        data.webui.port,
+                                    );
+                                this.config.webui.user = data.webui.user || "";
+                                this.config.webui.pass = data.webui.pass || "";
+                                this.config.webui.cdnPrefix =
+                                    data.webui["cdn-prefix"] ||
+                                    "https://cdn.jsdelivr.net/npm";
+                            }
+                            this.config.customIsp = (
+                                data["custom-isp"] || []
+                            ).map((i) => ({
+                                name: i.name,
+                                url: i.url,
+                                tag: i.tag,
+                            }));
+                            this.config.streamDomain = (
+                                data["stream-domain"] || []
+                            ).map((i) => ({
+                                interface: i.interface,
+                                srcAddr: i["src-addr"],
+                                url: i.url,
+                                tag: i.tag,
+                            }));
+                            this.config.ipGroup = (data["ip-group"] || []).map(
+                                (i) => ({ name: i.name, url: i.url }),
+                            );
+                            this.config.ipv6Group = (
+                                data["ipv6-group"] || []
+                            ).map((i) => ({ name: i.name, url: i.url }));
+                            this.config.streamIpPort = (
+                                data["stream-ipport"] || []
+                            ).map((i) => ({
+                                type: String(i.type),
+                                interface: i.interface,
+                                nexthop: i.nexthop,
+                                srcAddr: i["src-addr"],
+                                ipGroup: i["ip-group"],
+                                mode: i.mode || 0,
+                                ifaceband: i.ifaceband || 0,
+                            }));
+                            alert("远程配置加载成功！");
+                        } catch (e) {
+                            alert("失败: " + e.message);
+                        } finally {
+                            this.loadingRemote = false;
+                        }
+                    },
+                    async loadConfig() {
+                        try {
+                            const response = await fetch("/api/config");
+                            if (!response.ok) return;
+                            const data = await response.json();
+                            if (data.exe_path) this.cmd.exePath = data.exe_path;
+                            if (data.conf_path)
+                                this.serverConfPath = data.conf_path;
+                            if (data.top_level_comments) {
+                                this.commentMaps.top = data.top_level_comments;
+                                this.commentMaps.item = data.item_comments;
+                                this.commentMaps.webui = data.webui_comments;
+                            }
+                            this.config.ikuaiUrl = data["ikuai-url"] || "";
+                            this.config.username = data.username || "";
+                            this.config.password = data.password || "";
+                            this.config.cron = data.cron || "";
+                            this.config.addErrRetryWait =
+                                (data.AddErrRetryWait || 0) / 1000000000 + "s";
+                            this.config.addWait =
+                                (data.AddWait || 0) / 1000000000 + "s";
+                            if (data.webui) {
+                                this.config.webui.enable =
+                                    data.webui.enable || false;
+                                this.config.webui.port =
+                                    data.webui.port || "8080";
+                                this.config.webui.user = data.webui.user || "";
+                                this.config.webui.pass = data.webui.pass || "";
+                                this.config.webui.cdnPrefix =
+                                    data.webui["cdn-prefix"] ||
+                                    "https://cdn.jsdelivr.net/npm";
+                            }
+                            this.config.customIsp = (
+                                data["custom-isp"] || []
+                            ).map((i) => ({
+                                name: i.name,
+                                url: i.url,
+                                tag: i.tag,
+                            }));
+                            this.config.streamDomain = (
+                                data["stream-domain"] || []
+                            ).map((i) => ({
+                                interface: i.interface,
+                                srcAddr: i["src-addr"],
+                                url: i.url,
+                                tag: i.tag,
+                            }));
+                            this.config.ipGroup = (data["ip-group"] || []).map(
+                                (i) => ({ name: i.name, url: i.url }),
+                            );
+                            this.config.ipv6Group = (
+                                data["ipv6-group"] || []
+                            ).map((i) => ({ name: i.name, url: i.url }));
+                            this.config.streamIpPort = (
+                                data["stream-ipport"] || []
+                            ).map((i) => ({
+                                type: i.type,
+                                interface: i.interface,
+                                nexthop: i.nexthop,
+                                srcAddr: i["src-addr"],
+                                ipGroup: i["ip-group"],
+                                mode: i.mode,
+                                ifaceband: i.ifaceband,
+                            }));
+                            if (typeof data.AddErrRetryWait === "string")
+                                this.config.addErrRetryWait =
+                                    data.AddErrRetryWait;
+                            if (typeof data.AddWait === "string")
+                                this.config.addWait = data.AddWait;
+                            if (!this.cmd.loginUrl)
+                                this.cmd.loginUrl = this.config.ikuaiUrl;
+                            if (!this.cmd.loginUser)
+                                this.cmd.loginUser = this.config.username;
+                            if (!this.cmd.loginPass)
+                                this.cmd.loginPass = this.config.password;
+                        } catch (e) {
+                            console.log("Init failed:", e);
+                        }
+                    },
+                    async saveConfig() {
+                        try {
+                            const payload = {
+                                "ikuai-url": this.config.ikuaiUrl,
+                                username: this.config.username,
+                                password: this.config.password,
+                                cron: this.config.cron,
+                                AddErrRetryWait:
+                                    parseInt(this.config.addErrRetryWait) *
+                                    1000000000,
+                                AddWait:
+                                    parseInt(this.config.addWait) * 1000000000,
+                                webui: {
+                                    enable: this.config.webui.enable,
+                                    port: this.config.webui.port,
+                                    user: this.config.webui.user,
+                                    pass: this.config.webui.pass,
+                                    "cdn-prefix": this.config.webui.cdnPrefix,
+                                },
+                                "custom-isp": this.config.customIsp,
+                                "stream-domain": this.config.streamDomain.map(
+                                    (x) => ({
+                                        interface: x.interface,
+                                        "src-addr": x.srcAddr,
+                                        url: x.url,
+                                        tag: x.tag,
+                                    }),
+                                ),
+                                "ip-group": this.config.ipGroup,
+                                "ipv6-group": this.config.ipv6Group,
+                                "stream-ipport": this.config.streamIpPort.map(
+                                    (x) => ({
+                                        type: String(x.type),
+                                        interface: x.interface,
+                                        nexthop: x.nexthop,
+                                        "src-addr": x.srcAddr,
+                                        "ip-group": x.ipGroup,
+                                        mode: parseInt(x.mode),
+                                        ifaceband: parseInt(x.ifaceband),
+                                    }),
+                                ),
+                            };
+                            const res = await fetch("/api/save", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    ...payload,
+                                    with_comments: this.showComments,
+                                }),
+                            });
+                            if (res.ok) alert("保存成功！");
+                            else alert("保存失败: " + (await res.text()));
+                        } catch (e) {
+                            alert("错误: " + e);
+                        }
+                    },
+                    get generatedCommand() {
+                        let exe = this.cmd.exePath;
+                        if (exe.includes(" ")) exe = `"${exe}"`;
+                        let c = `${exe} -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
+                        if (
+                            ![
+                                "clean",
+                                "exportDomainSteamToTxt",
+                                "web",
+                            ].includes(this.cmd.runMode)
+                        )
+                            c += ` -m ${this.cmd.module}`;
+                        if (this.cmd.runMode === "clean" && this.cmd.cleanTag)
+                            c += ` -tag ${this.cmd.cleanTag}`;
+                        if (this.cmd.useCustomLogin && this.cmd.loginUrl)
+                            c += ` -login "${this.cmd.loginUrl},${this.cmd.loginUser},${this.cmd.loginPass}"`;
+                        if (this.cmd.delOldRule !== "after")
+                            c += ` -delOldRule ${this.cmd.delOldRule}`;
+                        if (
+                            this.cmd.module.includes("ip") &&
+                            this.cmd.randomSuff !== "1"
+                        )
+                            c += ` -isIpGroupNameAddRandomSuff ${this.cmd.randomSuff}`;
+                        return c;
+                    },
+                    get runModeDescription() {
+                        const ds = {
+                            cron: "计划模式。立即执行同步，随后根据 Cron 定时后台运行。",
+                            cronAft:
+                                "延迟计划模式。不立即执行，直接进入定时等待。",
+                            once: "单次模式。立即执行同步并退出，适合配合外部调度。",
+                            web: "WebUI 模式。仅启动管理界面，不执行同步规则。",
+                            clean: "清理模式。删除所有 IKUAI_BYPASS_ 标识的规则。",
+                            exportDomainSteamToTxt:
+                                "导出模式。将域名规则导出为爱快 TXT 格式。",
+                        };
+                        return ds[this.cmd.runMode] || "请选择模式查看说明。";
+                    },
+                    get generatedYaml() {
+                        const cleanConfig = {
+                            "ikuai-url": this.config.ikuaiUrl,
+                            username: this.config.username,
+                            password: this.config.password,
+                            cron: this.config.cron,
+                            AddErrRetryWait: this.config.addErrRetryWait,
+                            AddWait: this.config.addWait,
+                        };
+                        cleanConfig["webui"] = {
+                            enable: this.config.webui.enable,
+                            port: this.config.webui.port,
+                            user: this.config.webui.user,
+                            pass: this.config.webui.pass,
+                            "cdn-prefix": this.config.webui.cdnPrefix,
+                        };
+                        if (this.config.customIsp.length > 0)
+                            cleanConfig["custom-isp"] = this.config.customIsp;
+                        if (this.config.streamDomain.length > 0)
+                            cleanConfig["stream-domain"] =
+                                this.config.streamDomain.map((x) => ({
+                                    interface: x.interface,
+                                    "src-addr": x.srcAddr,
+                                    url: x.url,
+                                    tag: x.tag,
+                                }));
+                        if (this.config.ipGroup.length > 0)
+                            cleanConfig["ip-group"] = this.config.ipGroup;
+                        if (this.config.ipv6Group.length > 0)
+                            cleanConfig["ipv6-group"] = this.config.ipv6Group;
+                        if (this.config.streamIpPort.length > 0) {
+                            cleanConfig["stream-ipport"] =
+                                this.config.streamIpPort.map((item) => ({
+                                    type: parseInt(item.type),
+                                    "src-addr": item.srcAddr,
+                                    "ip-group": item.ipGroup,
+                                    mode: parseInt(item.mode),
+                                    ifaceband: parseInt(item.ifaceband),
+                                    ...(item.type == "0"
+                                        ? { interface: item.interface }
+                                        : { nexthop: item.nexthop }),
+                                }));
+                        }
+                        const yamlStr = jsyaml.dump(cleanConfig, {
+                            lineWidth: -1,
+                        });
+                        if (!this.showComments) return yamlStr;
+                        const lines = yamlStr.split("\n");
+                        let inWebui = false;
+                        const result = [
+                            "# iKuai Bypass 配置文件",
+                            "# 详情: https://github.com/joyanhui/ikuai-bypass",
+                        ];
+                        for (let line of lines) {
+                            if (!line.trim()) continue;
+                            const tm = line.match(/^([a-z0-9-]+):/);
+                            if (tm) {
+                                inWebui = tm[1] === "webui";
+                                if (this.commentMaps.top[tm[1]])
+                                    line += " # " + this.commentMaps.top[tm[1]];
+                            } else if (inWebui) {
+                                const wm = line.match(/^  ([a-z0-9-]+):/);
+                                if (wm && this.commentMaps.webui[wm[1]])
+                                    line +=
+                                        " # " + this.commentMaps.webui[wm[1]];
+                            } else {
+                                const im = line.match(/^    ([a-z0-9-]+):/);
+                                if (im && this.commentMaps.item[im[1]])
+                                    line +=
+                                        " # " + this.commentMaps.item[im[1]];
+                            }
+                            result.push(line);
+                        }
+                        return result.join("\n");
+                    },
+                    addItem(an) {
+                        const items = {
+                            customIsp: { name: "", url: "", tag: "" },
+                            streamDomain: {
+                                interface: "wan1",
+                                srcAddr: "",
+                                url: "",
+                                tag: "",
+                            },
+                            ipGroup: { name: "", url: "" },
+                            ipv6Group: { name: "", url: "" },
+                            streamIpPort: {
+                                type: "0",
+                                interface: "wan1",
+                                nexthop: "",
+                                srcAddr: "",
+                                ipGroup: "",
+                                mode: 0,
+                                ifaceband: 0,
+                            },
+                        };
+                        this.config[an].push({ ...items[an] });
+                    },
+                    removeItem(an, idx) {
+                        this.config[an].splice(idx, 1);
+                    },
+                    async copyToClipboard(text) {
+                        try {
+                            await navigator.clipboard.writeText(text);
+                            alert("已复制！");
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    },
+                };
+            }
+        </script>
+    </body>
+</html>

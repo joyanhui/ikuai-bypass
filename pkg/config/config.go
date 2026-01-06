@@ -21,40 +21,43 @@ var (
 )
 
 type Config struct {
-	IkuaiURL        string        `yaml:"ikuai-url"`
-	Username        string        `yaml:"username"`
-	Password        string        `yaml:"password"`
-	Cron            string        `yaml:"cron"`
-	AddErrRetryWait time.Duration `yaml:"AddErrRetryWait"`
-	AddWait         time.Duration `yaml:"AddWait"`
+	IkuaiURL        string        `yaml:"ikuai-url" json:"ikuai-url"`
+	Username        string        `yaml:"username" json:"username"`
+	Password        string        `yaml:"password" json:"password"`
+	Cron            string        `yaml:"cron" json:"cron"`
+	AddErrRetryWait time.Duration `yaml:"AddErrRetryWait" json:"AddErrRetryWait"`
+	AddWait         time.Duration `yaml:"AddWait" json:"AddWait"`
 	CustomIsp       []struct {
-		Name string `yaml:"name"`
-		URL  string `yaml:"url"`
-		Tag  string `yaml:"tag"`
-	} `yaml:"custom-isp"`
+		Name string `yaml:"name" json:"name"`
+		URL  string `yaml:"url" json:"url"`
+		Tag  string `yaml:"tag" json:"tag"`
+	} `yaml:"custom-isp" json:"custom-isp"`
 	StreamDomain []struct {
-		Interface string `yaml:"interface"`
-		SrcAddr   string `yaml:"src-addr"`
-		URL       string `yaml:"url"`
-		Tag       string `yaml:"tag"`
-	} `yaml:"stream-domain"`
+		Interface string `yaml:"interface" json:"interface"`
+		SrcAddr   string `yaml:"src-addr" json:"src-addr"`
+		URL       string `yaml:"url" json:"url"`
+		Tag       string `yaml:"tag" json:"tag"`
+	} `yaml:"stream-domain" json:"stream-domain"`
 	IpGroup []struct {
-		Name string `yaml:"name"`
-		URL  string `yaml:"url"`
-	} `yaml:"ip-group"`
+		Name string `yaml:"name" json:"name"`
+		URL  string `yaml:"url" json:"url"`
+	} `yaml:"ip-group" json:"ip-group"`
 	Ipv6Group []struct {
-		Name string `yaml:"name"`
-		URL  string `yaml:"url"`
-	} `yaml:"ipv6-group"`
+		Name string `yaml:"name" json:"name"`
+		URL  string `yaml:"url" json:"url"`
+	} `yaml:"ipv6-group" json:"ipv6-group"`
 	StreamIpPort []struct {
-		Type      string `yaml:"type"`
-		Interface string `yaml:"interface"`
-		Nexthop   string `yaml:"nexthop"`
-		SrcAddr   string `yaml:"src-addr"`
-		IpGroup   string `yaml:"ip-group"`
-		Mode      int    `yaml:"mode"`
-		IfaceBand int    `yaml:"ifaceband"`
-	} `yaml:"stream-ipport"`
+		Type      string `yaml:"type" json:"type"`
+		Interface string `yaml:"interface" json:"interface"`
+		Nexthop   string `yaml:"nexthop" json:"nexthop"`
+		SrcAddr   string `yaml:"src-addr" json:"src-addr"`
+		IpGroup   string `yaml:"ip-group" json:"ip-group"`
+		Mode      int    `yaml:"mode" json:"mode"`
+		IfaceBand int    `yaml:"ifaceband" json:"ifaceband"`
+	} `yaml:"stream-ipport" json:"stream-ipport"`
+	WebPort string `yaml:"web-port" json:"web-port"` // webui 端口
+	WebUser string `yaml:"web-user" json:"web-user"` // webui 用户名
+	WebPass string `yaml:"web-pass" json:"web-pass"` // webui 密码
 }
 
 var GlobalConfig Config
@@ -83,6 +86,40 @@ func Read(filename string) error {
 			log.Println("域名分流规则中中Tag为空,采用:", GlobalConfig.StreamDomain[i].Interface)
 			GlobalConfig.StreamDomain[i].Tag = GlobalConfig.StreamDomain[i].Interface
 		}
+	}
+
+	return nil
+}
+
+// Save 将配置保存到指定文件
+// 包含安全校验：
+// 1. 强制检查文件后缀名必须为 .yml 或 .yaml
+// 2. 通过 yaml.Marshal 重新序列化结构体，避免注入攻击
+func Save(filename string, cfg *Config) error {
+	// 1. 安全校验：文件后缀
+	ext := ""
+	if len(filename) > 4 {
+		ext = filename[len(filename)-4:]
+	}
+	if len(filename) > 5 && filename[len(filename)-5:] == ".yaml" {
+		ext = ".yaml"
+	}
+	
+	if ext != ".yml" && ext != ".yaml" {
+		return fmt.Errorf("security violation: file extension must be .yml or .yaml")
+	}
+
+	// 2. 序列化 (清除可能的恶意脚本注入，强制转为合法的YAML格式)
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("marshal config failed: %v", err)
+	}
+
+	// 3. 写入文件
+	// 使用 0644 权限，避免赋予执行权限
+	err = os.WriteFile(filename, data, 0644)
+	if err != nil {
+		return fmt.Errorf("write file failed: %v", err)
 	}
 
 	return nil

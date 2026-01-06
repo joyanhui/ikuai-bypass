@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>iKuai Bypass 配置助手</title>
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Alpine.js -->
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
+        ></script>
+        <!-- Bootstrap Icons -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        />
+        <!-- JS-YAML -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+        <style>
+            [x-cloak] {
+                display: none !important;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100 min-h-screen font-sans" x-data="appData()">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-6">
+                <div
+                    class="flex flex-col md:flex-row justify-between items-center"
+                >
+                    <div>
+                        <h1 class="text-3xl font-bold flex items-center gap-2">
+                            <i class="bi bi-router"></i> iKuai Bypass 助手
+                        </h1>
+                        <p class="mt-2 text-blue-100 text-sm">
+                            爱快路由器自动化分流规则同步工具配置生成器
+                        </p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex gap-3">
+                        <a
+                            href="https://github.com/joyanhui/ikuai-bypass"
+                            target="_blank"
+                            class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition text-sm flex items-center gap-2"
+                        >
+                            <i class="bi bi-github"></i> GitHub
+                        </a>
+                        <a
+                            href="https://github.com/joyanhui/ikuai-bypass/releases"
+                            target="_blank"
+                            class="bg-white text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-lg transition text-sm font-semibold flex items-center gap-2"
+                        >
+                            <i class="bi bi-download"></i> 下载 Release
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8 max-w-6xl">
+            <!-- Tabs -->
+            <div class="bg-white rounded-t-xl shadow-sm border-b">
+                <nav class="flex">
+                    <button
+                        @click="currentTab = 'tool'"
+                        :class="{'border-blue-500 text-blue-600': currentTab === 'tool', 'border-transparent text-gray-500 hover:text-gray-700': currentTab !== 'tool'}"
+                        class="px-6 py-4 text-sm font-medium border-b-2 transition flex items-center gap-2"
+                    >
+                        <i class="bi bi-gear-fill"></i> 配置助手
+                    </button>
+                    <button
+                        @click="currentTab = 'help'"
+                        :class="{'border-blue-500 text-blue-600': currentTab === 'help', 'border-transparent text-gray-500 hover:text-gray-700': currentTab !== 'help'}"
+                        class="px-6 py-4 text-sm font-medium border-b-2 transition flex items-center gap-2"
+                    >
+                        <i class="bi bi-question-circle"></i> 使用说明
+                    </button>
+                </nav>
+            </div>
+
+            <div class="bg-white rounded-b-xl shadow-md p-6 min-h-[500px]">
+                <!-- Tab: Tool (Combined Command + Config) -->
+                <div x-show="currentTab === 'tool'" x-cloak class="space-y-12">
+                    <!-- Section 1: Command Builder -->
+                    <section class="space-y-6">
+                        <h2
+                            class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2"
+                        >
+                            <i class="bi bi-terminal"></i> 1. 运行命令生成
+                        </h2>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- Left: Form -->
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                            >配置文件路径 (-c)</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="cmd.configPath"
+                                            class="w-full border p-2 rounded focus:ring-blue-500 focus:border-blue-500"
+                                            placeholder="./config.yml"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                            >运行模式 (-r)</label
+                                        >
+                                        <select
+                                            x-model="cmd.runMode"
+                                            class="w-full border p-2 rounded"
+                                        >
+                                            <option value="cron">
+                                                cron (标准: 先跑一次后定时)
+                                            </option>
+                                            <option value="once">
+                                                once (单次运行)
+                                            </option>
+                                            <option value="clean">
+                                                clean (清理规则)
+                                            </option>
+                                            <option
+                                                value="exportDomainSteamToTxt"
+                                            >
+                                                exportDomainSteamToTxt (导出)
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-1"
+                                        >功能模块 (-m)</label
+                                    >
+                                    <select
+                                        x-model="cmd.module"
+                                        class="w-full border p-2 rounded"
+                                    >
+                                        <option value="ispdomain">
+                                            ispdomain (默认: 运营商+域名分流)
+                                        </option>
+                                        <option value="ipgroup">
+                                            ipgroup (IP分组+端口分流)
+                                        </option>
+                                        <option value="ipv6group">
+                                            ipv6group (IPv6分组)
+                                        </option>
+                                        <option value="ii">
+                                            ii (混合: ispdomain + ipgroup)
+                                        </option>
+                                        <option value="ip">
+                                            ip (混合: ipgroup + ipv6group)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div
+                                    class="p-4 bg-gray-50 rounded border border-gray-200"
+                                >
+                                    <label
+                                        class="flex items-center gap-2 mb-2 cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            x-model="cmd.useCustomLogin"
+                                            class="rounded text-blue-600"
+                                        />
+                                        <span
+                                            class="text-sm font-medium text-gray-700"
+                                            >覆盖配置文件的登录信息
+                                            (-login)</span
+                                        >
+                                    </label>
+                                    <div
+                                        x-show="cmd.useCustomLogin"
+                                        class="space-y-2 mt-2"
+                                    >
+                                        <input
+                                            type="text"
+                                            x-model="cmd.loginUrl"
+                                            placeholder="http://192.168.1.1"
+                                            class="w-full text-sm border p-2 rounded"
+                                        />
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input
+                                                type="text"
+                                                x-model="cmd.loginUser"
+                                                placeholder="admin"
+                                                class="w-full text-sm border p-2 rounded"
+                                            />
+                                            <input
+                                                type="text"
+                                                x-model="cmd.loginPass"
+                                                placeholder="password"
+                                                class="w-full text-sm border p-2 rounded"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    x-show="cmd.runMode === 'clean'"
+                                    class="p-4 bg-red-50 rounded border border-red-200"
+                                >
+                                    <label
+                                        class="block text-sm font-medium text-red-700 mb-1"
+                                        >清理标签 (-tag)</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="cmd.cleanTag"
+                                        class="w-full text-sm border p-2 rounded border-red-300"
+                                        placeholder="cleanAll"
+                                    />
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                            >旧规则删除时机 (-delOldRule)</label
+                                        >
+                                        <select
+                                            x-model="cmd.delOldRule"
+                                            class="w-full border p-2 rounded"
+                                        >
+                                            <option value="after">
+                                                after (更新成功后删)
+                                            </option>
+                                            <option value="before">
+                                                before (更新前先删)
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-sm font-medium text-gray-700 mb-1"
+                                            >IP分组名随机后缀
+                                            (-isIpGroupNameAddRandomSuff)</label
+                                        >
+                                        <select
+                                            x-model="cmd.randomSuff"
+                                            class="w-full border p-2 rounded"
+                                        >
+                                            <option value="1">1 (开启)</option>
+                                            <option value="0">0 (关闭)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Output -->
+                            <div
+                                class="bg-gray-900 rounded-lg p-6 text-gray-100 font-mono relative group self-start"
+                            >
+                                <div
+                                    class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
+                                >
+                                    <button
+                                        @click="copyToClipboard(generatedCommand)"
+                                        class="bg-white/20 hover:bg-white/30 text-white text-xs px-2 py-1 rounded"
+                                    >
+                                        <i class="bi bi-clipboard"></i> 复制
+                                    </button>
+                                </div>
+                                <h3
+                                    class="text-gray-400 text-xs uppercase font-bold mb-2"
+                                >
+                                    Generated Command
+                                </h3>
+                                <div
+                                    class="break-all whitespace-pre-wrap"
+                                    x-text="generatedCommand"
+                                ></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Section 2: Config Editor -->
+                    <section class="space-y-6 pt-6">
+                        <h2
+                            class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-2"
+                        >
+                            <i class="bi bi-file-earmark-code"></i> 2.
+                            配置文件生成 (Config.yml)
+                        </h2>
+
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="space-y-4 col-span-1">
+                                <h3
+                                    class="font-bold text-gray-800 border-b pb-2"
+                                >
+                                    基础配置
+                                </h3>
+                                <div>
+                                    <label
+                                        class="text-xs font-bold text-gray-500 uppercase"
+                                        >iKuai URL</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.ikuaiUrl"
+                                        class="w-full border p-2 rounded text-sm"
+                                        placeholder="http://192.168.1.1"
+                                    />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label
+                                            class="text-xs font-bold text-gray-500 uppercase"
+                                            >Username</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.username"
+                                            class="w-full border p-2 rounded text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-xs font-bold text-gray-500 uppercase"
+                                            >Password</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.password"
+                                            class="w-full border p-2 rounded text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label
+                                        class="text-xs font-bold text-gray-500 uppercase"
+                                        >Cron Expression</label
+                                    >
+                                    <input
+                                        type="text"
+                                        x-model="config.cron"
+                                        class="w-full border p-2 rounded text-sm"
+                                        placeholder="0 7 * * *"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="space-y-4 col-span-1">
+                                <h3
+                                    class="font-bold text-gray-800 border-b pb-2"
+                                >
+                                    高级选项
+                                </h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label
+                                            class="text-xs font-bold text-gray-500 uppercase"
+                                            >Retry Wait</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.addErrRetryWait"
+                                            class="w-full border p-2 rounded text-sm"
+                                            placeholder="10s"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-xs font-bold text-gray-500 uppercase"
+                                            >Add Wait</label
+                                        >
+                                        <input
+                                            type="text"
+                                            x-model="config.addWait"
+                                            class="w-full border p-2 rounded text-sm"
+                                            placeholder="1s"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- WebUI Settings -->
+                            <div class="space-y-4 col-span-1">
+                                <h3 class="font-bold text-gray-800 border-b pb-2">WebUI 设置</h3>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase">Port</label>
+                                    <input type="text" x-model="config.webPort" class="w-full border p-2 rounded text-sm" placeholder="8080">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
+                                    <input type="text" x-model="config.webUser" class="w-full border p-2 rounded text-sm" placeholder="admin">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
+                                    <input type="text" x-model="config.webPass" class="w-full border p-2 rounded text-sm" placeholder="leave empty to disable auth">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom ISP -->
+                        <div class="space-y-2">
+                            <div
+                                class="flex justify-between items-center border-b pb-2"
+                            >
+                                <h3 class="font-bold text-gray-800">
+                                    自定义运营商 (Custom ISP)
+                                </h3>
+                                <button
+                                    @click="addItem('customIsp')"
+                                    class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                                >
+                                    <i class="bi bi-plus"></i> 添加
+                                </button>
+                            </div>
+                            <template
+                                x-for="(item, index) in config.customIsp"
+                                :key="index"
+                            >
+                                <div
+                                    class="grid md:grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded border border-gray-100"
+                                >
+                                    <div class="md:col-span-3">
+                                        <input
+                                            type="text"
+                                            x-model="item.name"
+                                            placeholder="Name (e.g., 国内IP)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-6">
+                                        <input
+                                            type="text"
+                                            x-model="item.url"
+                                            placeholder="URL (txt/cidr)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <input
+                                            type="text"
+                                            x-model="item.tag"
+                                            placeholder="Tag (optional)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-1 text-right">
+                                        <button
+                                            @click="removeItem('customIsp', index)"
+                                            class="text-red-500 hover:text-red-700"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Stream Domain -->
+                        <div class="space-y-2">
+                            <div
+                                class="flex justify-between items-center border-b pb-2"
+                            >
+                                <h3 class="font-bold text-gray-800">
+                                    域名分流 (Stream Domain)
+                                </h3>
+                                <button
+                                    @click="addItem('streamDomain')"
+                                    class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                                >
+                                    <i class="bi bi-plus"></i> 添加
+                                </button>
+                            </div>
+                            <template
+                                x-for="(item, index) in config.streamDomain"
+                                :key="index"
+                            >
+                                <div
+                                    class="grid md:grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded border border-gray-100"
+                                >
+                                    <div class="md:col-span-2">
+                                        <input
+                                            type="text"
+                                            x-model="item.interface"
+                                            placeholder="Interface (wan1)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <input
+                                            type="text"
+                                            x-model="item.srcAddr"
+                                            placeholder="Src Addr (192.168.1.1-10)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-5">
+                                        <input
+                                            type="text"
+                                            x-model="item.url"
+                                            placeholder="Domain List URL"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-1">
+                                        <input
+                                            type="text"
+                                            x-model="item.tag"
+                                            placeholder="Tag"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-1 text-right">
+                                        <button
+                                            @click="removeItem('streamDomain', index)"
+                                            class="text-red-500 hover:text-red-700"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- IP Group -->
+                        <div class="space-y-2">
+                            <div
+                                class="flex justify-between items-center border-b pb-2"
+                            >
+                                <h3 class="font-bold text-gray-800">
+                                    IP 分组 (IP Group)
+                                </h3>
+                                <button
+                                    @click="addItem('ipGroup')"
+                                    class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                                >
+                                    <i class="bi bi-plus"></i> 添加
+                                </button>
+                            </div>
+                            <template
+                                x-for="(item, index) in config.ipGroup"
+                                :key="index"
+                            >
+                                <div
+                                    class="grid md:grid-cols-12 gap-2 items-center bg-gray-50 p-2 rounded border border-gray-100"
+                                >
+                                    <div class="md:col-span-4">
+                                        <input
+                                            type="text"
+                                            x-model="item.name"
+                                            placeholder="Group Name (e.g., Telegram)"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-7">
+                                        <input
+                                            type="text"
+                                            x-model="item.url"
+                                            placeholder="URL"
+                                            class="w-full text-xs border p-1 rounded"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-1 text-right">
+                                        <button
+                                            @click="removeItem('ipGroup', index)"
+                                            class="text-red-500 hover:text-red-700"
+                                        >
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Stream IP Port -->
+                        <div class="space-y-2">
+                            <div
+                                class="flex justify-between items-center border-b pb-2"
+                            >
+                                <h3 class="font-bold text-gray-800">
+                                    端口分流 (Stream IP/Port)
+                                </h3>
+                                <button
+                                    @click="addItem('streamIpPort')"
+                                    class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1 rounded transition"
+                                >
+                                    <i class="bi bi-plus"></i> 添加
+                                </button>
+                            </div>
+                            <template
+                                x-for="(item, index) in config.streamIpPort"
+                                :key="index"
+                            >
+                                <div
+                                    class="bg-gray-50 p-3 rounded border border-gray-100 space-y-2"
+                                >
+                                    <div class="grid grid-cols-12 gap-2">
+                                        <div class="col-span-2">
+                                            <select
+                                                x-model="item.type"
+                                                class="w-full text-xs border p-1 rounded"
+                                                title="Type"
+                                            >
+                                                <option value="0">
+                                                    外网线路 (0)
+                                                </option>
+                                                <option value="1">
+                                                    下一跳网关 (1)
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="col-span-3">
+                                            <input
+                                                x-show="item.type == '0'"
+                                                type="text"
+                                                x-model="item.interface"
+                                                placeholder="Interface (wan1)"
+                                                class="w-full text-xs border p-1 rounded"
+                                            />
+                                            <input
+                                                x-show="item.type == '1'"
+                                                type="text"
+                                                x-model="item.nexthop"
+                                                placeholder="Next Hop IP"
+                                                class="w-full text-xs border p-1 rounded"
+                                            />
+                                        </div>
+                                        <div class="col-span-3">
+                                            <input
+                                                type="text"
+                                                x-model="item.srcAddr"
+                                                placeholder="Src Addr"
+                                                class="w-full text-xs border p-1 rounded"
+                                            />
+                                        </div>
+                                        <div class="col-span-3">
+                                            <input
+                                                type="text"
+                                                x-model="item.ipGroup"
+                                                placeholder="IP Group Name"
+                                                class="w-full text-xs border p-1 rounded"
+                                            />
+                                        </div>
+                                        <div class="col-span-1 text-right">
+                                            <button
+                                                @click="removeItem('streamIpPort', index)"
+                                                class="text-red-500 hover:text-red-700"
+                                            >
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-12 gap-2">
+                                        <div
+                                            class="col-span-6 flex items-center gap-2"
+                                        >
+                                            <label class="text-xs text-gray-500"
+                                                >Mode:</label
+                                            >
+                                            <select
+                                                x-model="item.mode"
+                                                class="w-full text-xs border p-1 rounded"
+                                            >
+                                                <option value="0">
+                                                    0-新建连接数
+                                                </option>
+                                                <option value="1">
+                                                    1-源IP
+                                                </option>
+                                                <option value="2">
+                                                    2-源IP+源端口
+                                                </option>
+                                                <option value="3">
+                                                    3-源IP+目的IP
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div
+                                            class="col-span-6 flex items-center gap-2"
+                                        >
+                                            <label class="text-xs text-gray-500"
+                                                >IfaceBand:</label
+                                            >
+                                            <select
+                                                x-model="item.ifaceband"
+                                                class="w-full text-xs border p-1 rounded"
+                                            >
+                                                <option value="0">
+                                                    0-不勾选
+                                                </option>
+                                                <option value="1">
+                                                    1-勾选
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Result -->
+                        <div class="mt-8">
+                            <h3 class="font-bold text-gray-800 mb-2">
+                                YAML 预览
+                            </h3>
+                            <textarea
+                                class="w-full h-96 bg-gray-900 text-gray-100 font-mono text-sm p-4 rounded-lg"
+                                readonly
+                                x-text="generatedYaml"
+                            ></textarea>
+                            <div class="flex gap-4 mt-2">
+                                <button
+                                    @click="copyToClipboard(generatedYaml)"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex-1"
+                                >
+                                    <i class="bi bi-clipboard"></i> 复制完整配置
+                                </button>
+                                <button
+                                    @click="saveConfig()"
+                                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition flex-1"
+                                >
+                                    <i class="bi bi-hdd"></i> 保存到服务器 (config.yml)
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Tab: Help (Simple Text) -->
+                <div
+                    x-show="currentTab === 'help'"
+                    x-cloak
+                    class="prose max-w-none text-gray-700 space-y-4"
+                >
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        快速使用说明
+                    </h2>
+                    <div
+                        class="bg-blue-50 p-4 rounded-lg border border-blue-100"
+                    >
+                        <p class="font-bold text-blue-800">第一步：配置准备</p>
+                        <p>
+                            在“配置助手”下方，填写您的爱快路由器登录地址、用户名和密码。建议在“自定义运营商”或“域名分流”中添加您需要的订阅地址。
+                        </p>
+                    </div>
+                    <div
+                        class="bg-green-50 p-4 rounded-lg border border-green-100"
+                    >
+                        <p class="font-bold text-green-800">第二步：保存配置</p>
+                        <p>
+                            点击“复制完整配置”，将生成的内容保存到程序同目录下的
+                            <code class="bg-white px-1 border rounded"
+                                >config.yml</code
+                            >
+                            文件中。
+                        </p>
+                    </div>
+                    <div
+                        class="bg-purple-50 p-4 rounded-lg border border-purple-100"
+                    >
+                        <p class="font-bold text-purple-800">
+                            第三步：执行程序
+                        </p>
+                        <p>
+                            根据您的需求在上方“运行命令生成”处选择模式。如果是首次运行，可以使用
+                            <code class="bg-white px-1 border rounded"
+                                >once</code
+                            >
+                            模式测试。如果是长期运行，建议使用
+                            <code class="bg-white px-1 border rounded"
+                                >cron</code
+                            >
+                            模式。
+                        </p>
+                    </div>
+                    <hr />
+                    <h3 class="font-bold text-lg">注意事项：</h3>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>
+                            本界面只是提供参考命令和配置文件模板，不会实际修改配置文件
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-gray-800 text-gray-400 py-8 text-center mt-12">
+            <p class="mb-2">iKuai Bypass Helper Tool</p>
+        </footer>
+
+        <script>
+            function appData() {
+                return {
+                    currentTab: "tool",
+
+                    // Command Logic
+                    cmd: {
+                        configPath: "./config.yml",
+                        runMode: "cron",
+                        module: "ispdomain",
+                        useCustomLogin: false,
+                        loginUrl: "",
+                        loginUser: "",
+                        loginPass: "",
+                        cleanTag: "",
+                        delOldRule: "after",
+                        randomSuff: "1",
+                    },
+
+                    // Config Logic
+                    config: {
+                        ikuaiUrl: "http://192.168.1.1",
+                        username: "admin",
+                        password: "password",
+                        cron: "0 7 * * *",
+                        addErrRetryWait: "10s",
+                        addWait: "1s",
+                        webPort: "8080",
+                        webUser: "",
+                        webPass: "",
+                        customIsp: [
+                            {
+                                name: "国内IP列表",
+                                url: "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt",
+                                tag: "ipcn",
+                            },
+                        ],
+                        streamDomain: [],
+                        ipGroup: [],
+                        ipv6Group: [],
+                        streamIpPort: [],
+                    },
+
+                    init() {
+                        this.loadConfig();
+                    },
+
+                    async loadConfig() {
+                        try {
+                            const response = await fetch('/api/config');
+                            if (!response.ok) return; // Might be running in standalone/file mode
+                            const data = await response.json();
+                            
+                            // Map Go struct to JS object
+                            this.config.ikuaiUrl = data['ikuai-url'] || "";
+                            this.config.username = data.username || "";
+                            this.config.password = data.password || "";
+                            this.config.cron = data.cron || "";
+                            this.config.addErrRetryWait = (data.AddErrRetryWait || 0) / 1000000000 + "s"; // ns to s approximation for display
+                            this.config.addWait = (data.AddWait || 0) / 1000000000 + "s";
+                            this.config.webPort = data['web-port'] || "8080";
+                            this.config.webUser = data['web-user'] || "";
+                            this.config.webPass = data['web-pass'] || "";
+
+                            // Arrays
+                            this.config.customIsp = (data['custom-isp'] || []).map(i => ({name: i.name, url: i.url, tag: i.tag}));
+                            this.config.streamDomain = (data['stream-domain'] || []).map(i => ({interface: i.interface, srcAddr: i['src-addr'], url: i.url, tag: i.tag}));
+                            this.config.ipGroup = (data['ip-group'] || []).map(i => ({name: i.name, url: i.url}));
+                            // ipv6-group if needed
+                            this.config.streamIpPort = (data['stream-ipport'] || []).map(i => ({
+                                type: i.type,
+                                interface: i.interface,
+                                nexthop: i.nexthop,
+                                srcAddr: i['src-addr'],
+                                ipGroup: i['ip-group'],
+                                mode: i.mode,
+                                ifaceband: i.ifaceband
+                            }));
+                            
+                            // Fix time duration string format if it came back as number from JSON unmarshal
+                            if (typeof data.AddErrRetryWait === 'string') this.config.addErrRetryWait = data.AddErrRetryWait;
+                            if (typeof data.AddWait === 'string') this.config.addWait = data.AddWait;
+
+                            // Update Command Generator defaults if custom login is not checked yet
+                            // Optional: pre-fill command generator login info with config info for convenience
+                            if (!this.cmd.loginUrl) this.cmd.loginUrl = this.config.ikuaiUrl;
+                            if (!this.cmd.loginUser) this.cmd.loginUser = this.config.username;
+                            if (!this.cmd.loginPass) this.cmd.loginPass = this.config.password;
+
+
+                        } catch (e) {
+                            console.log("Not running in server mode or fetch failed:", e);
+                        }
+                    },
+
+                    async saveConfig() {
+                        try {
+                            // Construct the payload matching the Go struct JSON tags
+                            const payload = {
+                                "ikuai-url": this.config.ikuaiUrl,
+                                "username": this.config.username,
+                                "password": this.config.password,
+                                "cron": this.config.cron,
+                                "AddErrRetryWait": this.config.addErrRetryWait.endsWith('s') ? parseInt(this.config.addErrRetryWait) * 1000000000 : 10000000000, // naive conv
+                                "AddWait": this.config.addWait.endsWith('s') ? parseInt(this.config.addWait) * 1000000000 : 1000000000,
+                                "web-port": this.config.webPort,
+                                "web-user": this.config.webUser,
+                                "web-pass": this.config.webPass,
+                                "custom-isp": this.config.customIsp,
+                                "stream-domain": this.config.streamDomain.map(x => ({
+                                    "interface": x.interface,
+                                    "src-addr": x.srcAddr,
+                                    "url": x.url,
+                                    "tag": x.tag
+                                })),
+                                "ip-group": this.config.ipGroup,
+                                "stream-ipport": this.config.streamIpPort.map(x => ({
+                                    "type": String(x.type),
+                                    "interface": x.interface,
+                                    "nexthop": x.nexthop,
+                                    "src-addr": x.srcAddr,
+                                    "ip-group": x.ipGroup,
+                                    "mode": parseInt(x.mode),
+                                    "ifaceband": parseInt(x.ifaceband)
+                                }))
+                            };
+
+                            // Hack: JSON unmarshal in Go for time.Duration expects number (ns) usually if no custom unmarshaler, 
+                            // OR string "10s" if using yaml/json unmarshaler that supports it.
+                            // Since we are sending JSON to a handler that uses json.Decoder, we should send appropriate format.
+                            // Let's rely on string format if the backend supports it, otherwise numbers.
+                            // The Go standard lib json unmarshal for time.Duration expects Nanoseconds (int64).
+                            // Let's fix the payload to send strings and hope user doesn't break it, or send NS.
+                            // To be safe, let's just send the strings and handle them in backend? 
+                            // Wait, standard `json` package does NOT support "10s" string for time.Duration. It expects int64 nanoseconds.
+                            // However, `gopkg.in/yaml.v3` DOES support strings.
+                            // BUT our API endpoint uses `json.NewDecoder`. 
+                            // We should probably change the backend to custom decode or use a struct with proper tags or just strings.
+                            // For now, let's send Nanoseconds to be safe with standard JSON.
+                            payload.AddErrRetryWait = parseInt(this.config.addErrRetryWait) * 1000000000;
+                            payload.AddWait = parseInt(this.config.addWait) * 1000000000;
+
+                            const res = await fetch('/api/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            });
+                            
+                            if (res.ok) {
+                                alert("保存成功！Server config updated.");
+                            } else {
+                                const txt = await res.text();
+                                alert("保存失败: " + txt);
+                            }
+                        } catch(e) {
+                            alert("保存错误: " + e);
+                        }
+                    },
+
+                    get generatedCommand() {
+                        let c = `./ikuai-bypass -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
+                        if (
+                            this.cmd.runMode !== "clean" &&
+                            this.cmd.runMode !== "exportDomainSteamToTxt"
+                        ) {
+                            c += ` -m ${this.cmd.module}`;
+                        }
+
+                        if (this.cmd.runMode === "clean" && this.cmd.cleanTag) {
+                            c += ` -tag ${this.cmd.cleanTag}`;
+                        }
+
+                        if (this.cmd.useCustomLogin && this.cmd.loginUrl) {
+                            c += ` -login "${this.cmd.loginUrl},${this.cmd.loginUser},${this.cmd.loginPass}"`;
+                        }
+
+                        if (this.cmd.delOldRule !== "after") {
+                            c += ` -delOldRule ${this.cmd.delOldRule}`;
+                        }
+
+                        if (
+                            this.cmd.module.includes("ip") &&
+                            this.cmd.randomSuff !== "1"
+                        ) {
+                            c += ` -isIpGroupNameAddRandomSuff ${this.cmd.randomSuff}`;
+                        }
+
+                        return c;
+                    },
+
+                    get generatedYaml() {
+                        // Filter empty objects
+                        const cleanConfig = {
+                            "ikuai-url": this.config.ikuaiUrl,
+                            username: this.config.username,
+                            password: this.config.password,
+                            cron: this.config.cron,
+                            AddErrRetryWait: this.config.addErrRetryWait,
+                            AddWait: this.config.addWait,
+                        };
+
+                        if (this.config.customIsp.length > 0)
+                            cleanConfig["custom-isp"] = this.config.customIsp;
+                        if (this.config.streamDomain.length > 0)
+                            cleanConfig["stream-domain"] =
+                                this.config.streamDomain.map((x) => {
+                                    const obj = {
+                                        interface: x.interface,
+                                        "src-addr": x.srcAddr,
+                                        url: x.url,
+                                    };
+                                    if (x.tag) obj.tag = x.tag;
+                                    return obj;
+                                });
+                        if (this.config.ipGroup.length > 0)
+                            cleanConfig["ip-group"] = this.config.ipGroup;
+
+                        if (this.config.streamIpPort.length > 0) {
+                            cleanConfig["stream-ipport"] =
+                                this.config.streamIpPort.map((item) => {
+                                    const obj = {
+                                        type: parseInt(item.type), // ensure number
+                                        "src-addr": item.srcAddr,
+                                        "ip-group": item.ipGroup,
+                                        mode: parseInt(item.mode),
+                                        ifaceband: parseInt(item.ifaceband),
+                                    };
+                                    if (item.type == "0")
+                                        obj.interface = item.interface;
+                                    if (item.type == "1")
+                                        obj.nexthop = item.nexthop;
+                                    return obj;
+                                });
+                        }
+
+                        return jsyaml.dump(cleanConfig, { lineWidth: -1 }); // prevent line folding
+                    },
+
+                    addItem(arrayName) {
+                        if (arrayName === "customIsp")
+                            this.config.customIsp.push({
+                                name: "",
+                                url: "",
+                                tag: "",
+                            });
+                        if (arrayName === "streamDomain")
+                            this.config.streamDomain.push({
+                                interface: "wan1",
+                                srcAddr: "",
+                                url: "",
+                                tag: "",
+                            });
+                        if (arrayName === "ipGroup")
+                            this.config.ipGroup.push({ name: "", url: "" });
+                        if (arrayName === "streamIpPort")
+                            this.config.streamIpPort.push({
+                                type: "0",
+                                interface: "wan1",
+                                nexthop: "",
+                                srcAddr: "",
+                                ipGroup: "",
+                                mode: 0,
+                                ifaceband: 0,
+                            });
+                    },
+
+                    removeItem(arrayName, index) {
+                        this.config[arrayName].splice(index, 1);
+                    },
+
+                    async copyToClipboard(text) {
+                        try {
+                            await navigator.clipboard.writeText(text);
+                            alert("已复制到剪贴板！");
+                        } catch (err) {
+                            console.error("Failed to copy!", err);
+                        }
+                    },
+                };
+            }
+        </script>
+    </body>
+</html>

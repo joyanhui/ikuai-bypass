@@ -9,6 +9,7 @@ import (
 
 	"github.com/dscao/ikuai-bypass/pkg/config"
 	"github.com/dscao/ikuai-bypass/pkg/core"
+	"github.com/dscao/ikuai-bypass/pkg/webui"
 	"github.com/robfig/cron/v3"
 )
 
@@ -33,6 +34,14 @@ func main() {
 		log.Println("导出域名分流规则到txt,可以从爱快内导入 ")
 		log.Println("导出路径:", *config.ExportPath)
 		core.ExportDomainSteamToTxt()
+		return
+	case "web":
+		log.Println("启动 WebUI 配置界面...")
+		// 如果配置文件不存在，尝试创建一个空的或使用默认值，以免读取失败导致无法启动 WebUI
+		if config.GlobalConfig.WebPort == "" {
+			config.GlobalConfig.WebPort = "8080"
+		}
+		webui.StartServer()
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -81,15 +82,18 @@ func createServer(port string) *http.Server {
 		}
 
 		exePath, _ := os.Executable()
+		confPath, _ := filepath.Abs(*config.ConfPath)
 		resp := struct {
 			config.Config
 			ExePath          string            `json:"exe_path"`
+			ConfPath         string            `json:"conf_path"`
 			TopLevelComments map[string]string `json:"top_level_comments"`
 			ItemComments     map[string]string `json:"item_comments"`
 			WebuiComments    map[string]string `json:"webui_comments"`
 		}{
 			Config:           config.GlobalConfig,
 			ExePath:          exePath,
+			ConfPath:         confPath,
 			TopLevelComments: config.TopLevelComments,
 			ItemComments:     config.ItemComments,
 			WebuiComments:    config.WebuiComments,

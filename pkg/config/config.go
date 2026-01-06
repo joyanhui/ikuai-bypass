@@ -170,6 +170,18 @@ func addCommentsToNode(node *yaml.Node) {
 		"stream-ipport":   "端口分流 (下一跳网关/外网线路)",
 	}
 
+	// 列表项内部字段注释映射
+	itemComments := map[string]string{
+		"type":      "分流方式：0-外网线路，1-下一跳网关",
+		"mode":      "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP",
+		"ifaceband": "线路绑定：0-不勾选，1-勾选",
+		"interface": "分流线路 (如 wan1)",
+		"nexthop":   "下一跳网关地址",
+		"tag":       "规则备注标签后缀",
+		"src-addr":  "分流源地址 (IP或范围)",
+		"ip-group":  "关联的IP分组名称",
+	}
+
 	// WebUI 子项注释
 	webuiComments := map[string]string{
 		"port":       "WebUI 服务端口",
@@ -181,18 +193,31 @@ func addCommentsToNode(node *yaml.Node) {
 
 	for i := 0; i < len(node.Content); i += 2 {
 		keyNode := node.Content[i]
+		valNode := node.Content[i+1]
+
 		if comment, ok := topLevelComments[keyNode.Value]; ok {
 			keyNode.LineComment = " " + comment
 		}
 
-		// 特殊处理 WebUI 内部
-		if keyNode.Value == "webui" && i+1 < len(node.Content) {
-			valNode := node.Content[i+1]
-			if valNode.Kind == yaml.MappingNode {
-				for j := 0; j < len(valNode.Content); j += 2 {
-					subKeyNode := valNode.Content[j]
-					if subComment, ok := webuiComments[subKeyNode.Value]; ok {
-						subKeyNode.LineComment = " " + subComment
+		// 处理 WebUI 对象
+		if keyNode.Value == "webui" && valNode.Kind == yaml.MappingNode {
+			for j := 0; j < len(valNode.Content); j += 2 {
+				subKeyNode := valNode.Content[j]
+				if subComment, ok := webuiComments[subKeyNode.Value]; ok {
+					subKeyNode.LineComment = " " + subComment
+				}
+			}
+		}
+
+		// 处理列表项内部字段 (如 stream-ipport 中的 type, mode 等)
+		if valNode.Kind == yaml.SequenceNode {
+			for _, itemNode := range valNode.Content {
+				if itemNode.Kind == yaml.MappingNode {
+					for j := 0; j < len(itemNode.Content); j += 2 {
+						subKeyNode := itemNode.Content[j]
+						if subComment, ok := itemComments[subKeyNode.Value]; ok {
+							subKeyNode.LineComment = " " + subComment
+						}
 					}
 				}
 			}

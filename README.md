@@ -4,7 +4,7 @@
 
 **iKuai Bypass** 是一个专为爱快（iKuai）路由器开发的自动化分流规则同步工具。它通过模拟 Web 管理界面行为，将远程订阅的 IP/域名列表自动同步到路由器的分流设置中，实现精准、高效的自动化流量调度。 [旧版本说明](README_bakcup.md)
 
-> **如果这个项目对你有帮助，请点个 ⭐️ Star！**
+> **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
 
 ---
 
@@ -43,12 +43,12 @@
 
 ## 主要功能特性
 
--   🚀 **高并发处理**：采用协程并发同步运营商/域名规则，同步速度极快。
+-   🚀 **高并发处理**：采用协程并发同步运营商/域名规则，同步速度提升。
 -   🛡️ **安全平滑更新**：默认采用“先增后删”策略，确保在规则更新期间路由器分流功能不中断。
--   🌐 **多维度支持**：涵盖运营商分流 (IPv4/IPv6)、域名分流、端口分流 (Next-hop)。
--   📅 **全自动运营**：内置 Cron 计划任务，支持多配置文件并发运行。
+-   🌐 **多维度支持**：涵盖运营商分流 (IPv4/IPv6分流)、ip分组、域名分流、端口分流 (Next-hop)。
+-   📅 **全自动运营**：内置 Cron 计划任务，兼容系统计划任务，支持多配置文件并发运行。
 -   🛠️ **工具链完备**：支持一键清理、单次运行、规则导出（导出为爱快可导入的 TXT 格式）。
--   💻 **广泛兼容**：提供全平台架构支持（arm, mips, amd64, 386 等）。
+-   💻 **广泛兼容**：提供全平台（win,linux,macos,freebsd）多架构支持（arm, mips, amd64, 386 等）。
 
 ---
 
@@ -57,8 +57,8 @@
 ### 版本选择
 
 - v4.0.1 重构了项目结构，修复了端口分流只保留一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)；优化了IP和IPv6分组更新流程[#97](https://github.com/joyanhui/ikuai-bypass/pull/97)。
-- v3.0.0 版本 增加了ipv6分组 由 [[dscao]](https://github.com/dscao) 提供。功能完备但是存在一处bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
-- v2.1.2-alpha1 虽然是alpha版，但是功能已经稳定 存在少量不影响使用的bug
+- v3.0.0 版本 增加了ipv6分组 此功能由 [[dscao]](https://github.com/dscao) 提供。本版功能完备但是存在一处bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
+- v2.1.2-alpha1 虽然是alpha版，但功能稳定 存在少量不影响使用的bug
 
 ### 1. 下载与配置
 
@@ -157,7 +157,7 @@ services:
 ---
 
 ## 更新日志
-- 2026-01-06 优化ip、ipv6分组的更新流程，先获取到新数据后删除旧分组，再增加新分组数据。分组名称保持统一。delOldRule与ip、ipv6分组不再有关联。
+- 2026-01-06 优化ip、ipv6分组的更新流程，先获取到新数据后删除旧分组，再增加新分组数据。分组名称保持统一。delOldRule与ip、ipv6分组不再有关联。[97](https://github.com/joyanhui/ikuai-bypass/pull/97)
 - 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
 - 2025-04-23 部分代码规范性处理以及nilness的逻辑修复
 - 2025-04-23 增加开关isIpGroupNameAddRandomSuff [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)

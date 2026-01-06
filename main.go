@@ -37,7 +37,8 @@ func main() {
 		return
 	case "web":
 		log.Println("WebUI 模式 不做其他操作")
-		go webui.IsAndStartWebUI()
+		config.GlobalConfig.WebUI.Enable = true
+		webui.IsAndStartWebUI()
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
@@ -65,20 +66,20 @@ func main() {
 		return
 	}
 	// 定时任务启动和检查  ================= start
-	if config.GlobalConfig.Cron == "" {
-		log.Println("Cron配为空 自动退出")
+	if config.GlobalConfig.Cron != "" {
+		c := cron.New()
+		_, err = c.AddFunc(config.GlobalConfig.Cron, updateEntrance)
+		if err != nil {
+			log.Println("启动计划任务失败：", err)
+			return
+		} else {
+			log.Println("已启动计划任务", config.GlobalConfig.Cron)
+		}
+		c.Start()
+	} else if *config.RunMode != "web" {
+		log.Println("Cron配置为空 自动退出")
 		return
 	}
-
-	c := cron.New()
-	_, err = c.AddFunc(config.GlobalConfig.Cron, updateEntrance)
-	if err != nil {
-		log.Println("启动计划任务失败：", err)
-		return
-	} else {
-		log.Println("已启动计划任务", config.GlobalConfig.Cron)
-	}
-	c.Start()
 
 	{
 		osSignals := make(chan os.Signal, 1)

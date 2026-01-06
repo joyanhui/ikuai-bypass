@@ -28,15 +28,15 @@ func StartServer() {
 
 	server := createServer(port)
 
-	log.Printf("WebUI Server started on http://0.0.0.0:%s", port)
+	log.Printf("WebUI 请访问  http://0.0.0.0:%s 注意ip要更换成实际ip地址", port)
 	if config.GlobalConfig.WebUI.User != "" {
-		log.Println("Basic Auth enabled")
+		log.Println("WebUI Basic 认证 enabled")
 	} else {
-		log.Println("Warning: Basic Auth is disabled (web-user is empty)")
+		log.Println("Warning: WebUI Basic 认证 is disabled (web-user is empty)")
 	}
 
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("WebUI Server failed: %v", err)
+		log.Fatalf("WebUI Server 启动失败 是不是端口被占用了: %v", err)
 	}
 }
 func IsAndStartWebUI() {

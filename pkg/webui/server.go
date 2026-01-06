@@ -17,6 +17,9 @@ import (
 //go:embed webui.html
 var htmlContent []byte
 
+//go:embed favicon.ico
+var faviconContent []byte
+
 // ShouldStartWebUI 判断是否应该启动 WebUI 服务
 func ShouldStartWebUI() bool {
 	return config.GlobalConfig.WebUI.Enable
@@ -72,6 +75,12 @@ func createServer(port string) *http.Server {
 		content = strings.ReplaceAll(content, "{{CDN_PREFIX}}", cdnPrefix)
 
 		w.Write([]byte(content))
+	})
+
+	// Favicon 处理器
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/x-icon")
+		w.Write(faviconContent)
 	})
 
 	// API: 获取配置

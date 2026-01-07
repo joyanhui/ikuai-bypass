@@ -28,7 +28,7 @@
 
 <details>
 <summary>点击这里展开查看详细图文说明</summary>
-<img src="assets/img.png"  alt="图文说明">
+<img src="assets/img.png"  alt="自定义运营商分流模式拓扑图">
 </details>
 
 ### 2. IP 分组与端口分流模式 (传统模式)
@@ -89,6 +89,31 @@
 
 ### 3. WebUI 配置与使用
 在 `config.yml` 的 `webui` 配置项中设置端口、用户名和密码。运行 `./ikuai-bypass -r web` 启动后，浏览器访问 `http://IP:19000` 即可在线修改配置和生成命令参数。
+
+---
+
+## WebUI 界面展示
+
+v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。
+
+<details>
+<summary><b>点击展开查看 WebUI 界面截图</b></summary>
+
+<div align="center">
+
+![screenshot-1](assets/screenshot-1.png)
+
+![screenshot-2](assets/screenshot-2.png)
+
+![screenshot-3](assets/screenshot-3.png)
+
+![screenshot-4](assets/screenshot-4.png)
+
+![screenshot-5](assets/screenshot-5.png)
+
+</div>
+
+</details>
 
 ---
 

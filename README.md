@@ -2,16 +2,16 @@
 
 ![iKuai](https://img.shields.io/badge/Router-iKuai-brightgreen) ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg) ![Go](https://img.shields.io/badge/Language-Go-blue)
 
-**iKuai Bypass** 是一个专为爱快（iKuai）路由器开发的自动化分流规则同步工具。它通过模拟 Web 管理界面行为，将远程订阅的 IP/域名列表自动同步到路由器的分流设置中，实现精准、高效的自动化流量调度。 [旧版本说明](README_bakcup.md)
+**iKuai Bypass** 是专为爱快路由器打造的自动化分流规则同步工具。通过模拟 Web 管理界面，自动将远程订阅的 IP/域名列表同步到路由器，实现精准流量调度。支持自定义运营商、IP/IPv6分组、域名分流、端口分流等多种模式，具备高并发处理、平滑更新、定时任务、可视化配置界面等特性，兼容全平台多架构。。[旧版本说明](README_bakcup.md)
 
 
 > **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
 
 ---
 
-## WebUI 界面展示
+## 可视化 界面展示
 
-v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。
+v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。当然你可以继续谁用纯cli和配置文件的方式使用。
 
 ![webui-screenshot.gif](assets/webui-screenshot.gif)
 

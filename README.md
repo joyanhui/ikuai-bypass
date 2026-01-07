@@ -96,24 +96,8 @@
 
 v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。
 
-<details>
-<summary><b>点击展开查看 WebUI 界面截图</b></summary>
+![webui-screenshot.gif](assets/webui-screenshot.gif)
 
-<div align="center">
-
-![screenshot-1](assets/screenshot-1.png)
-
-![screenshot-2](assets/screenshot-2.png)
-
-![screenshot-3](assets/screenshot-3.png)
-
-![screenshot-4](assets/screenshot-4.png)
-
-![screenshot-5](assets/screenshot-5.png)
-
-</div>
-
-</details>
 
 ---
 

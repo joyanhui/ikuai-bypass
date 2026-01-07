@@ -53,6 +53,15 @@
 
 ---
 
+## WebUI 界面展示
+
+v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。
+
+![webui-screenshot.gif](assets/webui-screenshot.gif)
+
+
+---
+
 ## 快速上手
 
 ### 版本选择
@@ -92,14 +101,6 @@
 
 ---
 
-## WebUI 界面展示
-
-v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。
-
-![webui-screenshot.gif](assets/webui-screenshot.gif)
-
-
----
 
 ## 参数说明 (CLI Flags)
 

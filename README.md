@@ -7,6 +7,9 @@
 
 > **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
 
+
+> 关于dns分流解析，建议用 ADGuard home自建，这里有一个本人利用githubaction自动维护相关规则文件的adguardhome规则.[[joyanhui/adguardhome-rules]](https://github.com/joyanhui/adguardhome-rules)（规则文件在release_file分支48小时更新一次）。并提供的教程，可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
+
 ---
 
 ## 可视化 界面展示

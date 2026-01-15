@@ -160,7 +160,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	}
 }
 
-func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
+func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
 	fullComment := COMMENT_IKUAI_BYPASS + "_" + tag
 	log.Println("端口分流== 正在查询 备注为:", fullComment, "的端口分流规则")
 	var data []StreamIpPortData
@@ -184,4 +184,3 @@ func (i *IKuai) GetStreamIpPortIds(tag string) (preDelIds string, err error) {
 
 	return preDelIds, nil
 }
-

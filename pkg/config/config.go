@@ -51,13 +51,15 @@ type Config struct {
 		URL  string `yaml:"url" json:"url"`
 	} `yaml:"ipv6-group" json:"ipv6-group"`
 	StreamIpPort []struct {
-		Type      string `yaml:"type" json:"type"`
-		Interface string `yaml:"interface" json:"interface"`
-		Nexthop   string `yaml:"nexthop" json:"nexthop"`
-		SrcAddr   string `yaml:"src-addr" json:"src-addr"`
-		IpGroup   string `yaml:"ip-group" json:"ip-group"`
-		Mode      int    `yaml:"mode" json:"mode"`
-		IfaceBand int    `yaml:"ifaceband" json:"ifaceband"`
+		OptTagName string `yaml:"name" json:"opt-tagname"`
+		Type       string `yaml:"type" json:"type"`
+		Interface  string `yaml:"interface" json:"interface"`
+		Nexthop    string `yaml:"nexthop" json:"nexthop"`
+		SrcAddr    string `yaml:"src-addr" json:"src-addr"`
+		SrcAddrTag string `yaml:"src-addr-opt-tagname" json:"src-addr-opt-tagname"`
+		IpGroup    string `yaml:"ip-group" json:"ip-group"`
+		Mode       int    `yaml:"mode" json:"mode"`
+		IfaceBand  int    `yaml:"ifaceband" json:"ifaceband"`
 	} `yaml:"stream-ipport" json:"stream-ipport"`
 	WebUI WebUIConfig `yaml:"webui" json:"webui"`
 }
@@ -126,14 +128,16 @@ var TopLevelComments = map[string]string{
 
 // ItemComments 列表项内部字段注释映射
 var ItemComments = map[string]string{
-	"type":      "分流方式：0-外网线路，1-下一跳网关",
-	"mode":      "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式",
-	"ifaceband": "线路绑定：0-不勾选，1-勾选",
-	"interface": "分流线路 (如 wan1)",
-	"nexthop":   "下一跳网关地址",
-	"tag":       "规则备注标签后缀",
-	"src-addr":  "分流源地址 (IP或范围)",
-	"ip-group":  "关联的IP分组名称",
+	"type":                 "分流方式：0-外网线路，1-下一跳网关",
+	"mode":                 "负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式",
+	"ifaceband":            "线路绑定：0-不勾选，1-勾选",
+	"interface":            "分流线路 (如 wan1)",
+	"nexthop":              "下一跳网关地址",
+	"tag":                  "规则备注标签后缀",
+	"src-addr":             "分流源地址 (IP或范围)",
+	"src-addr-opt-tagname": "分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略",
+	"ip-group":             "关联的IP分组名称",
+	"opt-tagname":          "该条规则的备注名称 (可选，如果不填写则自动根据其他条件区分)",
 }
 
 // WebuiComments WebUI 子项注释

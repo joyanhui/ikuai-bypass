@@ -34,18 +34,28 @@ func MainUpdateIpgroup() {
 	}
 	// 更新端口分流规则
 	for _, streamIpPort := range config.GlobalConfig.StreamIpPort {
+		var tag string
+		if streamIpPort.OptTagName != "" {
+			tag = streamIpPort.OptTagName
+		} else {
+			tag = streamIpPort.Interface + streamIpPort.Nexthop
+		}
+		if tag == "" {
+			log.Println("端口分流== err 规则名称和IpGroup不能同时为空，跳过该规则:", streamIpPort)
+			continue
+		}
 
 		if *config.DelOldRule == "after" {
-			preIds, err := iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
+			preIds, err := iKuai.GetStreamIpPortIdsByTag(tag)
 			if err != nil {
-				log.Println("端口分流== 获取准备更新的端口分流列表失败：", streamIpPort.IpGroup, err)
+				log.Println("端口分流== 获取准备更新的端口分流列表失败：", tag, err)
 				continue
 			} else {
-				log.Println("端口分流== 获取准备更新的端口分流列表成功", streamIpPort.IpGroup, preIds)
+				log.Println("端口分流== 获取准备更新的端口分流列表成功", tag, preIds)
 			}
 			err = utils.UpdateStreamIpPort( //执行
 				iKuai,
-				streamIpPort.Type,
+				streamIpPort.Type, tag,
 				streamIpPort.Interface,
 				streamIpPort.Nexthop,
 				streamIpPort.SrcAddr,
@@ -66,17 +76,17 @@ func MainUpdateIpgroup() {
 				)
 				err = iKuai.DelStreamIpPort(preIds)
 				if err == nil {
-					log.Println("端口分流== 删除旧的端口分流列表成功", streamIpPort.IpGroup, preIds)
+					log.Println("端口分流== 删除旧的端口分流列表成功", tag, preIds)
 					log.Println("端口分流== 更新完成", streamIpPort.IpGroup)
 				} else {
-					log.Println("端口分流== 删除旧的端口分流列表有错误", streamIpPort.IpGroup, err)
+					log.Println("端口分流== 删除旧的端口分流列表有错误", tag, err)
 				}
 			}
 		} else {
 			err := utils.UpdateStreamIpPort(
 				iKuai,
 				streamIpPort.Type,
-				streamIpPort.Interface,
+				streamIpPort.Interface, tag,
 				streamIpPort.Nexthop,
 				streamIpPort.SrcAddr,
 				streamIpPort.IpGroup,
@@ -86,13 +96,13 @@ func MainUpdateIpgroup() {
 			if err != nil {
 				log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n",
 					streamIpPort.Interface+streamIpPort.Nexthop,
-					streamIpPort.IpGroup,
+					tag+"/"+streamIpPort.IpGroup,
 					err,
 				)
 			} else {
 				log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n",
 					streamIpPort.Interface+streamIpPort.Nexthop,
-					streamIpPort.IpGroup,
+					tag+"/"+streamIpPort.IpGroup,
 				)
 			}
 		}

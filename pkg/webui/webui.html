@@ -533,10 +533,12 @@
                                     <div class="space-y-3">
                                         <template x-for="(item, index) in config.streamDomain" :key="index"
                                             ><div class="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl border dark:border-gray-700 grid md:grid-cols-12 gap-3 relative group shadow-sm">
-                                                <div class="md:col-span-2"><label class="text-[10px] font-bold text-gray-400 uppercase">出站接口</label><input type="text" x-model="item.interface" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['interface']"></p></div>
-                                                <div class="md:col-span-3"><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" placeholder="内网地址" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr']"></p></div>
-                                                <div class="md:col-span-5"><label class="text-[10px] font-bold text-gray-400 uppercase">域名列表 URL</label><input type="text" x-model="item.url" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /></div>
-                                                <div class="md:col-span-1"><label class="text-[10px] font-bold text-gray-400 uppercase">Tag</label><input type="text" x-model="item.tag" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['tag']"></p></div>
+                                                 <div class="md:col-span-2"><label class="text-[10px] font-bold text-gray-400 uppercase">出站接口</label><input type="text" x-model="item.interface" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['interface']"></p></div>
+                                                 <div class="md:col-span-2"><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" placeholder="IP/范围" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" :disabled="item.srcAddrOptIpGroup" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr']"></p></div>
+                                                 <div class="md:col-span-2"><label class="text-[10px] font-bold text-gray-400 uppercase">源地址关联IP分组</label><input type="text" x-model="item.srcAddrOptIpGroup" placeholder="IP分组名" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr-opt-ipgroup']"></p></div>
+                                                 <div class="md:col-span-4"><label class="text-[10px] font-bold text-gray-400 uppercase">域名列表 URL</label><input type="text" x-model="item.url" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /></div>
+                                                 <div class="md:col-span-1"><label class="text-[10px] font-bold text-gray-400 uppercase">Tag</label><input type="text" x-model="item.tag" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['tag']"></p></div>
+
                                                 <div class="md:col-span-1 text-right">
                                                     <button type="button" @click="removeItem('streamDomain', index)" class="text-red-500 hover:text-red-700 p-2">
                                                         <i class="bi bi-trash3-fill text-lg"></i>
@@ -558,23 +560,29 @@
                                     <div class="space-y-4">
                                         <template x-for="(item, index) in config.streamIpPort" :key="index"
                                             ><div class="bg-gray-50 dark:bg-gray-900/50 p-5 rounded-2xl border dark:border-gray-700 space-y-4 relative group shadow-sm">
-                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label class="text-[10px] font-bold text-gray-400 uppercase">分流类型</label
-                                                        ><select x-model="item.type" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 outline-none focus:ring-1 focus:ring-primary-500">
-                                                            <option value="0">外网线路</option>
-                                                            <option value="1">下一跳网关</option>
-                                                        </select>
-                                                        <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['type']"></p>
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-[10px] font-bold text-gray-400 uppercase" x-text="item.type == '0' ? '接口' : '下一跳 IP'"></label><input type="text" x-model="item.type == '0' ? item.interface : item.nexthop" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" />
-                                                        <p class="mt-1 text-[8px] text-gray-400" x-text="item.type == '0' ? commentMaps.item['interface'] : commentMaps.item['nexthop']"></p>
-                                                    </div>
-                                                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">关联 IP 分组</label><input type="text" x-model="item.ipGroup" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['ip-group']"></p></div>
-                                                </div>
-                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr']"></p></div>
+                                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                     <div>
+                                                         <label class="text-[10px] font-bold text-gray-400 uppercase">分流规则名称</label><input type="text" x-model="item.optTagName" placeholder="可选备注" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" />
+                                                         <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['opt-tagname']"></p>
+                                                     </div>
+                                                     <div>
+                                                         <label class="text-[10px] font-bold text-gray-400 uppercase">分流类型</label
+                                                         ><select x-model="item.type" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 outline-none focus:ring-1 focus:ring-primary-500">
+                                                             <option value="0">外网线路</option>
+                                                             <option value="1">下一跳网关</option>
+                                                         </select>
+                                                         <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['type']"></p>
+                                                     </div>
+                                                     <div>
+                                                         <label class="text-[10px] font-bold text-gray-400 uppercase" x-text="item.type == '0' ? '接口' : '下一跳 IP'"></label><input type="text" x-model="item.type == '0' ? item.interface : item.nexthop" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" />
+                                                         <p class="mt-1 text-[8px] text-gray-400" x-text="item.type == '0' ? commentMaps.item['interface'] : commentMaps.item['nexthop']"></p>
+                                                     </div>
+                                                     <div><label class="text-[10px] font-bold text-gray-400 uppercase">关联 IP 分组</label><input type="text" x-model="item.ipGroup" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['ip-group']"></p></div>
+                                                 </div>
+                                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                     <div><label class="text-[10px] font-bold text-gray-400 uppercase">源地址</label><input type="text" x-model="item.srcAddr" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" :disabled="item.srcAddrOptIpGroup" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr']"></p></div>
+                                                     <div><label class="text-[10px] font-bold text-gray-400 uppercase">源地址关联IP分组</label><input type="text" x-model="item.srcAddrOptIpGroup" placeholder="IP分组名" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 shadow-inner" /><p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['src-addr-opt-ipgroup']"></p></div>
+
                                                     <div>
                                                         <label class="text-[10px] font-bold text-gray-400 uppercase">负载模式</label
                                                         ><select x-model="item.mode" class="w-full text-xs rounded-lg bg-white dark:bg-gray-800 border dark:border-gray-600 dark:text-white p-2 outline-none focus:ring-1 focus:ring-primary-500">
@@ -855,23 +863,31 @@
                                 url: i.url,
                                 tag: i.tag,
                             }));
-                            this.config.streamDomain = (data["stream-domain"] || []).map((i) => ({
-                                interface: i.interface,
-                                srcAddr: i["src-addr"],
-                                url: i.url,
-                                tag: i.tag,
-                            }));
+                            if (data.streamDomain) {
+                                this.config.streamDomain = data["stream-domain"].map((i) => ({
+                                    interface: i.interface,
+                                    srcAddr: i["src-addr"] || "",
+                                    srcAddrOptIpGroup: i["src-addr-opt-ipgroup"] || "",
+                                    url: i.url,
+                                    tag: i.tag,
+                                }));
+                            }
                             this.config.ipGroup = (data["ip-group"] || []).map((i) => ({ name: i.name, url: i.url }));
                             this.config.ipv6Group = (data["ipv6-group"] || []).map((i) => ({ name: i.name, url: i.url }));
-                            this.config.streamIpPort = (data["stream-ipport"] || []).map((i) => ({
-                                type: String(i.type),
-                                interface: i.interface,
-                                nexthop: i.nexthop,
-                                srcAddr: i["src-addr"],
-                                ipGroup: i["ip-group"],
-                                mode: String(i.mode || 0),
-                                ifaceband: String(i.ifaceband || 0),
-                            }));
+                            if (data["stream-ipport"]) {
+                                this.config.streamIpPort = data["stream-ipport"].map((i) => ({
+                                    optTagName: i["opt-tagname"] || "",
+                                    type: String(i.type),
+                                    interface: i.interface,
+                                    nexthop: i.nexthop,
+                                    srcAddr: i["src-addr"] || "",
+                                    srcAddrOptIpGroup: i["src-addr-opt-ipgroup"] || "",
+                                    ipGroup: i["ip-group"],
+                                    mode: String(i.mode || 0),
+                                    ifaceband: String(i.ifaceband || 0),
+                                }));
+                            }
+
                             // Initial login sync
                             this.cmd.loginUrl = this.config.ikuaiUrl;
                             this.cmd.loginUser = this.config.username;
@@ -900,25 +916,29 @@
                                     pass: this.config.webui.pass,
                                     "cdn-prefix": this.config.webui.cdnPrefix,
                                 },
-                                "custom-isp": this.config.customIsp,
+                                 "custom-isp": this.config.customIsp,
                                 "stream-domain": this.config.streamDomain.map((i) => ({
                                     interface: i.interface,
                                     "src-addr": i.srcAddr,
+                                    "src-addr-opt-ipgroup": i.srcAddrOptIpGroup,
                                     url: i.url,
                                     tag: i.tag,
                                 })),
                                 "ip-group": this.config.ipGroup,
                                 "ipv6-group": this.config.ipv6Group,
                                 "stream-ipport": this.config.streamIpPort.map((i) => ({
+                                    "opt-tagname": i.optTagName,
                                     type: String(i.type),
                                     interface: i.interface,
                                     nexthop: i.nexthop,
                                     "src-addr": i.srcAddr,
+                                    "src-addr-opt-ipgroup": i.srcAddrOptIpGroup,
                                     "ip-group": i.ipGroup,
                                     mode: parseInt(i.mode),
                                     ifaceband: parseInt(i.ifaceband),
                                 })),
                                 with_comments: withComments,
+
                             };
                             const res = await fetch("/api/save", {
                                 method: "POST",
@@ -972,23 +992,27 @@
                                     url: i.url,
                                     tag: i.tag,
                                 }));
-                                this.config.streamDomain = (doc["stream-domain"] || []).map((i) => ({
+                                 this.config.streamDomain = (doc["stream-domain"] || []).map((i) => ({
                                     interface: i.interface,
-                                    srcAddr: i["src-addr"],
+                                    srcAddr: i["src-addr"] || "",
+                                    srcAddrOptIpGroup: i["src-addr-opt-ipgroup"] || "",
                                     url: i.url,
                                     tag: i.tag,
                                 }));
                                 this.config.ipGroup = (doc["ip-group"] || []).map((i) => ({ name: i.name, url: i.url }));
                                 this.config.ipv6Group = (doc["ipv6-group"] || []).map((i) => ({ name: i.name, url: i.url }));
                                 this.config.streamIpPort = (doc["stream-ipport"] || []).map((i) => ({
+                                    optTagName: i["opt-tagname"] || "",
                                     type: String(i.type),
                                     interface: i.interface,
                                     nexthop: i.nexthop,
-                                    srcAddr: i["src-addr"],
+                                    srcAddr: i["src-addr"] || "",
+                                    srcAddrOptIpGroup: i["src-addr-opt-ipgroup"] || "",
                                     ipGroup: i["ip-group"],
                                     mode: String(i.mode || 0),
                                     ifaceband: String(i.ifaceband || 0),
                                 }));
+
                                 alert("加载成功！");
                                 this.saveRemoteUrl();
                             }
@@ -1007,14 +1031,17 @@
                             streamDomain: {
                                 interface: "wan1",
                                 srcAddr: "",
+                                srcAddrOptIpGroup: "",
                                 url: "",
                                 tag: "",
                             },
                             streamIpPort: {
+                                optTagName: "",
                                 type: "0",
                                 interface: "wan1",
                                 nexthop: "",
                                 srcAddr: "",
+                                srcAddrOptIpGroup: "",
                                 ipGroup: "",
                                 mode: "0",
                                 ifaceband: "0",
@@ -1094,6 +1121,7 @@
                             c["stream-domain"] = this.config.streamDomain.map((x) => ({
                                 interface: x.interface,
                                 "src-addr": x.srcAddr,
+                                "src-addr-opt-ipgroup": x.srcAddrOptIpGroup,
                                 url: x.url,
                                 tag: x.tag,
                             }));
@@ -1101,8 +1129,10 @@
                         if (this.config.ipv6Group.length) c["ipv6-group"] = this.config.ipv6Group;
                         if (this.config.streamIpPort.length)
                             c["stream-ipport"] = this.config.streamIpPort.map((i) => ({
+                                "opt-tagname": i.optTagName,
                                 type: parseInt(i.type),
                                 "src-addr": i.srcAddr,
+                                "src-addr-opt-ipgroup": i.srcAddrOptIpGroup,
                                 "ip-group": i.ipGroup,
                                 mode: parseInt(i.mode),
                                 ifaceband: parseInt(i.ifaceband),

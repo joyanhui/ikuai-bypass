@@ -7,8 +7,8 @@ import (
 	"ikuai-bypass/pkg/utils"
 )
 
-// Clean 清理旧分流规则
-func Clean() {
+// MainClean 清理旧分流规则
+func MainClean() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)

@@ -14,7 +14,7 @@ import (
 	"ikuai-bypass/pkg/utils"
 )
 
-func ExportDomainSteamToTxt() {
+func MainExportDomainSteamToTxt() {
 	line := ""
 
 	for _, streamDomain := range config.GlobalConfig.StreamDomain {

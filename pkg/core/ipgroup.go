@@ -7,7 +7,7 @@ import (
 	"ikuai-bypass/pkg/utils"
 )
 
-func UpdateIpgroup() {
+func MainUpdateIpgroup() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)
@@ -43,7 +43,7 @@ func UpdateIpgroup() {
 			} else {
 				log.Println("端口分流== 获取准备更新的端口分流列表成功", streamIpPort.IpGroup, preIds)
 			}
-			err = utils.UpdateStreamIpPort(
+			err = utils.UpdateStreamIpPort( //执行
 				iKuai,
 				streamIpPort.Type,
 				streamIpPort.Interface,

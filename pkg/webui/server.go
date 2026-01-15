@@ -45,7 +45,7 @@ func StartServer() {
 		log.Fatalf("WebUI Server 启动失败 是不是端口被占用了: %v", err)
 	}
 }
-func IsAndStartWebUI() {
+func OnDemandStartUpWebUI() {
 	if ShouldStartWebUI() {
 		StartServer()
 	} else {

@@ -7,10 +7,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/robfig/cron/v3"
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/core"
 	"ikuai-bypass/pkg/webui"
+
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -33,22 +34,22 @@ func main() {
 	case "exportDomainSteamToTxt":
 		log.Println("导出域名分流规则到txt,可以从爱快内导入 ")
 		log.Println("导出路径:", *config.ExportPath)
-		core.ExportDomainSteamToTxt()
+		core.MainExportDomainSteamToTxt()
 		return
 	case "web":
 		log.Println("WebUI 模式 不做其他操作")
 		config.GlobalConfig.WebUI.Enable = true
-		webui.IsAndStartWebUI()
+		webui.OnDemandStartUpWebUI()
 		return
 	case "cron":
 		log.Println("cron 模式,执行一次，然后进入定时执行模式")
-		go webui.IsAndStartWebUI()
-		updateEntrance() //马上执行依次
+		go webui.OnDemandStartUpWebUI()
+		MainUpdateEntrance() //马上执行一次
 	case "cronAft":
 		log.Println("cronAft 模式，暂时不执行，稍后定时执行")
-		go webui.IsAndStartWebUI()
+		go webui.OnDemandStartUpWebUI()
 	case "nocron", "once", "1":
-		updateEntrance()
+		MainUpdateEntrance()
 		log.Println("once 模式 执行完毕自动退出")
 		return
 	case "clean":
@@ -58,7 +59,7 @@ func main() {
 		} else {
 			log.Println("清理规则备注为：", *config.CleanTag, "的规则")
 		}
-		core.Clean()
+		core.MainClean()
 		return
 
 	default:
@@ -68,7 +69,7 @@ func main() {
 	// 定时任务启动和检查  ================= start
 	if config.GlobalConfig.Cron != "" {
 		c := cron.New()
-		_, err = c.AddFunc(config.GlobalConfig.Cron, updateEntrance)
+		_, err = c.AddFunc(config.GlobalConfig.Cron, MainUpdateEntrance)
 		if err != nil {
 			log.Println("启动计划任务失败：", err)
 			return
@@ -90,14 +91,14 @@ func main() {
 
 }
 
-func updateEntrance() {
+func MainUpdateEntrance() {
 	switch *config.IsAcIpgroup {
 	case "ispdomain":
 		log.Println("启动 ... 自定义isp和域名分流模式 模式")
 		core.UpdateIspRule()
 	case "ipgroup":
 		log.Println("启动 ... ip分组和下一条网关模式")
-		core.UpdateIpgroup()
+		core.MainUpdateIpgroup()
 	case "ipv6group":
 		log.Println("启动 ... ipv6分组")
 		core.UpdateIpv6group()
@@ -105,11 +106,11 @@ func updateEntrance() {
 		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
 		log.Println("再 启动 ... ip分组和下一条网关模式")
 		core.UpdateIspRule()
-		core.UpdateIpgroup()
+		core.MainUpdateIpgroup()
 	case "ip":
 		log.Println("先 启动 ...  ip分组和下一条网关模式")
 		log.Println("再 启动 ... ipv6分组")
-		core.UpdateIpgroup()
+		core.MainUpdateIpgroup()
 		core.UpdateIpv6group()
 	}
 

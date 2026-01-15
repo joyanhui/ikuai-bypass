@@ -12,7 +12,7 @@ import (
 )
 
 // UpdateStreamDomain 更新域名分流规则
-func UpdateStreamDomain(iKuai *ikuai_api.IKuai, iface, tag, srcAddr, url string) (err error) {
+func UpdateStreamDomain(iKuai *ikuai_api.IKuai, iface, tag, srcAddrIpGroup, srcAddr, url string) (err error) {
 	log.Println("域名分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -32,6 +32,24 @@ func UpdateStreamDomain(iKuai *ikuai_api.IKuai, iface, tag, srcAddr, url string)
 	domains := strings.Split(string(body), "\n")
 	log.Println("域名分流== ", iface, tag, "获取到", len(domains), "个域名")
 	domainGroup := Group(domains, 1000) //1000条
+	// #99 fix srcAddr 优先使用 srcAddrIpGroup
+	var srcAddrList []string
+	if strings.TrimSpace(srcAddrIpGroup) != "" {
+		for srcIpGroupItem := range strings.SplitSeq(srcAddrIpGroup, ",") {
+			var data []string
+			data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(srcIpGroupItem)
+			if err != nil {
+				return
+			}
+			srcAddrList = append(srcAddrList, data...)
+		}
+		if len(srcAddrList) > 0 {
+			srcAddr = strings.Join(srcAddrList, ",") // #99
+		} else {
+			log.Println("域名分流== 未找到任何匹配的 源地址 IP 分组，跳过域名分流规则添加，配置的 srcAddrIpGroup:", srcAddrIpGroup)
+			return nil
+		}
+	}
 	var countFor int = 0
 	for _, d := range domainGroup {
 		countFor = countFor + 1

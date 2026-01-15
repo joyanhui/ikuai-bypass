@@ -85,8 +85,8 @@ func MainUpdateIspRule() {
 				}
 			}
 			//更新域名分流
-			log.Println("域名分流==  正在更新", streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptTag, streamDomain.SrcAddr)
-			err = utils.UpdateStreamDomain(iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddr, streamDomain.URL)
+			log.Println("域名分流==  正在更新", streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr)
+			err = utils.UpdateStreamDomain(iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr, streamDomain.URL)
 			if err != nil {
 				log.Printf("域名分流== 添加域名分流 '%s' 失败：%s\n", streamDomain.Interface, err)
 			} else {

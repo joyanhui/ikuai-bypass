@@ -20,17 +20,17 @@ custom-isp: # 自定义运营商分流 (IP分流)
 stream-domain: # 域名分流 (优先级高于IP分流)
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
-    src-addr-opt-tagname: "" # 分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略
+    src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
     tag: gfw # 规则备注标签后缀
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
-    src-addr-opt-tagname: "" # 分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略
+    src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
     tag: private_bypass # 规则备注标签后缀
   - interface: wan1 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
-    src-addr-opt-tagname: "" # 分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略
+    src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
     tag: private_direct # 规则备注标签后缀
 ip-group: # IP分组 (与端口分流配合使用)
@@ -47,8 +47,8 @@ stream-ipport: # 端口分流 (下一跳网关/外网线路)
     interface: wan1 # 分流线路 (如 wan1)
     nexthop: "" # 下一跳网关地址
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
-    src-addr-opt-tagname: "" # 分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略
-    ip-group: 国内 # 关联的IP分组名称
+    src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
+    ip-group: 国内 # 关联的IP分组名称用于匹配爱快中的IP分组 多个可以用逗号分割)
     mode: 0 # 负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式
     ifaceband: 0 # 线路绑定：0-不勾选，1-勾选
   - type: "1" # 分流方式：0-外网线路，1-下一跳网关
@@ -56,8 +56,8 @@ stream-ipport: # 端口分流 (下一跳网关/外网线路)
     interface: "" # 分流线路 (如 wan1)
     nexthop: 192.168.1.2 # 下一跳网关地址
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
-    src-addr-opt-tagname: "" # 分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略
-    ip-group: "Telegram" # 关联的IP分组名称
+    src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
+    ip-group: "Telegram" # 关联的IP分组名称用于匹配爱快中的IP分组 多个可以用逗号分割)
     mode: 0 # 负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式
     ifaceband: 0 # 线路绑定：0-不勾选，1-勾选
 webui: # WebUI 管理服务设置

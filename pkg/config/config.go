@@ -37,11 +37,11 @@ type Config struct {
 		Tag  string `yaml:"tag" json:"tag"`
 	} `yaml:"custom-isp" json:"custom-isp"`
 	StreamDomain []struct {
-		Interface     string `yaml:"interface" json:"interface"`
-		SrcAddr       string `yaml:"src-addr" json:"src-addr"`
-		SrcAddrOptTag string `yaml:"src-addr-opt-tagname" json:"src-addr-opt-tagname"`
-		URL           string `yaml:"url" json:"url"`
-		Tag           string `yaml:"tag" json:"tag"`
+		Interface         string `yaml:"interface" json:"interface"`
+		SrcAddr           string `yaml:"src-addr" json:"src-addr"`
+		SrcAddrOptIpGroup string `yaml:"src-addr-opt-ipgroup" json:"src-addr-opt-ipgroup"`
+		URL               string `yaml:"url" json:"url"`
+		Tag               string `yaml:"tag" json:"tag"`
 	} `yaml:"stream-domain" json:"stream-domain"`
 	IpGroup []struct {
 		Name string `yaml:"name" json:"name"`
@@ -52,15 +52,15 @@ type Config struct {
 		URL  string `yaml:"url" json:"url"`
 	} `yaml:"ipv6-group" json:"ipv6-group"`
 	StreamIpPort []struct {
-		OptTagName    string `yaml:"name" json:"opt-tagname"`
-		Type          string `yaml:"type" json:"type"`
-		Interface     string `yaml:"interface" json:"interface"`
-		Nexthop       string `yaml:"nexthop" json:"nexthop"`
-		SrcAddr       string `yaml:"src-addr" json:"src-addr"`
-		SrcAddrOptTag string `yaml:"src-addr-opt-tagname" json:"src-addr-opt-tagname"`
-		IpGroup       string `yaml:"ip-group" json:"ip-group"`
-		Mode          int    `yaml:"mode" json:"mode"`
-		IfaceBand     int    `yaml:"ifaceband" json:"ifaceband"`
+		OptTagName        string `yaml:"opt-tagname" json:"opt-tagname"`
+		Type              string `yaml:"type" json:"type"`
+		Interface         string `yaml:"interface" json:"interface"`
+		Nexthop           string `yaml:"nexthop" json:"nexthop"`
+		SrcAddr           string `yaml:"src-addr" json:"src-addr"`
+		SrcAddrOptIpGroup string `yaml:"src-addr-opt-ipgroup" json:"src-addr-opt-ipgroup"`
+		IpGroup           string `yaml:"ip-group" json:"ip-group"`
+		Mode              int    `yaml:"mode" json:"mode"`
+		IfaceBand         int    `yaml:"ifaceband" json:"ifaceband"`
 	} `yaml:"stream-ipport" json:"stream-ipport"`
 	WebUI WebUIConfig `yaml:"webui" json:"webui"`
 }
@@ -136,8 +136,8 @@ var ItemComments = map[string]string{
 	"nexthop":              "下一跳网关地址",
 	"tag":                  "规则备注标签后缀",
 	"src-addr":             "分流源地址 (IP或范围)",
-	"src-addr-opt-tagname": "分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-tagname后，src-addr参数会被忽略",
-	"ip-group":             "关联的IP分组名称",
+	"src-addr-opt-ipgroup": "分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略。多个名字可以逗号分隔",
+	"ip-group":             "关联的IP分组名称，多个名字可以逗号",
 	"opt-tagname":          "该条规则的备注名称 (可选，如果不填写则自动根据其他条件区分)",
 }
 

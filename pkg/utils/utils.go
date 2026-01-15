@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dscao/ikuai-bypass/pkg/ikuai-api"
-	"github.com/dscao/ikuai-bypass/pkg/config"
-	"github.com/dscao/ikuai-bypass/pkg/ikuai-router"
+	"github.com/joyanhui/ikuai-bypass/pkg/config"
+	ikuaiapi "github.com/joyanhui/ikuai-bypass/pkg/ikuai-api"
+	ikuairouter "github.com/joyanhui/ikuai-bypass/pkg/ikuai-router"
 )
 
 // GetFullUrl 根据配置的 GithubProxy 转换 URL
@@ -180,7 +180,7 @@ func UpdateIpGroup(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv6AndRemoveEmptyLine(ips)
 	ipGroups := Group(ips, 1000)
-    log.Println("ip分组获取新数据成功", name)
+	log.Println("ip分组获取新数据成功", name)
 	preIds, err := iKuai.GetIpGroup(name)
 	if err != nil {
 		log.Println("ip分组== 获取准备更新的IP分组列表失败：", name, err)
@@ -258,6 +258,12 @@ func UpdateIpv6Group(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 // UpdateStreamIpPort 更新ip端口分流
 func UpdateStreamIpPort(iKuai *ikuaiapi.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string, mode int, ifaceband int) (err error) {
 
+	// #/issues/101 fix ip-group为空时会默认添加
+	if strings.TrimSpace(ipGroup) == "" {
+		log.Println("ip端口分流== ip-group 参数为空，跳过端口分流规则添加")
+		return nil
+	}
+
 	var ipGroupList []string
 	for _, ipGroupItem := range strings.Split(ipGroup, ",") {
 		var data []string
@@ -267,6 +273,13 @@ func UpdateStreamIpPort(iKuai *ikuaiapi.IKuai, forwardType string, iface string,
 		}
 		ipGroupList = append(ipGroupList, data...)
 	}
+
+	// #/issues/101 fix ip-group为空时会默认添加
+	if len(ipGroupList) == 0 {
+		log.Println("ip端口分流== 未找到任何匹配的 IP 分组，跳过端口分流规则添加，配置的 ip-group:", ipGroup)
+		return nil
+	}
+
 	err = iKuai.AddStreamIpPort(forwardType, iface, strings.Join(ipGroupList, ","), srcAddr, nexthop, ipGroup, mode, ifaceband)
 	if err != nil {
 		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)

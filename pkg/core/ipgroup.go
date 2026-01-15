@@ -2,9 +2,10 @@ package core
 
 import (
 	"log"
+	"strings"
 
-	"github.com/dscao/ikuai-bypass/pkg/config"
-	"github.com/dscao/ikuai-bypass/pkg/utils"
+	"github.com/joyanhui/ikuai-bypass/pkg/config"
+	"github.com/joyanhui/ikuai-bypass/pkg/utils"
 )
 
 func UpdateIpgroup() {
@@ -33,6 +34,12 @@ func UpdateIpgroup() {
 		}
 	}
 	for _, streamIpPort := range config.GlobalConfig.StreamIpPort {
+		// #/issues/101 fix ip-group为空时会默认添加
+		if strings.TrimSpace(streamIpPort.IpGroup) == "" {
+			log.Println("端口分流== 跳过配置项，因为 ip-group 字段为空")
+			continue
+		}
+
 		if *config.DelOldRule == "after" {
 			preIds, err := iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
 			if err != nil {

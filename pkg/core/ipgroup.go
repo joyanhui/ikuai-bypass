@@ -99,7 +99,7 @@ func MainUpdateIpgroup() {
 	}
 }
 
-func UpdateIpv6group() {
+func MainUpdateIpv6group() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)

@@ -101,7 +101,7 @@ func MainUpdateEntrance() {
 		core.MainUpdateIpgroup()
 	case "ipv6group":
 		log.Println("启动 ... ipv6分组")
-		core.UpdateIpv6group()
+		core.MainUpdateIpv6group()
 	case "ii":
 		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
 		log.Println("再 启动 ... ip分组和下一条网关模式")
@@ -111,7 +111,7 @@ func MainUpdateEntrance() {
 		log.Println("先 启动 ...  ip分组和下一条网关模式")
 		log.Println("再 启动 ... ipv6分组")
 		core.MainUpdateIpgroup()
-		core.UpdateIpv6group()
+		core.MainUpdateIpv6group()
 	}
 
 }

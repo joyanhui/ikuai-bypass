@@ -181,10 +181,10 @@ func Save(filename string, cfg *Config, withComments bool) error {
 		var rootNode *yaml.Node
 		if node.Kind == yaml.DocumentNode && len(node.Content) > 0 {
 			rootNode = node.Content[0]
-			node.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
+			node.HeadComment = " iKuai Bypass 配置文件 大部分时候请使用默认设置即可\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
 		} else if node.Kind == yaml.MappingNode {
 			rootNode = &node
-			node.HeadComment = " iKuai Bypass 配置文件\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
+			node.HeadComment = " iKuai Bypass 配置文件 大部分时候请使用默认设置即可\n 详情参考: https://github.com/joyanhui/ikuai-bypass"
 		}
 
 		if rootNode != nil {

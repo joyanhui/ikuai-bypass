@@ -1,4 +1,4 @@
-#  iKuai Bypass 配置文件
+#  iKuai Bypass 配置文件 大部分时候请使用默认设置即可
 #  详情参考: https://github.com/joyanhui/ikuai-bypass
 ikuai-url: http://192.168.9.1 # 爱快控制台地址，结尾不要加 "/"
 username: admin # 爱快登陆用户名

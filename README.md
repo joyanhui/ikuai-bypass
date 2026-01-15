@@ -193,8 +193,9 @@ services:
 ---
 
 ## 更新日志
-- fix [#101](https://github.com/joyanhui/ikuai-bypass)， stream-ipport配置为空的时候依旧添加分流规则的bug，新增可选配置项 stream-ipport[].opt-tagname
-- features  [#99](https://github.com/joyanhui/ikuai-bypass/issues/99)  可以按照ip分组名字自动搜索来源ip 不 新增配置项目 src-addr-opt-ipgroup（最终名）支持端口分流和域名分流
+- 2026-01-15 重构部分代码结构，去掉对GitHub路径依赖，拆分utils包等。
+- 2026-01-15 fix [#101](https://github.com/joyanhui/ikuai-bypass)， stream-ipport配置为空的时候依旧添加分流规则的bug，新增可选配置项 stream-ipport[].opt-tagname
+- 2026-01-15 features  [#99](https://github.com/joyanhui/ikuai-bypass/issues/99)  可以按照ip分组名字自动搜索来源ip 不 新增配置项目 src-addr-opt-ipgroup（最终名）支持端口分流和域名分流
 - 2026-01-07 增加中文可视化界面 创建带参数的命令行 以及 在线可视化构建配置文件。
 - 2026-01-06 优化ip、ipv6分组的更新流程，先获取到新数据后删除旧分组，再增加新分组数据。分组名称保持统一。delOldRule与ip、ipv6分组不再有关联。[97](https://github.com/joyanhui/ikuai-bypass/pull/97)
 - 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)

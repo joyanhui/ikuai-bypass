@@ -29,7 +29,6 @@ sudo ip link set tap0 up
 sudo ip addr add 192.168.10.1/24 dev tap0
 sudo ip addr del 192.168.10.1/24 dev tap0
 sudo ip addr add 192.168.9.2/24 dev tap0
-ping 192.168.9.1
 
 
 qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm \

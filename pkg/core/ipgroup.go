@@ -2,7 +2,6 @@ package core
 
 import (
 	"log"
-	"strings"
 
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/utils"
@@ -33,12 +32,8 @@ func UpdateIpgroup() {
 			log.Println("端口分流== 删除旧的端口分流成功")
 		}
 	}
+	// 更新端口分流规则
 	for _, streamIpPort := range config.GlobalConfig.StreamIpPort {
-		// #/issues/101 fix ip-group为空时会默认添加
-		if strings.TrimSpace(streamIpPort.IpGroup) == "" {
-			log.Println("端口分流== 跳过配置项，因为 ip-group 字段为空")
-			continue
-		}
 
 		if *config.DelOldRule == "after" {
 			preIds, err := iKuai.GetStreamIpPortIds(streamIpPort.IpGroup)
@@ -48,7 +43,6 @@ func UpdateIpgroup() {
 			} else {
 				log.Println("端口分流== 获取准备更新的端口分流列表成功", streamIpPort.IpGroup, preIds)
 			}
-
 			err = utils.UpdateStreamIpPort(
 				iKuai,
 				streamIpPort.Type,

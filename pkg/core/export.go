@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dscao/ikuai-bypass/pkg/config"
-	"github.com/dscao/ikuai-bypass/pkg/utils"
+	"github.com/joyanhui/ikuai-bypass/pkg/config"
+	"github.com/joyanhui/ikuai-bypass/pkg/utils"
 )
 
 func ExportDomainSteamToTxt() {

@@ -1,4 +1,4 @@
-module github.com/dscao/ikuai-bypass
+module github.com/joyanhui/ikuai-bypass
 
 go 1.25.5
 

@@ -3,8 +3,8 @@ package core
 import (
 	"log"
 
-	"github.com/dscao/ikuai-bypass/pkg/config"
-	"github.com/dscao/ikuai-bypass/pkg/utils"
+	"github.com/joyanhui/ikuai-bypass/pkg/config"
+	"github.com/joyanhui/ikuai-bypass/pkg/utils"
 )
 
 // Clean 清理旧分流规则

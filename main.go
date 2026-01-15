@@ -7,9 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/dscao/ikuai-bypass/pkg/config"
-	"github.com/dscao/ikuai-bypass/pkg/core"
-	"github.com/dscao/ikuai-bypass/pkg/webui"
+	"github.com/joyanhui/ikuai-bypass/pkg/config"
+	"github.com/joyanhui/ikuai-bypass/pkg/core"
+	"github.com/joyanhui/ikuai-bypass/pkg/webui"
 	"github.com/robfig/cron/v3"
 )
 

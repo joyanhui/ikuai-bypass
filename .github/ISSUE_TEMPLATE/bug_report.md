@@ -8,19 +8,17 @@ assignees: ''
 ---
 
 **简单描述**
-请描述清楚问题，并点亮star支持本项目。
-文末最好提供完整运行命令和日志，以及配置文件的核心内容
-请勿在旧的issue中提交新issue.
+请大概描述清楚问题，并点亮star支持本项目。
 
-**运行环境**
-爱快版本：免费版本3.XX.XX x64 BuildXXXX
-ikuai-bypass版本：v2.X.X
-ikuai-bypass运行环境： linux发行版名称和版本/windows11/macos14
-ikuai-bypass运行环境：amd64/386/arm7/mips-softfloat/ppc64le
-**日志代码或截图支持md格式**
+爱快版本：免费版本3.XX.XX x64 BuildXXXX    ikuai-bypass版本：v4.X.X
 
-务必提供 完整命令 配置文件 以及运行日志，否则很有可能无法判断问题
+**运行命令/运行日志/配置文件/爱快截图** 支持md格式
 
-爱快本身的使用问题，还有网络top结构问题，在移步 爱快官方论坛或恩山或者discussions  https://github.com/joyanhui/ikuai-bypass/discussions  
+务必提供 完整命令参数  和配置文件 以及运行日志，否则很有可能无法判断问题（配置文件和命令行参数/日志尽量不要截图）
 
-> 
+爱快本身的使用问题，还有网络top结构问题，在移步 爱快官方论坛或恩山或者discussions  https://github.com/joyanhui/ikuai-bypass/discussions  ,此类问题提交到issue 会直接被关闭。
+
+如果是新增需求请描述清楚 需求场景和预期行为，每个人玩法不同，太过于简单的描述会很难让被旁人理解。
+
+
+>

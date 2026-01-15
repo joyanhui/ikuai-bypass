@@ -37,10 +37,11 @@ type Config struct {
 		Tag  string `yaml:"tag" json:"tag"`
 	} `yaml:"custom-isp" json:"custom-isp"`
 	StreamDomain []struct {
-		Interface string `yaml:"interface" json:"interface"`
-		SrcAddr   string `yaml:"src-addr" json:"src-addr"`
-		URL       string `yaml:"url" json:"url"`
-		Tag       string `yaml:"tag" json:"tag"`
+		Interface     string `yaml:"interface" json:"interface"`
+		SrcAddr       string `yaml:"src-addr" json:"src-addr"`
+		SrcAddrOptTag string `yaml:"src-addr-opt-tagname" json:"src-addr-opt-tagname"`
+		URL           string `yaml:"url" json:"url"`
+		Tag           string `yaml:"tag" json:"tag"`
 	} `yaml:"stream-domain" json:"stream-domain"`
 	IpGroup []struct {
 		Name string `yaml:"name" json:"name"`
@@ -51,15 +52,15 @@ type Config struct {
 		URL  string `yaml:"url" json:"url"`
 	} `yaml:"ipv6-group" json:"ipv6-group"`
 	StreamIpPort []struct {
-		OptTagName string `yaml:"name" json:"opt-tagname"`
-		Type       string `yaml:"type" json:"type"`
-		Interface  string `yaml:"interface" json:"interface"`
-		Nexthop    string `yaml:"nexthop" json:"nexthop"`
-		SrcAddr    string `yaml:"src-addr" json:"src-addr"`
-		SrcAddrTag string `yaml:"src-addr-opt-tagname" json:"src-addr-opt-tagname"`
-		IpGroup    string `yaml:"ip-group" json:"ip-group"`
-		Mode       int    `yaml:"mode" json:"mode"`
-		IfaceBand  int    `yaml:"ifaceband" json:"ifaceband"`
+		OptTagName    string `yaml:"name" json:"opt-tagname"`
+		Type          string `yaml:"type" json:"type"`
+		Interface     string `yaml:"interface" json:"interface"`
+		Nexthop       string `yaml:"nexthop" json:"nexthop"`
+		SrcAddr       string `yaml:"src-addr" json:"src-addr"`
+		SrcAddrOptTag string `yaml:"src-addr-opt-tagname" json:"src-addr-opt-tagname"`
+		IpGroup       string `yaml:"ip-group" json:"ip-group"`
+		Mode          int    `yaml:"mode" json:"mode"`
+		IfaceBand     int    `yaml:"ifaceband" json:"ifaceband"`
 	} `yaml:"stream-ipport" json:"stream-ipport"`
 	WebUI WebUIConfig `yaml:"webui" json:"webui"`
 }

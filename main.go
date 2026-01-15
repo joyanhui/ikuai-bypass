@@ -95,7 +95,7 @@ func MainUpdateEntrance() {
 	switch *config.IsAcIpgroup {
 	case "ispdomain":
 		log.Println("启动 ... 自定义isp和域名分流模式 模式")
-		core.UpdateIspRule()
+		core.MainUpdateIspRule()
 	case "ipgroup":
 		log.Println("启动 ... ip分组和下一条网关模式")
 		core.MainUpdateIpgroup()
@@ -105,7 +105,7 @@ func MainUpdateEntrance() {
 	case "ii":
 		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
 		log.Println("再 启动 ... ip分组和下一条网关模式")
-		core.UpdateIspRule()
+		core.MainUpdateIspRule()
 		core.MainUpdateIpgroup()
 	case "ip":
 		log.Println("先 启动 ...  ip分组和下一条网关模式")

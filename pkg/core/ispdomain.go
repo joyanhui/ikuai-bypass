@@ -9,7 +9,7 @@ import (
 	"ikuai-bypass/pkg/utils"
 )
 
-func UpdateIspRule() {
+func MainUpdateIspRule() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		log.Println("登录爱快失败：", err)

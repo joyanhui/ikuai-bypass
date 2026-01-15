@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joyanhui/ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/config"
 )
 
 //go:embed webui.html

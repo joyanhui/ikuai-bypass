@@ -1,4 +1,4 @@
-package ikuairouter
+package ikuai_router
 
 import (
 	"errors"

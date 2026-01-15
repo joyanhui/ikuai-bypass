@@ -1,4 +1,4 @@
-package ikuaiapi
+package ikuai_api
 
 import (
 	"errors"

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joyanhui/ikuai-bypass/pkg/config"
-	ikuaiapi "github.com/joyanhui/ikuai-bypass/pkg/ikuai-api"
-	ikuairouter "github.com/joyanhui/ikuai-bypass/pkg/ikuai-router"
+	"ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/ikuai_api"
+	"ikuai-bypass/pkg/ikuai_router"
 )
 
 // GetFullUrl 根据配置的 GithubProxy 转换 URL
@@ -31,7 +31,7 @@ func GetFullUrl(originalURL string) string {
 }
 
 // UpdateCustomIsp 更新运营商分流规则
-func UpdateCustomIsp(iKuai *ikuaiapi.IKuai, name string, tag string, url string) (err error) {
+func UpdateCustomIsp(iKuai *ikuai_api.IKuai, name string, tag string, url string) (err error) {
 	log.Println("运营商/IP分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -72,7 +72,7 @@ func UpdateCustomIsp(iKuai *ikuaiapi.IKuai, name string, tag string, url string)
 }
 
 // UpdateStreamDomain 更新域名分流规则
-func UpdateStreamDomain(iKuai *ikuaiapi.IKuai, iface, tag, srcAddr, url string) (err error) {
+func UpdateStreamDomain(iKuai *ikuai_api.IKuai, iface, tag, srcAddr, url string) (err error) {
 	log.Println("域名分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -163,7 +163,7 @@ func Group(arr []string, subGroupLength int64) [][]string {
 }
 
 // UpdateIpGroup 更新ip分组
-func UpdateIpGroup(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
+func UpdateIpGroup(iKuai *ikuai_api.IKuai, name, url string) (err error) {
 	log.Println("ip分组==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -210,7 +210,7 @@ func UpdateIpGroup(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 }
 
 // UpdateIpv6Group 更新ipv6分组
-func UpdateIpv6Group(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
+func UpdateIpv6Group(iKuai *ikuai_api.IKuai, name, url string) (err error) {
 	log.Println("ipv6分组==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -256,7 +256,7 @@ func UpdateIpv6Group(iKuai *ikuaiapi.IKuai, name, url string) (err error) {
 }
 
 // UpdateStreamIpPort 更新ip端口分流
-func UpdateStreamIpPort(iKuai *ikuaiapi.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string, mode int, ifaceband int) (err error) {
+func UpdateStreamIpPort(iKuai *ikuai_api.IKuai, forwardType string, iface string, nexthop string, srcAddr string, ipGroup string, mode int, ifaceband int) (err error) {
 
 	// #/issues/101 fix ip-group为空时会默认添加
 	if strings.TrimSpace(ipGroup) == "" {
@@ -265,7 +265,7 @@ func UpdateStreamIpPort(iKuai *ikuaiapi.IKuai, forwardType string, iface string,
 	}
 
 	var ipGroupList []string
-	for _, ipGroupItem := range strings.Split(ipGroup, ",") {
+	for ipGroupItem := range strings.SplitSeq(ipGroup, ",") {
 		var data []string
 		data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(ipGroupItem)
 		if err != nil {
@@ -289,7 +289,7 @@ func UpdateStreamIpPort(iKuai *ikuaiapi.IKuai, forwardType string, iface string,
 }
 
 // LoginToIkuai 登陆爱快
-func LoginToIkuai() (*ikuaiapi.IKuai, error) {
+func LoginToIkuai() (*ikuai_api.IKuai, error) {
 	err := config.Read(*config.ConfPath)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
@@ -303,7 +303,7 @@ func LoginToIkuai() (*ikuaiapi.IKuai, error) {
 			log.Println("命令行参数格式错误，请使用 -login http://ip,username,password ")
 			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip,username,password\"")
 		}
-		iKuai := ikuaiapi.NewIKuai(ikuaiLoginInfoArr[0])
+		iKuai := ikuai_api.NewIKuai(ikuaiLoginInfoArr[0])
 		err = iKuai.Login(ikuaiLoginInfoArr[1], ikuaiLoginInfoArr[2])
 		if err != nil {
 			log.Println("ikuai 登陆失败：", *config.IkuaiLoginInfo, err)
@@ -315,7 +315,7 @@ func LoginToIkuai() (*ikuaiapi.IKuai, error) {
 	} else {
 		baseurl := config.GlobalConfig.IkuaiURL
 		if baseurl == "" {
-			gateway, err := ikuairouter.GetGateway()
+			gateway, err := ikuai_router.GetGateway()
 			if err != nil {
 				log.Println("获取默认网关失败：", err)
 				return nil, err
@@ -323,7 +323,7 @@ func LoginToIkuai() (*ikuaiapi.IKuai, error) {
 			baseurl = "http://" + gateway
 			log.Println("使用默认网关地址：", baseurl)
 		}
-		iKuai := ikuaiapi.NewIKuai(baseurl)
+		iKuai := ikuai_api.NewIKuai(baseurl)
 		err = iKuai.Login(config.GlobalConfig.Username, config.GlobalConfig.Password)
 		if err != nil {
 			log.Println("ikuai 登陆失败：", baseurl, err)

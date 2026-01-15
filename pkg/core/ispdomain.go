@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/joyanhui/ikuai-bypass/pkg/config"
-	"github.com/joyanhui/ikuai-bypass/pkg/utils"
+	"ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/utils"
 )
 
 func UpdateIspRule() {

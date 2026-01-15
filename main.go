@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/joyanhui/ikuai-bypass/pkg/config"
-	"github.com/joyanhui/ikuai-bypass/pkg/core"
-	"github.com/joyanhui/ikuai-bypass/pkg/webui"
 	"github.com/robfig/cron/v3"
+	"ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/core"
+	"ikuai-bypass/pkg/webui"
 )
 
 func main() {

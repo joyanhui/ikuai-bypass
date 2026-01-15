@@ -1,7 +1,7 @@
 //go:build linux
 // +build linux
 
-package ikuairouter
+package ikuai_router
 
 import (
 	"net"

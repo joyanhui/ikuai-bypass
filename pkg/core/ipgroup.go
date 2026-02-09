@@ -23,18 +23,6 @@ func MainUpdateIpgroup() {
 		}
 	}
 
-	isVersion4 := config.GlobalConfig.IkuaiVersion == "4"
-
-	if !isVersion4 && *config.DelOldRule == "before" {
-		err = iKuai.DelIKuaiBypassStreamIpPort("cleanAll")
-		if err != nil {
-			log.Println("端口分流== 删除旧的端口分流失败,退出：", err)
-			return
-		} else {
-			log.Println("端口分流== 删除旧的端口分流成功")
-		}
-	}
-
 	// 更新端口分流规则
 	for _, streamIpPort := range config.GlobalConfig.StreamIpPort {
 		var tag string
@@ -54,11 +42,7 @@ func MainUpdateIpgroup() {
 			continue
 		}
 
-		preDelIds := ""
-		if isVersion4 || *config.DelOldRule == "before" {
-			preDelIds = preIds
-		}
-
+		// 强制执行 Safe-Before 模式
 		err = utils.UpdateStreamIpPort(
 			iKuai,
 			streamIpPort.Type, tag,
@@ -68,7 +52,7 @@ func MainUpdateIpgroup() {
 			streamIpPort.IpGroup,
 			streamIpPort.Mode,
 			streamIpPort.IfaceBand,
-			preDelIds,
+			preIds,
 		)
 
 		if err != nil {
@@ -82,14 +66,6 @@ func MainUpdateIpgroup() {
 				streamIpPort.Interface+streamIpPort.Nexthop,
 				streamIpPort.IpGroup,
 			)
-			if !isVersion4 && *config.DelOldRule == "after" {
-				err = iKuai.DelStreamIpPort(preIds)
-				if err == nil {
-					log.Println("端口分流== 删除旧的端口分流列表成功", tag, preIds)
-				} else {
-					log.Println("端口分流== 删除旧的端口分流列表有错误", tag, err)
-				}
-			}
 		}
 	}
 }

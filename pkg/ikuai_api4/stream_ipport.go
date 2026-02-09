@@ -2,6 +2,7 @@ package ikuai_api4
 
 import (
 	"errors"
+	"fmt"
 	"ikuai-bypass/pkg/ikuai_common"
 	"log"
 	"strconv"
@@ -10,35 +11,110 @@ import (
 
 const FUNC_NAME_STREAM_IPPORT = "stream_ipport"
 
-func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error {
+// 4.0 端口分流专用结构
+// Specific structures for 4.0 stream_ipport
+type streamIpPort4 struct {
+	ID        int    `json:"id"`
+	Enabled   string `json:"enabled"`
+	Tagname   string `json:"tagname"`
+	Interface string `json:"interface"`
+	Nexthop   string `json:"nexthop"`
+	Comment   string `json:"comment"`
+	Type      int    `json:"type"`
+	Mode      int    `json:"mode"`
+	IfaceBand int    `json:"iface_band"`
+	Protocol  string `json:"protocol"`
+	SrcAddr   struct {
+		Custom interface{} `json:"custom"`
+		Object interface{} `json:"object"`
+	} `json:"src_addr"`
+	DstAddr struct {
+		Custom interface{} `json:"custom"`
+		Object interface{} `json:"object"`
+	} `json:"dst_addr"`
+	SrcPort struct {
+		Custom interface{} `json:"custom"`
+		Object interface{} `json:"object"`
+	} `json:"src_port"`
+	DstPort struct {
+		Custom interface{} `json:"custom"`
+		Object interface{} `json:"object"`
+	} `json:"dst_port"`
+	Time struct {
+		Custom []struct {
+			Type      string `json:"type"`
+			Weekdays  string `json:"weekdays"`
+			StartTime string `json:"start_time"`
+			EndTime   string `json:"end_time"`
+			Comment   string `json:"comment"`
+		} `json:"custom"`
+		Object interface{} `json:"object"`
+	} `json:"time"`
+}
 
-	param := struct {
-		Interface string `json:"interface"`
-		Protocol  string `json:"protocol"`
-		Mode      int    `json:"mode"`
-		DstAddr   string `json:"dst_addr"`
-		SrcAddr   string `json:"src_addr"`
-		Week      string `json:"week"`
-		Time      string `json:"time"`
-		Enabled   string `json:"enabled"`
-		Type      string `json:"type"`
-		Nexthop   string `json:"nexthop"`
-		IfaceBand int    `json:"iface_band"`
-		Comment   string `json:"comment"`
-	}{
-		Interface: iface,
-		Protocol:  "any",
-		Mode:      mode,
-		DstAddr:   dstAddr,
-		SrcAddr:   srcAddr,
-		Week:      "1234567",
-		Time:      "00:00-23:59",
-		Enabled:   "yes",
-		Type:      forwardType,
-		Nexthop:   nexthop,
-		IfaceBand: ifaceband,
-		Comment:   COMMENT_IKUAI_BYPASS + "_" + tag,
+func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error {
+	// forwardType is "0" or "1" as string from utils
+	fType, _ := strconv.Atoi(forwardType)
+
+	srcAddr = strings.TrimSpace(srcAddr)
+	var srcAddrObject []string
+	if srcAddr != "" {
+		srcAddrObject = strings.Split(srcAddr, ",")
+	} else {
+		srcAddrObject = []string{}
 	}
+
+	dstAddr = strings.TrimSpace(dstAddr)
+	var dstAddrObject []string
+	if dstAddr != "" {
+		dstAddrObject = strings.Split(dstAddr, ",")
+	} else {
+		dstAddrObject = []string{}
+	}
+
+	param := map[string]interface{}{
+		"enabled":    "yes",
+		"tagname":    tag,
+		"interface":  iface,
+		"nexthop":    nexthop,
+		"iface_band": ifaceband,
+		"comment":    COMMENT_IKUAI_BYPASS + "_" + tag,
+		"type":       fType,
+		"mode":       mode,
+		"protocol":   "tcp+udp",
+		"src_addr": map[string]interface{}{
+			"custom": []string{},
+			"object": srcAddrObject,
+		},
+		"dst_addr": map[string]interface{}{
+			"custom": []string{},
+			"object": dstAddrObject,
+		},
+		"src_port": map[string]interface{}{
+			"custom": []string{},
+			"object": []string{},
+		},
+		"dst_port": map[string]interface{}{
+			"custom": []string{},
+			"object": []string{},
+		},
+		"time": map[string]interface{}{
+			"custom": []map[string]string{
+				{
+					"type":       "weekly",
+					"weekdays":   "1234567",
+					"start_time": "00:00",
+					"end_time":   "23:59",
+					"comment":    "",
+				},
+			},
+			"object": []interface{}{},
+		},
+		"prio":      0,
+		"area_code": "",
+		"dst_type":  "",
+	}
+
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,
 		Action:   "add",
@@ -53,6 +129,23 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		return errors.New(resp.Message)
 	}
 	return nil
+}
+
+func toStringList(v interface{}) []string {
+	if v == nil {
+		return []string{}
+	}
+	switch val := v.(type) {
+	case []interface{}:
+		res := make([]string, len(val))
+		for i, item := range val {
+			res[i] = fmt.Sprint(item)
+		}
+		return res
+	case []string:
+		return val
+	}
+	return []string{}
 }
 
 func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common.StreamIpPortData, err error) {
@@ -74,7 +167,9 @@ func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common
 		Action:   "show",
 		Param:    &param,
 	}
-	resp := CallResp{Results: &CallRespData{Data: &result}}
+
+	var data4 []streamIpPort4
+	resp := CallResp{Results: &CallRespData{Data: &data4}}
 	err = postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return
@@ -83,6 +178,31 @@ func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common
 		err = errors.New(resp.Message)
 		return
 	}
+
+	result = make([]ikuai_common.StreamIpPortData, len(data4))
+	for idx, d := range data4 {
+		srcs := append(toStringList(d.SrcAddr.Custom), toStringList(d.SrcAddr.Object)...)
+		dsts := append(toStringList(d.DstAddr.Custom), toStringList(d.DstAddr.Object)...)
+
+		result[idx] = ikuai_common.StreamIpPortData{
+			ID:        d.ID,
+			Enabled:   d.Enabled,
+			Comment:   d.Comment,
+			Interface: d.Interface,
+			Nexthop:   d.Nexthop,
+			Type:      d.Type,
+			Mode:      d.Mode,
+			IfaceBand: d.IfaceBand,
+			Protocol:  d.Protocol,
+			SrcAddr:   strings.Join(srcs, ","),
+			DstAddr:   strings.Join(dsts, ","),
+		}
+		if len(d.Time.Custom) > 0 {
+			result[idx].Week = d.Time.Custom[0].Weekdays
+			result[idx].Time = d.Time.Custom[0].StartTime + "-" + d.Time.Custom[0].EndTime
+		}
+	}
+
 	return
 }
 
@@ -117,7 +237,6 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-
 			if cleanTag == "cleanAll" {
 				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
 					ids = append(ids, strconv.Itoa(d.ID))
@@ -126,12 +245,10 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 				if cleanTag == "" {
 					cleanTag = COMMENT_IKUAI_BYPASS
 				}
-
 				if d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}
-
 		}
 		if len(ids) <= 0 {
 			return

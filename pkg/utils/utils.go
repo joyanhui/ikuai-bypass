@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"ikuai-bypass/pkg/config"
-	"ikuai-bypass/pkg/ikuai_api3"
 	"ikuai-bypass/pkg/ikuai_api4"
 	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/ikuai_router"
@@ -127,11 +126,6 @@ func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 		return nil, err
 	}
 
-	version := "3"
-	if config.GlobalConfig.IkuaiVersion != "" {
-		version = config.GlobalConfig.IkuaiVersion
-	}
-
 	var iKuai ikuai_common.IKuaiClient
 
 	if *config.IkuaiLoginInfo != "" {
@@ -143,11 +137,7 @@ func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip,username,password\"")
 		}
 
-		if version == "4" {
-			iKuai = ikuai_api4.NewIKuai(ikuaiLoginInfoArr[0])
-		} else {
-			iKuai = ikuai_api3.NewIKuai(ikuaiLoginInfoArr[0])
-		}
+		iKuai = ikuai_api4.NewIKuai(ikuaiLoginInfoArr[0])
 
 		err = iKuai.Login(ikuaiLoginInfoArr[1], ikuaiLoginInfoArr[2])
 		if err != nil {
@@ -169,11 +159,7 @@ func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 			log.Println("使用默认网关地址：", baseurl)
 		}
 
-		if version == "4" {
-			iKuai = ikuai_api4.NewIKuai(baseurl)
-		} else {
-			iKuai = ikuai_api3.NewIKuai(baseurl)
-		}
+		iKuai = ikuai_api4.NewIKuai(baseurl)
 
 		err = iKuai.Login(config.GlobalConfig.Username, config.GlobalConfig.Password)
 		if err != nil {

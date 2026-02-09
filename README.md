@@ -193,6 +193,7 @@ services:
 ---
 
 ## 更新日志
+- 2026-02-09 支持自定义域名清单文本规则中 用 #开头的行注释 并忽略包含_的域名。
 - 2026-02-09 准备支持爱快4.x内侧版本 
 - 2026-01-15 重构部分代码结构，去掉对GitHub路径依赖，拆分utils包等。
 - 2026-01-15 fix [#101](https://github.com/joyanhui/ikuai-bypass)， stream-ipport配置为空的时候依旧添加分流规则的bug，新增可选配置项 stream-ipport[].opt-tagname
@@ -232,7 +233,7 @@ services:
 
 如果您觉得这个项目对您有所帮助，并且愿意支持我的持续开发和维护工作，非常感谢您的慷慨！
 
-开源项目的维护需要一定的时间和精力，您的一份心意能让我更有动力继续完善这个工具，修复问题、添加新功能。
+为使用者较多，不忍心停止维护，虽世道艰难也一直在坚持维护，如果您的一份心意能让我更有动力继续完善这个工具。
 
 - **TRX (Tron TRC20) 钱包地址**：`TLiv9F6i38uZEGdp8VoB5qLxJx43aV9XSZ`
 
@@ -244,6 +245,6 @@ services:
 
 -   **交流讨论**：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛。
 -   **Bug 反馈**：[Issues](https://github.com/joyanhui/ikuai-bypass/issues)。
--   **致谢**：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的核心功能贡献，以及所有提供 PR 的开发者。
+-   **致谢**：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的初始版本思路，以及所有提供 PR 的开发者。
 
 > **如果这个项目对你有帮助，请点个 ⭐️ Star！**

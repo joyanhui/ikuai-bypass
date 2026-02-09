@@ -12,6 +12,7 @@ import (
 )
 
 const COMMENT_IKUAI_BYPASS = "IKUAI_BYPASS"
+const FUNC_NAME_ROUTE_OBJECT = "route_object"
 
 type IKuai struct {
 	baseurl string
@@ -34,6 +35,16 @@ type CallResp struct {
 type CallRespData struct {
 	Total int         `json:"total"`
 	Data  interface{} `json:"data"`
+}
+
+// 4.0 路由对象专用结构 (兼容 IPv4/IPv6 分组)
+// Specific structures for 4.0 route_object (compatible with IPv4/IPv6 groups)
+type routeObject4 struct {
+	ID         int    `json:"id"`
+	GroupName  string `json:"group_name"`
+	Type       int    `json:"type"` // 0: IPv4, 1: IPv6
+	GroupValue []map[string]string `json:"group_value"` // 包含 "ip" 或 "ipv6" 键
+	Comment    string `json:"comment"`
 }
 
 func md5String(v string) string {

@@ -8,28 +8,20 @@ import (
 	"strings"
 )
 
-const FUNC_NAME_IPV6_GROUP = "ipv6group"
-
 func (i *IKuai) ShowIpv6GroupByComment(comment string) (result []ikuai_common.Ipv6GroupData, err error) {
-	param := struct {
-		Finds    string `json:"FINDS"`
-		Keywords string `json:"KEYWORDS"`
-		Type     string `json:"TYPE"`
-		Limit    string `json:"limit"`
-		OrderBy  string `json:"ORDER_BY"`
-		Order    string `json:"ORDER"`
-	}{
-		Finds:    "comment",
-		Keywords: comment,
-		Type:     "total,data",
-		Limit:    "0,1000",
+	param := map[string]interface{}{
+		"TYPE":    "total,data",
+		"limit":   "0,1000",
+		"FILTER1": "type,=,1", // IPv6
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IPV6_GROUP,
+		FuncName: FUNC_NAME_ROUTE_OBJECT,
 		Action:   "show",
 		Param:    &param,
 	}
-	resp := CallResp{Results: &CallRespData{Data: &result}}
+
+	var data4 []routeObject4
+	resp := CallResp{Results: &CallRespData{Data: &data4}}
 	err = postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return
@@ -37,30 +29,42 @@ func (i *IKuai) ShowIpv6GroupByComment(comment string) (result []ikuai_common.Ip
 	if resp.Code != 0 {
 		err = errors.New(resp.Message)
 		return
+	}
+
+	for _, d := range data4 {
+		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+			ips := make([]string, 0)
+			for _, v := range d.GroupValue {
+				if ipv6, ok := v["ipv6"]; ok {
+					ips = append(ips, ipv6)
+				}
+			}
+			result = append(result, ikuai_common.Ipv6GroupData{
+				ID:        d.ID,
+				GroupName: d.GroupName,
+				AddrPool:  strings.Join(ips, ","),
+				Comment:   d.Comment,
+				Type:      d.Type,
+			})
+		}
 	}
 	return
 }
 
 func (i *IKuai) ShowIpv6GroupByName(name string) (result []ikuai_common.Ipv6GroupData, err error) {
-	param := struct {
-		Finds    string `json:"FINDS"`
-		Keywords string `json:"KEYWORDS"`
-		Type     string `json:"TYPE"`
-		Limit    string `json:"limit"`
-		OrderBy  string `json:"ORDER_BY"`
-		Order    string `json:"ORDER"`
-	}{
-		Finds:    "group_name",
-		Keywords: name,
-		Type:     "total,data",
-		Limit:    "0,1000",
+	param := map[string]interface{}{
+		"TYPE":    "total,data",
+		"limit":   "0,1000",
+		"FILTER1": "type,=,1", // IPv6
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IPV6_GROUP,
+		FuncName: FUNC_NAME_ROUTE_OBJECT,
 		Action:   "show",
 		Param:    &param,
 	}
-	resp := CallResp{Results: &CallRespData{Data: &result}}
+
+	var data4 []routeObject4
+	resp := CallResp{Results: &CallRespData{Data: &data4}}
 	err = postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return
@@ -69,25 +73,49 @@ func (i *IKuai) ShowIpv6GroupByName(name string) (result []ikuai_common.Ipv6Grou
 		err = errors.New(resp.Message)
 		return
 	}
+
+	for _, d := range data4 {
+		if name == "" || d.GroupName == name || strings.Contains(d.GroupName, name) {
+			ips := make([]string, 0)
+			for _, v := range d.GroupValue {
+				if ipv6, ok := v["ipv6"]; ok {
+					ips = append(ips, ipv6)
+				}
+			}
+			result = append(result, ikuai_common.Ipv6GroupData{
+				ID:        d.ID,
+				GroupName: d.GroupName,
+				AddrPool:  strings.Join(ips, ","),
+				Comment:   d.Comment,
+				Type:      d.Type,
+			})
+		}
+	}
 	return
 }
 
 func (i *IKuai) AddIpv6Group(groupName, addrPool string) error {
-	param := struct {
-		AddrPool  string `json:"addr_pool"`
-		Comment   string `json:"comment"`
-		GroupName string `json:"group_name"`
-		NewRow    bool   `json:"newRow"`
-		Type      int    `json:"type"`
-	}{
-		GroupName: groupName,
-		AddrPool:  addrPool,
-		Comment:   COMMENT_IKUAI_BYPASS + "_" + groupName,
-		NewRow:    true,
-		Type:      0,
+	addrPool = strings.TrimSpace(addrPool)
+	ips := strings.Split(addrPool, ",")
+	groupValue := make([]map[string]string, 0)
+	for _, ip := range ips {
+		ip = strings.TrimSpace(ip)
+		if ip != "" {
+			groupValue = append(groupValue, map[string]string{
+				"ipv6":    ip,
+				"comment": "",
+			})
+		}
+	}
+
+	param := map[string]interface{}{
+		"group_name":  groupName,
+		"type":        1, // IPv6
+		"group_value": groupValue,
+		"comment":     COMMENT_IKUAI_BYPASS + "_" + groupName,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IPV6_GROUP,
+		FuncName: FUNC_NAME_ROUTE_OBJECT,
 		Action:   "add",
 		Param:    &param,
 	}
@@ -109,7 +137,7 @@ func (i *IKuai) DelIpv6Group(id string) error {
 		Id: id,
 	}
 	req := CallReq{
-		FuncName: FUNC_NAME_IPV6_GROUP,
+		FuncName: FUNC_NAME_ROUTE_OBJECT,
 		Action:   "del",
 		Param:    &param,
 	}

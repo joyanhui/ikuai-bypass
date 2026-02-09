@@ -114,7 +114,7 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 | `-r` | 运行模式 | 见下表 |
 | `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll` |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
-| `-delOldRule`| 删除旧规则时机 | `after` (默认-更新后删), `before` (更新前删)。**注意：在 ikuaiV4 中此参数无效，强制使用 before** |
+| `-delOldRule`| 删除旧规则时机 | `after` (默认-更新后删), `before` (更新前删)。**注意：在 ikuaiV4 中此参数被移除，强制使用 before** |
 | `-exportPath` | 域名分流规则导出文件路径 | 默认为 `/tmp` |
 | `-isIpGroupNameAddRandomSuff` | IP分组名称是否增加随机数后缀 | `1` (添加), `0` (不添加)。仅 ipgroup 模式有效 |
 
@@ -195,6 +195,7 @@ services:
 ---
 
 ## 更新日志
+- 2026-06-15 因爱快v4版本禁止同tagname的分流规则存在，所以暂时移除delOldRule参数的支持，强制使用before删除旧规则模式。
 - 2026-02-09 增加ispgroup和ipv4group ipv6group 三分流模块 一起使用模式 `-m iip`模式 [#104](https://github.com/joyanhui/ikuai-bypass/issues/104)
 - 2026-02-09 支持自定义域名清单文本规则中 用 #开头的行注释 并忽略包含_的域名。
 - 2026-02-09 准备支持爱快4.x内侧版本 

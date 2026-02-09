@@ -240,7 +240,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                                 <div>
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">运行模式 (-r)</label
                                     ><select x-model="cmd.runMode" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-sm rounded-lg p-2 focus:ring-primary-500 dark:text-white">
@@ -257,22 +257,14 @@
                                 <div>
                                     <label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">功能模块 (-m)</label
                                     ><select x-model="cmd.module" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-sm rounded-lg p-2 focus:ring-primary-500 dark:text-white">
-                                        <option value="ispdomain">ispdomain (域名+ISP)</option>
-                                        <option value="ipgroup">ipgroup (IP分组+端口)</option>
+                                        <option value="ispdomain">ispdomain (运营商/域名分流)</option>
+                                        <option value="ipgroup">ipgroup (IPv4分组/端口分流)</option>
                                         <option value="ipv6group">ipv6group (IPv6分组)</option>
                                         <option value="ii">ii (混合模式)</option>
                                         <option value="ip">ip (v4+v6分组)</option>
-                                        <option value="iip">iip (ii+ip)</option>
+                                        <option value="iip">iip (混合+分组)</option>
                                     </select>
                                     <p class="mt-1 text-[9px] text-gray-400 italic" x-text="moduleDescription"></p>
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase tracking-tighter">旧规则删除时机</label
-                                    ><select x-model="cmd.delOldRule" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-sm rounded-lg p-2 focus:ring-primary-500 dark:text-white">
-                                        <option value="after">After (更新成功后删)</option>
-                                        <option value="before">Before (更新前先删)</option>
-                                    </select>
-                                    <p class="mt-1 text-[9px] text-gray-400 italic" x-text="cmd.delOldRule === 'after' ? '最稳妥：成功后再清理，确保无断网。' : '最干净：先腾出空间，适合低性能设备。'"></p>
                                 </div>
                             </div>
 
@@ -347,19 +339,11 @@
                                     爱快连接配置
                                 </h3>
                                 <div class="space-y-4 flex-1">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 gap-4">
                                         <div>
                                             <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">爱快地址 (URL)</label>
                                             <input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" />
                                             <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-url']"></p>
-                                        </div>
-                                        <div>
-                                            <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">爱快API 版本</label>
-                                            <select x-model="config.ikuaiVersion" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500">
-                                                <option value="3">版本 3.x (稳定)</option>
-                                                <option value="4">版本 4.x (内测 API)</option>
-                                            </select>
-                                            <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-version']"></p>
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
@@ -723,7 +707,6 @@
                         configPath: "{{CONF_PATH}}",
                         runMode: "cron",
                         module: "ispdomain",
-                        delOldRule: "after",
                         cleanTag: "cleanAll",
                         randomSuff: "1",
                         useCustomLogin: false,
@@ -733,7 +716,6 @@
                     },
                     config: {
                         ikuaiUrl: "",
-                        ikuaiVersion: "3",
                         username: "",
                         password: "",
                         cron: "",
@@ -831,7 +813,6 @@
                                 configPath: "{{CONF_PATH}}",
                                 runMode: "cron",
                                 module: "ispdomain",
-                                delOldRule: "after",
                                 cleanTag: "cleanAll",
                                 randomSuff: "1",
                                 useCustomLogin: false,
@@ -858,7 +839,6 @@
                                 this.commentMaps.webui = data.webui_comments;
                             }
                             this.config.ikuaiUrl = data["ikuai-url"] || "";
-                            this.config.ikuaiVersion = String(data["ikuai-version"] || "3");
                             this.config.username = data.username || "";
                             this.config.password = data.password || "";
                             this.config.cron = data.cron || "";
@@ -919,7 +899,6 @@
                         try {
                             const payload = {
                                 "ikuai-url": this.config.ikuaiUrl,
-                                "ikuai-version": this.config.ikuaiVersion,
                                 username: this.config.username,
                                 password: this.config.password,
                                 cron: this.config.cron,
@@ -989,7 +968,6 @@
                             const doc = jsyaml.load(await res.text());
                             if (doc) {
                                 this.config.ikuaiUrl = doc["ikuai-url"] || "";
-                                this.config.ikuaiVersion = String(doc["ikuai-version"] || "3");
                                 this.config.username = doc.username || "";
                                 this.config.password = doc.password || "";
                                 this.config.cron = doc.cron || "";
@@ -1090,7 +1068,6 @@
                         let cmd = `${exe} -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
                         if (!["clean", "exportDomainSteamToTxt", "web"].includes(this.cmd.runMode)) {
                             cmd += ` -m ${this.cmd.module}`;
-                            if (this.cmd.delOldRule !== "after") cmd += ` -delOldRule ${this.cmd.delOldRule}`;
                         }
                         if (this.cmd.runMode === "clean" && this.cmd.cleanTag) cmd += ` -tag ${this.cmd.cleanTag}`;
                         if (this.cmd.useCustomLogin && this.cmd.loginUrl) cmd += ` -login "${this.cmd.loginUrl},${this.cmd.loginUser},${this.cmd.loginPass}"`;
@@ -1115,14 +1092,13 @@
                             ipv6group: "IPv6模式：仅更新IPv6地址分组。",
                             ii: "混合模式：同时更新 ispdomain 和 ipgroup 规则。",
                             ip: "分组模式：同时更新 IPv4 和 IPv6 地址分组。",
-                            iip: "混合模式：同时更新 ii 和 ip 规则。",
+                            iip: "全能模式：同时执行 ii 和 ip 的所有操作。",
                         };
                         return ds[this.cmd.module] || "";
                     },
                     get generatedYaml() {
                         const c = {
                             "ikuai-url": this.config.ikuaiUrl,
-                            "ikuai-version": this.config.ikuaiVersion,
                             username: this.config.username,
                             password: this.config.password,
                             cron: this.config.cron,

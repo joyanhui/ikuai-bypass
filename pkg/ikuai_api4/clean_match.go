@@ -17,19 +17,7 @@ func matchCleanTag(cleanTag, legacyTagName, currentTagName string) bool {
 		return true
 	}
 
-	// 兼容传入裸 tag 的历史行为
-	commentWithPrefix := COMMENT_IKUAI_BYPASS + "_" + cleanTag
-	if legacyTagName == commentWithPrefix || strings.Contains(legacyTagName, commentWithPrefix) {
-		return true
-	}
 
-	// 兼容传入 IKUAI_BYPASS_xxx 时，名字按 xxx 匹配
-	if strings.HasPrefix(cleanTag, COMMENT_IKUAI_BYPASS+"_") {
-		tag := cleanTag[len(COMMENT_IKUAI_BYPASS)+1:]
-		if currentTagName == tag || strings.Contains(currentTagName, tag) {
-			return true
-		}
-	}
 
 	return false
 }

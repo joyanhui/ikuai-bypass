@@ -14,7 +14,7 @@ import (
 
 var (
 	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
-	RunMode                    = flag.String("r", "cron", "运行模式: cron(立即执行并定时), cronAft(仅定时), once/1(执行一次退出), clean(清理规则), web(仅WebUI), exportDomainSteamToTxt(导出规则)")
+	RunMode                    = flag.String("r", "cron", "运行模式: cron(立即执行并定时), cronAft(仅定时), once/1(执行一次退出), clean(清理规则), web(仅WebUI)")
 	IsAcIpgroup                = flag.String("m", "ispdomain", "功能模块: ispdomain(运营商/域名分流), ipgroup(IPv4分组/端口分流), ipv6group(IPv6分组), ii(ispdomain+ipgroup), ip(v4+v6分组), iip(ii+ip)")
 	CleanTag                   = flag.String("tag", "cleanAll", "要清理的分流规则 TagName 或关键词")
 	ExportPath                 = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")

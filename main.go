@@ -17,15 +17,6 @@ import (
 func main() {
 	flag.Parse()
 
-	if *config.CleanTag != "cleanAll" && *config.CleanTag != "" {
-		//检查规则名称中是否包含前缀 IKB 或 IKUAI_BYPASS_，如果没有添加上 IKB
-		hasOldPrefix := len(*config.CleanTag) >= len("IKUAI_BYPASS") && (*config.CleanTag)[:len("IKUAI_BYPASS")] == "IKUAI_BYPASS"
-		hasNewPrefix := len(*config.CleanTag) >= len("IKB") && (*config.CleanTag)[:len("IKB")] == "IKB"
-		if !hasOldPrefix && !hasNewPrefix {
-			*config.CleanTag = "IKB" + *config.CleanTag
-		}
-	}
-
 	log.Println("运行模式", *config.RunMode, "配置文件", *config.ConfPath)
 	err := config.Read(*config.ConfPath)
 	if err != nil {
@@ -33,11 +24,6 @@ func main() {
 		return
 	}
 	switch *config.RunMode { //运行模式选择
-	case "exportDomainSteamToTxt":
-		log.Println("导出域名分流规则到txt,可以从爱快内导入 ")
-		log.Println("导出路径:", *config.ExportPath)
-		core.MainExportDomainSteamToTxt()
-		return
 	case "web":
 		log.Println("WebUI 模式 不做其他操作")
 		config.GlobalConfig.WebUI.Enable = true

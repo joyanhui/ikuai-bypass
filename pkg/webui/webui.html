@@ -249,7 +249,6 @@
                                         <option value="once">once (单次运行)</option>
                                         <option value="clean">clean (清理规则)</option>
                                         <option value="web">web (仅WebUI)</option>
-                                        <option value="exportDomainSteamToTxt">export (导出规则)</option>
                                     </select>
                                     <p class="mt-1 text-[9px] text-gray-400 italic" x-text="runModeDescription"></p>
                                 </div>
@@ -1066,7 +1065,7 @@
                         }
                         if (exe.includes(" ")) exe = `"${exe}"`;
                         let cmd = `${exe} -c ${this.cmd.configPath} -r ${this.cmd.runMode}`;
-                        if (!["clean", "exportDomainSteamToTxt", "web"].includes(this.cmd.runMode)) {
+                        if (!["clean",  "web"].includes(this.cmd.runMode)) {
                             cmd += ` -m ${this.cmd.module}`;
                         }
                         if (this.cmd.runMode === "clean" && this.cmd.cleanTag) cmd += ` -tag ${this.cmd.cleanTag}`;
@@ -1081,7 +1080,6 @@
                             once: "单次同步并立即退出。",
                             web: "WebUI 模式。仅启动网页管理界面。",
                             clean: "清理模式。删除所有相关分流规则。",
-                            exportDomainSteamToTxt: "导出模式。将规则导出为 TXT 格式。",
                         };
                         return ds[this.cmd.runMode] || "";
                     },

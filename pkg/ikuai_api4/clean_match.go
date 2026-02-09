@@ -18,9 +18,10 @@ func matchCleanTag(cleanTag, legacyTagName, currentTagName string) bool {
 	// 为了兼容旧版备注模式，legacyTagName (备注) 匹配不受此限，但 currentTagName (名字) 必须受限
 	isBypassRule := strings.HasPrefix(currentTagName, ikuai_common.NAME_PREFIX_IKB) ||
 		strings.HasPrefix(currentTagName, ikuai_common.NAME_PREFIX_IKB) ||
-		strings.Contains(legacyTagName, ikuai_common.COMMENT_IKUAI_BYPASS)
+		strings.Contains(legacyTagName, ikuai_common.COMMENT_IKUAI_BYPASS)||
+		strings.Contains(legacyTagName, ikuai_common.NEW_COMMENT)
 
-	if !isBypassRule && cleanTag != "cleanAll" {
+	if !isBypassRule && cleanTag != ikuai_common.CleanModeAll {
 		return false
 	}
 

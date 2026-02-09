@@ -53,7 +53,7 @@ func (i *IKuai) AddCustomIsp(tag, ipgroup string, index int) error {
 	}{
 		Name:    buildIndexedTagName(tag, index),
 		Ipgroup: ipgroup,
-		Comment: tag,
+		Comment: ikuai_common.NEW_COMMENT,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_CUSTOM_ISP,

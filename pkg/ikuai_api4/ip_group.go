@@ -102,7 +102,7 @@ func (i *IKuai) AddIpGroup(tag, addrPool string, index int) error {
 		if ip != "" {
 			groupValue = append(groupValue, map[string]string{
 				"ip":      ip,
-				"comment": "",
+				"comment": ikuai_common.NEW_COMMENT,
 			})
 		}
 	}
@@ -111,7 +111,7 @@ func (i *IKuai) AddIpGroup(tag, addrPool string, index int) error {
 		"group_name":  buildIndexedTagName(tag, index),
 		"type":        0, // IPv4
 		"group_value": groupValue,
-		"comment":     tag,
+		"comment":     ikuai_common.NEW_COMMENT,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

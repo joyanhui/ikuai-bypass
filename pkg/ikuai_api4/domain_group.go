@@ -59,7 +59,7 @@ func (i *IKuai) AddDomainGroup(tag, domains string, index int) error {
 		if domain != "" {
 			groupValue = append(groupValue, map[string]string{
 				"domain":  domain,
-				"comment": "",
+				"comment": ikuai_common.NEW_COMMENT,
 			})
 		}
 	}
@@ -68,7 +68,7 @@ func (i *IKuai) AddDomainGroup(tag, domains string, index int) error {
 		"group_name":  buildIndexedTagName(tag, index),
 		"type":        6, // Domain Group
 		"group_value": groupValue,
-		"comment":     tag,
+		"comment":     ikuai_common.NEW_COMMENT,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

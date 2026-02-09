@@ -10,9 +10,7 @@ import (
 	"ikuai-bypass/pkg/utils"
 )
 
-const (
-	cleanModeAll = "cleanAll"
-)
+
 
 // MainClean 清理旧分流规则
 func MainClean() {
@@ -84,7 +82,7 @@ func normalizeCleanTag(cleanTag string) (string, bool) {
 	if cleanTag == "" {
 		return ikuai_common.NAME_PREFIX_IKB, false
 	}
-	return cleanTag, cleanTag == cleanModeAll
+	return cleanTag, cleanTag == ikuai_common.CleanModeAll
 }
 
 func isManagedBypassRule(_ string, name string) bool {

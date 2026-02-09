@@ -102,7 +102,7 @@ func (i *IKuai) AddIpv6Group(tag, addrPool string, index int) error {
 		if ip != "" {
 			groupValue = append(groupValue, map[string]string{
 				"ipv6":    ip,
-				"comment": "",
+				"comment": ikuai_common.NEW_COMMENT,
 			})
 		}
 	}
@@ -111,7 +111,7 @@ func (i *IKuai) AddIpv6Group(tag, addrPool string, index int) error {
 		"group_name":  buildIndexedTagName(tag, index),
 		"type":        1, // IPv6
 		"group_value": groupValue,
-		"comment":     tag,
+		"comment":     ikuai_common.NEW_COMMENT,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

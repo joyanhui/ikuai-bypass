@@ -10,6 +10,7 @@ import (
 	"ikuai-bypass/pkg/core"
 	"ikuai-bypass/pkg/utils"
 	"ikuai-bypass/pkg/webui"
+	"ikuai-bypass/pkg/ikuai_common"
 
 	"github.com/robfig/cron/v3"
 )
@@ -42,7 +43,7 @@ func main() {
 		return
 	case "clean":
 		utils.SysLog.Info("MODE:运行模式", "Clean mode")
-		if *config.CleanTag == "cleanAll" {
+		if *config.CleanTag == ikuai_common.CleanModeAll {
 			utils.SysLog.Info("CLEAN:清理范围", "Clearing all rules with prefix IKB (includes legacy notes)")
 		} else {
 			utils.SysLog.Info("CLEAN:清理范围", "Clearing rules with TagName or Name: %s", *config.CleanTag)

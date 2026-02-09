@@ -92,7 +92,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 			"custom": domainList,
 			"object": []interface{}{},
 		},
-		"comment": "",
+		"comment": ikuai_common.NEW_COMMENT,
 		"time": map[string]interface{}{
 			"custom": []map[string]interface{}{
 				{
@@ -100,7 +100,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 					"weekdays":   "1234567",
 					"start_time": "00:00",
 					"end_time":   "23:59",
-					"comment":    "",
+					"comment":    ikuai_common.NEW_COMMENT,
 				},
 			},
 			"object": []interface{}{},

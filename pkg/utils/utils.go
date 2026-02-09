@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"ikuai-bypass/pkg/config"
-	"ikuai-bypass/pkg/ikuai_api"
+	"ikuai-bypass/pkg/ikuai_api3"
+	"ikuai-bypass/pkg/ikuai_api4"
+	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/ikuai_router"
 )
 
@@ -75,12 +77,23 @@ func Group(arr []string, subGroupLength int64) [][]string {
 }
 
 // LoginToIkuai 登陆爱快
-func LoginToIkuai() (*ikuai_api.IKuai, error) {
+func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 	err := config.Read(*config.ConfPath)
 	if err != nil {
 		log.Println("读取配置文件失败：", err)
 		return nil, err
 	}
+
+	version := "3"
+	if config.GlobalConfig.IkuaiVersion != "" {
+		version = config.GlobalConfig.IkuaiVersion
+	}
+	if *config.IkuaiVersion != "3" {
+		version = *config.IkuaiVersion
+	}
+
+	var iKuai ikuai_common.IKuaiClient
+
 	if *config.IkuaiLoginInfo != "" {
 		log.Println("使用命令行参数登陆爱快")
 		ikuaiLoginInfoArr := strings.Split(*config.IkuaiLoginInfo, ",")
@@ -89,7 +102,13 @@ func LoginToIkuai() (*ikuai_api.IKuai, error) {
 			log.Println("命令行参数格式错误，请使用 -login http://ip,username,password ")
 			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip,username,password\"")
 		}
-		iKuai := ikuai_api.NewIKuai(ikuaiLoginInfoArr[0])
+
+		if version == "4" {
+			iKuai = ikuai_api4.NewIKuai(ikuaiLoginInfoArr[0])
+		} else {
+			iKuai = ikuai_api3.NewIKuai(ikuaiLoginInfoArr[0])
+		}
+
 		err = iKuai.Login(ikuaiLoginInfoArr[1], ikuaiLoginInfoArr[2])
 		if err != nil {
 			log.Println("ikuai 登陆失败：", *config.IkuaiLoginInfo, err)
@@ -109,7 +128,13 @@ func LoginToIkuai() (*ikuai_api.IKuai, error) {
 			baseurl = "http://" + gateway
 			log.Println("使用默认网关地址：", baseurl)
 		}
-		iKuai := ikuai_api.NewIKuai(baseurl)
+
+		if version == "4" {
+			iKuai = ikuai_api4.NewIKuai(baseurl)
+		} else {
+			iKuai = ikuai_api3.NewIKuai(baseurl)
+		}
+
 		err = iKuai.Login(config.GlobalConfig.Username, config.GlobalConfig.Password)
 		if err != nil {
 			log.Println("ikuai 登陆失败：", baseurl, err)

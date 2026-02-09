@@ -1,6 +1,7 @@
 #  iKuai Bypass 配置文件 大部分时候请使用默认设置即可
 #  详情参考: https://github.com/joyanhui/ikuai-bypass
 ikuai-url: http://192.168.9.1 # 爱快控制台地址，结尾不要加 "/"
+ikuai-version: 3 # 爱快 API 版本，默认 3, 如果是 4.0 以上版本建议尝试设置为 4
 username: admin # 爱快登陆用户名
 password: admin888 # 爱快登陆密码
 cron: 0 7 * * * # 更新周期cron表达式，例如 0 7 * * *

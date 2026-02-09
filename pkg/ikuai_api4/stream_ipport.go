@@ -1,31 +1,14 @@
-package ikuai_api
+package ikuai_api4
 
 import (
 	"errors"
+	"ikuai-bypass/pkg/ikuai_common"
 	"log"
 	"strconv"
 	"strings"
 )
 
 const FUNC_NAME_STREAM_IPPORT = "stream_ipport"
-
-type StreamIpPortData struct {
-	Protocol  string `json:"protocol"`
-	SrcPort   string `json:"src_port"`
-	ID        int    `json:"id"`
-	Enabled   string `json:"enabled"`
-	Week      string `json:"week"`
-	Comment   string `json:"comment"`
-	Time      string `json:"time"`
-	Nexthop   string `json:"nexthop"`
-	IfaceBand int    `json:"iface_band"`
-	Interface string `json:"interface"`
-	Mode      int    `json:"mode"`
-	SrcAddr   string `json:"src_addr"`
-	DstPort   string `json:"dst_port"`
-	DstAddr   string `json:"dst_addr"`
-	Type      int    `json:"type"`
-}
 
 func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error {
 
@@ -66,13 +49,13 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 	if err != nil {
 		return err
 	}
-	if resp.Result != 30000 {
-		return errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
 	}
 	return nil
 }
 
-func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []StreamIpPortData, err error) {
+func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common.StreamIpPortData, err error) {
 	param := struct {
 		Type     string `json:"TYPE"`
 		Limit    string `json:"limit"`
@@ -83,20 +66,21 @@ func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []StreamIpPort
 	}{
 		Finds:    "comment",
 		Keywords: comment,
-		Type:     "data",
+		Type:     "total,data",
+		Limit:    "0,1000",
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,
 		Action:   "show",
 		Param:    &param,
 	}
-	resp := CallResp{Data: &CallRespData{Data: &result}}
+	resp := CallResp{Results: &CallRespData{Data: &result}}
 	err = postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return
 	}
-	if resp.Result != 30000 {
-		err = errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		err = errors.New(resp.Message)
 		return
 	}
 	return
@@ -118,15 +102,15 @@ func (i *IKuai) DelStreamIpPort(id string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Result != 30000 {
-		return errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
 	}
 	return nil
 }
 
 func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	for {
-		var data []StreamIpPortData
+		var data []ikuai_common.StreamIpPortData
 		data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
 		if err != nil {
 			return
@@ -163,7 +147,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
 	fullComment := COMMENT_IKUAI_BYPASS + "_" + tag
 	log.Println("端口分流== 正在查询 备注为:", fullComment, "的端口分流规则")
-	var data []StreamIpPortData
+	var data []ikuai_common.StreamIpPortData
 	data, err = i.ShowStreamIpPortByComment(fullComment)
 	if err != nil {
 		return

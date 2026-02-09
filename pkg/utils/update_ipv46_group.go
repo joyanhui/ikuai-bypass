@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 	"ikuai-bypass/pkg/config"
-	"ikuai-bypass/pkg/ikuai_api"
+	"ikuai-bypass/pkg/ikuai_common"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +13,7 @@ import (
 )
 
 // UpdateIpGroup 更新ip分组
-func UpdateIpGroup(iKuai *ikuai_api.IKuai, name, url string) (err error) {
+func UpdateIpGroup(iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
 	log.Println("ip分组==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -60,7 +60,7 @@ func UpdateIpGroup(iKuai *ikuai_api.IKuai, name, url string) (err error) {
 }
 
 // UpdateIpv6Group 更新ipv6分组
-func UpdateIpv6Group(iKuai *ikuai_api.IKuai, name, url string) (err error) {
+func UpdateIpv6Group(iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
 	log.Println("ipv6分组==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {

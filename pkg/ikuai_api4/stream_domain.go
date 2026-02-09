@@ -1,24 +1,14 @@
-package ikuai_api
+package ikuai_api4
 
 import (
 	"errors"
+	"ikuai-bypass/pkg/ikuai_common"
 	"log"
 	"strconv"
 	"strings"
 )
 
 const FuncNameStreamDomain = "stream_domain"
-
-type StreamDomainData struct {
-	Week      string `json:"week"`
-	Comment   string `json:"comment"`
-	Domain    string `json:"domain"`
-	SrcAddr   string `json:"src_addr"`
-	Interface string `json:"interface"`
-	Time      string `json:"time"`
-	ID        int    `json:"id"`
-	Enabled   string `json:"enabled"`
-}
 
 func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
 	// https://github.com/joyanhui/ikuai-bypass/issues/24
@@ -51,13 +41,13 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Result != 30000 {
-		return errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
 	}
 	return nil
 }
 
-func (i *IKuai) ShowStreamDomainByComment(comment string) (result []StreamDomainData, err error) {
+func (i *IKuai) ShowStreamDomainByComment(comment string) (result []ikuai_common.StreamDomainData, err error) {
 	param := struct {
 		Type     string `json:"TYPE"`
 		Limit    string `json:"limit"`
@@ -68,20 +58,21 @@ func (i *IKuai) ShowStreamDomainByComment(comment string) (result []StreamDomain
 	}{
 		Finds:    "comment",
 		Keywords: comment,
-		Type:     "data",
+		Type:     "total,data",
+		Limit:    "0,1000",
 	}
 	req := CallReq{
 		FuncName: FuncNameStreamDomain,
 		Action:   "show",
 		Param:    &param,
 	}
-	resp := CallResp{Data: &CallRespData{Data: &result}}
+	resp := CallResp{Results: &CallRespData{Data: &result}}
 	err = postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return
 	}
-	if resp.Result != 30000 {
-		err = errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		err = errors.New(resp.Message)
 		return
 	}
 	return
@@ -103,8 +94,8 @@ func (i *IKuai) DelStreamDomain(id string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Result != 30000 {
-		return errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
 	}
 	return nil
 }
@@ -114,8 +105,7 @@ func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
 	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的域名分流规则")
 	preIds = ""
 	err = nil
-	//for loop := 0; loop < 2; loop++ {
-	var data []StreamDomainData
+	var data []ikuai_common.StreamDomainData
 	data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS + "_" + tag)
 	if err != nil {
 		return
@@ -131,7 +121,6 @@ func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
 	}
 	id := strings.Join(ids, ",")
 	preIds = preIds + "||" + id
-	//}
 	return
 }
 
@@ -154,7 +143,7 @@ func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
 // DelStreamDomainAll 删除所有的域名分流规则
 func (i *IKuai) DelStreamDomainAll(cleanTag string) (err error) {
 	for {
-		var data []StreamDomainData
+		var data []ikuai_common.StreamDomainData
 		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS)
 		if err != nil {
 			return

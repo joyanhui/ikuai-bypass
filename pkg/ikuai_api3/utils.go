@@ -1,4 +1,4 @@
-package ikuai_api
+package ikuai_api3
 
 import (
 	"bytes"

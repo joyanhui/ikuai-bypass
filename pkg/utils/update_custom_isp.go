@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 	"ikuai-bypass/pkg/config"
-	"ikuai-bypass/pkg/ikuai_api"
+	"ikuai-bypass/pkg/ikuai_common"
 	"io"
 	"log"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 )
 
 // UpdateCustomIsp 更新运营商分流规则
-func UpdateCustomIsp(iKuai *ikuai_api.IKuai, name string, tag string, url string) (err error) {
+func UpdateCustomIsp(iKuai ikuai_common.IKuaiClient, name string, tag string, url string) (err error) {
 	log.Println("运营商/IP分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {

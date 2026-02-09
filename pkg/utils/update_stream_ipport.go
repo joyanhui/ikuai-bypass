@@ -2,14 +2,14 @@ package utils
 
 import (
 	"ikuai-bypass/pkg/config"
-	"ikuai-bypass/pkg/ikuai_api"
+	"ikuai-bypass/pkg/ikuai_common"
 	"log"
 	"strings"
 	"time"
 )
 
 // UpdateStreamIpPort 更新ip端口分流
-func UpdateStreamIpPort(iKuai *ikuai_api.IKuai, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptTag string, ipGroupName string, mode int, ifaceband int) (err error) {
+func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptTag string, ipGroupName string, mode int, ifaceband int) (err error) {
 
 	// #101 fix ip-group为空时会默认添加实际不匹配的规则
 	var dstAddr string

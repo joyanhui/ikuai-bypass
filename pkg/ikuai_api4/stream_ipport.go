@@ -2,7 +2,6 @@ package ikuai_api4
 
 import (
 	"errors"
-	"fmt"
 	"ikuai-bypass/pkg/ikuai_common"
 	"log"
 	"strconv"
@@ -57,20 +56,19 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 	fType, _ := strconv.Atoi(forwardType)
 
 	srcAddr = strings.TrimSpace(srcAddr)
-	var srcAddrObject []string
+	var srcAddrList []string
 	if srcAddr != "" {
-		srcAddrObject = strings.Split(srcAddr, ",")
-	} else {
-		srcAddrObject = []string{}
+		srcAddrList = strings.Split(srcAddr, ",")
 	}
 
 	dstAddr = strings.TrimSpace(dstAddr)
-	var dstAddrObject []string
+	var dstAddrList []string
 	if dstAddr != "" {
-		dstAddrObject = strings.Split(dstAddr, ",")
-	} else {
-		dstAddrObject = []string{}
+		dstAddrList = strings.Split(dstAddr, ",")
 	}
+
+	srcCustom, srcObject := CategorizeAddrs(srcAddrList)
+	dstCustom, dstObject := CategorizeAddrs(dstAddrList)
 
 	param := map[string]interface{}{
 		"enabled":    "yes",
@@ -83,12 +81,12 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		"mode":       mode,
 		"protocol":   "tcp+udp",
 		"src_addr": map[string]interface{}{
-			"custom": []string{},
-			"object": srcAddrObject,
+			"custom": srcCustom,
+			"object": srcObject,
 		},
 		"dst_addr": map[string]interface{}{
-			"custom": []string{},
-			"object": dstAddrObject,
+			"custom": dstCustom,
+			"object": dstObject,
 		},
 		"src_port": map[string]interface{}{
 			"custom": []string{},
@@ -129,23 +127,6 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		return errors.New(resp.Message)
 	}
 	return nil
-}
-
-func toStringList(v interface{}) []string {
-	if v == nil {
-		return []string{}
-	}
-	switch val := v.(type) {
-	case []interface{}:
-		res := make([]string, len(val))
-		for i, item := range val {
-			res[i] = fmt.Sprint(item)
-		}
-		return res
-	case []string:
-		return val
-	}
-	return []string{}
 }
 
 func (i *IKuai) ShowStreamIpPortByTagName(tagName string) (result []ikuai_common.StreamIpPortData, err error) {
@@ -247,7 +228,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 }
 
 func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
-	log.Println("端口分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的端口分流规则")
+	log.Println("端口分流== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的端口分流规则")
 	var data []ikuai_common.StreamIpPortData
 	data, err = i.ShowStreamIpPortByTagName("")
 	if err != nil {

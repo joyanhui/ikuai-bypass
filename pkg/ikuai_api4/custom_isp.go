@@ -96,7 +96,7 @@ func (i *IKuai) DelCustomIsp(id string) error {
 
 // GetCustomIspAll 预备删除
 func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
-	log.Println("运营商/IP分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的运营商配置规则")
+	log.Println("运营商/IP分流== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的运营商配置规则")
 	preIds = ""
 	err = nil
 	var data []ikuai_common.CustomIspData

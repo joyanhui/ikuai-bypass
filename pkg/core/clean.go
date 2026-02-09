@@ -12,7 +12,6 @@ import (
 
 const (
 	cleanModeAll    = "cleanAll"
-	defaultCleanTag = "IKB"
 )
 
 // MainClean 清理旧分流规则
@@ -82,14 +81,13 @@ func MainClean() {
 func normalizeCleanTag(cleanTag string) (string, bool) {
 	cleanTag = strings.TrimSpace(cleanTag)
 	if cleanTag == "" {
-		return defaultCleanTag, false
+		return ikuai_common.NAME_PREFIX_IKB, false
 	}
 	return cleanTag, cleanTag == cleanModeAll
 }
 
 func isManagedBypassRule(_ string, name string) bool {
-	return strings.HasPrefix(name, "IKB") ||
-		strings.Contains(name, "IKB")
+	return strings.HasPrefix(name, ikuai_common.NAME_PREFIX_IKB) || strings.Contains(name, ikuai_common.NAME_PREFIX_IKB)
 }
 
 func cleanAllByManagedMark(iKuai ikuai_common.IKuaiClient) (err error) {

@@ -49,9 +49,9 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 	var srcAddrList []string
 	if srcAddr != "" {
 		srcAddrList = strings.Split(srcAddr, ",")
-	} else {
-		srcAddrList = []string{}
 	}
+
+	srcCustom, srcObject := CategorizeAddrs(srcAddrList)
 
 	// 使用序号作为 tagname 后缀，从 1 开始，防止 chunks 冲突
 	// Use sequence number starting from 1 as tagname suffix to avoid chunks conflicts
@@ -64,8 +64,8 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 		"tagname":   uniqueTagname,
 		"interface": iface,
 		"src_addr": map[string]interface{}{
-			"custom": srcAddrList,
-			"object": []interface{}{},
+			"custom": srcCustom,
+			"object": srcObject,
 		},
 		"domain": map[string]interface{}{
 			"custom": domainList,
@@ -129,14 +129,17 @@ func (i *IKuai) ShowStreamDomainByTagName(tagName string) (result []ikuai_common
 	// Convert 4.0 structure to common structure
 	for _, d := range data4 {
 		if matchTagNameFilter(tagName, d.Tagname, d.Comment) {
+			srcs := append(toStringList(d.SrcAddr.Custom), toStringList(d.SrcAddr.Object)...)
+			domains := append(toStringList(d.Domain.Custom), toStringList(d.Domain.Object)...)
+
 			item := ikuai_common.StreamDomainData{
 				ID:        d.ID,
 				Enabled:   d.Enabled,
 				Comment:   d.Comment,
 				TagName:   d.Tagname,
 				Interface: d.Interface,
-				Domain:    strings.Join(d.Domain.Custom, ","),
-				SrcAddr:   strings.Join(d.SrcAddr.Custom, ","),
+				Domain:    strings.Join(domains, ","),
+				SrcAddr:   strings.Join(srcs, ","),
 			}
 			// 尝试还原 Week 和 Time 字段
 			if len(d.Time.Custom) > 0 {
@@ -175,7 +178,7 @@ func (i *IKuai) DelStreamDomain(id string) error {
 // GetStreamDomainAll 批量查询并返回逗号分隔的 ID
 // Batch query and return comma-separated IDs
 func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
-	log.Println("域名分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的域名分流规则")
+	log.Println("域名分流== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的域名分流规则")
 	preIds = ""
 	err = nil
 	var data []ikuai_common.StreamDomainData

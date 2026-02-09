@@ -4,15 +4,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"ikuai-bypass/pkg/ikuai_common"
 )
 
 var tagNameSanitizer = regexp.MustCompile(`[^\p{Han}A-Za-z0-9]+`)
 
 func stripKnownPrefix(raw string) string {
 	raw = strings.TrimSpace(raw)
-	raw = strings.TrimPrefix(raw, COMMENT_IKUAI_BYPASS+"_")
-	raw = strings.TrimPrefix(raw, "IKB_")
-	raw = strings.TrimPrefix(raw, NAME_PREFIX_IKB)
+	raw = strings.TrimPrefix(raw, ikuai_common.COMMENT_IKUAI_BYPASS+"_")
+	raw = strings.TrimPrefix(raw, ikuai_common.NAME_PREFIX_IKB)
 	return strings.TrimSpace(raw)
 }
 
@@ -25,9 +26,9 @@ func sanitizeTagName(raw string) string {
 func buildTagName(raw string) string {
 	token := sanitizeTagName(raw)
 	if token == "" {
-		return NAME_PREFIX_IKB
+		return ikuai_common.NAME_PREFIX_IKB
 	}
-	return NAME_PREFIX_IKB + token
+	return ikuai_common.NAME_PREFIX_IKB + token
 }
 
 func buildIndexedTagName(raw string, index int) string {
@@ -48,13 +49,11 @@ func buildTagNameCandidates(raw string) []string {
 		candidateSet[v] = struct{}{}
 	}
 
-	add(raw)
-
+	// 强制要求候选词必须包含 IKB 相关前缀，严禁匹配不带前缀的原始名称
+	// candidates must contain IKB related prefixes, matching raw names without prefixes is strictly prohibited
 	token := sanitizeTagName(raw)
 	if token != "" {
-		add(token)
-		add(NAME_PREFIX_IKB + token)
-		add("IKB_" + token) // 兼容旧版本命名
+		add(ikuai_common.NAME_PREFIX_IKB + token)
 	}
 
 	res := make([]string, 0, len(candidateSet))

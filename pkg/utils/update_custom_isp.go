@@ -48,19 +48,21 @@ func UpdateCustomIsp(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name
 	ipGroups := Group(ips, 5000) //5000条
 
 	for i, ig := range ipGroups {
+		logger.Info("ADD:正在添加", "[%d/%d] %s: adding...", i+1, len(ipGroups), name)
 		ipGroup := strings.Join(ig, ",")
 		err = iKuai.AddCustomIsp(name, tag, ipGroup)
 		if err != nil {
-			logger.Error("ADD:添加规则", "Failed to add chunk %d, retrying in %v seconds... Error: %v", i+1, config.GlobalConfig.AddErrRetryWait, err)
+			logger.Error("ADD:添加失败", "[%d/%d] %s: failed, retrying after %v seconds. error: %v", i+1, len(ipGroups), name, config.GlobalConfig.AddErrRetryWait, err)
 			time.Sleep(config.GlobalConfig.AddErrRetryWait)
 			err = iKuai.AddCustomIsp(name, tag, ipGroup)
 			if err != nil {
-				logger.Error("ADD:添加规则", "Retry failed for chunk %d, skipping remaining operations", i+1)
+				logger.Error("ADD:重试失败", "[%d/%d] %s: retry failed, skipping this operation", i+1, len(ipGroups), name)
 				break
 			}
+		} else {
+			logger.Success("ADD:添加成功", "%s (%s): added %d IPs. Waiting %v seconds...", name, tag, len(ig), config.GlobalConfig.AddWait)
+			time.Sleep(config.GlobalConfig.AddWait)
 		}
-		logger.Log("ADD:添加进度", "Added %d IPs (%d/%d), waiting %v seconds for next chunk...", len(ig), i+1, len(ipGroups), config.GlobalConfig.AddWait)
-		time.Sleep(config.GlobalConfig.AddWait)
 	}
-	return
+	return nil
 }

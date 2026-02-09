@@ -19,11 +19,11 @@ type streamDomain4 struct {
 	Comment   string `json:"comment"`
 	Prio      int    `json:"prio"`
 	SrcAddr   struct {
-		Custom []string    `json:"custom"`
+		Custom interface{} `json:"custom"`
 		Object interface{} `json:"object"`
 	} `json:"src_addr"`
 	Domain struct {
-		Custom []string    `json:"custom"`
+		Custom interface{} `json:"custom"`
 		Object interface{} `json:"object"`
 	} `json:"domain"`
 	Time struct {

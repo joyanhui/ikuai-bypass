@@ -62,10 +62,17 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 		logger.Success("CLEAN:清理旧规", "Cleared %d old port streaming rules", count)
 	}
 
+	logger.Info("ADD:正在添加", "[1/1] %s: adding...", tag)
 	err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
 	if err != nil {
-		logger.Error("ADD:添加失败", "Failed to add port streaming rule, retrying after %v seconds. error: %v", config.GlobalConfig.AddErrRetryWait, err)
+		logger.Error("ADD:添加失败", "[1/1] %s: failed, retrying after %v seconds. error: %v", tag, config.GlobalConfig.AddErrRetryWait, err)
 		time.Sleep(config.GlobalConfig.AddErrRetryWait)
+		err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
+		if err != nil {
+			logger.Error("ADD:重试失败", "[1/1] %s: retry failed, skipping this operation", tag)
+		} else {
+			logger.Success("ADD:添加成功", "Port streaming rule added successfully after retry: %s", tag)
+		}
 	} else {
 		logger.Success("ADD:添加成功", "Port streaming rule added successfully: %s", tag)
 	}

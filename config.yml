@@ -25,7 +25,7 @@ stream-domain: # 域名分流 (优先级高于IP分流)
     tag: gfw # 规则TagName关键词（系统自动添加前缀 IKB）
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
-    src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
+    src-addr-opt-ipgroup: "Telegram" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
     tag: private_bypass # 规则TagName关键词（系统自动添加前缀 IKB）
   - interface: wan1 # 分流线路 (如 wan1)

@@ -75,7 +75,7 @@ type IKuaiClient interface {
 	DelCustomIspAll(cleanTag string) error
 
 	ShowStreamDomainByTagName(tagName string) ([]StreamDomainData, error)
-	AddStreamDomain(iface, tag, srcAddr, domains string, index int) error
+	AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int) error
 	DelStreamDomain(id string) error
 	GetStreamDomainAll(tag string) (string, error)
 	DelStreamDomainFromPreIds(preIds string) error

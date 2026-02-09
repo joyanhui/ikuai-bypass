@@ -38,38 +38,59 @@ type streamDomain4 struct {
 	} `json:"time"`
 }
 
-func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) error {
+func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int) error {
 	// https://github.com/joyanhui/ikuai-bypass/issues/24
 	// 去掉末尾空行、空格
 	domains = strings.TrimSpace(domains)
 	domainList := strings.Split(domains, ",")
 
-	srcAddr = strings.TrimSpace(srcAddr)
-	var srcAddrList []string
-	if srcAddr != "" {
-		srcAddrList = strings.Split(srcAddr, ",")
+	var srcCustom []string
+	var srcObjects []ipGroupObject4
+
+	if strings.TrimSpace(srcAddrOptIpGroup) != "" {
+		// 如果设置了 srcAddrOptIpGroup，则通过名字查询 IP 分组并构建对象，忽略 srcAddr
+		names := strings.Split(srcAddrOptIpGroup, ",")
+		var resolvedNames []string
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+			// 支持模糊匹配
+			matches, err := i.GetAllIKuaiBypassIpGroupNamesByName(name)
+			if err == nil {
+				resolvedNames = append(resolvedNames, matches...)
+			}
+		}
+		srcObjects = i.resolveIpGroupObjects(resolvedNames)
+		srcCustom = []string{}
+	} else {
+		// 否则使用原来的 srcAddr 逻辑
+		srcAddr = strings.TrimSpace(srcAddr)
+		var srcAddrList []string
+		if srcAddr != "" {
+			srcAddrList = strings.Split(srcAddr, ",")
+		}
+		var srcObjectNames []string
+		srcCustom, srcObjectNames = CategorizeAddrs(srcAddrList)
+		srcObjects = i.resolveIpGroupObjects(srcObjectNames)
 	}
 
-	srcCustom, srcObjectNames := CategorizeAddrs(srcAddrList)
-	srcObjects := i.resolveIpGroupObjects(srcObjectNames)
-
 	// 使用序号作为 tagname 后缀，从 1 开始，防止 chunks 冲突
-	// Use sequence number starting from 1 as tagname suffix to avoid chunks conflicts
 	uniqueTagname := buildIndexedTagName(tag, index)
 
 	// 构造 4.0 格式的参数
-	// Construct 4.0 format parameters
 	param := map[string]interface{}{
 		"enabled":   "yes",
 		"tagname":   uniqueTagname,
 		"interface": iface,
 		"src_addr": map[string]interface{}{
 			"custom": srcCustom,
-			  "object": srcObjects,
+			"object": srcObjects,
 		},
 		"domain": map[string]interface{}{
 			"custom": domainList,
-		     	"object": []interface{}{},
+			"object": []interface{}{},
 		},
 		"comment": "",
 		"time": map[string]interface{}{

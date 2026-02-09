@@ -49,19 +49,16 @@ func UpdateStreamDomain(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, i
 
 	domainGroup := Group(domains, 1000) //1000条
 	// #99 fix srcAddr 优先使用 srcAddrIpGroup
-	var srcAddrList []string
 	if strings.TrimSpace(srcAddrIpGroup) != "" {
+		var found bool
 		for srcIpGroupItem := range strings.SplitSeq(srcAddrIpGroup, ",") {
-			var data []string
-			data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(srcIpGroupItem)
-			if err != nil {
-				return
+			data, err := iKuai.GetAllIKuaiBypassIpGroupNamesByName(srcIpGroupItem)
+			if err == nil && len(data) > 0 {
+				found = true
+				break
 			}
-			srcAddrList = append(srcAddrList, data...)
 		}
-		if len(srcAddrList) > 0 {
-			srcAddr = strings.Join(srcAddrList, ",") // #99
-		} else {
+		if !found {
 			logger.Info("SKIP:跳过操作", "No matching source IP groups found, skipping rule addition. srcAddrIpGroup: %s", srcAddrIpGroup)
 			return nil
 		}
@@ -70,11 +67,11 @@ func UpdateStreamDomain(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, i
 	for index, d := range domainGroup {
 		logger.Info("ADD:正在添加", "[%d/%d] %s %s: adding...", index+1, len(domainGroup), iface, tag)
 		domain := strings.Join(d, ",")
-		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain, index)
+		err = iKuai.AddStreamDomain(iface, tag, srcAddr, srcAddrIpGroup, domain, index)
 		if err != nil {
 			logger.Error("ADD:添加失败", "[%d/%d] %s %s: failed, retrying after %v seconds. error: %v", index+1, len(domainGroup), iface, tag, config.GlobalConfig.AddErrRetryWait, err)
 			time.Sleep(config.GlobalConfig.AddErrRetryWait)
-			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain, index)
+			err = iKuai.AddStreamDomain(iface, tag, srcAddr, srcAddrIpGroup, domain, index)
 			if err != nil {
 				logger.Error("ADD:重试失败", "[%d/%d] %s %s: retry failed, skipping this operation", index+1, len(domainGroup), iface, tag)
 				break

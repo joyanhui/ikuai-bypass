@@ -11,6 +11,7 @@ type CustomIspData struct {
 type StreamDomainData struct {
 	Week      string `json:"week"`
 	Comment   string `json:"comment"`
+	TagName   string `json:"tagname"`
 	Domain    string `json:"domain"`
 	SrcAddr   string `json:"src_addr"`
 	Interface string `json:"interface"`
@@ -35,8 +36,18 @@ type Ipv6GroupData struct {
 	Type      int    `json:"type"`
 }
 
+type DomainGroupData struct {
+	GroupName string `json:"group_name"`
+	GroupID   string `json:"group_id"`
+	ID        int    `json:"id"`
+	Type      int    `json:"type"`
+	Comment   string `json:"comment"`
+	Domains   string `json:"domains"`
+}
+
 type StreamIpPortData struct {
 	Protocol  string `json:"protocol"`
+	TagName   string `json:"tagname"`
 	SrcPort   string `json:"src_port"`
 	ID        int    `json:"id"`
 	Enabled   string `json:"enabled"`
@@ -85,6 +96,12 @@ type IKuaiClient interface {
 	GetIpv6Group(tag string) (string, error)
 	DelIKuaiBypassIpv6Group(cleanTag string) error
 	GetAllIKuaiBypassIpv6GroupNamesByName(name string) ([]string, error)
+
+	ShowDomainGroupByComment(comment string) ([]DomainGroupData, error)
+	AddDomainGroup(groupName, domains string) error
+	DelDomainGroup(id string) error
+	GetDomainGroup(tag string) (string, error)
+	DelIKuaiBypassDomainGroup(cleanTag string) error
 
 	AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error
 	ShowStreamIpPortByComment(comment string) ([]StreamIpPortData, error)

@@ -55,7 +55,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 
 	// 使用序号作为 tagname 后缀，从 1 开始，防止 chunks 冲突
 	// Use sequence number starting from 1 as tagname suffix to avoid chunks conflicts
-	uniqueTagname := tag + "_" + strconv.Itoa(index+1)
+	uniqueTagname := NAME_PREFIX_IKB + tag + "_" + strconv.Itoa(index+1)
 
 	// 构造 4.0 格式的参数
 	// Construct 4.0 format parameters
@@ -71,7 +71,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 			"custom": domainList,
 			"object": []interface{}{},
 		},
-		"comment": COMMENT_IKUAI_BYPASS + "_" + tag,
+		"comment": "",
 		"time": map[string]interface{}{
 			"custom": []map[string]interface{}{
 				{
@@ -104,18 +104,9 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 }
 
 func (i *IKuai) ShowStreamDomainByComment(comment string) (result []ikuai_common.StreamDomainData, err error) {
-	param := struct {
-		Type     string `json:"TYPE"`
-		Limit    string `json:"limit"`
-		OrderBy  string `json:"ORDER_BY"`
-		Order    string `json:"ORDER"`
-		Finds    string `json:"FINDS"`
-		Keywords string `json:"KEYWORDS"`
-	}{
-		Finds:    "comment",
-		Keywords: comment,
-		Type:     "total,data",
-		Limit:    "0,1000",
+	param := map[string]interface{}{
+		"TYPE":  "total,data",
+		"limit": "0,1000",
 	}
 	req := CallReq{
 		FuncName: FuncNameStreamDomain,
@@ -136,20 +127,23 @@ func (i *IKuai) ShowStreamDomainByComment(comment string) (result []ikuai_common
 
 	// 将 4.0 结构转换为通用结构
 	// Convert 4.0 structure to common structure
-	result = make([]ikuai_common.StreamDomainData, len(data4))
-	for idx, d := range data4 {
-		result[idx] = ikuai_common.StreamDomainData{
-			ID:        d.ID,
-			Enabled:   d.Enabled,
-			Comment:   d.Comment,
-			Interface: d.Interface,
-			Domain:    strings.Join(d.Domain.Custom, ","),
-			SrcAddr:   strings.Join(d.SrcAddr.Custom, ","),
-		}
-		// 尝试还原 Week 和 Time 字段
-		if len(d.Time.Custom) > 0 {
-			result[idx].Week = d.Time.Custom[0].Weekdays
-			result[idx].Time = d.Time.Custom[0].StartTime + "-" + d.Time.Custom[0].EndTime
+	for _, d := range data4 {
+		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+			item := ikuai_common.StreamDomainData{
+				ID:        d.ID,
+				Enabled:   d.Enabled,
+				Comment:   d.Comment,
+				TagName:   d.Tagname,
+				Interface: d.Interface,
+				Domain:    strings.Join(d.Domain.Custom, ","),
+				SrcAddr:   strings.Join(d.SrcAddr.Custom, ","),
+			}
+			// 尝试还原 Week 和 Time 字段
+			if len(d.Time.Custom) > 0 {
+				item.Week = d.Time.Custom[0].Weekdays
+				item.Time = d.Time.Custom[0].StartTime + "-" + d.Time.Custom[0].EndTime
+			}
+			result = append(result, item)
 		}
 	}
 
@@ -181,17 +175,17 @@ func (i *IKuai) DelStreamDomain(id string) error {
 // GetStreamDomainAll 批量查询并返回逗号分隔的 ID
 // Batch query and return comma-separated IDs
 func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
-	log.Println("域名分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的域名分流规则")
+	log.Println("域名分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的域名分流规则")
 	preIds = ""
 	err = nil
 	var data []ikuai_common.StreamDomainData
-	data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS + "_" + tag)
+	data, err = i.ShowStreamDomainByComment("")
 	if err != nil {
 		return
 	}
 	var ids []string
 	for _, d := range data {
-		if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -223,18 +217,23 @@ func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
 func (i *IKuai) DelStreamDomainAll(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.StreamDomainData
-		data, err = i.ShowStreamDomainByComment(COMMENT_IKUAI_BYPASS)
+		data, err = i.ShowStreamDomainByComment("")
 		if err != nil {
 			return
 		}
 		var ids []string
 		for _, d := range data {
 			if cleanTag == "cleanAll" {
-				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) || strings.Contains(d.TagName, "IKB") {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			} else {
-				if d.Comment == cleanTag {
+				match := (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, cleanTag)) || d.Comment == cleanTag || d.TagName == cleanTag || strings.Contains(d.TagName, cleanTag)
+				if !match && strings.HasPrefix(cleanTag, COMMENT_IKUAI_BYPASS+"_") {
+					tag := cleanTag[len(COMMENT_IKUAI_BYPASS)+1:]
+					match = d.TagName == tag || strings.Contains(d.TagName, tag)
+				}
+				if match {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}

@@ -74,11 +74,11 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 
 	param := map[string]interface{}{
 		"enabled":    "yes",
-		"tagname":    tag,
+		"tagname":    NAME_PREFIX_IKB + tag,
 		"interface":  iface,
 		"nexthop":    nexthop,
 		"iface_band": ifaceband,
-		"comment":    COMMENT_IKUAI_BYPASS + "_" + tag,
+		"comment":    "",
 		"type":       fType,
 		"mode":       mode,
 		"protocol":   "tcp+udp",
@@ -149,18 +149,9 @@ func toStringList(v interface{}) []string {
 }
 
 func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common.StreamIpPortData, err error) {
-	param := struct {
-		Type     string `json:"TYPE"`
-		Limit    string `json:"limit"`
-		OrderBy  string `json:"ORDER_BY"`
-		Order    string `json:"ORDER"`
-		Finds    string `json:"FINDS"`
-		Keywords string `json:"KEYWORDS"`
-	}{
-		Finds:    "comment",
-		Keywords: comment,
-		Type:     "total,data",
-		Limit:    "0,1000",
+	param := map[string]interface{}{
+		"TYPE":  "total,data",
+		"limit": "0,1000",
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,
@@ -179,27 +170,30 @@ func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common
 		return
 	}
 
-	result = make([]ikuai_common.StreamIpPortData, len(data4))
-	for idx, d := range data4 {
-		srcs := append(toStringList(d.SrcAddr.Custom), toStringList(d.SrcAddr.Object)...)
-		dsts := append(toStringList(d.DstAddr.Custom), toStringList(d.DstAddr.Object)...)
+	for _, d := range data4 {
+		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+			srcs := append(toStringList(d.SrcAddr.Custom), toStringList(d.SrcAddr.Object)...)
+			dsts := append(toStringList(d.DstAddr.Custom), toStringList(d.DstAddr.Object)...)
 
-		result[idx] = ikuai_common.StreamIpPortData{
-			ID:        d.ID,
-			Enabled:   d.Enabled,
-			Comment:   d.Comment,
-			Interface: d.Interface,
-			Nexthop:   d.Nexthop,
-			Type:      d.Type,
-			Mode:      d.Mode,
-			IfaceBand: d.IfaceBand,
-			Protocol:  d.Protocol,
-			SrcAddr:   strings.Join(srcs, ","),
-			DstAddr:   strings.Join(dsts, ","),
-		}
-		if len(d.Time.Custom) > 0 {
-			result[idx].Week = d.Time.Custom[0].Weekdays
-			result[idx].Time = d.Time.Custom[0].StartTime + "-" + d.Time.Custom[0].EndTime
+			item := ikuai_common.StreamIpPortData{
+				ID:        d.ID,
+				Enabled:   d.Enabled,
+				Comment:   d.Comment,
+				TagName:   d.Tagname,
+				Interface: d.Interface,
+				Nexthop:   d.Nexthop,
+				Type:      d.Type,
+				Mode:      d.Mode,
+				IfaceBand: d.IfaceBand,
+				Protocol:  d.Protocol,
+				SrcAddr:   strings.Join(srcs, ","),
+				DstAddr:   strings.Join(dsts, ","),
+			}
+			if len(d.Time.Custom) > 0 {
+				item.Week = d.Time.Custom[0].Weekdays
+				item.Time = d.Time.Custom[0].StartTime + "-" + d.Time.Custom[0].EndTime
+			}
+			result = append(result, item)
 		}
 	}
 
@@ -231,21 +225,26 @@ func (i *IKuai) DelStreamIpPort(id string) error {
 func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.StreamIpPortData
-		data, err = i.ShowStreamIpPortByComment(COMMENT_IKUAI_BYPASS)
+		data, err = i.ShowStreamIpPortByComment("")
 		if err != nil {
 			return
 		}
 		var ids []string
 		for _, d := range data {
 			if cleanTag == "cleanAll" {
-				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) || strings.Contains(d.TagName, "IKB") {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			} else {
 				if cleanTag == "" {
 					cleanTag = COMMENT_IKUAI_BYPASS
 				}
-				if d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag {
+				match := (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, cleanTag)) || d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag || d.TagName == cleanTag || strings.Contains(d.TagName, cleanTag)
+				if !match && strings.HasPrefix(cleanTag, COMMENT_IKUAI_BYPASS+"_") {
+					tag := cleanTag[len(COMMENT_IKUAI_BYPASS)+1:]
+					match = d.TagName == tag || strings.Contains(d.TagName, tag)
+				}
+				if match {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}
@@ -262,17 +261,16 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 }
 
 func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
-	fullComment := COMMENT_IKUAI_BYPASS + "_" + tag
-	log.Println("端口分流== 正在查询 备注为:", fullComment, "的端口分流规则")
+	log.Println("端口分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的端口分流规则")
 	var data []ikuai_common.StreamIpPortData
-	data, err = i.ShowStreamIpPortByComment(fullComment)
+	data, err = i.ShowStreamIpPortByComment("")
 	if err != nil {
 		return
 	}
 	var ids []string
 
 	for _, d := range data {
-		if d.Comment == fullComment {
+		if (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}

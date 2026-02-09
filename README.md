@@ -112,7 +112,7 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 | `-c` | 配置文件路径 | `-c ./config.yml` |
 | `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合), `ip` (ipv4和ipv6分组) ，`iip` (ii+ip混合) |
 | `-r` | 运行模式 | 见下表 |
-| `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll`备注和名字中包含IKUAI_BYPASS和IKB的规则和分组|
+| `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll`。备注或名字中包含 IKUAI_BYPASS 或 IKB 的规则和分组 |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
 | `-delOldRule`| 删除旧规则时机 | `after` (默认-更新后删), `before` (更新前删)。**注意：在 ikuaiV4 中此参数被移除，强制使用 before** |
 | `-exportPath` | 域名分流规则导出文件路径 | 默认为 `/tmp` |
@@ -125,7 +125,7 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 | `cron` | 计划任务模式 | **默认模式**。立即执行一次更新，随后进入定时任务等待模式。若启用了 WebUI 则同步启动。 |
 | `cronAft` | 延迟计划任务 | 不立即执行更新，直接进入定时任务等待模式。若启用了 WebUI 则同步启动。 |
 | `once` / `nocron` / `1` | 单次模式 | 立即执行一次规则更新，完成后立即退出程序。 |
-| `clean` | 清理模式 | 删除所有带有 `IKUAI_BYPASS_` 前缀（或 `-tag` 指定）的规则。 |
+| `clean` | 清理模式 | 删除所有带有 `IKB_` 前缀（或 `-tag` 指定）的规则和分组。 |
 | `web`v4.1版本才有的功能 | WebUI 模式 | 启动可视化 Web 管理界面，用于在线修改配置。不做其他操作 |
 | `exportDomainSteamToTxt` | 导出模式 | 将域名分流规则导出为爱快兼容的 TXT 格式，方便手动导入。 |
 

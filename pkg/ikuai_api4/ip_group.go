@@ -109,10 +109,10 @@ func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  groupName,
+		"group_name":  NAME_PREFIX_IKB + groupName,
 		"type":        0, // IPv4
 		"group_value": groupValue,
-		"comment":     COMMENT_IKUAI_BYPASS + "_" + groupName,
+		"comment":     "",
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,
@@ -153,24 +153,19 @@ func (i *IKuai) DelIpGroup(id string) error {
 }
 
 func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
-	log.Println("ip分组== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的ip分组规则")
-	var tagComment = ""
-	if tag == "" {
-		tagComment = COMMENT_IKUAI_BYPASS
-	} else {
-		tagComment = COMMENT_IKUAI_BYPASS + "_" + tag
-	}
-
+	log.Println("ip分组== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的ip分组规则")
 	var ids []string
 
 	var data []ikuai_common.IpGroupData
-	data, err = i.ShowIpGroupByComment(tagComment)
+	data, err = i.ShowIpGroupByComment("")
 	if err != nil {
 		return "", err
 	}
 
 	for _, d := range data {
-		ids = append(ids, strconv.Itoa(d.ID))
+		if (strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) && strings.Contains(d.GroupName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+			ids = append(ids, strconv.Itoa(d.ID))
+		}
 	}
 
 	if len(ids) <= 0 {
@@ -185,21 +180,26 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.IpGroupData
-		data, err = i.ShowIpGroupByComment(COMMENT_IKUAI_BYPASS)
+		data, err = i.ShowIpGroupByComment("")
 		if err != nil {
 			return err
 		}
 		var ids []string
 		for _, d := range data {
 			if cleanTag == "cleanAll" {
-				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) || strings.Contains(d.GroupName, "IKB") {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			} else {
 				if cleanTag == "" {
 					cleanTag = COMMENT_IKUAI_BYPASS
 				}
-				if d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag {
+				match := (strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) && strings.Contains(d.GroupName, cleanTag)) || d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag || d.GroupName == cleanTag || strings.Contains(d.GroupName, cleanTag)
+				if !match && strings.HasPrefix(cleanTag, COMMENT_IKUAI_BYPASS+"_") {
+					tag := cleanTag[len(COMMENT_IKUAI_BYPASS)+1:]
+					match = d.GroupName == tag || strings.Contains(d.GroupName, tag)
+				}
+				if match {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}
@@ -224,7 +224,7 @@ func (i *IKuai) GetAllIKuaiBypassIpGroupNamesByName(name string) (names []string
 
 	for _, d := range data {
 		match := strings.Contains(d.GroupName, name)
-		if (d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS)) && match {
+		if (d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB)) && match {
 			names = append(names, d.GroupName)
 		}
 	}

@@ -46,9 +46,9 @@ func (i *IKuai) AddCustomIsp(name, tag, ipgroup string) error {
 		Ipgroup string `json:"ipgroup"`
 		Comment string `json:"comment"`
 	}{
-		Name:    name,
+		Name:    NAME_PREFIX_IKB + name,
 		Ipgroup: ipgroup,
-		Comment: COMMENT_IKUAI_BYPASS + "_" + tag,
+		Comment: "",
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_CUSTOM_ISP,
@@ -90,7 +90,7 @@ func (i *IKuai) DelCustomIsp(id string) error {
 
 // GetCustomIspAll 预备删除
 func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
-	log.Println("运营商/IP分流== 正在查询  备注为:", COMMENT_IKUAI_BYPASS+"_"+tag, "的运营商配置规则")
+	log.Println("运营商/IP分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的运营商配置规则")
 	preIds = ""
 	err = nil
 	var data []ikuai_common.CustomIspData
@@ -100,7 +100,7 @@ func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
 	}
 	var ids []string
 	for _, d := range data {
-		if d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if (strings.HasPrefix(d.Name, NAME_PREFIX_IKB) && strings.Contains(d.Name, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -138,11 +138,15 @@ func (i *IKuai) DelCustomIspAll(cleanTag string) (err error) {
 		var ids []string
 		for _, d := range data {
 			if cleanTag == "cleanAll" {
-				if d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) {
+				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.Name, NAME_PREFIX_IKB) || strings.Contains(d.Name, "IKB") {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			} else {
-				if d.Comment == cleanTag {
+				match := strings.HasPrefix(d.Name, NAME_PREFIX_IKB) && strings.Contains(d.Name, cleanTag)
+				if !match {
+					match = d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag || d.Name == cleanTag || strings.Contains(d.Name, cleanTag)
+				}
+				if match {
 					ids = append(ids, strconv.Itoa(d.ID))
 				}
 			}

@@ -41,8 +41,8 @@ type streamDomain4 struct {
 
 func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) error {
 	// https://github.com/joyanhui/ikuai-bypass/issues/24
-	// 去掉末尾空行
-	domains = strings.Trim(strings.Trim(domains, "\n"), "\r")
+	// 去掉末尾空行、空格
+	domains = strings.TrimSpace(domains)
 	domainList := strings.Split(domains, ",")
 
 	srcAddr = strings.TrimSpace(srcAddr)

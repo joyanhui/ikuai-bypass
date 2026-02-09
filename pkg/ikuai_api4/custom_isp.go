@@ -95,7 +95,7 @@ func (i *IKuai) DelCustomIsp(id string) error {
 
 // GetCustomIspAll 预备删除
 func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
-	i.L.Info("查询规则", "Querying custom ISP rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
+	i.L.Info("QUERY:查询规则", "Querying custom ISP rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	preIds = ""
 	err = nil
 	var data []ikuai_common.CustomIspData

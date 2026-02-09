@@ -177,7 +177,7 @@ func (i *IKuai) DelStreamDomain(id string) error {
 // GetStreamDomainAll 批量查询并返回逗号分隔的 ID
 // Batch query and return comma-separated IDs
 func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
-	i.L.Info("查询列表", "Querying domain streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
+	i.L.Info("QUERY:查询列表", "Querying domain streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	preIds = ""
 	err = nil
 	var data []ikuai_common.StreamDomainData

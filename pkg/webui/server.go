@@ -25,7 +25,7 @@ func ShouldStartWebUI() bool {
 	return config.GlobalConfig.WebUI.Enable
 }
 
-var webLogger = logger.NewLogger("WebUI服务")
+var webLogger = logger.NewLogger("WEB:WebUI服务")
 
 // StartServer 启动 WebUI 服务（阻塞）
 func StartServer() {
@@ -36,15 +36,15 @@ func StartServer() {
 
 	server := createServer(port)
 
-	webLogger.Info("服务启动", "WebUI is available at http://0.0.0.0:%s", port)
+	webLogger.Info("WEB:服务启动", "WebUI is available at http://0.0.0.0:%s", port)
 	if config.GlobalConfig.WebUI.User != "" {
-		webLogger.Info("权限校验", "Basic authentication enabled")
+		webLogger.Info("AUTH:权限校验", "Basic authentication enabled")
 	} else {
-		webLogger.Log("权限校验", "Warning: Basic authentication is disabled (web-user is empty)")
+		webLogger.Log("AUTH:权限校验", "Warning: Basic authentication is disabled (web-user is empty)")
 	}
 
 	if err := server.ListenAndServe(); err != nil {
-		webLogger.Error("启动失败", "WebUI Server failed to start, port might be occupied: %v", err)
+		webLogger.Error("ERR:启动失败", "WebUI Server failed to start, port might be occupied: %v", err)
 		os.Exit(1)
 	}
 }
@@ -52,7 +52,7 @@ func OnDemandStartUpWebUI() {
 	if ShouldStartWebUI() {
 		StartServer()
 	} else {
-		webLogger.Info("服务状态", "WebUI mode is disabled")
+		webLogger.Info("WEB:服务状态", "WebUI mode is disabled")
 	}
 }
 
@@ -153,14 +153,14 @@ func createServer(port string) *http.Server {
 
 		// 使用 config.Save 进行安全保存
 		if err := config.Save(savePath, &req.Config, req.WithComments); err != nil {
-			webLogger.Error("保存配置", "Failed to save configuration: %v", err)
+			webLogger.Error("CONF:保存配置", "Failed to save configuration: %v", err)
 			http.Error(w, "Failed to save config: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		// 更新内存中的全局配置
 		config.GlobalConfig = req.Config
-		webLogger.Success("保存配置", "Configuration saved to %s by WebUI (with_comments: %v)", savePath, req.WithComments)
+		webLogger.Success("CONF:保存配置", "Configuration saved to %s by WebUI (with_comments: %v)", savePath, req.WithComments)
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status": "success", "message": "Configuration saved successfully"}`))

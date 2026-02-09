@@ -152,7 +152,7 @@ func (i *IKuai) DelIpv6Group(id string) error {
 }
 
 func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
-	i.L.Info("查询列表", "Querying IPv6 group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
+	i.L.Info("QUERY:查询列表", "Querying IPv6 group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var ids []string
 
 	var data []ikuai_common.Ipv6GroupData

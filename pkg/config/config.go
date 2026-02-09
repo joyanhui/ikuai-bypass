@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var configLogger = logger.NewLogger("配置中心")
+var configLogger = logger.NewLogger("CONF:配置中心")
 
 var (
 	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
@@ -96,7 +96,7 @@ func Read(filename string) error {
 	// 检查每个 CustomIsp 的 Tag，如果不存在，则使用 Name
 	for i := range GlobalConfig.CustomIsp {
 		if GlobalConfig.CustomIsp[i].Tag == "" {
-			configLogger.Info("默认参数", "Tag is empty for custom ISP, using name: %s", GlobalConfig.CustomIsp[i].Name)
+			configLogger.Info("CONF:默认参数", "Tag is empty for custom ISP, using name: %s", GlobalConfig.CustomIsp[i].Name)
 			GlobalConfig.CustomIsp[i].Tag = GlobalConfig.CustomIsp[i].Name
 		}
 	}
@@ -104,7 +104,7 @@ func Read(filename string) error {
 	// 检查每个 StreamDomain 的 Tag，如果不存在，则使用 Interface
 	for i := range GlobalConfig.StreamDomain {
 		if GlobalConfig.StreamDomain[i].Tag == "" {
-			configLogger.Info("默认参数", "Tag is empty for domain streaming, using interface: %s", GlobalConfig.StreamDomain[i].Interface)
+			configLogger.Info("CONF:默认参数", "Tag is empty for domain streaming, using interface: %s", GlobalConfig.StreamDomain[i].Interface)
 			GlobalConfig.StreamDomain[i].Tag = GlobalConfig.StreamDomain[i].Interface
 		}
 	}

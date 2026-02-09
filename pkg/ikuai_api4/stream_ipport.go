@@ -227,7 +227,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 }
 
 func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
-	i.L.Info("查询列表", "Querying port streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
+	i.L.Info("QUERY:查询列表", "Querying port streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var data []ikuai_common.StreamIpPortData
 	data, err = i.ShowStreamIpPortByTagName("")
 	if err != nil {

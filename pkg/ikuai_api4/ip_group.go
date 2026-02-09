@@ -152,7 +152,7 @@ func (i *IKuai) DelIpGroup(id string) error {
 }
 
 func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
-	i.L.Info("查询列表", "Querying IP group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
+	i.L.Info("QUERY:查询列表", "Querying IP group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var ids []string
 
 	var data []ikuai_common.IpGroupData

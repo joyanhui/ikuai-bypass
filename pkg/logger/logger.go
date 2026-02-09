@@ -21,25 +21,26 @@ func NewLogger(module string) *Logger {
 // Print unified format log: [Time] [Module] [Chinese Tag] English detail...
 func (l *Logger) Log(tag, format string, v ...interface{}) {
 	detail := fmt.Sprintf(format, v...)
-	log.Printf("[%s] [%s] %s\n", l.Module, tag, detail)
+	log.Printf("[Log ] [%s] [%s] %s\n", l.Module, tag, detail)
 }
 
 // Info 别名，用于常规信息打印
 // Alias for regular information printing
 func (l *Logger) Info(tag, format string, v ...interface{}) {
-	l.Log(tag, format, v...)
+	detail := fmt.Sprintf(format, v...)
+	log.Printf("[Info] [%s] [%s] %s\n", l.Module, tag, detail)
 }
 
 // Error 打印错误日志
 // Print error log
 func (l *Logger) Error(tag, format string, v ...interface{}) {
 	detail := fmt.Sprintf(format, v...)
-	log.Printf("[%s] [%s] [ERROR] %s\n", l.Module, tag, detail)
+	log.Printf("[Err ] [%s] [%s] [ERROR] %s\n", l.Module, tag, detail)
 }
 
 // Success 打印成功日志
 // Print success log
 func (l *Logger) Success(tag, format string, v ...interface{}) {
 	detail := fmt.Sprintf(format, v...)
-	log.Printf("[%s] [%s] [SUCCESS] %s\n", l.Module, tag, detail)
+	log.Printf("[ OK ] [%s] [%s] [SUCCESS] %s\n", l.Module, tag, detail)
 }

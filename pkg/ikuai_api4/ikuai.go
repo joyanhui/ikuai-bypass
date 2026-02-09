@@ -59,7 +59,7 @@ func NewIKuai(baseurl string) *IKuai {
 	return &IKuai{
 		baseurl: baseurl,
 		client:  &http.Client{Jar: cookieJar, Timeout: time.Second * 10},
-		L:       logger.NewLogger("iKuaiAPI"),
+		L:       logger.NewLogger("API:iKuaiAPI"),
 	}
 }
 

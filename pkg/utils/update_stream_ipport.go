@@ -15,7 +15,7 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 	var dstAddr string
 	var dstIpGroupList []string
 	if strings.TrimSpace(ipGroupName) == "" {
-		logger.Info("参数校验", "ip-group parameter is empty")
+		logger.Info("CHECK:参数校验", "ip-group parameter is empty")
 	} else {
 		for ipGroupItem := range strings.SplitSeq(ipGroupName, ",") {
 			var data []string
@@ -27,7 +27,7 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 		}
 		// #101 fix ip-group为空时会默认添加
 		if len(dstIpGroupList) == 0 {
-			logger.Info("跳过操作", "No matching destination IP groups found, skipping port streaming rule addition. ip-group: %s", ipGroupName)
+			logger.Info("SKIP:跳过操作", "No matching destination IP groups found, skipping port streaming rule addition. ip-group: %s", ipGroupName)
 			return nil
 		} else {
 			dstAddr = strings.Join(dstIpGroupList, ",")
@@ -46,7 +46,7 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 		if len(srcIpGroupList) > 0 {
 			srcAddr = strings.Join(srcIpGroupList, ",") // #99
 		} else {
-			logger.Info("跳过操作", "No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: %s", srcAddrOptIpGroup)
+			logger.Info("SKIP:跳过操作", "No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: %s", srcAddrOptIpGroup)
 			return nil
 		}
 	}
@@ -56,18 +56,18 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 		count := len(strings.Split(preDelIds, ","))
 		err = iKuai.DelStreamIpPort(preDelIds)
 		if err != nil {
-			logger.Error("清理旧规", "Failed to clear old rules, skipping update: %v", err)
+			logger.Error("CLEAN:清理旧规", "Failed to clear old rules, skipping update: %v", err)
 			return
 		}
-		logger.Success("清理旧规", "Cleared %d old port streaming rules", count)
+		logger.Success("CLEAN:清理旧规", "Cleared %d old port streaming rules", count)
 	}
 
 	err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
 	if err != nil {
-		logger.Error("添加失败", "Failed to add port streaming rule, retrying after %v seconds. error: %v", config.GlobalConfig.AddErrRetryWait, err)
+		logger.Error("ADD:添加失败", "Failed to add port streaming rule, retrying after %v seconds. error: %v", config.GlobalConfig.AddErrRetryWait, err)
 		time.Sleep(config.GlobalConfig.AddErrRetryWait)
 	} else {
-		logger.Success("添加成功", "Port streaming rule added successfully: %s", tag)
+		logger.Success("ADD:添加成功", "Port streaming rule added successfully: %s", tag)
 	}
 	return
 }

@@ -109,7 +109,7 @@ func (i *IKuai) DelDomainGroup(id string) error {
 }
 
 func (i *IKuai) GetDomainGroup(tag string) (preIds string, err error) {
-	i.L.Info("查询列表", "Querying domain group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
+	i.L.Info("QUERY:查询列表", "Querying domain group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var ids []string
 
 	var data []ikuai_common.DomainGroupData

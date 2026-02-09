@@ -2,14 +2,16 @@ package utils
 
 import (
 	"errors"
-	"log"
 	"strings"
 
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/ikuai_api4"
 	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/ikuai_router"
+	"ikuai-bypass/pkg/logger"
 )
+
+var SysLog = logger.NewLogger("系统组件") // System Component Logger
 
 // GetFullUrl 根据配置的 GithubProxy 转换 URL
 func GetFullUrl(originalURL string) string {
@@ -27,8 +29,8 @@ func GetFullUrl(originalURL string) string {
 	return proxy + originalURL
 }
 
-func RemoveIpv6AndRemoveEmptyLine(ips []string) []string {
-	log.Println("移除ipv6地址 和删除空行、注释....")
+func RemoveIpv6AndRemoveEmptyLine(l *logger.Logger, ips []string) []string {
+	l.Info("规则清洗", "Removing IPv6 addresses, empty lines and comments...")
 	i := 0
 	for _, ip := range ips {
 		// 处理注释：删除 # 及其后的所有内容
@@ -49,8 +51,8 @@ func RemoveIpv6AndRemoveEmptyLine(ips []string) []string {
 	return ips[:i]
 }
 
-func RemoveIpv4AndRemoveEmptyLine(ips []string) []string {
-	log.Println("移除ipv4地址 和删除空行、注释....")
+func RemoveIpv4AndRemoveEmptyLine(l *logger.Logger, ips []string) []string {
+	l.Info("规则清洗", "Removing IPv4 addresses, empty lines and comments...")
 	i := 0
 	for _, ip := range ips {
 		// 处理注释：删除 # 及其后的所有内容
@@ -86,8 +88,8 @@ func Group(arr []string, subGroupLength int64) [][]string {
 	return segmens
 }
 
-func FilterDomains(domains []string) []string {
-	log.Println("域名分流== 清理无效域名 (如包含下划线、注释等)...")
+func FilterDomains(l *logger.Logger, domains []string) []string {
+	l.Info("域名清洗", "Cleaning invalid domains (underscores, comments, etc.)...")
 	i := 0
 	for _, d := range domains {
 		d = strings.TrimSpace(d)
@@ -109,7 +111,7 @@ func FilterDomains(domains []string) []string {
 		// iKuai 不支持包含下划线的域名，这会导致 4.0 API 返回 "请求参数不合法"
 		// iKuai does not support domains with underscores, which causes "Invalid parameters" in 4.0 API
 		if strings.Contains(d, "_") {
-			log.Printf("域名分流== 排除无效域名 (包含下划线): %s\n", d)
+			l.Log("域名清洗", "Excluding invalid domain (contains underscore): %s", d)
 			continue
 		}
 		domains[i] = d
@@ -122,29 +124,29 @@ func FilterDomains(domains []string) []string {
 func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 	err := config.Read(*config.ConfPath)
 	if err != nil {
-		log.Println("读取配置文件失败：", err)
+		SysLog.Error("配置读取", "Failed to read configuration file: %v", err)
 		return nil, err
 	}
 
 	var iKuai ikuai_common.IKuaiClient
 
 	if *config.IkuaiLoginInfo != "" {
-		log.Println("使用命令行参数登陆爱快")
+		SysLog.Info("登录认证", "Logging in using command line parameters")
 		ikuaiLoginInfoArr := strings.Split(*config.IkuaiLoginInfo, ",")
 		if len(ikuaiLoginInfoArr) != 3 {
-			log.Println(*config.IkuaiLoginInfo)
-			log.Println("命令行参数格式错误，请使用 -login http://ip,username,password ")
-			return nil, errors.New("命令行参数格式错误，请使用 -login=\"ip,username,password\"")
+			SysLog.Log("参数错误", "Login info provided: %s", *config.IkuaiLoginInfo)
+			SysLog.Error("登录认证", "Command line parameter format error, please use -login http://ip,username,password")
+			return nil, errors.New("command line parameter format error")
 		}
 
 		iKuai = ikuai_api4.NewIKuai(ikuaiLoginInfoArr[0])
 
 		err = iKuai.Login(ikuaiLoginInfoArr[1], ikuaiLoginInfoArr[2])
 		if err != nil {
-			log.Println("ikuai 登陆失败：", *config.IkuaiLoginInfo, err)
+			SysLog.Error("登录认证", "Login failed: %s, error: %v", *config.IkuaiLoginInfo, err)
 			return nil, err
 		} else {
-			log.Println("ikuai 登录成功", ikuaiLoginInfoArr[0])
+			SysLog.Success("登录认证", "Login successful: %s", ikuaiLoginInfoArr[0])
 			return iKuai, nil
 		}
 	} else {
@@ -152,21 +154,21 @@ func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 		if baseurl == "" {
 			gateway, err := ikuai_router.GetGateway()
 			if err != nil {
-				log.Println("获取默认网关失败：", err)
+				SysLog.Error("网关检测", "Failed to get default gateway: %v", err)
 				return nil, err
 			}
 			baseurl = "http://" + gateway
-			log.Println("使用默认网关地址：", baseurl)
+			SysLog.Info("网关检测", "Using default gateway address: %s", baseurl)
 		}
 
 		iKuai = ikuai_api4.NewIKuai(baseurl)
 
 		err = iKuai.Login(config.GlobalConfig.Username, config.GlobalConfig.Password)
 		if err != nil {
-			log.Println("ikuai 登陆失败：", baseurl, err)
+			SysLog.Error("登录认证", "Login failed: %s, error: %v", baseurl, err)
 			return iKuai, err
 		} else {
-			log.Println("ikuai 登录成功", baseurl)
+			SysLog.Success("登录认证", "Login successful: %s", baseurl)
 			return iKuai, nil
 		}
 	}

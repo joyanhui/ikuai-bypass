@@ -3,19 +3,19 @@ package utils
 import (
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
+	"ikuai-bypass/pkg/logger"
 	"strings"
 	"time"
 )
 
 // UpdateStreamIpPort 更新ip端口分流
-func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptTag string, ipGroupName string, mode int, ifaceband int, preDelIds string) (err error) {
+func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptIpGroup string, ipGroupName string, mode int, ifaceband int, preDelIds string) (err error) {
 
 	// #101 fix ip-group为空时会默认添加实际不匹配的规则
 	var dstAddr string
 	var dstIpGroupList []string
 	if strings.TrimSpace(ipGroupName) == "" {
-		log.Println("ip端口分流== ip-group 参数为空 ")
+		logger.Info("参数校验", "ip-group parameter is empty")
 	} else {
 		for ipGroupItem := range strings.SplitSeq(ipGroupName, ",") {
 			var data []string
@@ -27,15 +27,15 @@ func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag 
 		}
 		// #101 fix ip-group为空时会默认添加
 		if len(dstIpGroupList) == 0 {
-			log.Println("ip端口分流== 未找到任何匹配的 IP 分组，跳过端口分流规则添加，配置的 ip-group:", ipGroupName)
+			logger.Info("跳过操作", "No matching destination IP groups found, skipping port streaming rule addition. ip-group: %s", ipGroupName)
 			return nil
 		} else {
 			dstAddr = strings.Join(dstIpGroupList, ",")
 		}
 	}
-	if strings.TrimSpace(srcAddrOptTag) != "" { // 优先使用 srcAddrOptTag #99
+	if strings.TrimSpace(srcAddrOptIpGroup) != "" { // 优先使用 srcAddrOptIpGroup #99
 		var srcIpGroupList []string
-		for srcIpGroupItem := range strings.SplitSeq(srcAddrOptTag, ",") {
+		for srcIpGroupItem := range strings.SplitSeq(srcAddrOptIpGroup, ",") {
 			var data []string
 			data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(srcIpGroupItem)
 			if err != nil {
@@ -46,25 +46,28 @@ func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag 
 		if len(srcIpGroupList) > 0 {
 			srcAddr = strings.Join(srcIpGroupList, ",") // #99
 		} else {
-			log.Println("ip端口分流== 未找到任何匹配的 源地址 IP 分组，跳过端口分流规则添加，配置的 srcAddrOptTag:", srcAddrOptTag)
+			logger.Info("跳过操作", "No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: %s", srcAddrOptIpGroup)
 			return nil
 		}
 	}
 
 	// 如果提供了预删除 ID，则在添加前清理
 	if preDelIds != "" {
+		count := len(strings.Split(preDelIds, ","))
 		err = iKuai.DelStreamIpPort(preDelIds)
 		if err != nil {
-			log.Println("ip端口分流== 清理旧规则失败，跳过此次更新:", err)
+			logger.Error("清理旧规", "Failed to clear old rules, skipping update: %v", err)
 			return
 		}
-		log.Println("ip端口分流== 已清理旧的端口分流规则")
+		logger.Success("清理旧规", "Cleared %d old port streaming rules", count)
 	}
 
 	err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
 	if err != nil {
-		log.Println("ip端口分流==  添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试  err:", err)
+		logger.Error("添加失败", "Failed to add port streaming rule, retrying after %v seconds. error: %v", config.GlobalConfig.AddErrRetryWait, err)
 		time.Sleep(config.GlobalConfig.AddErrRetryWait)
+	} else {
+		logger.Success("添加成功", "Port streaming rule added successfully: %s", tag)
 	}
 	return
 }

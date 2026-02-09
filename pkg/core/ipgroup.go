@@ -1,25 +1,27 @@
 package core
 
 import (
-	"log"
-
 	"ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/logger"
 	"ikuai-bypass/pkg/utils"
 )
 
 func MainUpdateIpgroup() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
-		log.Println("登录爱快失败：", err)
+		utils.SysLog.Error("登录失败", "Failed to login to iKuai: %v", err)
 		return
 	}
 
+	ipLogger := logger.NewLogger("IP分组")
+	streamLogger := logger.NewLogger("端口分流")
+
 	for _, ipGroup := range config.GlobalConfig.IpGroup {
-		err := utils.UpdateIpGroup(iKuai, ipGroup.Name, ipGroup.URL)
+		err := utils.UpdateIpGroup(ipLogger, iKuai, ipGroup.Name, ipGroup.URL)
 		if err != nil {
-			log.Printf("ip分组== 添加IP分组'%s@%s'失败：%s\n", ipGroup.Name, ipGroup.URL, err)
+			ipLogger.Error("更新失败", "Failed to add IP group '%s@%s': %v", ipGroup.Name, ipGroup.URL, err)
 		} else {
-			log.Printf("ip分组== 添加IP分组'%s@%s'成功\n", ipGroup.Name, ipGroup.URL)
+			ipLogger.Success("更新成功", "Successfully updated IP group '%s@%s'", ipGroup.Name, ipGroup.URL)
 		}
 	}
 
@@ -32,18 +34,19 @@ func MainUpdateIpgroup() {
 			tag = streamIpPort.Interface + streamIpPort.Nexthop
 		}
 		if tag == "" {
-			log.Println("端口分流== err 规则名称和IpGroup不能同时为空，跳过该规则:", streamIpPort)
+			streamLogger.Error("参数校验", "Rule name and IpGroup cannot both be empty, skipping: %+v", streamIpPort)
 			continue
 		}
 
 		preIds, err := iKuai.GetStreamIpPortIdsByTag(tag)
 		if err != nil {
-			log.Println("端口分流== 获取准备更新的端口分流列表失败：", tag, err)
+			streamLogger.Error("查询列表", "Failed to get port streaming list for %s: %v", tag, err)
 			continue
 		}
 
 		// 强制执行 Safe-Before 模式
 		err = utils.UpdateStreamIpPort(
+			streamLogger,
 			iKuai,
 			streamIpPort.Type, tag,
 			streamIpPort.Interface,
@@ -56,13 +59,13 @@ func MainUpdateIpgroup() {
 		)
 
 		if err != nil {
-			log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n",
+			streamLogger.Error("更新失败", "Failed to update port streaming '%s@%s': %v",
 				streamIpPort.Interface+streamIpPort.Nexthop,
 				streamIpPort.IpGroup,
 				err,
 			)
 		} else {
-			log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n",
+			streamLogger.Success("更新成功", "Successfully updated port streaming '%s@%s'",
 				streamIpPort.Interface+streamIpPort.Nexthop,
 				streamIpPort.IpGroup,
 			)
@@ -73,15 +76,16 @@ func MainUpdateIpgroup() {
 func MainUpdateIpv6group() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
-		log.Println("登录爱快失败：", err)
+		utils.SysLog.Error("登录失败", "Failed to login to iKuai: %v", err)
 		return
 	}
+	ipv6Logger := logger.NewLogger("IPv6分组")
 	for _, ipv6Group := range config.GlobalConfig.Ipv6Group {
-		err := utils.UpdateIpv6Group(iKuai, ipv6Group.Name, ipv6Group.URL)
+		err := utils.UpdateIpv6Group(ipv6Logger, iKuai, ipv6Group.Name, ipv6Group.URL)
 		if err != nil {
-			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'失败：%s\n", ipv6Group.Name, ipv6Group.URL, err)
+			ipv6Logger.Error("更新失败", "Failed to add IPv6 group '%s@%s': %v", ipv6Group.Name, ipv6Group.URL, err)
 		} else {
-			log.Printf("ipv6分组== 添加IPV6分组'%s@%s'成功\n", ipv6Group.Name, ipv6Group.URL)
+			ipv6Logger.Success("更新成功", "Successfully updated IPv6 group '%s@%s'", ipv6Group.Name, ipv6Group.URL)
 		}
 	}
 }

@@ -1,20 +1,22 @@
 package core
 
 import (
-	"fmt"
-	"log"
 	"time"
 
 	"ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/logger"
 	"ikuai-bypass/pkg/utils"
 )
 
 func MainUpdateIspRule() {
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
-		log.Println("登录爱快失败：", err)
+		utils.SysLog.Error("登录失败", "Failed to login to iKuai: %v", err)
 		return
 	}
+
+	ispLogger := logger.NewLogger("运营商分流")
+	domainLogger := logger.NewLogger("域名分流")
 
 	var GoroutineEnd1 bool = false
 	var GoroutineEnd2 bool = false
@@ -23,20 +25,19 @@ func MainUpdateIspRule() {
 			//记录旧的自定义运营商
 			preIds, err := iKuai.GetCustomIspAll(customIsp.Tag)
 			if err != nil {
-				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表失败：", customIsp.Name, customIsp.Tag, err)
+				ispLogger.Error("查询列表", "Failed to get old custom ISP list for %s (%s): %v", customIsp.Name, customIsp.Tag, err)
 				break
 			} else {
-				log.Println("运营商/IP分流== 获取准备更新的自定义运营商列表成功", customIsp.Name, customIsp.Tag)
+				ispLogger.Info("查询成功", "Obtained old custom ISP list for %s (%s)", customIsp.Name, customIsp.Tag)
 			}
 
 			// 强制执行 "Safe-Before" 模式：先成功获取远程数据，再清理旧规则，后添加新分片
-			// 这种模式最安全且符合 iKuai 4.0 规范
-			log.Println("运营商/IP分流==  正在更新", customIsp.Name, customIsp.Tag)
-			err = utils.UpdateCustomIsp(iKuai, customIsp.Name, customIsp.Tag, customIsp.URL, preIds)
+			ispLogger.Info("开始更新", "Updating %s (%s)...", customIsp.Name, customIsp.Tag)
+			err = utils.UpdateCustomIsp(ispLogger, iKuai, customIsp.Name, customIsp.Tag, customIsp.URL, preIds)
 			if err != nil {
-				log.Printf("运营商/IP分流== 添加自定义运营商'%s'失败：%s\n", customIsp.Name, err)
+				ispLogger.Error("更新失败", "Failed to update custom ISP '%s': %v", customIsp.Name, err)
 			} else {
-				log.Printf("运营商/IP分流== 添加自定义运营商'%s'成功\n", customIsp.Name)
+				ispLogger.Success("更新成功", "Successfully updated custom ISP '%s'", customIsp.Name)
 			}
 		}
 		GoroutineEnd1 = true
@@ -47,19 +48,19 @@ func MainUpdateIspRule() {
 			//记录旧的域名分流
 			preIds, err := iKuai.GetStreamDomainAll(streamDomain.Tag)
 			if err != nil {
-				log.Println("域名分流== 获取准备更新的域名列表失败：", streamDomain.Tag, err)
+				domainLogger.Error("查询列表", "Failed to get old domain list for tag %s: %v", streamDomain.Tag, err)
 				break
 			} else {
-				log.Println("域名分流==  获取准备更新的域名列表成功", streamDomain.Tag)
+				domainLogger.Info("查询成功", "Obtained old domain list for tag %s", streamDomain.Tag)
 			}
 
 			//更新域名分流 (强制 Safe-Before)
-			log.Println("域名分流==  正在更新", streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr)
-			err = utils.UpdateStreamDomain(iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr, streamDomain.URL, preIds)
+			domainLogger.Info("开始更新", "Updating %s (Interface: %s, Tag: %s)...", streamDomain.URL, streamDomain.Interface, streamDomain.Tag)
+			err = utils.UpdateStreamDomain(domainLogger, iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr, streamDomain.URL, preIds)
 			if err != nil {
-				log.Printf("域名分流== 添加域名分流 '%s' 失败：%s\n", streamDomain.Interface, err)
+				domainLogger.Error("更新失败", "Failed to update domain streaming '%s': %v", streamDomain.Interface, err)
 			} else {
-				log.Printf("域名分流== 添加域名分流 '%s' 成功\n", streamDomain.Interface)
+				domainLogger.Success("更新成功", "Successfully updated domain streaming '%s'", streamDomain.Interface)
 			}
 		}
 		GoroutineEnd2 = true
@@ -70,6 +71,6 @@ func MainUpdateIspRule() {
 			break
 		}
 		time.Sleep(1 * time.Second)
-		fmt.Printf(".")
 	}
+	utils.SysLog.Success("任务完成", "ISP and Domain streaming update tasks completed")
 }

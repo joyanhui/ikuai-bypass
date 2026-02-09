@@ -2,34 +2,35 @@ package core
 
 import (
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
 	"strconv"
 	"strings"
 
 	"ikuai-bypass/pkg/config"
+	"ikuai-bypass/pkg/logger"
 	"ikuai-bypass/pkg/utils"
 )
 
 const (
-	cleanModeAll    = "cleanAll"
+	cleanModeAll = "cleanAll"
 )
 
 // MainClean 清理旧分流规则
 func MainClean() {
+	cleanLogger := logger.NewLogger("清理模式")
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
-		log.Println("登录爱快失败：", err)
+		utils.SysLog.Error("登录失败", "Failed to login to iKuai: %v", err)
 		return
 	}
 
 	cleanTag, isCleanAll := normalizeCleanTag(*config.CleanTag)
 
 	if isCleanAll {
-		err = cleanAllByManagedMark(iKuai)
+		err = cleanAllByManagedMark(cleanLogger, iKuai)
 		if err != nil {
-			log.Println("清理所有规则失败：", err)
+			cleanLogger.Error("操作失败", "Failed to clear all rules: %v", err)
 		} else {
-			log.Println("清理所有规则成功 tag:" + cleanTag)
+			cleanLogger.Success("操作成功", "Cleared all rules with tag: %s", cleanTag)
 		}
 		return
 	}
@@ -37,44 +38,44 @@ func MainClean() {
 	//删除旧的自定义运营商
 	err = iKuai.DelCustomIspAll(cleanTag)
 	if err != nil {
-		log.Println("移除旧的自定义运营商失败 tag:"+cleanTag+"：", err)
+		cleanLogger.Error("清理失败", "Failed to remove old custom ISP for tag %s: %v", cleanTag, err)
 	} else {
-		log.Println("移除旧的自定义运营商成功 tag:" + cleanTag)
+		cleanLogger.Success("清理成功", "Removed old custom ISP for tag %s", cleanTag)
 	}
 	//删除旧的域名分流
 	err = iKuai.DelStreamDomainAll(cleanTag)
 	if err != nil {
-		log.Println("移除旧的域名分流失败 tag:"+cleanTag+"：", err)
+		cleanLogger.Error("清理失败", "Failed to remove old domain streaming for tag %s: %v", cleanTag, err)
 	} else {
-		log.Println("移除旧的域名分流成功 tag:" + cleanTag)
+		cleanLogger.Success("清理成功", "Removed old domain streaming for tag %s", cleanTag)
 	}
 	//删除旧的ip组
 	err = iKuai.DelIKuaiBypassIpGroup(cleanTag)
 	if err != nil {
-		log.Println("移除旧的IP分组失败 tag:"+cleanTag+"：", err)
+		cleanLogger.Error("清理失败", "Failed to remove old IP group for tag %s: %v", cleanTag, err)
 	} else {
-		log.Println("移除旧的IP分组成功 tag:" + cleanTag)
+		cleanLogger.Success("清理成功", "Removed old IP group for tag %s", cleanTag)
 	}
 	//删除旧的ipv6组
 	err = iKuai.DelIKuaiBypassIpv6Group(cleanTag)
 	if err != nil {
-		log.Println("移除旧的IPV6分组失败 tag:"+cleanTag+"：", err)
+		cleanLogger.Error("清理失败", "Failed to remove old IPv6 group for tag %s: %v", cleanTag, err)
 	} else {
-		log.Println("移除旧的IPV6分组成功 tag:" + cleanTag)
+		cleanLogger.Success("清理成功", "Removed old IPv6 group for tag %s", cleanTag)
 	}
 	//删除域名分组
 	err = iKuai.DelIKuaiBypassDomainGroup(cleanTag)
 	if err != nil {
-		log.Println("移除旧的域名分组失败 tag:"+cleanTag+"：", err)
+		cleanLogger.Error("清理失败", "Failed to remove old domain group for tag %s: %v", cleanTag, err)
 	} else {
-		log.Println("移除旧的域名分组成功 tag:" + cleanTag)
+		cleanLogger.Success("清理成功", "Removed old domain group for tag %s", cleanTag)
 	}
 	//删除端口分流规则
 	err = iKuai.DelIKuaiBypassStreamIpPort(cleanTag)
 	if err != nil {
-		log.Println("移除旧的端口分流失败 tag:"+cleanTag+"：", err)
+		cleanLogger.Error("清理失败", "Failed to remove old port streaming for tag %s: %v", cleanTag, err)
 	} else {
-		log.Println("移除旧的端口分流成功 tag:" + cleanTag)
+		cleanLogger.Success("清理成功", "Removed old port streaming for tag %s", cleanTag)
 	}
 }
 
@@ -90,35 +91,35 @@ func isManagedBypassRule(_ string, name string) bool {
 	return strings.HasPrefix(name, ikuai_common.NAME_PREFIX_IKB) || strings.Contains(name, ikuai_common.NAME_PREFIX_IKB)
 }
 
-func cleanAllByManagedMark(iKuai ikuai_common.IKuaiClient) (err error) {
-	err = cleanAllCustomIsp(iKuai)
+func cleanAllByManagedMark(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
+	err = cleanAllCustomIsp(l, iKuai)
 	if err != nil {
 		return err
 	}
-	err = cleanAllStreamDomain(iKuai)
+	err = cleanAllStreamDomain(l, iKuai)
 	if err != nil {
 		return err
 	}
-	err = cleanAllIpGroup(iKuai)
+	err = cleanAllIpGroup(l, iKuai)
 	if err != nil {
 		return err
 	}
-	err = cleanAllIpv6Group(iKuai)
+	err = cleanAllIpv6Group(l, iKuai)
 	if err != nil {
 		return err
 	}
-	err = cleanAllDomainGroup(iKuai)
+	err = cleanAllDomainGroup(l, iKuai)
 	if err != nil {
 		return err
 	}
-	err = cleanAllStreamIpPort(iKuai)
+	err = cleanAllStreamIpPort(l, iKuai)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func cleanAllCustomIsp(iKuai ikuai_common.IKuaiClient) (err error) {
+func cleanAllCustomIsp(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowCustomIspByTagName("")
 		if showErr != nil {
@@ -137,10 +138,11 @@ func cleanAllCustomIsp(iKuai ikuai_common.IKuaiClient) (err error) {
 		if err != nil {
 			return err
 		}
+		l.Success("清理详情", "Removed %d managed custom ISP rules", len(ids))
 	}
 }
 
-func cleanAllStreamDomain(iKuai ikuai_common.IKuaiClient) (err error) {
+func cleanAllStreamDomain(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowStreamDomainByTagName("")
 		if showErr != nil {
@@ -159,10 +161,11 @@ func cleanAllStreamDomain(iKuai ikuai_common.IKuaiClient) (err error) {
 		if err != nil {
 			return err
 		}
+		l.Success("清理详情", "Removed %d managed domain streaming rules", len(ids))
 	}
 }
 
-func cleanAllIpGroup(iKuai ikuai_common.IKuaiClient) (err error) {
+func cleanAllIpGroup(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowIpGroupByTagName("")
 		if showErr != nil {
@@ -181,10 +184,11 @@ func cleanAllIpGroup(iKuai ikuai_common.IKuaiClient) (err error) {
 		if err != nil {
 			return err
 		}
+		l.Success("清理详情", "Removed %d managed IP groups", len(ids))
 	}
 }
 
-func cleanAllIpv6Group(iKuai ikuai_common.IKuaiClient) (err error) {
+func cleanAllIpv6Group(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowIpv6GroupByTagName("")
 		if showErr != nil {
@@ -203,10 +207,11 @@ func cleanAllIpv6Group(iKuai ikuai_common.IKuaiClient) (err error) {
 		if err != nil {
 			return err
 		}
+		l.Success("清理详情", "Removed %d managed IPv6 groups", len(ids))
 	}
 }
 
-func cleanAllDomainGroup(iKuai ikuai_common.IKuaiClient) (err error) {
+func cleanAllDomainGroup(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowDomainGroupByTagName("")
 		if showErr != nil {
@@ -225,10 +230,11 @@ func cleanAllDomainGroup(iKuai ikuai_common.IKuaiClient) (err error) {
 		if err != nil {
 			return err
 		}
+		l.Success("清理详情", "Removed %d managed domain groups", len(ids))
 	}
 }
 
-func cleanAllStreamIpPort(iKuai ikuai_common.IKuaiClient) (err error) {
+func cleanAllStreamIpPort(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowStreamIpPortByTagName("")
 		if showErr != nil {
@@ -247,5 +253,6 @@ func cleanAllStreamIpPort(iKuai ikuai_common.IKuaiClient) (err error) {
 		if err != nil {
 			return err
 		}
+		l.Success("清理详情", "Removed %d managed port streaming rules", len(ids))
 	}
 }

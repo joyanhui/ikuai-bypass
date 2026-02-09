@@ -3,7 +3,6 @@ package ikuai_api4
 import (
 	"errors"
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -153,7 +152,7 @@ func (i *IKuai) DelIpv6Group(id string) error {
 }
 
 func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
-	log.Println("ipv6分组== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的IPv6分组规则")
+	i.L.Info("查询列表", "Querying IPv6 group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var ids []string
 
 	var data []ikuai_common.Ipv6GroupData

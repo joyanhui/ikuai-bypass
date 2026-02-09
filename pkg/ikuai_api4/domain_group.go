@@ -3,7 +3,6 @@ package ikuai_api4
 import (
 	"errors"
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -110,7 +109,7 @@ func (i *IKuai) DelDomainGroup(id string) error {
 }
 
 func (i *IKuai) GetDomainGroup(tag string) (preIds string, err error) {
-	log.Println("域名分组== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的域名分组规则")
+	i.L.Info("查询列表", "Querying domain group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var ids []string
 
 	var data []ikuai_common.DomainGroupData

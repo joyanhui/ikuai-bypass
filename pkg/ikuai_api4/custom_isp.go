@@ -3,7 +3,6 @@ package ikuai_api4
 import (
 	"errors"
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -96,7 +95,7 @@ func (i *IKuai) DelCustomIsp(id string) error {
 
 // GetCustomIspAll 预备删除
 func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
-	log.Println("运营商/IP分流== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的运营商配置规则")
+	i.L.Info("查询规则", "Querying custom ISP rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	preIds = ""
 	err = nil
 	var data []ikuai_common.CustomIspData

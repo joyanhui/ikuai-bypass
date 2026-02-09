@@ -3,7 +3,6 @@ package ikuai_api4
 import (
 	"errors"
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -178,7 +177,7 @@ func (i *IKuai) DelStreamDomain(id string) error {
 // GetStreamDomainAll 批量查询并返回逗号分隔的 ID
 // Batch query and return comma-separated IDs
 func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
-	log.Println("域名分流== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的域名分流规则")
+	i.L.Info("查询列表", "Querying domain streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	preIds = ""
 	err = nil
 	var data []ikuai_common.StreamDomainData

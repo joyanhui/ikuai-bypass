@@ -3,7 +3,6 @@ package ikuai_api4
 import (
 	"errors"
 	"ikuai-bypass/pkg/ikuai_common"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -228,7 +227,7 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 }
 
 func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
-	log.Println("端口分流== 正在查询 名字前缀为:", ikuai_common.NAME_PREFIX_IKB, "且包含 tag:", tag, "的端口分流规则")
+	i.L.Info("查询列表", "Querying port streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var data []ikuai_common.StreamIpPortData
 	data, err = i.ShowStreamIpPortByTagName("")
 	if err != nil {

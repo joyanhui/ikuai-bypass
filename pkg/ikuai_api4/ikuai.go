@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"log"
+	"ikuai-bypass/pkg/logger"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
@@ -16,6 +16,7 @@ const FUNC_NAME_ROUTE_OBJECT = "route_object"
 type IKuai struct {
 	baseurl string
 	client  *http.Client
+	L       *logger.Logger
 }
 
 type CallReq struct {
@@ -39,11 +40,11 @@ type CallRespData struct {
 // 4.0 路由对象专用结构 (兼容 IPv4/IPv6 分组)
 // Specific structures for 4.0 route_object (compatible with IPv4/IPv6 groups)
 type routeObject4 struct {
-	ID         int    `json:"id"`
-	GroupName  string `json:"group_name"`
-	Type       int    `json:"type"` // 0: IPv4, 1: IPv6
+	ID         int                 `json:"id"`
+	GroupName  string              `json:"group_name"`
+	Type       int                 `json:"type"`        // 0: IPv4, 1: IPv6
 	GroupValue []map[string]string `json:"group_value"` // 包含 "ip" 或 "ipv6" 键
-	Comment    string `json:"comment"`
+	Comment    string              `json:"comment"`
 }
 
 func md5String(v string) string {
@@ -54,11 +55,12 @@ func md5String(v string) string {
 }
 
 func NewIKuai(baseurl string) *IKuai {
-	cookieJar, err := cookiejar.New(nil)
-	if err != nil {
-		log.Fatalln(err)
+	cookieJar, _ := cookiejar.New(nil)
+	return &IKuai{
+		baseurl: baseurl,
+		client:  &http.Client{Jar: cookieJar, Timeout: time.Second * 10},
+		L:       logger.NewLogger("iKuaiAPI"),
 	}
-	return &IKuai{baseurl, &http.Client{Jar: cookieJar, Timeout: time.Second * 10}}
 }
 
 // Login 爱快 4.0 登录

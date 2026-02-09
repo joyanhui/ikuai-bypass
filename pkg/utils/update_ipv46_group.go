@@ -4,8 +4,8 @@ import (
 	"errors"
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/ikuai_common"
+	"ikuai-bypass/pkg/logger"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,8 +13,8 @@ import (
 )
 
 // UpdateIpGroup 更新ip分组
-func UpdateIpGroup(iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
-	log.Println("ip分组==  http.get ...", url)
+func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
+	logger.Info("资源下载", "http.get %s", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
 		return
@@ -28,40 +28,44 @@ func UpdateIpGroup(iKuai ikuai_common.IKuaiClient, name, url string) (err error)
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = RemoveIpv6AndRemoveEmptyLine(ips)
+	ips = RemoveIpv6AndRemoveEmptyLine(logger, ips)
 	ipGroups := Group(ips, 1000)
-	log.Println("ip分组获取新数据成功", name)
+	logger.Success("解析成功", "%s: obtained new data", name)
 	preIds, err := iKuai.GetIpGroup(name)
 	if err != nil {
-		log.Println("ip分组== 获取准备更新的IP分组列表失败：", name, err)
+		logger.Error("查询列表", "Failed to get IP group list for update: %s, error: %v", name, err)
 		return
 	} else {
-		log.Println("ip分组== 获取准备更新的IP分组列表成功", name, preIds)
+		logger.Info("查询成功", "%s: old group IDs found: %s", name, preIds)
 	}
-	err = iKuai.DelIpGroup(preIds)
-	if err == nil {
-		log.Println("ip分组== 删除旧的IP分组列表成功", name)
-	} else {
-		log.Println("ip分组== 删除旧的IP分组列表有错误", name, err)
-		return
+
+	if preIds != "" {
+		count := len(strings.Split(preIds, ","))
+		err = iKuai.DelIpGroup(preIds)
+		if err == nil {
+			logger.Success("清理旧规", "%s: cleared %d old IP groups", name, count)
+		} else {
+			logger.Error("清理失败", "%s: error clearing old IP group list: %v", name, err)
+			return
+		}
 	}
+
 	preIds = ""
 	for index, ig := range ipGroups {
-		log.Println("ip分组== ", index, " 正在添加 .... ")
+		logger.Info("正在添加", "[%d/%d] %s: adding...", index+1, len(ipGroups), name)
 		ipGroup := strings.Join(ig, ",")
 		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
-			log.Println("ip分组== ", index, "添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试 err:", err)
+			logger.Error("添加失败", "[%d/%d] %s: failed, retrying after %v seconds. error: %v", index+1, len(ipGroups), name, config.GlobalConfig.AddErrRetryWait, err)
 			time.Sleep(config.GlobalConfig.AddWait)
 		}
-
 	}
 	return
 }
 
 // UpdateIpv6Group 更新ipv6分组
-func UpdateIpv6Group(iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
-	log.Println("ipv6分组==  http.get ...", url)
+func UpdateIpv6Group(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
+	logger.Info("资源下载", "http.get %s", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
 		return
@@ -75,30 +79,35 @@ func UpdateIpv6Group(iKuai ikuai_common.IKuaiClient, name, url string) (err erro
 		return
 	}
 	ips := strings.Split(string(body), "\n")
-	ips = RemoveIpv4AndRemoveEmptyLine(ips)
+	ips = RemoveIpv4AndRemoveEmptyLine(logger, ips)
 	ipGroups := Group(ips, 1000)
-	log.Println("ipv6分组获取新数据成功", name)
+	logger.Success("解析成功", "%s: obtained new data", name)
 	preIds, err := iKuai.GetIpv6Group(name)
 	if err != nil {
-		log.Println("ipv6分组== 获取准备更新的IPv6分组列表失败：", name, err)
+		logger.Error("查询列表", "Failed to get IPv6 group list for update: %s, error: %v", name, err)
 		return
 	} else {
-		log.Println("ipv6分组== 获取准备更新的IPv6分组列表成功", name, preIds)
+		logger.Info("查询成功", "%s: old IPv6 group IDs found: %s", name, preIds)
 	}
-	err = iKuai.DelIpv6Group(preIds)
-	if err == nil {
-		log.Println("ipv6分组== 删除旧的IPv6分组列表成功", name, preIds)
-	} else {
-		log.Println("ipv6分组== 删除旧的IPv6分组列表有错误", name, err)
-		return
+
+	if preIds != "" {
+		count := len(strings.Split(preIds, ","))
+		err = iKuai.DelIpv6Group(preIds)
+		if err == nil {
+			logger.Success("清理旧规", "%s: cleared %d old IPv6 groups", name, count)
+		} else {
+			logger.Error("清理失败", "%s: error clearing old IPv6 group list: %v", name, err)
+			return
+		}
 	}
+
 	preIds = ""
 	for index, ig := range ipGroups {
-		log.Println("ipv6分组== ", index, " 正在添加 .... ")
+		logger.Info("正在添加", "[%d/%d] %s: adding...", index+1, len(ipGroups), name)
 		ipGroup := strings.Join(ig, ",")
 		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
-			log.Println("ipv6分组== ", index, "添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试 err:", err)
+			logger.Error("添加失败", "[%d/%d] %s: failed, retrying after %v seconds. error: %v", index+1, len(ipGroups), name, config.GlobalConfig.AddErrRetryWait, err)
 			time.Sleep(config.GlobalConfig.AddWait)
 		}
 	}

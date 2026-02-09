@@ -2,13 +2,13 @@ package main
 
 import (
 	"flag"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/core"
+	"ikuai-bypass/pkg/utils"
 	"ikuai-bypass/pkg/webui"
 
 	"github.com/robfig/cron/v3"
@@ -17,41 +17,41 @@ import (
 func main() {
 	flag.Parse()
 
-	log.Println("运行模式", *config.RunMode, "配置文件", *config.ConfPath)
+	utils.SysLog.Info("START:启动程序", "Run mode: %s, Config path: %s", *config.RunMode, *config.ConfPath)
 	err := config.Read(*config.ConfPath)
 	if err != nil {
-		log.Println("读取配置文件失败：", err)
+		utils.SysLog.Error("CONF:配置读取", "Failed to read configuration file: %v", err)
 		return
 	}
 	switch *config.RunMode { //运行模式选择
 	case "web":
-		log.Println("WebUI 模式 不做其他操作")
+		utils.SysLog.Info("MODE:运行模式", "WebUI mode - starting web service")
 		config.GlobalConfig.WebUI.Enable = true
 		webui.OnDemandStartUpWebUI()
 		return
 	case "cron":
-		log.Println("cron 模式,执行一次，然后进入定时执行模式")
+		utils.SysLog.Info("MODE:运行模式", "Cron mode - executing once then entering scheduled mode")
 		go webui.OnDemandStartUpWebUI()
 		MainUpdateEntrance() //马上执行一次
 	case "cronAft":
-		log.Println("cronAft 模式，暂时不执行，稍后定时执行")
+		utils.SysLog.Info("MODE:运行模式", "CronAft mode - scheduled execution only")
 		go webui.OnDemandStartUpWebUI()
 	case "nocron", "once", "1":
 		MainUpdateEntrance()
-		log.Println("once 模式 执行完毕自动退出")
+		utils.SysLog.Success("END:运行完毕", "Once mode execution completed, exiting...")
 		return
 	case "clean":
-		log.Println("清理模式")
+		utils.SysLog.Info("MODE:运行模式", "Clean mode")
 		if *config.CleanTag == "cleanAll" {
-			log.Println("清理所有 名字包含 IKB 的规则和分组（兼容旧备注配置）")
+			utils.SysLog.Info("CLEAN:清理范围", "Clearing all rules with prefix IKB (includes legacy notes)")
 		} else {
-			log.Println("清理 TagName 或名字为：", *config.CleanTag, "的规则和分组")
+			utils.SysLog.Info("CLEAN:清理范围", "Clearing rules with TagName or Name: %s", *config.CleanTag)
 		}
 		core.MainClean()
 		return
 
 	default:
-		log.Println("-r 参数错误")
+		utils.SysLog.Error("ERR:参数错误", "Invalid -r parameter: %s", *config.RunMode)
 		return
 	}
 	// 定时任务启动和检查  ================= start
@@ -59,14 +59,14 @@ func main() {
 		c := cron.New()
 		_, err = c.AddFunc(config.GlobalConfig.Cron, MainUpdateEntrance)
 		if err != nil {
-			log.Println("启动计划任务失败：", err)
+			utils.SysLog.Error("CRON:定时任务", "Failed to start scheduled task: %v", err)
 			return
 		} else {
-			log.Println("已启动计划任务", config.GlobalConfig.Cron)
+			utils.SysLog.Success("CRON:定时任务", "Scheduled task started: %s", config.GlobalConfig.Cron)
 		}
 		c.Start()
 	} else if *config.RunMode != "web" {
-		log.Println("Cron配置为空 自动退出")
+		utils.SysLog.Info("CRON:定时任务", "Cron configuration is empty, exiting...")
 		return
 	}
 
@@ -82,28 +82,24 @@ func main() {
 func MainUpdateEntrance() {
 	switch *config.IsAcIpgroup {
 	case "ispdomain":
-		log.Println("启动 ... 自定义isp和域名分流模式 模式")
+		utils.SysLog.Info("TASK:任务启动", "Starting ISP and Domain streaming mode")
 		core.MainUpdateIspRule()
 	case "ipgroup":
-		log.Println("启动 ... ip分组和下一条网关模式")
+		utils.SysLog.Info("TASK:任务启动", "Starting IP group and Next-hop gateway mode")
 		core.MainUpdateIpgroup()
 	case "ipv6group":
-		log.Println("启动 ... ipv6分组")
+		utils.SysLog.Info("TASK:任务启动", "Starting IPv6 group mode")
 		core.MainUpdateIpv6group()
 	case "ii":
-		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
-		log.Println("再 启动 ... ip分组和下一条网关模式")
+		utils.SysLog.Info("TASK:任务启动", "Starting hybrid mode: ISP/Domain + IP group")
 		core.MainUpdateIspRule()
 		core.MainUpdateIpgroup()
 	case "ip":
-		log.Println("先 启动 ...  ip分组和下一条网关模式")
-		log.Println("再 启动 ... ipv6分组")
+		utils.SysLog.Info("TASK:任务启动", "Starting hybrid mode: IPv4 group + IPv6 group")
 		core.MainUpdateIpgroup()
 		core.MainUpdateIpv6group()
 	case "iip":
-		log.Println("先 启动 ...  自定义isp和域名分流模式 模式")
-		log.Println("再 启动 ... ip分组和下一条网关模式")
-		log.Println("最后 启动 ... ipv6分组")
+		utils.SysLog.Info("TASK:任务启动", "Starting full hybrid mode: ISP/Domain + IPv4/v6 group")
 		core.MainUpdateIspRule()
 		core.MainUpdateIpgroup()
 		core.MainUpdateIpv6group()

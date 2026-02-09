@@ -3,14 +3,17 @@ package config
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"ikuai-bypass/pkg/logger"
+
 	"gopkg.in/yaml.v3"
 )
+
+var configLogger = logger.NewLogger("配置中心")
 
 var (
 	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
@@ -93,7 +96,7 @@ func Read(filename string) error {
 	// 检查每个 CustomIsp 的 Tag，如果不存在，则使用 Name
 	for i := range GlobalConfig.CustomIsp {
 		if GlobalConfig.CustomIsp[i].Tag == "" {
-			log.Println("运营商分流规则中配置中Tag为空,采用:", GlobalConfig.CustomIsp[i].Name)
+			configLogger.Info("默认参数", "Tag is empty for custom ISP, using name: %s", GlobalConfig.CustomIsp[i].Name)
 			GlobalConfig.CustomIsp[i].Tag = GlobalConfig.CustomIsp[i].Name
 		}
 	}
@@ -101,7 +104,7 @@ func Read(filename string) error {
 	// 检查每个 StreamDomain 的 Tag，如果不存在，则使用 Interface
 	for i := range GlobalConfig.StreamDomain {
 		if GlobalConfig.StreamDomain[i].Tag == "" {
-			log.Println("域名分流规则中中Tag为空,采用:", GlobalConfig.StreamDomain[i].Interface)
+			configLogger.Info("默认参数", "Tag is empty for domain streaming, using interface: %s", GlobalConfig.StreamDomain[i].Interface)
 			GlobalConfig.StreamDomain[i].Tag = GlobalConfig.StreamDomain[i].Interface
 		}
 	}

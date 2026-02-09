@@ -66,8 +66,11 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		dstAddrList = strings.Split(dstAddr, ",")
 	}
 
-	srcCustom, srcObject := CategorizeAddrs(srcAddrList)
-	dstCustom, dstObject := CategorizeAddrs(dstAddrList)
+	srcCustom, srcObjectNames := CategorizeAddrs(srcAddrList)
+	dstCustom, dstObjectNames := CategorizeAddrs(dstAddrList)
+
+	srcObjects := i.resolveIpGroupObjects(srcObjectNames)
+	dstObjects := i.resolveIpGroupObjects(dstObjectNames)
 
 	param := map[string]interface{}{
 		"enabled":    "yes",
@@ -81,11 +84,11 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		"protocol":   "tcp+udp",
 		"src_addr": map[string]interface{}{
 			"custom": srcCustom,
-			"object": srcObject,
+			"object": srcObjects,
 		},
 		"dst_addr": map[string]interface{}{
 			"custom": dstCustom,
-			"object": dstObject,
+			"object": dstObjects,
 		},
 		"src_port": map[string]interface{}{
 			"custom": []string{},

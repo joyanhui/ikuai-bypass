@@ -50,7 +50,8 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 		srcAddrList = strings.Split(srcAddr, ",")
 	}
 
-	srcCustom, srcObject := CategorizeAddrs(srcAddrList)
+	srcCustom, srcObjectNames := CategorizeAddrs(srcAddrList)
+	srcObjects := i.resolveIpGroupObjects(srcObjectNames)
 
 	// 使用序号作为 tagname 后缀，从 1 开始，防止 chunks 冲突
 	// Use sequence number starting from 1 as tagname suffix to avoid chunks conflicts
@@ -64,11 +65,11 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 		"interface": iface,
 		"src_addr": map[string]interface{}{
 			"custom": srcCustom,
-			"object": srcObject,
+			  "object": srcObjects,
 		},
 		"domain": map[string]interface{}{
 			"custom": domainList,
-			"object": []interface{}{},
+		     	"object": []interface{}{},
 		},
 		"comment": "",
 		"time": map[string]interface{}{

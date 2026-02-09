@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/logger"
 	"net/http"
 	"net/http/cookiejar"
@@ -47,6 +49,12 @@ type routeObject4 struct {
 	Comment    string              `json:"comment"`
 }
 
+type ipGroupObject4 struct {
+	Type   int    `json:"type"`
+	Gid    string `json:"gid"`
+	GpName string `json:"gp_name"`
+}
+
 func md5String(v string) string {
 	d := []byte(v)
 	m := md5.New()
@@ -61,6 +69,38 @@ func NewIKuai(baseurl string) *IKuai {
 		client:  &http.Client{Jar: cookieJar, Timeout: time.Second * 10},
 		L:       logger.NewLogger("API:iKuaiAPI"),
 	}
+}
+
+// resolveIpGroupObjects 根据名称列表解析为 iKuai 4.0 的 IP 分组对象
+// resolveIpGroupObjects resolves a list of names to iKuai 4.0 IP group objects
+func (i *IKuai) resolveIpGroupObjects(names []string) []ipGroupObject4 {
+	if len(names) == 0 {
+		return []ipGroupObject4{}
+	}
+
+	// 获取所有 IP 分组以获取其 ID
+	groups, err := i.ShowIpGroupByTagName("")
+	if err != nil {
+		i.L.Error("API:查询失败", "Failed to query IP groups for resolution: %v", err)
+		return []ipGroupObject4{}
+	}
+
+	nameMap := make(map[string]ikuai_common.IpGroupData)
+	for _, g := range groups {
+		nameMap[g.GroupName] = g
+	}
+
+	var result []ipGroupObject4
+	for _, name := range names {
+		if g, ok := nameMap[name]; ok {
+			result = append(result, ipGroupObject4{
+				Type:   0, // IPv4
+				Gid:    fmt.Sprintf("IPGP%d", g.ID),
+				GpName: g.GroupName,
+			})
+		}
+	}
+	return result
 }
 
 // Login 爱快 4.0 登录

@@ -1,4 +1,4 @@
-package ikuai_api
+package ikuai_api4
 
 import (
 	"crypto/md5"
@@ -25,10 +25,10 @@ type CallReq struct {
 }
 
 type CallResp struct {
-	ErrMsg string        `json:"ErrMsg"`
-	Result int           `json:"Result"`
-	RowID  int           `json:"RowId"`
-	Data   *CallRespData `json:"Data"`
+	Code    int           `json:"code"`
+	Message string        `json:"message"`
+	Results *CallRespData `json:"results"`
+	RowID   int           `json:"rowid"`
 }
 
 type CallRespData struct {
@@ -51,7 +51,8 @@ func NewIKuai(baseurl string) *IKuai {
 	return &IKuai{baseurl, &http.Client{Jar: cookieJar, Timeout: time.Second * 10}}
 }
 
-// https://github.com/joyanhui/ikuai-bypass/issues/55 疑似有bug但是无法复现
+// Login 爱快 4.0 登录
+// iKuai 4.0 login
 func (i *IKuai) Login(username, password string) error {
 	passwd := md5String(password)
 	pass := base64.StdEncoding.EncodeToString([]byte("salt_11" + password))
@@ -66,8 +67,8 @@ func (i *IKuai) Login(username, password string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Result != 10000 {
-		return errors.New(resp.ErrMsg)
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
 	}
 	return nil
 }

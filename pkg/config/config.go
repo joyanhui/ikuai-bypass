@@ -21,10 +21,12 @@ var (
 	IkuaiLoginInfo             = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
 	DelOldRule                 = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
 	IsIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加")
+	IkuaiVersion               = flag.String("ikuaiVersion", "3", "爱快 API 版本 (3 或 4)")
 )
 
 type Config struct {
 	IkuaiURL        string        `yaml:"ikuai-url" json:"ikuai-url"`
+	IkuaiVersion    string        `yaml:"ikuai-version" json:"ikuai-version"`
 	Username        string        `yaml:"username" json:"username"`
 	Password        string        `yaml:"password" json:"password"`
 	Cron            string        `yaml:"cron" json:"cron"`
@@ -113,6 +115,7 @@ func Read(filename string) error {
 // TopLevelComments 顶级字段注释映射
 var TopLevelComments = map[string]string{
 	"ikuai-url":       "爱快控制台地址，结尾不要加 \"/\"",
+	"ikuai-version":   "爱快 API 版本，默认 3, 如果是 4.0 以上版本建议尝试设置为 4",
 	"username":        "爱快登陆用户名",
 	"password":        "爱快登陆密码",
 	"cron":            "更新周期cron表达式，例如 0 7 * * *",

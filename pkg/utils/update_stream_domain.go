@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 	"ikuai-bypass/pkg/config"
-	"ikuai-bypass/pkg/ikuai_api"
+	"ikuai-bypass/pkg/ikuai_common"
 	"io"
 	"log"
 	"net/http"
@@ -12,7 +12,7 @@ import (
 )
 
 // UpdateStreamDomain 更新域名分流规则
-func UpdateStreamDomain(iKuai *ikuai_api.IKuai, iface, tag, srcAddrIpGroup, srcAddr, url string) (err error) {
+func UpdateStreamDomain(iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGroup, srcAddr, url string) (err error) {
 	log.Println("域名分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {

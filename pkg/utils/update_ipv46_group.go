@@ -51,7 +51,7 @@ func UpdateIpGroup(iKuai ikuai_common.IKuaiClient, name, url string) (err error)
 		ipGroup := strings.Join(ig, ",")
 		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
-			log.Println("ip分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			log.Println("ip分组== ", index, "添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试 err:", err)
 			time.Sleep(config.GlobalConfig.AddWait)
 		}
 
@@ -98,7 +98,7 @@ func UpdateIpv6Group(iKuai ikuai_common.IKuaiClient, name, url string) (err erro
 		ipGroup := strings.Join(ig, ",")
 		err := iKuai.AddIpv6Group(name+"_"+strconv.Itoa(index), ipGroup)
 		if err != nil {
-			log.Println("ipv6分组== ", index, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			log.Println("ipv6分组== ", index, "添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试 err:", err)
 			time.Sleep(config.GlobalConfig.AddWait)
 		}
 	}

@@ -61,7 +61,7 @@ stream-ipport: # 端口分流 (下一跳网关/外网线路)
     mode: 0 # 负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式
     ifaceband: 0 # 线路绑定：0-不勾选，1-勾选
 webui: # WebUI 管理服务设置
-  port: "19000" # WebUI 服务端口
+  port: "19001" # WebUI 服务端口
   user: admin # WebUI 用户名 (留空禁用认证)
   pass: admin888 # WebUI 密码
   enable: true # 是否启用 WebUI 服务

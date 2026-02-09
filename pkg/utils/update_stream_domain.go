@@ -71,11 +71,11 @@ func UpdateStreamDomain(iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGro
 		domain := strings.Join(d, ",")
 		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain, index)
 		if err != nil {
-			log.Println("域名分流==  ", index+1, "/", len(domainGroup), iface, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			log.Println("域名分流==  ", index+1, "/", len(domainGroup), iface, tag, "添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试 err:", err)
 			time.Sleep(config.GlobalConfig.AddErrRetryWait)
 			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain, index)
 			if err != nil {
-				log.Println("域名分流=  ", index+1, "/", len(domainGroup), iface, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
+				log.Println("域名分流=  ", index+1, "/", len(domainGroup), iface, tag, "重试失败，已经重试过一次，所以跳过此次操作")
 				break
 			}
 		} else {

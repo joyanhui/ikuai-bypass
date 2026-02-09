@@ -63,7 +63,7 @@ func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag 
 
 	err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
 	if err != nil {
-		log.Println("ip端口分流==  添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+		log.Println("ip端口分流==  添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试  err:", err)
 		time.Sleep(config.GlobalConfig.AddErrRetryWait)
 	}
 	return

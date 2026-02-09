@@ -43,11 +43,15 @@ qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm 
 
 
 
- qemu-system-x86_64 -m 3000  androidImage.img \
-    -netdev user,id=net0 \
-    -device virtio-net-pci,netdev=net0 \
-    -enable-kvm \
-    -vga std
+qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm \
+    -drive file=/home/y/kvm/ikuai.qcow2,if=virtio \
+    -drive file=/home/y/Downloads/iKuai8_x64_4.0.0_Build202512241218.iso,index=1,media=cdrom \
+    -device usb-tablet -device VGA,vgamem_mb=256 -monitor stdio \
+    -nic tap,ifname=tap0,script=no,downscript=no,model=e1000,mac=52:54:00:11:11:11 \
+    -nic user,model=e1000,mac=52:54:00:22:22:22 \
+    -nic user,model=e1000,mac=52:54:00:33:33:33 \
+    -nic user,model=e1000,mac=52:54:00:44:44:44
+
 
 
 

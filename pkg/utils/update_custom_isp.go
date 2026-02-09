@@ -50,11 +50,11 @@ func UpdateCustomIsp(iKuai ikuai_common.IKuaiClient, name string, tag string, ur
 		ipGroup := strings.Join(ig, ",")
 		err = iKuai.AddCustomIsp(name, tag, ipGroup)
 		if err != nil {
-			log.Println("运营商/IP分流==  ", name, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			log.Println("运营商/IP分流==  ", name, tag, "添加失败，", config.GlobalConfig.AddErrRetryWait, "秒后重试 err:", err)
 			time.Sleep(config.GlobalConfig.AddErrRetryWait)
 			err = iKuai.AddCustomIsp(name, tag, ipGroup)
 			if err != nil {
-				log.Println("运营商/IP分流==  ", name, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
+				log.Println("运营商/IP分流==  ", name, tag, "重试失败，已经重试过一次，所以跳过此次操作")
 				break
 			}
 		}

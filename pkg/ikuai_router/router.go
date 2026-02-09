@@ -23,7 +23,7 @@ type router struct {
 func GetGateway() (gateway string, err error) {
 	newRoute, err := GetRouteInfo()
 	if err != nil {
-		err = errors.New("找不到默认网关")
+		err = errors.New("default gateway not found")
 		return
 	}
 
@@ -33,6 +33,6 @@ func GetGateway() (gateway string, err error) {
 			return
 		}
 	}
-	err = errors.New("找不到默认网关")
+	err = errors.New("default gateway not found")
 	return
 }

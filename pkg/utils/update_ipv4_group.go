@@ -7,13 +7,12 @@ import (
 	"ikuai-bypass/pkg/logger"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 )
 
 // UpdateIpGroup 更新ip分组
-func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name, url string) (err error) {
+func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, tag, url string) (err error) {
 	logger.Info("HTTP:资源下载", "http.get %s", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -30,34 +29,39 @@ func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name, 
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv6AndRemoveEmptyLine(logger, ips)
 	ipGroups := Group(ips, 1000)
-	logger.Success("PARSE:解析成功", "%s: obtained new data", name)
-	preIds, err := iKuai.GetIpGroup(name)
+	logger.Success("PARSE:解析成功", "%s: obtained new data", tag)
+	preIds, err := iKuai.GetIpGroup(tag)
 	if err != nil {
-		logger.Error("QUERY:查询列表", "Failed to get IP group list for update: %s, error: %v", name, err)
+		logger.Error("QUERY:查询列表", "Failed to get IP group list for update: %s, error: %v", tag, err)
 		return
 	} else {
-		logger.Info("QUERY:查询成功", "%s: old group IDs found: %s", name, preIds)
+		logger.Info("QUERY:查询成功", "%s: old group IDs found: %s", tag, preIds)
 	}
 
 	if preIds != "" {
 		count := len(strings.Split(preIds, ","))
 		err = iKuai.DelIpGroup(preIds)
 		if err == nil {
-			logger.Success("CLEAN:清理旧规", "%s: cleared %d old IP groups", name, count)
+			logger.Success("CLEAN:清理旧规", "%s: cleared %d old IP groups", tag, count)
 		} else {
-			logger.Error("CLEAN:清理失败", "%s: error clearing old IP group list: %v", name, err)
+			logger.Error("CLEAN:清理失败", "%s: error clearing old IP group list: %v", tag, err)
 			return
 		}
 	}
 
 	preIds = ""
-	for index, ig := range ipGroups {
-		logger.Info("ADD:正在添加", "[%d/%d] %s: adding...", index+1, len(ipGroups), name)
+	for i, ig := range ipGroups {
+		logger.Info("ADD:正在添加", "[%d/%d] %s: adding...", i+1, len(ipGroups), tag)
 		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpGroup(name+"_"+strconv.Itoa(index), ipGroup)
+		err := iKuai.AddIpGroup(tag, ipGroup, i)
 		if err != nil {
-			logger.Error("ADD:添加失败", "[%d/%d] %s: failed, retrying after %v seconds. error: %v", index+1, len(ipGroups), name, config.GlobalConfig.AddErrRetryWait, err)
+			logger.Error("ADD:添加失败", "[%d/%d] %s: failed, retrying after %v seconds. error: %v", i+1, len(ipGroups), tag, config.GlobalConfig.AddErrRetryWait, err)
 			time.Sleep(config.GlobalConfig.AddWait)
+			err = iKuai.AddIpGroup(tag, ipGroup, i)
+			if err != nil {
+				logger.Error("ADD:重试失败", "[%d/%d] %s: retry failed, skipping this operation", i+1, len(ipGroups), tag)
+				break
+			}
 		}
 	}
 	return

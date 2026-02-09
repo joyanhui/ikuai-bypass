@@ -68,7 +68,7 @@ type IKuaiClient interface {
 	Login(username, password string) error
 
 	ShowCustomIspByTagName(tagName string) ([]CustomIspData, error)
-	AddCustomIsp(name, tag, ipgroup string) error
+	AddCustomIsp(tag, ipgroup string, index int) error
 	DelCustomIsp(id string) error
 	GetCustomIspAll(tag string) (string, error)
 	DelCustomIspFromPreIds(preIds string) error
@@ -83,7 +83,7 @@ type IKuaiClient interface {
 
 	ShowIpGroupByTagName(tagName string) ([]IpGroupData, error)
 	ShowIpGroupByName(name string) ([]IpGroupData, error)
-	AddIpGroup(groupName, addrPool string) error
+	AddIpGroup(tag, addrPool string, index int) error
 	DelIpGroup(id string) error
 	GetIpGroup(tag string) (string, error)
 	DelIKuaiBypassIpGroup(cleanTag string) error
@@ -91,14 +91,14 @@ type IKuaiClient interface {
 
 	ShowIpv6GroupByTagName(tagName string) ([]Ipv6GroupData, error)
 	ShowIpv6GroupByName(name string) ([]Ipv6GroupData, error)
-	AddIpv6Group(groupName, addrPool string) error
+	AddIpv6Group(tag, addrPool string, index int) error
 	DelIpv6Group(id string) error
 	GetIpv6Group(tag string) (string, error)
 	DelIKuaiBypassIpv6Group(cleanTag string) error
 	GetAllIKuaiBypassIpv6GroupNamesByName(name string) ([]string, error)
 
 	ShowDomainGroupByTagName(tagName string) ([]DomainGroupData, error)
-	AddDomainGroup(groupName, domains string) error
+	AddDomainGroup(tag, domains string, index int) error
 	DelDomainGroup(id string) error
 	GetDomainGroup(tag string) (string, error)
 	DelIKuaiBypassDomainGroup(cleanTag string) error

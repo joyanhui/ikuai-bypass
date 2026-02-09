@@ -42,7 +42,7 @@ func (i *IKuai) ShowCustomIspByTagName(tagName string) (result []ikuai_common.Cu
 	return
 }
 
-func (i *IKuai) AddCustomIsp(name, tag, ipgroup string) error {
+func (i *IKuai) AddCustomIsp(tag, ipgroup string, index int) error {
 	// https://github.com/joyanhui/ikuai-bypass/issues/24
 	// 去掉末尾空行、空格
 	ipgroup = strings.TrimSpace(ipgroup)
@@ -51,9 +51,9 @@ func (i *IKuai) AddCustomIsp(name, tag, ipgroup string) error {
 		Ipgroup string `json:"ipgroup"`
 		Comment string `json:"comment"`
 	}{
-		Name:    buildTagName(name),
+		Name:    buildIndexedTagName(tag, index),
 		Ipgroup: ipgroup,
-		Comment: "",
+		Comment: tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_CUSTOM_ISP,
@@ -105,6 +105,7 @@ func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
 	}
 	var ids []string
 	for _, d := range data {
+		// 优先名字匹配，兼容序号
 		if matchTagNameFilter(tag, d.Name, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}

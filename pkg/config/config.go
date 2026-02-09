@@ -34,9 +34,8 @@ type Config struct {
 	AddWait         time.Duration `yaml:"AddWait" json:"AddWait"`
 	GithubProxy     string        `yaml:"github-proxy" json:"github-proxy"` // Github代理加速地址
 	CustomIsp       []struct {
-		Name string `yaml:"name" json:"name"`
-		URL  string `yaml:"url" json:"url"`
-		Tag  string `yaml:"tag" json:"tag"`
+		Tag string `yaml:"tag" json:"tag"`
+		URL string `yaml:"url" json:"url"`
 	} `yaml:"custom-isp" json:"custom-isp"`
 	StreamDomain []struct {
 		Interface         string `yaml:"interface" json:"interface"`
@@ -46,12 +45,12 @@ type Config struct {
 		Tag               string `yaml:"tag" json:"tag"`
 	} `yaml:"stream-domain" json:"stream-domain"`
 	IpGroup []struct {
-		Name string `yaml:"name" json:"name"`
-		URL  string `yaml:"url" json:"url"`
+		Tag string `yaml:"tag" json:"tag"`
+		URL string `yaml:"url" json:"url"`
 	} `yaml:"ip-group" json:"ip-group"`
 	Ipv6Group []struct {
-		Name string `yaml:"name" json:"name"`
-		URL  string `yaml:"url" json:"url"`
+		Tag string `yaml:"tag" json:"tag"`
+		URL string `yaml:"url" json:"url"`
 	} `yaml:"ipv6-group" json:"ipv6-group"`
 	StreamIpPort []struct {
 		OptTagName        string `yaml:"opt-tagname" json:"opt-tagname"`
@@ -83,22 +82,42 @@ func Read(filename string) error {
 	if err != nil {
 		return err
 	}
+
+	// 首先解析为原始 map 以便检测旧字段 'name'
+	var raw map[string]interface{}
+	_ = yaml.Unmarshal(buf, &raw)
+
 	err = yaml.Unmarshal(buf, &GlobalConfig)
 	if err != nil {
 		return fmt.Errorf("in file %q: %v", filename, err)
 	}
 
+	// 检查并提示用户从 'name' 迁移到 'tag'
+	migrationNag := func(section string, items []interface{}) {
+		for _, item := range items {
+			if m, ok := item.(map[string]interface{}); ok {
+				if _, hasName := m["name"]; hasName {
+					if _, hasTag := m["tag"]; !hasTag {
+						configLogger.Warn("CONF:迁移提示", "Section [%s] 发现过时的 'name' 字段, 请修改配置文件统一使用 'tag' 字段", section)
+					}
+				}
+			}
+		}
+	}
+
+	if customIsp, ok := raw["custom-isp"].([]interface{}); ok {
+		migrationNag("custom-isp", customIsp)
+	}
+	if ipGroup, ok := raw["ip-group"].([]interface{}); ok {
+		migrationNag("ip-group", ipGroup)
+	}
+	if ipv6Group, ok := raw["ipv6-group"].([]interface{}); ok {
+		migrationNag("ipv6-group", ipv6Group)
+	}
+
 	// 设置默认 CDN 前缀
 	if GlobalConfig.WebUI.CDNPrefix == "" {
 		GlobalConfig.WebUI.CDNPrefix = "https://cdn.jsdelivr.net/npm"
-	}
-
-	// 检查每个 CustomIsp 的 Tag，如果不存在，则使用 Name
-	for i := range GlobalConfig.CustomIsp {
-		if GlobalConfig.CustomIsp[i].Tag == "" {
-			configLogger.Info("CONF:默认参数", "Tag is empty for custom ISP, using name: %s", GlobalConfig.CustomIsp[i].Name)
-			GlobalConfig.CustomIsp[i].Tag = GlobalConfig.CustomIsp[i].Name
-		}
 	}
 
 	// 检查每个 StreamDomain 的 Tag，如果不存在，则使用 Interface

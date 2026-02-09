@@ -8,15 +8,12 @@ AddErrRetryWait: 10s # 自动重试时间间隔 (10s, 120s)
 AddWait: 1s # 规则添加后的反应等待时间
 github-proxy: "https://gh-proxy.com/" # Github代理加速地址，例如 https://gh-proxy.com/ (留空不使用)
 custom-isp: # 自定义运营商分流 (IP分流)
-  - name: 国内IP列表
+  - tag: 国内IP列表
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
-    tag: ipcn # 规则TagName关键词（系统自动添加前缀 IKB）
-  - name: telegram
+  - tag: telegram
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
-    tag: iptg # 规则TagName关键词（系统自动添加前缀 IKB）
-  - name: google
+  - tag: google
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt
-    tag: ipgoogle # 规则TagName关键词（系统自动添加前缀 IKB）
 stream-domain: # 域名分流 (优先级高于IP分流)
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
@@ -34,12 +31,12 @@ stream-domain: # 域名分流 (优先级高于IP分流)
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
     tag: private_direct # 规则TagName关键词（系统自动添加前缀 IKB）
 ip-group: # IP分组 (与端口分流配合使用)
-  - name: 国内
+  - tag: 国内
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
-  - name: Telegram
+  - tag: Telegram
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
 ipv6-group: # IPv6分组 (与端口分流配合使用)
-  - name: 国内v6
+  - tag: 国内v6
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
 stream-ipport: # 端口分流 (下一跳网关/外网线路)
   - type: "0" # 分流方式：0-外网线路，1-下一跳网关
@@ -48,7 +45,7 @@ stream-ipport: # 端口分流 (下一跳网关/外网线路)
     nexthop: "" # 下一跳网关地址
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
-    ip-group: 国内 # 关联的IP分组名称用于匹配爱快中的IP分组 多个可以用逗号分割)
+    ip-group: 国内 # 关联的IP分组名称用于匹配爱快中的IP分组 多个可以用逗号分隔)
     mode: 0 # 负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式
     ifaceband: 0 # 线路绑定：0-不勾选，1-勾选
   - type: "1" # 分流方式：0-外网线路，1-下一跳网关
@@ -57,11 +54,11 @@ stream-ipport: # 端口分流 (下一跳网关/外网线路)
     nexthop: 192.168.1.2 # 下一跳网关地址
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
-    ip-group: "Telegram" # 关联的IP分组名称用于匹配爱快中的IP分组 多个可以用逗号分割)
+    ip-group: "Telegram" # 关联的IP分组名称用于匹配爱快中的IP分组 多个可以用逗号分隔)
     mode: 0 # 负载模式：0-新建连接数, 1-源IP, 2-源IP+源端口, 3-源IP+目的IP, 4-源IP+目的IP+目的端口, 5-主备模式
     ifaceband: 0 # 线路绑定：0-不勾选，1-勾选
 webui: # WebUI 管理服务设置
-  port: "19000" # WebUI 服务端口
+  port: "19001" # WebUI 服务端口
   user: admin # WebUI 用户名 (留空禁用认证)
   pass: admin888 # WebUI 密码
   enable: true # 是否启用 WebUI 服务

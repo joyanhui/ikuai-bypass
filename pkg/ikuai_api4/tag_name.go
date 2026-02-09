@@ -49,11 +49,12 @@ func buildTagNameCandidates(raw string) []string {
 		candidateSet[v] = struct{}{}
 	}
 
-	// 强制要求候选词必须包含 IKB 相关前缀，严禁匹配不带前缀的原始名称
-	// candidates must contain IKB related prefixes, matching raw names without prefixes is strictly prohibited
-	token := sanitizeTagName(raw)
-	if token != "" {
-		add(ikuai_common.NAME_PREFIX_IKB + token)
+	// 支持逗号分隔
+	for _, part := range strings.Split(raw, ",") {
+		token := sanitizeTagName(part)
+		if token != "" {
+			add(ikuai_common.NAME_PREFIX_IKB + token)
+		}
 	}
 
 	res := make([]string, 0, len(candidateSet))
@@ -68,11 +69,16 @@ func matchTagNameFilter(filterTagName, currentName, legacyComment string) bool {
 	if strings.TrimSpace(filterTagName) == "" {
 		return true
 	}
+	// 强制校验 currentName 是否以 IKB 开头，除非它是旧版备注匹配
+	isManaged := strings.HasPrefix(currentName, ikuai_common.NAME_PREFIX_IKB)
+
 	for _, c := range buildTagNameCandidates(filterTagName) {
-		if currentName == c || strings.Contains(currentName, c) {
+		// 如果名字以候选词开头（处理序号），且是受管规则
+		if isManaged && strings.HasPrefix(currentName, c) {
 			return true
 		}
-		if legacyComment == c || strings.Contains(legacyComment, c) {
+		// 兼容性：包含匹配（慎用，主要用于备注）
+		if legacyComment != "" && strings.Contains(legacyComment, c) {
 			return true
 		}
 	}

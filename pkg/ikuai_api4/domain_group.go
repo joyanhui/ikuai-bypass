@@ -50,7 +50,7 @@ func (i *IKuai) ShowDomainGroupByTagName(tagName string) (result []ikuai_common.
 	return
 }
 
-func (i *IKuai) AddDomainGroup(groupName, domains string) error {
+func (i *IKuai) AddDomainGroup(tag, domains string, index int) error {
 	domains = strings.TrimSpace(domains)
 	domainList := strings.Split(domains, ",")
 	groupValue := make([]map[string]string, 0)
@@ -65,10 +65,10 @@ func (i *IKuai) AddDomainGroup(groupName, domains string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  buildTagName(groupName),
+		"group_name":  buildIndexedTagName(tag, index),
 		"type":        6, // Domain Group
 		"group_value": groupValue,
-		"comment":     "",
+		"comment":     tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

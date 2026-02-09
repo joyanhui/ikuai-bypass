@@ -17,11 +17,11 @@ func MainUpdateIpgroup() {
 	streamLogger := logger.NewLogger("STREAM:端口分流")
 
 	for _, ipGroup := range config.GlobalConfig.IpGroup {
-		err := utils.UpdateIpGroup(ipLogger, iKuai, ipGroup.Name, ipGroup.URL)
+		err := utils.UpdateIpGroup(ipLogger, iKuai, ipGroup.Tag, ipGroup.URL)
 		if err != nil {
-			ipLogger.Error("UPDATE:更新失败", "Failed to add IP group '%s@%s': %v", ipGroup.Name, ipGroup.URL, err)
+			ipLogger.Error("UPDATE:更新失败", "Failed to add IP group '%s@%s': %v", ipGroup.Tag, ipGroup.URL, err)
 		} else {
-			ipLogger.Success("UPDATE:更新成功", "Successfully updated IP group '%s@%s'", ipGroup.Name, ipGroup.URL)
+			ipLogger.Success("UPDATE:更新成功", "Successfully updated IP group '%s@%s'", ipGroup.Tag, ipGroup.URL)
 		}
 	}
 
@@ -81,11 +81,11 @@ func MainUpdateIpv6group() {
 	}
 	ipv6Logger := logger.NewLogger("IPV6:IPv6分组")
 	for _, ipv6Group := range config.GlobalConfig.Ipv6Group {
-		err := utils.UpdateIpv6Group(ipv6Logger, iKuai, ipv6Group.Name, ipv6Group.URL)
+		err := utils.UpdateIpv6Group(ipv6Logger, iKuai, ipv6Group.Tag, ipv6Group.URL)
 		if err != nil {
-			ipv6Logger.Error("UPDATE:更新失败", "Failed to add IPv6 group '%s@%s': %v", ipv6Group.Name, ipv6Group.URL, err)
+			ipv6Logger.Error("UPDATE:更新失败", "Failed to add IPv6 group '%s@%s': %v", ipv6Group.Tag, ipv6Group.URL, err)
 		} else {
-			ipv6Logger.Success("UPDATE:更新成功", "Successfully updated IPv6 group '%s@%s'", ipv6Group.Name, ipv6Group.URL)
+			ipv6Logger.Success("UPDATE:更新成功", "Successfully updated IPv6 group '%s@%s'", ipv6Group.Tag, ipv6Group.URL)
 		}
 	}
 }

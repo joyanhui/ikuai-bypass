@@ -451,15 +451,11 @@
                                     <div class="space-y-3">
                                         <template x-for="(item, index) in config.customIsp" :key="index"
                                             ><div class="grid grid-cols-1 md:grid-cols-12 gap-3 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border dark:border-gray-700 shadow-sm">
-                                                <div class="md:col-span-3">
-                                                    <input type="text" x-model="item.name" placeholder="运营商名称" class="w-full text-xs bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg p-2 dark:text-white" />
+                                                <div class="md:col-span-4">
+                                                    <input type="text" x-model="item.tag" placeholder="Tag (支持中文)" class="w-full text-xs bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg p-2 dark:text-white" />
                                                 </div>
-                                                <div class="md:col-span-6">
+                                                <div class="md:col-span-7">
                                                     <input type="text" x-model="item.url" placeholder="IP订阅 URL" class="w-full text-xs bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg p-2 dark:text-white" />
-                                                </div>
-                                                <div class="md:col-span-2">
-                                                    <input type="text" x-model="item.tag" placeholder="TagName关键词" class="w-full text-xs bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-lg p-2 dark:text-white" />
-                                                    <p class="mt-1 text-[8px] text-gray-400" x-text="commentMaps.item['tag']"></p>
                                                 </div>
                                                 <div class="md:col-span-1 text-right">
                                                     <button type="button" @click="removeItem('customIsp', index)" class="text-red-500 p-2">
@@ -483,7 +479,7 @@
                                         <div class="space-y-2">
                                             <template x-for="(item, index) in config.ipGroup" :key="index"
                                                 ><div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl border dark:border-gray-700 flex gap-2 items-center shadow-sm">
-                                                    <input type="text" x-model="item.name" placeholder="分组名" class="w-24 text-[10px] font-bold bg-white dark:bg-gray-800 border dark:border-gray-600 rounded px-2 py-1.5 dark:text-white shadow-inner" /><input
+                                                    <input type="text" x-model="item.tag" placeholder="Tag" class="w-24 text-[10px] font-bold bg-white dark:bg-gray-800 border dark:border-gray-600 rounded px-2 py-1.5 dark:text-white shadow-inner" /><input
                                                         type="text"
                                                         x-model="item.url"
                                                         placeholder="URL"
@@ -506,7 +502,7 @@
                                         <div class="space-y-2">
                                             <template x-for="(item, index) in config.ipv6Group" :key="index"
                                                 ><div class="bg-gray-50 dark:bg-gray-900/50 p-2 rounded-xl border dark:border-gray-700 flex gap-2 items-center shadow-sm">
-                                                    <input type="text" x-model="item.name" placeholder="分组名" class="w-24 text-[10px] font-bold bg-white dark:bg-gray-800 border dark:border-gray-600 rounded px-2 py-1.5 dark:text-white shadow-inner" /><input
+                                                    <input type="text" x-model="item.tag" placeholder="Tag" class="w-24 text-[10px] font-bold bg-white dark:bg-gray-800 border dark:border-gray-600 rounded px-2 py-1.5 dark:text-white shadow-inner" /><input
                                                         type="text"
                                                         x-model="item.url"
                                                         placeholder="URL"
@@ -855,9 +851,8 @@
                                 };
                             }
                             this.config.customIsp = (data["custom-isp"] || []).map((i) => ({
-                                name: i.name,
-                                url: i.url,
                                 tag: i.tag,
+                                url: i.url,
                             }));
                             if (data.streamDomain) {
                                 this.config.streamDomain = data["stream-domain"].map((i) => ({
@@ -868,8 +863,8 @@
                                     tag: i.tag,
                                 }));
                             }
-                            this.config.ipGroup = (data["ip-group"] || []).map((i) => ({ name: i.name, url: i.url }));
-                            this.config.ipv6Group = (data["ipv6-group"] || []).map((i) => ({ name: i.name, url: i.url }));
+                            this.config.ipGroup = (data["ip-group"] || []).map((i) => ({ tag: i.tag, url: i.url }));
+                            this.config.ipv6Group = (data["ipv6-group"] || []).map((i) => ({ tag: i.tag, url: i.url }));
                             if (data["stream-ipport"]) {
                                 this.config.streamIpPort = data["stream-ipport"].map((i) => ({
                                     optTagName: i["opt-tagname"] || "",
@@ -912,7 +907,10 @@
                                     pass: this.config.webui.pass,
                                     "cdn-prefix": this.config.webui.cdnPrefix,
                                 },
-                                 "custom-isp": this.config.customIsp,
+                                 "custom-isp": this.config.customIsp.map((i) => ({
+                                    tag: i.tag,
+                                    url: i.url,
+                                })),
                                 "stream-domain": this.config.streamDomain.map((i) => ({
                                     interface: i.interface,
                                     "src-addr": i.srcAddr,
@@ -920,8 +918,14 @@
                                     url: i.url,
                                     tag: i.tag,
                                 })),
-                                "ip-group": this.config.ipGroup,
-                                "ipv6-group": this.config.ipv6Group,
+                                "ip-group": this.config.ipGroup.map((i) => ({
+                                    tag: i.tag,
+                                    url: i.url,
+                                })),
+                                "ipv6-group": this.config.ipv6Group.map((i) => ({
+                                    tag: i.tag,
+                                    url: i.url,
+                                })),
                                 "stream-ipport": this.config.streamIpPort.map((i) => ({
                                     "opt-tagname": i.optTagName,
                                     type: String(i.type),
@@ -984,9 +988,8 @@
                                     };
                                 }
                                 this.config.customIsp = (doc["custom-isp"] || []).map((i) => ({
-                                    name: i.name,
-                                    url: i.url,
                                     tag: i.tag,
+                                    url: i.url,
                                 }));
                                  this.config.streamDomain = (doc["stream-domain"] || []).map((i) => ({
                                     interface: i.interface,
@@ -995,8 +998,8 @@
                                     url: i.url,
                                     tag: i.tag,
                                 }));
-                                this.config.ipGroup = (doc["ip-group"] || []).map((i) => ({ name: i.name, url: i.url }));
-                                this.config.ipv6Group = (doc["ipv6-group"] || []).map((i) => ({ name: i.name, url: i.url }));
+                                this.config.ipGroup = (doc["ip-group"] || []).map((i) => ({ tag: i.tag, url: i.url }));
+                                this.config.ipv6Group = (doc["ipv6-group"] || []).map((i) => ({ tag: i.tag, url: i.url }));
                                 this.config.streamIpPort = (doc["stream-ipport"] || []).map((i) => ({
                                     optTagName: i["opt-tagname"] || "",
                                     type: String(i.type),
@@ -1021,9 +1024,9 @@
 
                     addItem(key) {
                         const ts = {
-                            customIsp: { name: "", url: "", tag: "" },
-                            ipGroup: { name: "", url: "" },
-                            ipv6Group: { name: "", url: "" },
+                            customIsp: { tag: "", url: "" },
+                            ipGroup: { tag: "", url: "" },
+                            ipv6Group: { tag: "", url: "" },
                             streamDomain: {
                                 interface: "wan1",
                                 srcAddr: "",
@@ -1111,7 +1114,11 @@
                             pass: this.config.webui.pass,
                             "cdn-prefix": this.config.webui.cdnPrefix,
                         };
-                        if (this.config.customIsp.length) c["custom-isp"] = this.config.customIsp;
+                        if (this.config.customIsp.length)
+                            c["custom-isp"] = this.config.customIsp.map((i) => ({
+                                tag: i.tag,
+                                url: i.url,
+                            }));
                         if (this.config.streamDomain.length)
                             c["stream-domain"] = this.config.streamDomain.map((x) => ({
                                 interface: x.interface,
@@ -1120,8 +1127,16 @@
                                 url: x.url,
                                 tag: x.tag,
                             }));
-                        if (this.config.ipGroup.length) c["ip-group"] = this.config.ipGroup;
-                        if (this.config.ipv6Group.length) c["ipv6-group"] = this.config.ipv6Group;
+                        if (this.config.ipGroup.length)
+                            c["ip-group"] = this.config.ipGroup.map((i) => ({
+                                tag: i.tag,
+                                url: i.url,
+                            }));
+                        if (this.config.ipv6Group.length)
+                            c["ipv6-group"] = this.config.ipv6Group.map((i) => ({
+                                tag: i.tag,
+                                url: i.url,
+                            }));
                         if (this.config.streamIpPort.length)
                             c["stream-ipport"] = this.config.streamIpPort.map((i) => ({
                                 "opt-tagname": i.optTagName,

@@ -93,7 +93,7 @@ func (i *IKuai) ShowIpGroupByName(name string) (result []ikuai_common.IpGroupDat
 	return
 }
 
-func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
+func (i *IKuai) AddIpGroup(tag, addrPool string, index int) error {
 	addrPool = strings.TrimSpace(addrPool)
 	ips := strings.Split(addrPool, ",")
 	groupValue := make([]map[string]string, 0)
@@ -108,10 +108,10 @@ func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  buildTagName(groupName),
+		"group_name":  buildIndexedTagName(tag, index),
 		"type":        0, // IPv4
 		"group_value": groupValue,
-		"comment":     "",
+		"comment":     tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

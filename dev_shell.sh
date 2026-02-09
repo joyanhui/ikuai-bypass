@@ -79,6 +79,7 @@ go run *.go  -r clean -c  /home/yh/workspace/ikuai-bypass/config_example.yml  -l
       - 规则标识从备注改为名字前缀 IKB（v4 接口备注无返回）
       - 因ikuaiv4不支持同名强制使用 Safe-Before 更新模式
       - 支持按 IP 分组名称自动搜索来源 IP（src-addr-opt-ipgroup）
+      - 删除配置项中的 name等混乱名字 统一为tag
 
    2. 新增 iip 混合模式 (#104)
       - 支持 ispgroup、ipv4group、ipv6group 三分流模块一起使用

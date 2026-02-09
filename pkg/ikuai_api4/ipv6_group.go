@@ -93,7 +93,7 @@ func (i *IKuai) ShowIpv6GroupByName(name string) (result []ikuai_common.Ipv6Grou
 	return
 }
 
-func (i *IKuai) AddIpv6Group(groupName, addrPool string) error {
+func (i *IKuai) AddIpv6Group(tag, addrPool string, index int) error {
 	addrPool = strings.TrimSpace(addrPool)
 	ips := strings.Split(addrPool, ",")
 	groupValue := make([]map[string]string, 0)
@@ -108,10 +108,10 @@ func (i *IKuai) AddIpv6Group(groupName, addrPool string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  buildTagName(groupName),
+		"group_name":  buildIndexedTagName(tag, index),
 		"type":        1, // IPv6
 		"group_value": groupValue,
-		"comment":     "",
+		"comment":     tag,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

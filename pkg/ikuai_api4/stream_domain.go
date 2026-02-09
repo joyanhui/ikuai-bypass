@@ -58,8 +58,7 @@ func (i *IKuai) ShowStreamDomainByComment(comment string) (result []ikuai_common
 	}{
 		Finds:    "comment",
 		Keywords: comment,
-		Type:     "total,data",
-		Limit:    "0,1000",
+		Type:     "data",
 	}
 	req := CallReq{
 		FuncName: FuncNameStreamDomain,

@@ -66,8 +66,7 @@ func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common
 	}{
 		Finds:    "comment",
 		Keywords: comment,
-		Type:     "total,data",
-		Limit:    "0,1000",
+		Type:     "data",
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,

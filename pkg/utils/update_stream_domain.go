@@ -12,7 +12,8 @@ import (
 )
 
 // UpdateStreamDomain 更新域名分流规则
-func UpdateStreamDomain(iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGroup, srcAddr, url string) (err error) {
+// preDelIds: 如果非空，则在下载成功后、添加新规则前进行删除（Safe-Before 模式）
+func UpdateStreamDomain(iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGroup, srcAddr, url string, preDelIds string) (err error) {
 	log.Println("域名分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -30,7 +31,21 @@ func UpdateStreamDomain(iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGro
 		return
 	}
 	domains := strings.Split(string(body), "\n")
-	log.Println("域名分流== ", iface, tag, "获取到", len(domains), "个域名")
+	// 清理无效域名
+	domains = FilterDomains(domains)
+
+	log.Println("域名分流== ", iface, tag, "获取到", len(domains), "个有效域名")
+
+	// 如果提供了预删除 ID，则在开始添加前进行清理（确保下载成功后才删除）
+	if preDelIds != "" {
+		err = iKuai.DelStreamDomainFromPreIds(preDelIds)
+		if err != nil {
+			log.Println("域名分流== 清理旧规则失败，跳过此次更新:", err)
+			return
+		}
+		log.Println("域名分流== 已清理旧的域名分流规则")
+	}
+
 	domainGroup := Group(domains, 1000) //1000条
 	// #99 fix srcAddr 优先使用 srcAddrIpGroup
 	var srcAddrList []string
@@ -50,18 +65,17 @@ func UpdateStreamDomain(iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGro
 			return nil
 		}
 	}
-	var countFor int = 0
-	for _, d := range domainGroup {
-		countFor = countFor + 1
-		log.Println("域名分流== ", countFor, "/", len(domainGroup), iface, tag, " 正在添加 .... ")
+
+	for index, d := range domainGroup {
+		log.Println("域名分流== ", index+1, "/", len(domainGroup), iface, tag, " 正在添加 .... ")
 		domain := strings.Join(d, ",")
-		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
+		err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain, index)
 		if err != nil {
-			log.Println("域名分流==  ", countFor, "/", len(domainGroup), iface, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
+			log.Println("域名分流==  ", index+1, "/", len(domainGroup), iface, tag, "添加失败，可能是列表太多了，添加太快,爱快没响应。", config.GlobalConfig.AddErrRetryWait, "秒后重试", err)
 			time.Sleep(config.GlobalConfig.AddErrRetryWait)
-			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain)
+			err = iKuai.AddStreamDomain(iface, tag, srcAddr, domain, index)
 			if err != nil {
-				log.Println("域名分流=  ", countFor, "/", len(domainGroup), iface, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
+				log.Println("域名分流=  ", index+1, "/", len(domainGroup), iface, tag, "重试失败，可能是列表太多了，添加太快,爱快没响应。已经重试过一次，所以跳过此次操作")
 				break
 			}
 		} else {

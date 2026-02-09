@@ -21,7 +21,6 @@ var (
 	IkuaiLoginInfo             = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
 	DelOldRule                 = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
 	IsIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加")
-	IkuaiVersion               = flag.String("ikuaiVersion", "3", "爱快 API 版本 (3 或 4)")
 )
 
 type Config struct {

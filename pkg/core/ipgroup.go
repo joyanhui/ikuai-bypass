@@ -23,7 +23,9 @@ func MainUpdateIpgroup() {
 		}
 	}
 
-	if *config.DelOldRule == "before" {
+	isVersion4 := config.GlobalConfig.IkuaiVersion == "4"
+
+	if !isVersion4 && *config.DelOldRule == "before" {
 		err = iKuai.DelIKuaiBypassStreamIpPort("cleanAll")
 		if err != nil {
 			log.Println("端口分流== 删除旧的端口分流失败,退出：", err)
@@ -32,6 +34,7 @@ func MainUpdateIpgroup() {
 			log.Println("端口分流== 删除旧的端口分流成功")
 		}
 	}
+
 	// 更新端口分流规则
 	for _, streamIpPort := range config.GlobalConfig.StreamIpPort {
 		var tag string
@@ -45,65 +48,47 @@ func MainUpdateIpgroup() {
 			continue
 		}
 
-		if *config.DelOldRule == "after" {
-			preIds, err := iKuai.GetStreamIpPortIdsByTag(tag)
-			if err != nil {
-				log.Println("端口分流== 获取准备更新的端口分流列表失败：", tag, err)
-				continue
-			} else {
-				log.Println("端口分流== 获取准备更新的端口分流列表成功", tag, preIds)
-			}
-			err = utils.UpdateStreamIpPort( //执行
-				iKuai,
-				streamIpPort.Type, tag,
-				streamIpPort.Interface,
-				streamIpPort.Nexthop,
-				streamIpPort.SrcAddr, streamIpPort.SrcAddrOptIpGroup,
+		preIds, err := iKuai.GetStreamIpPortIdsByTag(tag)
+		if err != nil {
+			log.Println("端口分流== 获取准备更新的端口分流列表失败：", tag, err)
+			continue
+		}
+
+		preDelIds := ""
+		if isVersion4 || *config.DelOldRule == "before" {
+			preDelIds = preIds
+		}
+
+		err = utils.UpdateStreamIpPort(
+			iKuai,
+			streamIpPort.Type, tag,
+			streamIpPort.Interface,
+			streamIpPort.Nexthop,
+			streamIpPort.SrcAddr, streamIpPort.SrcAddrOptIpGroup,
+			streamIpPort.IpGroup,
+			streamIpPort.Mode,
+			streamIpPort.IfaceBand,
+			preDelIds,
+		)
+
+		if err != nil {
+			log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n",
+				streamIpPort.Interface+streamIpPort.Nexthop,
 				streamIpPort.IpGroup,
-				streamIpPort.Mode,
-				streamIpPort.IfaceBand,
+				err,
 			)
-			if err != nil {
-				log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n",
-					streamIpPort.Interface+streamIpPort.Nexthop,
-					streamIpPort.IpGroup,
-					err,
-				)
-			} else {
-				log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n",
-					streamIpPort.Interface+streamIpPort.Nexthop,
-					streamIpPort.IpGroup,
-				)
+		} else {
+			log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n",
+				streamIpPort.Interface+streamIpPort.Nexthop,
+				streamIpPort.IpGroup,
+			)
+			if !isVersion4 && *config.DelOldRule == "after" {
 				err = iKuai.DelStreamIpPort(preIds)
 				if err == nil {
 					log.Println("端口分流== 删除旧的端口分流列表成功", tag, preIds)
-					log.Println("端口分流== 更新完成", streamIpPort.IpGroup)
 				} else {
 					log.Println("端口分流== 删除旧的端口分流列表有错误", tag, err)
 				}
-			}
-		} else {
-			err := utils.UpdateStreamIpPort(
-				iKuai,
-				streamIpPort.Type,
-				streamIpPort.Interface, tag,
-				streamIpPort.Nexthop,
-				streamIpPort.SrcAddr, streamIpPort.SrcAddrOptIpGroup,
-				streamIpPort.IpGroup,
-				streamIpPort.Mode,
-				streamIpPort.IfaceBand,
-			)
-			if err != nil {
-				log.Printf("端口分流== 添加端口分流 '%s@%s' 失败：%s\n",
-					streamIpPort.Interface+streamIpPort.Nexthop,
-					tag+"/"+streamIpPort.IpGroup,
-					err,
-				)
-			} else {
-				log.Printf("端口分流== 添加端口分流 '%s@%s' 成功\n",
-					streamIpPort.Interface+streamIpPort.Nexthop,
-					tag+"/"+streamIpPort.IpGroup,
-				)
 			}
 		}
 	}

@@ -29,33 +29,44 @@ func GetFullUrl(originalURL string) string {
 }
 
 func RemoveIpv6AndRemoveEmptyLine(ips []string) []string {
-	log.Println("移除ipv6地址 和删除空行....")
+	log.Println("移除ipv6地址 和删除空行、注释....")
 	i := 0
 	for _, ip := range ips {
-		if !strings.Contains(ip, ":") {
-			//删除空行
-			ip = strings.Trim(strings.Trim(ip, "\n"), "\r")
-			if ip != "" {
-				ips[i] = ip
-				i++
-			}
+		// 处理注释：删除 # 及其后的所有内容
+		// Handle comments: remove everything after #
+		if idx := strings.Index(ip, "#"); idx != -1 {
+			ip = ip[:idx]
+		}
+		ip = strings.TrimSpace(ip)
+		if ip == "" {
+			continue
+		}
 
+		if !strings.Contains(ip, ":") {
+			ips[i] = ip
+			i++
 		}
 	}
 	return ips[:i]
 }
 
 func RemoveIpv4AndRemoveEmptyLine(ips []string) []string {
-	log.Println("移除ipv4地址 和删除空行....")
+	log.Println("移除ipv4地址 和删除空行、注释....")
 	i := 0
 	for _, ip := range ips {
+		// 处理注释：删除 # 及其后的所有内容
+		// Handle comments: remove everything after #
+		if idx := strings.Index(ip, "#"); idx != -1 {
+			ip = ip[:idx]
+		}
+		ip = strings.TrimSpace(ip)
+		if ip == "" {
+			continue
+		}
+
 		if strings.Contains(ip, ":") { // 检查IPv6地址特征
-			// 清理首尾的空白字符和换行符
-			ip = strings.TrimSpace(ip)
-			if ip != "" {
-				ips[i] = ip
-				i++
-			}
+			ips[i] = ip
+			i++
 		}
 	}
 	return ips[:i]
@@ -76,6 +87,38 @@ func Group(arr []string, subGroupLength int64) [][]string {
 	return segmens
 }
 
+func FilterDomains(domains []string) []string {
+	log.Println("域名分流== 清理无效域名 (如包含下划线、注释等)...")
+	i := 0
+	for _, d := range domains {
+		d = strings.TrimSpace(d)
+		if d == "" {
+			continue
+		}
+
+		// 处理注释：删除 # 及其后的所有内容
+		// Handle comments: remove everything after #
+		if idx := strings.Index(d, "#"); idx != -1 {
+			d = strings.TrimSpace(d[:idx])
+		}
+
+		// 再次检查清理后的内容是否为空
+		if d == "" {
+			continue
+		}
+
+		// iKuai 不支持包含下划线的域名，这会导致 4.0 API 返回 "请求参数不合法"
+		// iKuai does not support domains with underscores, which causes "Invalid parameters" in 4.0 API
+		if strings.Contains(d, "_") {
+			log.Printf("域名分流== 排除无效域名 (包含下划线): %s\n", d)
+			continue
+		}
+		domains[i] = d
+		i++
+	}
+	return domains[:i]
+}
+
 // LoginToIkuai 登陆爱快
 func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 	err := config.Read(*config.ConfPath)
@@ -87,9 +130,6 @@ func LoginToIkuai() (ikuai_common.IKuaiClient, error) {
 	version := "3"
 	if config.GlobalConfig.IkuaiVersion != "" {
 		version = config.GlobalConfig.IkuaiVersion
-	}
-	if *config.IkuaiVersion != "3" {
-		version = *config.IkuaiVersion
 	}
 
 	var iKuai ikuai_common.IKuaiClient

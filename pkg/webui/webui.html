@@ -346,7 +346,21 @@
                                     爱快连接配置
                                 </h3>
                                 <div class="space-y-4 flex-1">
-                                    <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">爱快地址 (URL)</label><input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-url']"></p></div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">爱快地址 (URL)</label>
+                                            <input type="text" x-model="config.ikuaiUrl" placeholder="http://192.168.1.1" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" />
+                                            <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-url']"></p>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">爱快API 版本</label>
+                                            <select x-model="config.ikuaiVersion" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500">
+                                                <option value="3">版本 3.x (稳定)</option>
+                                                <option value="4">版本 4.x (内测 API)</option>
+                                            </select>
+                                            <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['ikuai-version']"></p>
+                                        </div>
+                                    </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">用户名</label><input type="text" x-model="config.username" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['username']"></p></div>
                                         <div><label class="block mb-1 text-[10px] font-bold text-gray-500 uppercase">密码</label><input type="password" x-model="config.password" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 rounded-lg w-full p-2.5 text-sm dark:text-white focus:ring-1 focus:ring-primary-500" /><p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['password']"></p></div>
@@ -718,6 +732,7 @@
                     },
                     config: {
                         ikuaiUrl: "",
+                        ikuaiVersion: "3",
                         username: "",
                         password: "",
                         cron: "",
@@ -842,6 +857,7 @@
                                 this.commentMaps.webui = data.webui_comments;
                             }
                             this.config.ikuaiUrl = data["ikuai-url"] || "";
+                            this.config.ikuaiVersion = String(data["ikuai-version"] || "3");
                             this.config.username = data.username || "";
                             this.config.password = data.password || "";
                             this.config.cron = data.cron || "";
@@ -902,6 +918,7 @@
                         try {
                             const payload = {
                                 "ikuai-url": this.config.ikuaiUrl,
+                                "ikuai-version": this.config.ikuaiVersion,
                                 username: this.config.username,
                                 password: this.config.password,
                                 cron: this.config.cron,
@@ -971,6 +988,7 @@
                             const doc = jsyaml.load(await res.text());
                             if (doc) {
                                 this.config.ikuaiUrl = doc["ikuai-url"] || "";
+                                this.config.ikuaiVersion = String(doc["ikuai-version"] || "3");
                                 this.config.username = doc.username || "";
                                 this.config.password = doc.password || "";
                                 this.config.cron = doc.cron || "";
@@ -1102,6 +1120,7 @@
                     get generatedYaml() {
                         const c = {
                             "ikuai-url": this.config.ikuaiUrl,
+                            "ikuai-version": this.config.ikuaiVersion,
                             username: this.config.username,
                             password: this.config.password,
                             cron: this.config.cron,

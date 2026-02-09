@@ -10,7 +10,7 @@ import (
 
 const FuncNameStreamDomain = "stream_domain"
 
-func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
+func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) error {
 	// https://github.com/joyanhui/ikuai-bypass/issues/24
 	// 去掉末尾空行
 	domains = strings.Trim(strings.Trim(domains, "\n"), "\r")
@@ -31,6 +31,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string) error {
 		Time:      "00:00-23:59",
 		Enabled:   "yes",
 	}
+	// ... (rest remains same)
 	req := CallReq{
 		FuncName: FuncNameStreamDomain,
 		Action:   "add",

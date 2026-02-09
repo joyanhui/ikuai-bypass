@@ -12,7 +12,8 @@ import (
 )
 
 // UpdateCustomIsp 更新运营商分流规则
-func UpdateCustomIsp(iKuai ikuai_common.IKuaiClient, name string, tag string, url string) (err error) {
+// preDelIds: 如果非空，则在下载成功后、添加新规则前进行删除（Safe-Before 模式）
+func UpdateCustomIsp(iKuai ikuai_common.IKuaiClient, name string, tag string, url string, preDelIds string) (err error) {
 	log.Println("运营商/IP分流==  http.get ...", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
@@ -32,6 +33,17 @@ func UpdateCustomIsp(iKuai ikuai_common.IKuaiClient, name string, tag string, ur
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv6AndRemoveEmptyLine(ips)
 	log.Println("运营商/IP分流== ", name, tag, " 获取到", len(ips), "个ip")
+
+	// 如果提供了预删除 ID，则在开始添加前进行清理（确保下载成功后才删除）
+	if preDelIds != "" {
+		err = iKuai.DelCustomIspFromPreIds(preDelIds)
+		if err != nil {
+			log.Println("运营商/IP分流== 清理旧规则失败，跳过此次更新:", err)
+			return
+		}
+		log.Println("运营商/IP分流== 已清理旧的运营商列表规则")
+	}
+
 	ipGroups := Group(ips, 5000) //5000条
 
 	for _, ig := range ipGroups {

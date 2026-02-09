@@ -9,7 +9,7 @@ import (
 )
 
 // UpdateStreamIpPort 更新ip端口分流
-func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptTag string, ipGroupName string, mode int, ifaceband int) (err error) {
+func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptTag string, ipGroupName string, mode int, ifaceband int, preDelIds string) (err error) {
 
 	// #101 fix ip-group为空时会默认添加实际不匹配的规则
 	var dstAddr string
@@ -49,6 +49,16 @@ func UpdateStreamIpPort(iKuai ikuai_common.IKuaiClient, forwardType string, tag 
 			log.Println("ip端口分流== 未找到任何匹配的 源地址 IP 分组，跳过端口分流规则添加，配置的 srcAddrOptTag:", srcAddrOptTag)
 			return nil
 		}
+	}
+
+	// 如果提供了预删除 ID，则在添加前清理
+	if preDelIds != "" {
+		err = iKuai.DelStreamIpPort(preDelIds)
+		if err != nil {
+			log.Println("ip端口分流== 清理旧规则失败，跳过此次更新:", err)
+			return
+		}
+		log.Println("ip端口分流== 已清理旧的端口分流规则")
 	}
 
 	err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)

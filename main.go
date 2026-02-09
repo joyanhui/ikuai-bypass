@@ -17,7 +17,7 @@ import (
 func main() {
 	flag.Parse()
 
-	utils.SysLog.Info("START:启动程序", "Run mode: %s, Config path: %s", *config.RunMode, *config.ConfPath)
+	utils.SysLog.Info("START:启动程序", "Run mode: %s, Config path: '%s'", *config.RunMode, *config.ConfPath)
 	err := config.Read(*config.ConfPath)
 	if err != nil {
 		utils.SysLog.Error("CONF:配置读取", "Failed to read configuration file: %v", err)

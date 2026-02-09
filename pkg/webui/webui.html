@@ -262,6 +262,7 @@
                                         <option value="ipv6group">ipv6group (IPv6分组)</option>
                                         <option value="ii">ii (混合模式)</option>
                                         <option value="ip">ip (v4+v6分组)</option>
+                                        <option value="iip">iip (ii+ip)</option>
                                     </select>
                                     <p class="mt-1 text-[9px] text-gray-400 italic" x-text="moduleDescription"></p>
                                 </div>
@@ -1114,6 +1115,7 @@
                             ipv6group: "IPv6模式：仅更新IPv6地址分组。",
                             ii: "混合模式：同时更新 ispdomain 和 ipgroup 规则。",
                             ip: "分组模式：同时更新 IPv4 和 IPv6 地址分组。",
+                            iip: "混合模式：同时更新 ii 和 ip 规则。",
                         };
                         return ds[this.cmd.module] || "";
                     },

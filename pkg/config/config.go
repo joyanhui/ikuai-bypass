@@ -14,12 +14,12 @@ import (
 
 var (
 	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
-	RunMode                    = flag.String("r", "cron", "运行模式，马上执行 或者定时执行 或者执行一次")
-	IsAcIpgroup                = flag.String("m", "ispdomain", "ipgroup(启用ip分组和下一条网关模式) 或者 ispdomain(isp和域名分流模式)")
+	RunMode                    = flag.String("r", "cron", "运行模式: cron(立即执行并定时), cronAft(仅定时), once/1(执行一次退出), clean(清理规则), web(仅WebUI), exportDomainSteamToTxt(导出规则)")
+	IsAcIpgroup                = flag.String("m", "ispdomain", "功能模块: ispdomain(运营商/域名分流), ipgroup(IPv4分组/端口分流), ipv6group(IPv6分组), ii(ispdomain+ipgroup), ip(v4+v6分组), iip(ii+ip)")
 	CleanTag                   = flag.String("tag", "cleanAll", "要清理的分流规则备注名或关键词")
 	ExportPath                 = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
 	IkuaiLoginInfo             = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
-	DelOldRule                 = flag.String("delOldRule", "after", "删除旧规则顺序 after before ")
+	DelOldRule                 = flag.String("delOldRule", "after", "删除旧规则顺序 after before 。注意：在 ikuaiV4 中此参数无效，强制使用 before")
 	IsIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加")
 )
 

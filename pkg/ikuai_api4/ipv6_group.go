@@ -186,22 +186,8 @@ func (i *IKuai) DelIKuaiBypassIpv6Group(cleanTag string) (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-			if cleanTag == "cleanAll" {
-				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) || strings.Contains(d.GroupName, "IKB") {
-					ids = append(ids, strconv.Itoa(d.ID))
-				}
-			} else {
-				if cleanTag == "" {
-					cleanTag = COMMENT_IKUAI_BYPASS
-				}
-				match := (strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) && strings.Contains(d.GroupName, cleanTag)) || d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag || d.GroupName == cleanTag || strings.Contains(d.GroupName, cleanTag)
-				if !match && strings.HasPrefix(cleanTag, COMMENT_IKUAI_BYPASS+"_") {
-					tag := cleanTag[len(COMMENT_IKUAI_BYPASS)+1:]
-					match = d.GroupName == tag || strings.Contains(d.GroupName, tag)
-				}
-				if match {
-					ids = append(ids, strconv.Itoa(d.ID))
-				}
+			if matchCleanTag(cleanTag, d.Comment, d.GroupName) {
+				ids = append(ids, strconv.Itoa(d.ID))
 			}
 		}
 		if len(ids) <= 0 {

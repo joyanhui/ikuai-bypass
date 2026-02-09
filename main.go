@@ -17,7 +17,7 @@ import (
 func main() {
 	flag.Parse()
 
-	if *config.CleanTag != "cleanAll" {
+	if *config.CleanTag != "cleanAll" && *config.CleanTag != "" {
 		//检查规则名称中是否包含前缀 IKB_ 或 IKUAI_BYPASS_，如果没有添加上 IKB_
 		hasOldPrefix := len(*config.CleanTag) >= len("IKUAI_BYPASS") && (*config.CleanTag)[:len("IKUAI_BYPASS")] == "IKUAI_BYPASS"
 		hasNewPrefix := len(*config.CleanTag) >= len("IKB_") && (*config.CleanTag)[:len("IKB_")] == "IKB_"

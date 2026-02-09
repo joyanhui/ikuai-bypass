@@ -223,19 +223,8 @@ func (i *IKuai) DelStreamDomainAll(cleanTag string) (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-			if cleanTag == "cleanAll" {
-				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) || strings.Contains(d.TagName, "IKB") {
-					ids = append(ids, strconv.Itoa(d.ID))
-				}
-			} else {
-				match := (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, cleanTag)) || d.Comment == cleanTag || d.TagName == cleanTag || strings.Contains(d.TagName, cleanTag)
-				if !match && strings.HasPrefix(cleanTag, COMMENT_IKUAI_BYPASS+"_") {
-					tag := cleanTag[len(COMMENT_IKUAI_BYPASS)+1:]
-					match = d.TagName == tag || strings.Contains(d.TagName, tag)
-				}
-				if match {
-					ids = append(ids, strconv.Itoa(d.ID))
-				}
+			if matchCleanTag(cleanTag, d.Comment, d.TagName) {
+				ids = append(ids, strconv.Itoa(d.ID))
 			}
 		}
 		if len(ids) <= 0 {

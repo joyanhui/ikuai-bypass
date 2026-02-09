@@ -137,20 +137,9 @@ func (i *IKuai) DelCustomIspAll(cleanTag string) (err error) {
 		}
 		var ids []string
 		for _, d := range data {
-			if cleanTag == "cleanAll" {
-				if strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.Name, NAME_PREFIX_IKB) || strings.Contains(d.Name, "IKB") {
-					ids = append(ids, strconv.Itoa(d.ID))
-				}
-			} else {
-				match := strings.HasPrefix(d.Name, NAME_PREFIX_IKB) && strings.Contains(d.Name, cleanTag)
-				if !match {
-					match = d.Comment == cleanTag || d.Comment == COMMENT_IKUAI_BYPASS+"_"+cleanTag || d.Name == cleanTag || strings.Contains(d.Name, cleanTag)
-				}
-				if match {
-					ids = append(ids, strconv.Itoa(d.ID))
-				}
+			if matchCleanTag(cleanTag, d.Comment, d.Name) {
+				ids = append(ids, strconv.Itoa(d.ID))
 			}
-
 		}
 		if len(ids) <= 0 {
 			return

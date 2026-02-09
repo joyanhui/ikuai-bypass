@@ -193,6 +193,7 @@ services:
 ---
 
 ## 更新日志
+- 2026-02-09 准备支持爱快4.x内侧版本 
 - 2026-01-15 重构部分代码结构，去掉对GitHub路径依赖，拆分utils包等。
 - 2026-01-15 fix [#101](https://github.com/joyanhui/ikuai-bypass)， stream-ipport配置为空的时候依旧添加分流规则的bug，新增可选配置项 stream-ipport[].opt-tagname
 - 2026-01-15 features  [#99](https://github.com/joyanhui/ikuai-bypass/issues/99)  可以按照ip分组名字自动搜索来源ip 不 新增配置项目 src-addr-opt-ipgroup（最终名）支持端口分流和域名分流
@@ -225,6 +226,18 @@ services:
 - 2024-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)
 - 2024-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则
 - 旧的更新记录没啥价值也未单独记，小工具代码简单，请参考commit记录
+---
+
+## 赞助支持
+
+如果您觉得这个项目对您有所帮助，并且愿意支持我的持续开发和维护工作，非常感谢您的慷慨！
+
+开源项目的维护需要一定的时间和精力，您的一份心意能让我更有动力继续完善这个工具，修复问题、添加新功能。
+
+- **TRX (Tron TRC20) 钱包地址**：`TLiv9F6i38uZEGdp8VoB5qLxJx43aV9XSZ`
+
+当然，您也可以通过在 GitHub 上给项目点一个 ⭐️ Star 来支持我，这对项目的发展同样非常重要！
+
 ---
 
 ## 交流与反馈

@@ -1125,7 +1125,7 @@
                         if (this.config.streamIpPort.length)
                             c["stream-ipport"] = this.config.streamIpPort.map((i) => ({
                                 "opt-tagname": i.optTagName,
-                                type: parseInt(i.type),
+                                type: String(i.type),
                                 "src-addr": i.srcAddr,
                                 "src-addr-opt-ipgroup": i.srcAddrOptIpGroup,
                                 "ip-group": i.ipGroup,

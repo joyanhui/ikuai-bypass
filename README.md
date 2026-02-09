@@ -82,6 +82,9 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
     username: admin
     password: your_password
     cron: "0 7 * * *" # 每天早上 7 点更新
+    custom-isp:
+      - tag: "国内IP"
+        url: "https://example.com/cn.txt"
     ```
 
 ### 2. 运行模式
@@ -112,7 +115,7 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 | `-c` | 配置文件路径 | `-c ./config.yml` |
 | `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合), `ip` (ipv4和ipv6分组) ，`iip` (ii+ip混合) |
 | `-r` | 运行模式 | 见下表 |
-| `-tag` | 清理模式下的标签关键词 | 默认为 `cleanAll`。优先按 TagName/名字匹配，兼容旧备注匹配 |
+| `-tag` | 清理模式下的标签关键词 | **必填项**。用于匹配 TagName 或名字，兼容旧备注匹配 (使用 `cleanAll` 清理全部) |
 | `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
 | `-delOldRule`| 删除旧规则时机 | `after` (默认-更新后删), `before` (更新前删)。**注意：在 ikuaiV4 中此参数被移除，强制使用 before** |
 | `-exportPath` | 域名分流规则导出文件路径 | 默认为 `/tmp` |

@@ -155,7 +155,7 @@ var ItemComments = map[string]string{
 	"ifaceband":            "线路绑定：0-不勾选，1-勾选",
 	"interface":            "分流线路 (如 wan1)",
 	"nexthop":              "下一跳网关地址",
-	"tag":                  "规则 TagName 后缀",
+	"tag":                  "规则标识名称 (支持中文，系统自动添加 IKB 前缀)",
 	"src-addr":             "分流源地址 (IP或范围)",
 	"src-addr-opt-ipgroup": "分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略。多个名字可以逗号分隔",
 	"ip-group":             "关联的IP分组名称，多个名字可以逗号",

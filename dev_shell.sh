@@ -74,19 +74,17 @@ go run *.go  -r clean -c  /home/yh/workspace/ikuai-bypass/config_example.yml  -l
 
    主要更新：
    1. 完成爱快 v4 内测版适配 (#103)
-      - 统一使用 v4 API，移除 ikuai_api3 支持
-      - IPv4/IPv6 分组统一使用 route_object API
-      - 规则标识从备注改为名字前缀 IKB（v4 接口备注无返回）
-      - 因ikuaiv4不支持同名强制使用 Safe-Before 更新模式
-      - 支持按 IP 分组名称自动搜索来源 IP（src-addr-opt-ipgroup）
-      - 删除配置项中的 name等混乱名字 统一为tag
+      - [重要] 统一使用 v4 API，移除 ikuai_api3 支持,v4.4以后版本不再支持爱快v3.x版本，如果你是爱快v3.7以下版本请使用ikuai-bypass v4.1
+      - [重要] 规则标识从备注改为名字前缀 IKB（v4 接口备注无返回）,不再使用备注作为规则区分，备注仅仅只有备注功能了没有实际功能意义。
+      - [重要] 删除配置项中的 name等混乱名字 统一为tag。你需要参考 [config.yml](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml) 更新一下你的配置文件
 
    2. 新增 iip 混合模式 (#104)
-      - 支持 ispgroup、ipv4group、ipv6group 三分流模块一起使用
+      - [新增]支持 ispgroup、ipv4group、ipv6group 三分流模块一起使用
 
    3. 其他优化：
-      - 去掉并发处理，改为顺序执行，避免 API 失败
+      - 去掉并发处理，改为顺序执行，避免 API 失败和日志乱序
       - 重构日志系统，增加智能高亮、彩色输出和跨平台支持
-      - 因ikuaiv4 移除 delOldRule 参数
+      - [重要] 因ikuaiv4的api限制了同名规则，所以 移除 delOldRule 参数，改为统一逻辑为先同步后查询然后删除最后添加
       - 删除 exportDomainSteamToTxt 功能
+      - [重要] 清理模式下不再默认为CleanAll 避免误删除, 必须显示配置tag参数。同时清理模式只可以清理名字为IKB开头的规则。为了兼容旧版也支持清理 备注中包含字符IKUAI_BYPASSS和joyanhui/ikuai-bypass的规则
    "

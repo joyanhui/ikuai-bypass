@@ -10,18 +10,21 @@ import (
 	"ikuai-bypass/pkg/utils"
 )
 
-
-
 // MainClean 清理旧分流规则
 func MainClean() {
 	cleanLogger := logger.NewLogger("CLEAN:清理模式")
+
+	cleanTag, isCleanAll := normalizeCleanTag(*config.CleanTag)
+	if cleanTag == "" {
+		cleanLogger.Error("VALID:参数校验", "清理模式必须指定 -tag 参数 (例如: -tag cleanAll 或 -tag 某规则名)")
+		return
+	}
+
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		utils.SysLog.Error("LOGIN:登录失败", "Failed to login to iKuai: %v", err)
 		return
 	}
-
-	cleanTag, isCleanAll := normalizeCleanTag(*config.CleanTag)
 
 	if isCleanAll {
 		err = cleanAllByManagedMark(cleanLogger, iKuai)
@@ -79,14 +82,19 @@ func MainClean() {
 
 func normalizeCleanTag(cleanTag string) (string, bool) {
 	cleanTag = strings.TrimSpace(cleanTag)
-	if cleanTag == "" {
-		return ikuai_common.NAME_PREFIX_IKB, false
-	}
 	return cleanTag, cleanTag == ikuai_common.CleanModeAll
 }
 
-func isManagedBypassRule(_ string, name string) bool {
-	return strings.HasPrefix(name, ikuai_common.NAME_PREFIX_IKB) || strings.Contains(name, ikuai_common.NAME_PREFIX_IKB)
+func isManagedBypassRule(comment string, name string) bool {
+	// 名字以 IKB 开头
+	if strings.HasPrefix(name, ikuai_common.NAME_PREFIX_IKB) {
+		return true
+	}
+	// 备注包含 ikuai-bypass (新) 或 IKUAI_BYPASS (旧)
+	if strings.Contains(comment, ikuai_common.NEW_COMMENT) || strings.Contains(comment, ikuai_common.COMMENT_IKUAI_BYPASS) {
+		return true
+	}
+	return false
 }
 
 func cleanAllByManagedMark(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {

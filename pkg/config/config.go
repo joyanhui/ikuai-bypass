@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"ikuai-bypass/pkg/logger"
-	"ikuai-bypass/pkg/ikuai_common"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,7 +19,7 @@ var (
 	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
 	RunMode                    = flag.String("r", "cron", "运行模式: cron(立即执行并定时), cronAft(仅定时), once/1(执行一次退出), clean(清理规则), web(仅WebUI)")
 	IsAcIpgroup                = flag.String("m", "ispdomain", "功能模块: ispdomain(运营商/域名分流), ipgroup(IPv4分组/端口分流), ipv6group(IPv6分组), ii(ispdomain+ipgroup), ip(v4+v6分组), iip(ii+ip)")
-	CleanTag                   = flag.String("tag", ikuai_common.CleanModeAll, "要清理的分流规则 TagName 或关键词")
+	CleanTag                   = flag.String("tag", "", "要清理的分流规则 TagName 或关键词 (cleanAll 清理全部)")
 	ExportPath                 = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
 	IkuaiLoginInfo             = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
 	IsIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加")

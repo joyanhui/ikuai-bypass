@@ -14,22 +14,31 @@ func matchCleanTag(cleanTag, legacyTagName, currentTagName string) bool {
 		return false
 	}
 
-	// 增加前缀强制校验：除非 cleanTag 显式包含前缀，否则 currentTagName 必须以 IKB 开头
-	// 为了兼容旧版备注模式，legacyTagName (备注) 匹配不受此限，但 currentTagName (名字) 必须受限
-	isBypassRule := strings.HasPrefix(currentTagName, ikuai_common.NAME_PREFIX_IKB) ||
-		strings.HasPrefix(currentTagName, ikuai_common.NAME_PREFIX_IKB) ||
-		strings.Contains(legacyTagName, ikuai_common.COMMENT_IKUAI_BYPASS)||
+	// 1. 首先识别是否为受管规则
+	// 名字以 IKB 开头 OR 备注包含已知标识
+	isManaged := strings.HasPrefix(currentTagName, ikuai_common.NAME_PREFIX_IKB) ||
+		strings.Contains(legacyTagName, ikuai_common.COMMENT_IKUAI_BYPASS) ||
 		strings.Contains(legacyTagName, ikuai_common.NEW_COMMENT)
 
-	if !isBypassRule && cleanTag != ikuai_common.CleanModeAll {
+	// 如果不是受管规则，严禁删除任何内容
+	if !isManaged {
 		return false
 	}
 
-	if legacyTagName == cleanTag || strings.Contains(legacyTagName, cleanTag) {
+	// 2. 如果是 cleanAll 模式，直接确认
+	if cleanTag == ikuai_common.CleanModeAll {
 		return true
 	}
-	if currentTagName == cleanTag || strings.Contains(currentTagName, cleanTag) {
+
+	// 3. 执行特定标签匹配（仅限受管规则内部）
+	// 备注匹配：支持完整匹配或包含匹配
+	if legacyTagName != "" && (legacyTagName == cleanTag || strings.Contains(legacyTagName, cleanTag)) {
 		return true
 	}
+	// 名字匹配：考虑到序号，使用包含匹配
+	if currentTagName != "" && (currentTagName == cleanTag || strings.Contains(currentTagName, cleanTag)) {
+		return true
+	}
+
 	return false
 }

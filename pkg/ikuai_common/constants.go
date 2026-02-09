@@ -9,7 +9,7 @@ const (
 	// COMMENT_IKUAI_BYPASS 是旧版本使用的备注标识符
 	// 仅用于向后兼容，新版本统一使用名称前缀 IKB
 	COMMENT_IKUAI_BYPASS = "IKUAI_BYPASS"
-	NEW_COMMENT = "ikuai-bypass"
+	NEW_COMMENT = "joyanhui/ikuai-bypass"
 
 	CleanModeAll = "cleanAll"
 )

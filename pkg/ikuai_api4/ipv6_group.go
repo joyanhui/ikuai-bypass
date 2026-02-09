@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (i *IKuai) ShowIpv6GroupByComment(comment string) (result []ikuai_common.Ipv6GroupData, err error) {
+func (i *IKuai) ShowIpv6GroupByTagName(tagName string) (result []ikuai_common.Ipv6GroupData, err error) {
 	param := map[string]interface{}{
 		"TYPE":    "total,data",
 		"limit":   "0,1000",
@@ -32,7 +32,7 @@ func (i *IKuai) ShowIpv6GroupByComment(comment string) (result []ikuai_common.Ip
 	}
 
 	for _, d := range data4 {
-		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+		if matchTagNameFilter(tagName, d.GroupName, d.Comment) {
 			ips := make([]string, 0)
 			for _, v := range d.GroupValue {
 				if ipv6, ok := v["ipv6"]; ok {
@@ -75,7 +75,7 @@ func (i *IKuai) ShowIpv6GroupByName(name string) (result []ikuai_common.Ipv6Grou
 	}
 
 	for _, d := range data4 {
-		if name == "" || d.GroupName == name || strings.Contains(d.GroupName, name) {
+		if matchTagNameFilter(name, d.GroupName, d.Comment) {
 			ips := make([]string, 0)
 			for _, v := range d.GroupValue {
 				if ipv6, ok := v["ipv6"]; ok {
@@ -109,7 +109,7 @@ func (i *IKuai) AddIpv6Group(groupName, addrPool string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  NAME_PREFIX_IKB + groupName,
+		"group_name":  buildTagName(groupName),
 		"type":        1, // IPv6
 		"group_value": groupValue,
 		"comment":     "",
@@ -157,13 +157,13 @@ func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
 	var ids []string
 
 	var data []ikuai_common.Ipv6GroupData
-	data, err = i.ShowIpv6GroupByComment("")
+	data, err = i.ShowIpv6GroupByTagName("")
 	if err != nil {
 		return "", err
 	}
 
 	for _, d := range data {
-		if (strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) && strings.Contains(d.GroupName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if matchTagNameFilter(tag, d.GroupName, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -180,7 +180,7 @@ func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
 func (i *IKuai) DelIKuaiBypassIpv6Group(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.Ipv6GroupData
-		data, err = i.ShowIpv6GroupByComment("")
+		data, err = i.ShowIpv6GroupByTagName("")
 		if err != nil {
 			return err
 		}
@@ -209,8 +209,7 @@ func (i *IKuai) GetAllIKuaiBypassIpv6GroupNamesByName(name string) (names []stri
 	}
 
 	for _, d := range data {
-		match := strings.Contains(d.GroupName, name)
-		if (d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB)) && match {
+		if matchTagNameFilter(name, d.GroupName, d.Comment) {
 			names = append(names, d.GroupName)
 		}
 	}

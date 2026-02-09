@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (i *IKuai) ShowDomainGroupByComment(comment string) (result []ikuai_common.DomainGroupData, err error) {
+func (i *IKuai) ShowDomainGroupByTagName(tagName string) (result []ikuai_common.DomainGroupData, err error) {
 	param := map[string]interface{}{
 		"TYPE":    "total,data",
 		"limit":   "0,1000",
@@ -32,7 +32,7 @@ func (i *IKuai) ShowDomainGroupByComment(comment string) (result []ikuai_common.
 	}
 
 	for _, d := range data4 {
-		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+		if matchTagNameFilter(tagName, d.GroupName, d.Comment) {
 			domains := make([]string, 0)
 			for _, v := range d.GroupValue {
 				if domain, ok := v["domain"]; ok {
@@ -66,7 +66,7 @@ func (i *IKuai) AddDomainGroup(groupName, domains string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  NAME_PREFIX_IKB + groupName,
+		"group_name":  buildTagName(groupName),
 		"type":        6, // Domain Group
 		"group_value": groupValue,
 		"comment":     "",
@@ -114,13 +114,13 @@ func (i *IKuai) GetDomainGroup(tag string) (preIds string, err error) {
 	var ids []string
 
 	var data []ikuai_common.DomainGroupData
-	data, err = i.ShowDomainGroupByComment("")
+	data, err = i.ShowDomainGroupByTagName("")
 	if err != nil {
 		return "", err
 	}
 
 	for _, d := range data {
-		if (strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) && strings.Contains(d.GroupName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if matchTagNameFilter(tag, d.GroupName, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -137,7 +137,7 @@ func (i *IKuai) GetDomainGroup(tag string) (preIds string, err error) {
 func (i *IKuai) DelIKuaiBypassDomainGroup(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.DomainGroupData
-		data, err = i.ShowDomainGroupByComment("")
+		data, err = i.ShowDomainGroupByTagName("")
 		if err != nil {
 			return err
 		}

@@ -55,7 +55,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 
 	// 使用序号作为 tagname 后缀，从 1 开始，防止 chunks 冲突
 	// Use sequence number starting from 1 as tagname suffix to avoid chunks conflicts
-	uniqueTagname := NAME_PREFIX_IKB + tag + "_" + strconv.Itoa(index+1)
+	uniqueTagname := buildIndexedTagName(tag, index)
 
 	// 构造 4.0 格式的参数
 	// Construct 4.0 format parameters
@@ -103,7 +103,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, domains string, index int) 
 	return nil
 }
 
-func (i *IKuai) ShowStreamDomainByComment(comment string) (result []ikuai_common.StreamDomainData, err error) {
+func (i *IKuai) ShowStreamDomainByTagName(tagName string) (result []ikuai_common.StreamDomainData, err error) {
 	param := map[string]interface{}{
 		"TYPE":  "total,data",
 		"limit": "0,1000",
@@ -128,7 +128,7 @@ func (i *IKuai) ShowStreamDomainByComment(comment string) (result []ikuai_common
 	// 将 4.0 结构转换为通用结构
 	// Convert 4.0 structure to common structure
 	for _, d := range data4 {
-		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+		if matchTagNameFilter(tagName, d.Tagname, d.Comment) {
 			item := ikuai_common.StreamDomainData{
 				ID:        d.ID,
 				Enabled:   d.Enabled,
@@ -179,13 +179,13 @@ func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
 	preIds = ""
 	err = nil
 	var data []ikuai_common.StreamDomainData
-	data, err = i.ShowStreamDomainByComment("")
+	data, err = i.ShowStreamDomainByTagName("")
 	if err != nil {
 		return
 	}
 	var ids []string
 	for _, d := range data {
-		if (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if matchTagNameFilter(tag, d.TagName, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -217,7 +217,7 @@ func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
 func (i *IKuai) DelStreamDomainAll(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.StreamDomainData
-		data, err = i.ShowStreamDomainByComment("")
+		data, err = i.ShowStreamDomainByTagName("")
 		if err != nil {
 			return
 		}

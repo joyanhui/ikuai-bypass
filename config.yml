@@ -10,29 +10,29 @@ github-proxy: "https://gh-proxy.com/" # Github代理加速地址，例如 https:
 custom-isp: # 自定义运营商分流 (IP分流)
   - name: 国内IP列表
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
-    tag: ipcn # 规则备注标签后缀
+    tag: ipcn # 规则TagName关键词（系统自动添加前缀 IKB）
   - name: telegram
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
-    tag: iptg # 规则备注标签后缀
+    tag: iptg # 规则TagName关键词（系统自动添加前缀 IKB）
   - name: google
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt
-    tag: ipgoogle # 规则备注标签后缀
+    tag: ipgoogle # 规则TagName关键词（系统自动添加前缀 IKB）
 stream-domain: # 域名分流 (优先级高于IP分流)
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
-    tag: gfw # 规则备注标签后缀
+    tag: gfw # 规则TagName关键词（系统自动添加前缀 IKB）
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
-    tag: private_bypass # 规则备注标签后缀
+    tag: private_bypass # 规则TagName关键词（系统自动添加前缀 IKB）
   - interface: wan1 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
-    tag: private_direct # 规则备注标签后缀
+    tag: private_direct # 规则TagName关键词（系统自动添加前缀 IKB）
 ip-group: # IP分组 (与端口分流配合使用)
   - name: 国内
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt

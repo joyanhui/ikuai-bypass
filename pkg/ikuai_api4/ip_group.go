@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func (i *IKuai) ShowIpGroupByComment(comment string) (result []ikuai_common.IpGroupData, err error) {
+func (i *IKuai) ShowIpGroupByTagName(tagName string) (result []ikuai_common.IpGroupData, err error) {
 	param := map[string]interface{}{
 		"TYPE":    "total,data",
 		"limit":   "0,1000",
@@ -32,7 +32,7 @@ func (i *IKuai) ShowIpGroupByComment(comment string) (result []ikuai_common.IpGr
 	}
 
 	for _, d := range data4 {
-		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+		if matchTagNameFilter(tagName, d.GroupName, d.Comment) {
 			ips := make([]string, 0)
 			for _, v := range d.GroupValue {
 				if ip, ok := v["ip"]; ok {
@@ -75,7 +75,7 @@ func (i *IKuai) ShowIpGroupByName(name string) (result []ikuai_common.IpGroupDat
 	}
 
 	for _, d := range data4 {
-		if name == "" || d.GroupName == name || strings.Contains(d.GroupName, name) {
+		if matchTagNameFilter(name, d.GroupName, d.Comment) {
 			ips := make([]string, 0)
 			for _, v := range d.GroupValue {
 				if ip, ok := v["ip"]; ok {
@@ -109,7 +109,7 @@ func (i *IKuai) AddIpGroup(groupName, addrPool string) error {
 	}
 
 	param := map[string]interface{}{
-		"group_name":  NAME_PREFIX_IKB + groupName,
+		"group_name":  buildTagName(groupName),
 		"type":        0, // IPv4
 		"group_value": groupValue,
 		"comment":     "",
@@ -157,13 +157,13 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 	var ids []string
 
 	var data []ikuai_common.IpGroupData
-	data, err = i.ShowIpGroupByComment("")
+	data, err = i.ShowIpGroupByTagName("")
 	if err != nil {
 		return "", err
 	}
 
 	for _, d := range data {
-		if (strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB) && strings.Contains(d.GroupName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if matchTagNameFilter(tag, d.GroupName, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -180,7 +180,7 @@ func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
 func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.IpGroupData
-		data, err = i.ShowIpGroupByComment("")
+		data, err = i.ShowIpGroupByTagName("")
 		if err != nil {
 			return err
 		}
@@ -209,8 +209,7 @@ func (i *IKuai) GetAllIKuaiBypassIpGroupNamesByName(name string) (names []string
 	}
 
 	for _, d := range data {
-		match := strings.Contains(d.GroupName, name)
-		if (d.Comment == COMMENT_IKUAI_BYPASS || strings.Contains(d.Comment, COMMENT_IKUAI_BYPASS) || strings.HasPrefix(d.GroupName, NAME_PREFIX_IKB)) && match {
+		if matchTagNameFilter(name, d.GroupName, d.Comment) {
 			names = append(names, d.GroupName)
 		}
 	}

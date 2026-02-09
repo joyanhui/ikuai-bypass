@@ -74,7 +74,7 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 
 	param := map[string]interface{}{
 		"enabled":    "yes",
-		"tagname":    NAME_PREFIX_IKB + tag,
+		"tagname":    buildTagName(tag),
 		"interface":  iface,
 		"nexthop":    nexthop,
 		"iface_band": ifaceband,
@@ -148,7 +148,7 @@ func toStringList(v interface{}) []string {
 	return []string{}
 }
 
-func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common.StreamIpPortData, err error) {
+func (i *IKuai) ShowStreamIpPortByTagName(tagName string) (result []ikuai_common.StreamIpPortData, err error) {
 	param := map[string]interface{}{
 		"TYPE":  "total,data",
 		"limit": "0,1000",
@@ -171,7 +171,7 @@ func (i *IKuai) ShowStreamIpPortByComment(comment string) (result []ikuai_common
 	}
 
 	for _, d := range data4 {
-		if comment == "" || d.Comment == comment || strings.Contains(d.Comment, comment) {
+		if matchTagNameFilter(tagName, d.Tagname, d.Comment) {
 			srcs := append(toStringList(d.SrcAddr.Custom), toStringList(d.SrcAddr.Object)...)
 			dsts := append(toStringList(d.DstAddr.Custom), toStringList(d.DstAddr.Object)...)
 
@@ -225,7 +225,7 @@ func (i *IKuai) DelStreamIpPort(id string) error {
 func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.StreamIpPortData
-		data, err = i.ShowStreamIpPortByComment("")
+		data, err = i.ShowStreamIpPortByTagName("")
 		if err != nil {
 			return
 		}
@@ -249,14 +249,14 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
 	log.Println("端口分流== 正在查询 名字前缀为:", NAME_PREFIX_IKB, "且包含 tag:", tag, "的端口分流规则")
 	var data []ikuai_common.StreamIpPortData
-	data, err = i.ShowStreamIpPortByComment("")
+	data, err = i.ShowStreamIpPortByTagName("")
 	if err != nil {
 		return
 	}
 	var ids []string
 
 	for _, d := range data {
-		if (strings.HasPrefix(d.TagName, NAME_PREFIX_IKB) && strings.Contains(d.TagName, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if matchTagNameFilter(tag, d.TagName, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}

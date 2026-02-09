@@ -18,11 +18,11 @@ func main() {
 	flag.Parse()
 
 	if *config.CleanTag != "cleanAll" && *config.CleanTag != "" {
-		//检查规则名称中是否包含前缀 IKB_ 或 IKUAI_BYPASS_，如果没有添加上 IKB_
+		//检查规则名称中是否包含前缀 IKB 或 IKUAI_BYPASS_，如果没有添加上 IKB
 		hasOldPrefix := len(*config.CleanTag) >= len("IKUAI_BYPASS") && (*config.CleanTag)[:len("IKUAI_BYPASS")] == "IKUAI_BYPASS"
-		hasNewPrefix := len(*config.CleanTag) >= len("IKB_") && (*config.CleanTag)[:len("IKB_")] == "IKB_"
+		hasNewPrefix := len(*config.CleanTag) >= len("IKB") && (*config.CleanTag)[:len("IKB")] == "IKB"
 		if !hasOldPrefix && !hasNewPrefix {
-			*config.CleanTag = "IKB_" + *config.CleanTag
+			*config.CleanTag = "IKB" + *config.CleanTag
 		}
 	}
 
@@ -57,9 +57,9 @@ func main() {
 	case "clean":
 		log.Println("清理模式")
 		if *config.CleanTag == "cleanAll" {
-			log.Println("清理所有 备注包含 IKUAI_BYPASS 或 名字包含 IKB 的规则和分组")
+			log.Println("清理所有 名字包含 IKB 的规则和分组（兼容旧备注配置）")
 		} else {
-			log.Println("清理备注或名字为：", *config.CleanTag, "的规则和分组")
+			log.Println("清理 TagName 或名字为：", *config.CleanTag, "的规则和分组")
 		}
 		core.MainClean()
 		return

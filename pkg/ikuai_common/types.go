@@ -66,22 +66,22 @@ type StreamIpPortData struct {
 
 type IKuaiClient interface {
 	Login(username, password string) error
-	
-	ShowCustomIspByComment() ([]CustomIspData, error)
+
+	ShowCustomIspByTagName(tagName string) ([]CustomIspData, error)
 	AddCustomIsp(name, tag, ipgroup string) error
 	DelCustomIsp(id string) error
 	GetCustomIspAll(tag string) (string, error)
 	DelCustomIspFromPreIds(preIds string) error
 	DelCustomIspAll(cleanTag string) error
 
-	ShowStreamDomainByComment(comment string) ([]StreamDomainData, error)
+	ShowStreamDomainByTagName(tagName string) ([]StreamDomainData, error)
 	AddStreamDomain(iface, tag, srcAddr, domains string, index int) error
 	DelStreamDomain(id string) error
 	GetStreamDomainAll(tag string) (string, error)
 	DelStreamDomainFromPreIds(preIds string) error
 	DelStreamDomainAll(cleanTag string) error
 
-	ShowIpGroupByComment(comment string) ([]IpGroupData, error)
+	ShowIpGroupByTagName(tagName string) ([]IpGroupData, error)
 	ShowIpGroupByName(name string) ([]IpGroupData, error)
 	AddIpGroup(groupName, addrPool string) error
 	DelIpGroup(id string) error
@@ -89,7 +89,7 @@ type IKuaiClient interface {
 	DelIKuaiBypassIpGroup(cleanTag string) error
 	GetAllIKuaiBypassIpGroupNamesByName(name string) ([]string, error)
 
-	ShowIpv6GroupByComment(comment string) ([]Ipv6GroupData, error)
+	ShowIpv6GroupByTagName(tagName string) ([]Ipv6GroupData, error)
 	ShowIpv6GroupByName(name string) ([]Ipv6GroupData, error)
 	AddIpv6Group(groupName, addrPool string) error
 	DelIpv6Group(id string) error
@@ -97,14 +97,14 @@ type IKuaiClient interface {
 	DelIKuaiBypassIpv6Group(cleanTag string) error
 	GetAllIKuaiBypassIpv6GroupNamesByName(name string) ([]string, error)
 
-	ShowDomainGroupByComment(comment string) ([]DomainGroupData, error)
+	ShowDomainGroupByTagName(tagName string) ([]DomainGroupData, error)
 	AddDomainGroup(groupName, domains string) error
 	DelDomainGroup(id string) error
 	GetDomainGroup(tag string) (string, error)
 	DelIKuaiBypassDomainGroup(cleanTag string) error
 
 	AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error
-	ShowStreamIpPortByComment(comment string) ([]StreamIpPortData, error)
+	ShowStreamIpPortByTagName(tagName string) ([]StreamIpPortData, error)
 	DelStreamIpPort(id string) error
 	DelIKuaiBypassStreamIpPort(cleanTag string) error
 	GetStreamIpPortIdsByTag(tag string) (string, error)

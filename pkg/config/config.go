@@ -16,7 +16,7 @@ var (
 	ConfPath                   = flag.String("c", "./config.yml", "配置文件路径 后缀必须是yml/yaml")
 	RunMode                    = flag.String("r", "cron", "运行模式: cron(立即执行并定时), cronAft(仅定时), once/1(执行一次退出), clean(清理规则), web(仅WebUI), exportDomainSteamToTxt(导出规则)")
 	IsAcIpgroup                = flag.String("m", "ispdomain", "功能模块: ispdomain(运营商/域名分流), ipgroup(IPv4分组/端口分流), ipv6group(IPv6分组), ii(ispdomain+ipgroup), ip(v4+v6分组), iip(ii+ip)")
-	CleanTag                   = flag.String("tag", "cleanAll", "要清理的分流规则备注名或关键词")
+	CleanTag                   = flag.String("tag", "cleanAll", "要清理的分流规则 TagName 或关键词")
 	ExportPath                 = flag.String("exportPath", "/tmp", "域名分流规则导出文件路径")
 	IkuaiLoginInfo             = flag.String("login", "", "爱快登陆地址,用户名,密码。优先级比配置文件内的高")
 	IsIpGroupNameAddRandomSuff = flag.String("isIpGroupNameAddRandomSuff", "1", "ip分组名称是否增加随机数后缀(仅ip分组模式有效) 1为添加 0不添加")
@@ -133,11 +133,11 @@ var ItemComments = map[string]string{
 	"ifaceband":            "线路绑定：0-不勾选，1-勾选",
 	"interface":            "分流线路 (如 wan1)",
 	"nexthop":              "下一跳网关地址",
-	"tag":                  "规则备注标签后缀",
+	"tag":                  "规则 TagName 后缀",
 	"src-addr":             "分流源地址 (IP或范围)",
 	"src-addr-opt-ipgroup": "分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略。多个名字可以逗号分隔",
 	"ip-group":             "关联的IP分组名称，多个名字可以逗号",
-	"opt-tagname":          "该条规则的备注名称 (可选，如果不填写则自动根据其他条件区分)",
+	"opt-tagname":          "该条规则的 TagName (可选，如果不填写则自动根据其他条件区分)",
 }
 
 // WebuiComments WebUI 子项注释

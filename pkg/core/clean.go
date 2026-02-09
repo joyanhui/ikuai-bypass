@@ -12,7 +12,7 @@ import (
 
 const (
 	cleanModeAll    = "cleanAll"
-	defaultCleanTag = "IKUAI_BYPASS"
+	defaultCleanTag = "IKB"
 )
 
 // MainClean 清理旧分流规则
@@ -87,9 +87,8 @@ func normalizeCleanTag(cleanTag string) (string, bool) {
 	return cleanTag, cleanTag == cleanModeAll
 }
 
-func isManagedBypassRule(comment, name string) bool {
-	return strings.Contains(comment, defaultCleanTag) ||
-		strings.HasPrefix(name, "IKB_") ||
+func isManagedBypassRule(_ string, name string) bool {
+	return strings.HasPrefix(name, "IKB") ||
 		strings.Contains(name, "IKB")
 }
 
@@ -123,7 +122,7 @@ func cleanAllByManagedMark(iKuai ikuai_common.IKuaiClient) (err error) {
 
 func cleanAllCustomIsp(iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
-		data, showErr := iKuai.ShowCustomIspByComment()
+		data, showErr := iKuai.ShowCustomIspByTagName("")
 		if showErr != nil {
 			return showErr
 		}
@@ -145,7 +144,7 @@ func cleanAllCustomIsp(iKuai ikuai_common.IKuaiClient) (err error) {
 
 func cleanAllStreamDomain(iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
-		data, showErr := iKuai.ShowStreamDomainByComment("")
+		data, showErr := iKuai.ShowStreamDomainByTagName("")
 		if showErr != nil {
 			return showErr
 		}
@@ -167,7 +166,7 @@ func cleanAllStreamDomain(iKuai ikuai_common.IKuaiClient) (err error) {
 
 func cleanAllIpGroup(iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
-		data, showErr := iKuai.ShowIpGroupByComment("")
+		data, showErr := iKuai.ShowIpGroupByTagName("")
 		if showErr != nil {
 			return showErr
 		}
@@ -189,7 +188,7 @@ func cleanAllIpGroup(iKuai ikuai_common.IKuaiClient) (err error) {
 
 func cleanAllIpv6Group(iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
-		data, showErr := iKuai.ShowIpv6GroupByComment("")
+		data, showErr := iKuai.ShowIpv6GroupByTagName("")
 		if showErr != nil {
 			return showErr
 		}
@@ -211,7 +210,7 @@ func cleanAllIpv6Group(iKuai ikuai_common.IKuaiClient) (err error) {
 
 func cleanAllDomainGroup(iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
-		data, showErr := iKuai.ShowDomainGroupByComment("")
+		data, showErr := iKuai.ShowDomainGroupByTagName("")
 		if showErr != nil {
 			return showErr
 		}
@@ -233,7 +232,7 @@ func cleanAllDomainGroup(iKuai ikuai_common.IKuaiClient) (err error) {
 
 func cleanAllStreamIpPort(iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
-		data, showErr := iKuai.ShowStreamIpPortByComment("")
+		data, showErr := iKuai.ShowStreamIpPortByTagName("")
 		if showErr != nil {
 			return showErr
 		}

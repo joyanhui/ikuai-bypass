@@ -12,7 +12,7 @@ import (
 )
 
 const COMMENT_IKUAI_BYPASS = "IKUAI_BYPASS"
-const NAME_PREFIX_IKB = "IKB_"
+const NAME_PREFIX_IKB = "IKB"
 const FUNC_NAME_ROUTE_OBJECT = "route_object"
 
 type IKuai struct {

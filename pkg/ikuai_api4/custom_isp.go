@@ -10,7 +10,7 @@ import (
 
 const FUNC_NAME_CUSTOM_ISP = "custom_isp"
 
-func (i *IKuai) ShowCustomIspByComment() (result []ikuai_common.CustomIspData, err error) {
+func (i *IKuai) ShowCustomIspByTagName(tagName string) (result []ikuai_common.CustomIspData, err error) {
 	param := struct {
 		Type    string `json:"TYPE"`
 		Limit   string `json:"limit"`
@@ -25,7 +25,8 @@ func (i *IKuai) ShowCustomIspByComment() (result []ikuai_common.CustomIspData, e
 		Action:   "show",
 		Param:    &param,
 	}
-	resp := CallResp{Results: &CallRespData{Data: &result}}
+	var all []ikuai_common.CustomIspData
+	resp := CallResp{Results: &CallRespData{Data: &all}}
 	err = postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return
@@ -33,6 +34,11 @@ func (i *IKuai) ShowCustomIspByComment() (result []ikuai_common.CustomIspData, e
 	if resp.Code != 0 {
 		err = errors.New(resp.Message)
 		return
+	}
+	for _, d := range all {
+		if matchTagNameFilter(tagName, d.Name, d.Comment) {
+			result = append(result, d)
+		}
 	}
 	return
 }
@@ -46,7 +52,7 @@ func (i *IKuai) AddCustomIsp(name, tag, ipgroup string) error {
 		Ipgroup string `json:"ipgroup"`
 		Comment string `json:"comment"`
 	}{
-		Name:    NAME_PREFIX_IKB + name,
+		Name:    buildTagName(name),
 		Ipgroup: ipgroup,
 		Comment: "",
 	}
@@ -94,13 +100,13 @@ func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
 	preIds = ""
 	err = nil
 	var data []ikuai_common.CustomIspData
-	data, err = i.ShowCustomIspByComment()
+	data, err = i.ShowCustomIspByTagName("")
 	if err != nil {
 		return
 	}
 	var ids []string
 	for _, d := range data {
-		if (strings.HasPrefix(d.Name, NAME_PREFIX_IKB) && strings.Contains(d.Name, tag)) || d.Comment == COMMENT_IKUAI_BYPASS+"_"+tag {
+		if matchTagNameFilter(tag, d.Name, d.Comment) {
 			ids = append(ids, strconv.Itoa(d.ID))
 		}
 	}
@@ -131,7 +137,7 @@ func (i *IKuai) DelCustomIspFromPreIds(preIds string) (err error) {
 func (i *IKuai) DelCustomIspAll(cleanTag string) (err error) {
 	for {
 		var data []ikuai_common.CustomIspData
-		data, err = i.ShowCustomIspByComment()
+		data, err = i.ShowCustomIspByTagName("")
 		if err != nil {
 			return
 		}

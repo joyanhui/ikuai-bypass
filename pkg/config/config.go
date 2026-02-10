@@ -197,10 +197,10 @@ var WebuiComments = map[string]string{
 
 // MaxNumberOfOneRecordsComments MaxNumberOfOneRecords 子项注释
 var MaxNumberOfOneRecordsComments = map[string]string{
-	"Isp":    "自定义运营商IP最大单条写入数 (爱快限制5000，实际本工具可以写入1w+)",
-	"Ipv4":   "IPv4分组最大单条写入数 (爱快限制1000，实际本工具可以写入1.5K)",
-	"Ipv6":   "IPv6分组最大单条写入数 (爱快限制1000，实际本工具可以写入1.5K)",
-	"Domain": "域名分流最大单条写入数 (爱快限制1000，实际本工具可以写入1w+)",
+	"Isp":    "自定义运营商IP最大单条写入数 (爱快限制5000，本工具可以写入1w+)",
+	"Ipv4":   "IPv4分组最大单条写入数 (爱快限制1000，本工具可以写入1.8k+)",
+	"Ipv6":   "IPv6分组最大单条写入数 (爱快限制1000，本工具可以写入1.5k+)",
+	"Domain": "域名分流最大单条写入数 (爱快限制1000，本工具可以写入1w+)",
 }
 
 // Save 将配置保存到指定文件

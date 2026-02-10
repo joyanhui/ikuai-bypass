@@ -102,7 +102,7 @@ func (i *IKuai) AddIpv6Group(tag, addrPool string, index int) error {
 		if ip != "" {
 			groupValue = append(groupValue, map[string]string{
 				"ipv6":    ip,
-				"comment": ikuai_common.NEW_COMMENT,
+				"comment":  "", //不要加注释，因为 ikuai v4.x 的IP分组 的注释很蛋疼
 			})
 		}
 	}
@@ -111,7 +111,7 @@ func (i *IKuai) AddIpv6Group(tag, addrPool string, index int) error {
 		"group_name":  buildIndexedTagName(tag, index),
 		"type":        1, // IPv6
 		"group_value": groupValue,
-		"comment":     ikuai_common.NEW_COMMENT,
+		"comment":     "", //不要加注释，因为 ikuai v4.x 的IP分组 的注释很蛋疼
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_ROUTE_OBJECT,

@@ -199,6 +199,7 @@ services:
 ---
 
 ## 更新日志
+- 2026-02-10 ip分组去掉注释功能
 - 2026-02-10 增加 单条数据记录配置能力，可以把国内地址的自定义运营商压缩为一条记录  [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
 - 2026-02-10 修复 自定义运营商 会产生多条的bug [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
 - 2026-02-10 初步完成对爱快v4内测版的适配[#103](https://github.com/joyanhui/ikuai-bypass/issues/103),并发布 v4.4.2-Pre版本

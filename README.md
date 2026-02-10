@@ -260,6 +260,5 @@ services:
 
 ## 交流与反馈
 
--   **交流讨论**：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛。
--   **Bug 反馈**：[Issues](https://github.com/joyanhui/ikuai-bypass/issues)。
+-   **交流讨论**：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛。 [Bug Issues](https://github.com/joyanhui/ikuai-bypass/issues)
 -   **致谢**：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的初始版本思路，以及所有提供 PR 的开发者。

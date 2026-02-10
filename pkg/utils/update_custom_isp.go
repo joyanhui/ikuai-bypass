@@ -12,7 +12,9 @@ import (
 )
 
 // UpdateCustomIsp 更新运营商分流规则
+// UpdateCustomIsp updates custom ISP routing rules
 // preDelIds: 如果非空，则在下载成功后、添加新规则前进行删除（Safe-Before 模式）
+// preDelIds: if not empty, old rules are deleted after successful download but before adding new ones (Safe-Before mode)
 func UpdateCustomIsp(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name string, url string, preDelIds string) (err error) {
 	logger.Info("HTTP:数据获取", "Downloading rules from URL: %s", url)
 	resp, err := http.Get(GetFullUrl(url))
@@ -35,6 +37,7 @@ func UpdateCustomIsp(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name
 	logger.Info("STAT:规则统计", "Fetched %d IPs for %s", len(ips), name)
 
 	// 如果提供了预删除 ID，则在开始添加前进行清理（确保下载成功后才删除）
+	// If pre-deletion IDs are provided, clear them before adding new rules (ensures deletion only after successful download)
 	if preDelIds != "" {
 		count := len(strings.Split(preDelIds, ","))
 		err = iKuai.DelCustomIspFromPreIds(preDelIds)
@@ -45,7 +48,7 @@ func UpdateCustomIsp(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name
 		logger.Success("CLEAN:清理旧规则", "Successfully cleared %d old custom ISP rules", count)
 	}
 
-	ipGroups := Group(ips, 5000) //5000条
+	ipGroups := Group(ips, 5000) // 5000条一个分本 / 5000 entries per group
 
 	for i, ig := range ipGroups {
 		logger.Info("ADD:正在添加", "[%d/%d] %s: adding...", i+1, len(ipGroups), name)

@@ -72,4 +72,4 @@ go run *.go  -r clean -c  /home/yh/workspace/ikuai-bypass/config_example.yml  -l
 
 
 
-git tag -a v4.4.3-Pre -F aaa_Update.md
+git tag -a v4.4.4-Pre -F Update.md

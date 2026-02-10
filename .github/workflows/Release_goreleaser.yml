@@ -35,6 +35,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: "./release/*.zip"
+          body_path: Update.md
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

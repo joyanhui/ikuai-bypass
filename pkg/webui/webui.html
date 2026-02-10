@@ -384,6 +384,27 @@
                                         <input type="text" x-model="config.githubProxy" placeholder="https://gh-proxy.com/" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-xs rounded p-2.5 w-full dark:text-white focus:ring-1 focus:ring-primary-500" />
                                         <p class="mt-1 text-[10px] text-gray-400" x-text="commentMaps.top['github-proxy']"></p>
                                     </div>
+                                    <div class="border-t dark:border-gray-700 pt-4 mt-2">
+                                        <label class="block mb-2 text-[10px] font-bold text-gray-500 uppercase">单条记录最大写入数设置</label>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block mb-1 text-[8px] font-bold text-gray-400 uppercase">运营商 (ISP)</label>
+                                                <input type="number" x-model="config.maxNumberOfOneRecords.Isp" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-[10px] rounded p-2 w-full dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label class="block mb-1 text-[8px] font-bold text-gray-400 uppercase">IPv4 分组</label>
+                                                <input type="number" x-model="config.maxNumberOfOneRecords.Ipv4" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-[10px] rounded p-2 w-full dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label class="block mb-1 text-[8px] font-bold text-gray-400 uppercase">IPv6 分组</label>
+                                                <input type="number" x-model="config.maxNumberOfOneRecords.Ipv6" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-[10px] rounded p-2 w-full dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label class="block mb-1 text-[8px] font-bold text-gray-400 uppercase">域名分流</label>
+                                                <input type="number" x-model="config.maxNumberOfOneRecords.Domain" class="bg-gray-50 dark:bg-gray-900 border dark:border-gray-600 text-[10px] rounded p-2 w-full dark:text-white" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 
@@ -695,7 +716,7 @@
                     loadingRemote: false,
                     serverConfPath: "",
                     remoteConfigUrl: "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config_example.yml",
-                    commentMaps: { top: {}, item: {}, webui: {} },
+                    commentMaps: { top: {}, item: {}, webui: {}, maxNumberOfOneRecords: {} },
                     presets: [],
                     cmd: {
                         exePath: "{{EXE_PATH}}",
@@ -730,6 +751,12 @@
                         },
                         addErrRetryWait: "10s",
                         addWait: "1s",
+                        maxNumberOfOneRecords: {
+                            Isp: 5000,
+                            Ipv4: 1000,
+                            Ipv6: 1000,
+                            Domain: 1000,
+                        },
                     },
 
                     initApp() {
@@ -832,6 +859,7 @@
                                 this.commentMaps.top = data.top_level_comments;
                                 this.commentMaps.item = data.item_comments;
                                 this.commentMaps.webui = data.webui_comments;
+                                this.commentMaps.maxNumberOfOneRecords = data.max_number_of_one_records_comments;
                             }
                             this.config.ikuaiUrl = data["ikuai-url"] || "";
                             this.config.username = data.username || "";
@@ -840,6 +868,14 @@
                             this.config.githubProxy = data["github-proxy"] || "";
                             if (data.AddErrRetryWait) this.config.addErrRetryWait = typeof data.AddErrRetryWait === "number" ? data.AddErrRetryWait / 1e9 + "s" : data.AddErrRetryWait;
                             if (data.AddWait) this.config.addWait = typeof data.AddWait === "number" ? data.AddWait / 1e9 + "s" : data.AddWait;
+                            if (data.MaxNumberOfOneRecords) {
+                                this.config.maxNumberOfOneRecords = {
+                                    Isp: data.MaxNumberOfOneRecords.Isp || 5000,
+                                    Ipv4: data.MaxNumberOfOneRecords.Ipv4 || 1000,
+                                    Ipv6: data.MaxNumberOfOneRecords.Ipv6 || 1000,
+                                    Domain: data.MaxNumberOfOneRecords.Domain || 1000,
+                                };
+                            }
                             if (data.webui) {
                                 this.config.webui = {
                                     enable: !!data.webui.enable,
@@ -899,6 +935,12 @@
                                 "github-proxy": this.config.githubProxy,
                                 AddErrRetryWait: parseInt(parseFloat(this.config.addErrRetryWait) * 1e9),
                                 AddWait: parseInt(parseFloat(this.config.addWait) * 1e9),
+                                MaxNumberOfOneRecords: {
+                                    Isp: parseInt(this.config.maxNumberOfOneRecords.Isp),
+                                    Ipv4: parseInt(this.config.maxNumberOfOneRecords.Ipv4),
+                                    Ipv6: parseInt(this.config.maxNumberOfOneRecords.Ipv6),
+                                    Domain: parseInt(this.config.maxNumberOfOneRecords.Domain),
+                                },
                                 webui: {
                                     enable: this.config.webui.enable,
                                     "enable-update": this.config.webui.enableUpdate,
@@ -977,6 +1019,14 @@
                                 this.config.githubProxy = doc["github-proxy"] || "";
                                 if (doc.AddErrRetryWait) this.config.addErrRetryWait = String(doc.AddErrRetryWait);
                                 if (doc.AddWait) this.config.addWait = String(doc.AddWait);
+                                if (doc.MaxNumberOfOneRecords) {
+                                    this.config.maxNumberOfOneRecords = {
+                                        Isp: doc.MaxNumberOfOneRecords.Isp || 5000,
+                                        Ipv4: doc.MaxNumberOfOneRecords.Ipv4 || 1000,
+                                        Ipv6: doc.MaxNumberOfOneRecords.Ipv6 || 1000,
+                                        Domain: doc.MaxNumberOfOneRecords.Domain || 1000,
+                                    };
+                                }
                                 if (doc.webui) {
                                     this.config.webui = {
                                         enable: !!doc.webui.enable,
@@ -1106,6 +1156,12 @@
                             AddErrRetryWait: this.config.addErrRetryWait,
                             AddWait: this.config.addWait,
                             "github-proxy": this.config.githubProxy,
+                            MaxNumberOfOneRecords: {
+                                Isp: parseInt(this.config.maxNumberOfOneRecords.Isp),
+                                Ipv4: parseInt(this.config.maxNumberOfOneRecords.Ipv4),
+                                Ipv6: parseInt(this.config.maxNumberOfOneRecords.Ipv6),
+                                Domain: parseInt(this.config.maxNumberOfOneRecords.Domain),
+                            },
                         };
                         c["webui"] = {
                             enable: this.config.webui.enable,
@@ -1152,15 +1208,20 @@
                         if (!this.showComments) return yaml;
                         const res = ["# iKuai Bypass 配置文件", "# 详情: https://github.com/joyanhui/ikuai-bypass"];
                         let inW = false;
+                        let inM = false;
                         yaml.split("\n").forEach((l) => {
                             if (!l.trim()) return;
-                            const tm = l.match(/^([a-z0-9-]+):/);
+                            const tm = l.match(/^([A-Za-z0-9-]+):/);
                             if (tm) {
                                 inW = tm[1] === "webui";
+                                inM = tm[1] === "MaxNumberOfOneRecords";
                                 if (this.commentMaps.top[tm[1]]) l += " # " + this.commentMaps.top[tm[1]];
                             } else if (inW) {
                                 const wm = l.match(/^  ([a-z0-9-]+):/);
                                 if (wm && this.commentMaps.webui[wm[1]]) l += " # " + this.commentMaps.webui[wm[1]];
+                            } else if (inM) {
+                                const mm = l.match(/^  ([A-Za-z0-9-]+):/);
+                                if (mm && this.commentMaps.maxNumberOfOneRecords[mm[1]]) l += " # " + this.commentMaps.maxNumberOfOneRecords[mm[1]];
                             } else {
                                 const im = l.match(/^    ([a-z0-9-]+):/);
                                 if (im && this.commentMaps.item[im[1]]) l += " # " + this.commentMaps.item[im[1]];

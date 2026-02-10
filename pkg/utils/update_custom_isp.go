@@ -48,7 +48,7 @@ func UpdateCustomIsp(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name
 		logger.Success("CLEAN:清理旧规则", "Successfully cleared %d old custom ISP rules", count)
 	}
 
-	ipGroups := Group(ips, 5000) // 5000条一个分本 / 5000 entries per group
+	ipGroups := Group(ips, config.GlobalConfig.MaxNumberOfOneRecords.Isp) // 5000条一个分本 / 5000 entries per group
 
 	for i, ig := range ipGroups {
 		logger.Info("ADD:正在添加", "[%d/%d] %s: adding...", i+1, len(ipGroups), name)

@@ -47,7 +47,7 @@ func UpdateStreamDomain(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, i
 		logger.Success("CLEAN:清理旧规", "Cleared %d old domain streaming rules", count)
 	}
 
-	domainGroup := Group(domains, 1000) //1000条
+	domainGroup := Group(domains, config.GlobalConfig.MaxNumberOfOneRecords.Domain) //1000条
 	// #99 fix srcAddr 优先使用 srcAddrIpGroup
 	if strings.TrimSpace(srcAddrIpGroup) != "" {
 		var found bool

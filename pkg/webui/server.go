@@ -102,6 +102,7 @@ func createServer(port string) *http.Server {
 			TopLevelComments map[string]string `json:"top_level_comments"`
 			ItemComments     map[string]string `json:"item_comments"`
 			WebuiComments    map[string]string `json:"webui_comments"`
+			MaxNumberOfOneRecordsComments map[string]string `json:"max_number_of_one_records_comments"`
 		}{
 			Config:           config.GlobalConfig,
 			ExePath:          exePath,
@@ -109,6 +110,7 @@ func createServer(port string) *http.Server {
 			TopLevelComments: config.TopLevelComments,
 			ItemComments:     config.ItemComments,
 			WebuiComments:    config.WebuiComments,
+			MaxNumberOfOneRecordsComments: config.MaxNumberOfOneRecordsComments,
 		}
 
 		w.Header().Set("Content-Type", "application/json")

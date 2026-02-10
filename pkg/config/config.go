@@ -63,7 +63,15 @@ type Config struct {
 		Mode              int    `yaml:"mode" json:"mode"`
 		IfaceBand         int    `yaml:"ifaceband" json:"ifaceband"`
 	} `yaml:"stream-ipport" json:"stream-ipport"`
-	WebUI WebUIConfig `yaml:"webui" json:"webui"`
+	WebUI                 WebUIConfig                 `yaml:"webui" json:"webui"`
+	MaxNumberOfOneRecords MaxNumberOfOneRecordsConfig `yaml:"MaxNumberOfOneRecords" json:"MaxNumberOfOneRecords"`
+}
+
+type MaxNumberOfOneRecordsConfig struct {
+	Isp    int64 `yaml:"Isp" json:"Isp"`
+	Ipv4   int64 `yaml:"Ipv4" json:"Ipv4"`
+	Ipv6   int64 `yaml:"Ipv6" json:"Ipv6"`
+	Domain int64 `yaml:"Domain" json:"Domain"`
 }
 
 type WebUIConfig struct {
@@ -120,6 +128,20 @@ func Read(filename string) error {
 		GlobalConfig.WebUI.CDNPrefix = "https://cdn.jsdelivr.net/npm"
 	}
 
+	// 设置 MaxNumberOfOneRecords 默认值
+	if GlobalConfig.MaxNumberOfOneRecords.Isp == 0 {
+		GlobalConfig.MaxNumberOfOneRecords.Isp = 5000
+	}
+	if GlobalConfig.MaxNumberOfOneRecords.Ipv4 == 0 {
+		GlobalConfig.MaxNumberOfOneRecords.Ipv4 = 1000
+	}
+	if GlobalConfig.MaxNumberOfOneRecords.Ipv6 == 0 {
+		GlobalConfig.MaxNumberOfOneRecords.Ipv6 = 1000
+	}
+	if GlobalConfig.MaxNumberOfOneRecords.Domain == 0 {
+		GlobalConfig.MaxNumberOfOneRecords.Domain = 1000
+	}
+
 	// 检查每个 StreamDomain 的 Tag，如果不存在，则使用 Interface
 	for i := range GlobalConfig.StreamDomain {
 		if GlobalConfig.StreamDomain[i].Tag == "" {
@@ -146,6 +168,7 @@ var TopLevelComments = map[string]string{
 	"ip-group":        "IP分组 (与端口分流配合使用)",
 	"ipv6-group":      "IPv6分组 (与端口分流配合使用)",
 	"stream-ipport":   "端口分流 (下一跳网关/外网线路)",
+	"MaxNumberOfOneRecords": "分组和分流规则单条记录最大写入数据量设置",
 }
 
 // ItemComments 列表项内部字段注释映射
@@ -170,6 +193,14 @@ var WebuiComments = map[string]string{
 	"enable":        "是否启用 WebUI 服务",
 	"enable-update": "是否启用配置文件在线更新功能",
 	"cdn-prefix":    "CDN 前缀 (例如: https://cdn.jsdelivr.net/npm |  https://cdn.jsdmirror.com/npm（国内）)",
+}
+
+// MaxNumberOfOneRecordsComments MaxNumberOfOneRecords 子项注释
+var MaxNumberOfOneRecordsComments = map[string]string{
+	"Isp":    "自定义运营商IP最大单条写入数 (爱快限制5000，实际本工具可以写入1w+)",
+	"Ipv4":   "IPv4分组最大单条写入数 (爱快限制1000，实际本工具可以写入1.5K)",
+	"Ipv6":   "IPv6分组最大单条写入数 (爱快限制1000，实际本工具可以写入1.5K)",
+	"Domain": "域名分流最大单条写入数 (爱快限制1000，实际本工具可以写入1w+)",
 }
 
 // Save 将配置保存到指定文件
@@ -247,6 +278,16 @@ func addCommentsToNode(node *yaml.Node) {
 			for j := 0; j < len(valNode.Content); j += 2 {
 				subKeyNode := valNode.Content[j]
 				if subComment, ok := WebuiComments[subKeyNode.Value]; ok {
+					subKeyNode.LineComment = subComment
+				}
+			}
+		}
+
+		// 处理 MaxNumberOfOneRecords 对象
+		if keyNode.Value == "MaxNumberOfOneRecords" && valNode.Kind == yaml.MappingNode {
+			for j := 0; j < len(valNode.Content); j += 2 {
+				subKeyNode := valNode.Content[j]
+				if subComment, ok := MaxNumberOfOneRecordsComments[subKeyNode.Value]; ok {
 					subKeyNode.LineComment = subComment
 				}
 			}

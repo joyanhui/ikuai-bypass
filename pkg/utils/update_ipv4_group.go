@@ -28,7 +28,7 @@ func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, tag, u
 	}
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv6AndRemoveEmptyLine(logger, ips)
-	ipGroups := Group(ips, 1000)
+	ipGroups := Group(ips, config.GlobalConfig.MaxNumberOfOneRecords.Ipv4)
 	logger.Success("PARSE:解析成功", "%s: obtained new data", tag)
 	preIds, err := iKuai.GetIpGroup(tag)
 	if err != nil {

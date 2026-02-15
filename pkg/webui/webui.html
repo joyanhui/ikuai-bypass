@@ -677,7 +677,7 @@
                                     </template>
                                     <template x-if="!config.webui.enableUpdate">
                                         <span class="flex items-center gap-2 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-5 py-2 rounded-xl border-2 border-red-200 dark:border-red-800 font-bold shadow-lg animate-pulse">
-                                            <i class="bi bi-exclamation-triangle-fill"></i> 在线更新已禁用，请在设置中开启后再保存
+                                            <i class="bi bi-exclamation-triangle-fill"></i> 禁在线编辑：只能浏览配置无法保存修改，要启用，请手动编辑配置文件 <code class="bg-red-200 dark:bg-red-800 px-1 rounded">webui</code> 段落下的 <code class="bg-red-200 dark:bg-red-800 px-1 rounded">enable-update</code> 改为 <code class="bg-red-200 dark:bg-red-800 px-1 rounded">true</code>
                                         </span>
                                     </template>
                                 </div>

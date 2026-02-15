@@ -13,13 +13,11 @@ import (
 // MainClean 清理旧分流规则
 func MainClean() {
 	cleanLogger := logger.NewLogger("CLEAN:清理模式")
-
 	cleanTag, isCleanAll := normalizeCleanTag(*config.CleanTag)
 	if cleanTag == "" {
 		cleanLogger.Error("VALID:参数校验", "清理模式必须指定 -tag 参数 (例如: -tag cleanAll 或 -tag 某规则名)")
 		return
 	}
-
 	iKuai, err := utils.LoginToIkuai()
 	if err != nil {
 		utils.SysLog.Error("LOGIN:登录失败", "Failed to login to iKuai: %v", err)

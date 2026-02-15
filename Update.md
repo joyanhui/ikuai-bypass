@@ -22,3 +22,4 @@
     - 参考[config.yml#L67](https://github.com/joyanhui/ikuai-bypass/blob/4734b3a86cb5de3b38921f47ffadeb998888bf7d/config.yml#L67)
 ### 4 增加docker镜像
 - 自动构建工作流测试
+- 增加riscv64的支持

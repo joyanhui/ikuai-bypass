@@ -157,7 +157,9 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 <details>
 <summary><b>Docker 部署</b></summary>
 <a href="https://hub.docker.com/repository/docker/joyanhui/ikuai-bypass/general">joyanhui/ikuai-bypass</a>
-<br>
+<br><br>
+> ⚠️ **重要提示**：`joyanhui/ikuai-bypass:latest` 镜像仅支持 **爱快 v4** 版本，不兼容爱快 3.x 旧版。如果您使用的是爱快 3.x，请参考 [旧版 Docker 部署文档](https://github.com/joyanhui/ikuai-bypass/blob/d367e399c80357867e3c0e1258e98e7dbb439d4e/README_bakcup.md)。
+<br><br>
 说明：<code>mips/mipsle/mips64*</code> 由于 Alpine 官方基础镜像平台限制，建议使用 Releases 中对应架构二进制直接运行。
 <br><br>
 拉取镜像：

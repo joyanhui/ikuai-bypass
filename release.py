@@ -39,6 +39,7 @@ envs = [
     [['GOOS', 'linux'], ['GOARCH', 'mips64le'], ['GOMIPS64', 'softfloat']],
 
     [['GOOS', 'linux'], ['GOARCH', 'ppc64le']],
+    [['GOOS', 'linux'], ['GOARCH', 'riscv64']],
 
     [['GOOS', 'freebsd'], ['GOARCH', '386']],
     [['GOOS', 'freebsd'], ['GOARCH', 'amd64']],

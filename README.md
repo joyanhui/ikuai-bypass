@@ -32,9 +32,9 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
     1.  **链路设计**：OpenWrt 作为 iKuai 的下级设备接收流量，处理后再将出口流量“绕回”给 iKuai 的物理 WAN 口。
     2.  **规则同步**：本工具将目标 IP 列表导入 iKuai 的“自定义运营商”。iKuai 会认为这些 IP 属于该“虚拟运营商”，从而将流量转发给 OpenWrt。
 *   **核心优势：**
-    *   **极高可靠性**：OpenWrt 宕机只会导致被分流的流量中断，国内/普通流量依然通过主线直连，不会全家断网。
+    *   **极高可靠性**：OpenWrt 宕机只会导致被分流的流量中断，普通流量依然通过主线直连，不会全家断网。
     *   **配置无感**：终端设备无需更改网关配置，完全由 iKuai 在内核层级完成调度。
-    *   **性能优异**：国内网站直连速度最快，旁路仅处理特定流量。
+    *   **性能优异**：直连速度最快，旁路仅处理特定流量。
 *   **参考文档**：[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。
 
 <details>
@@ -84,8 +84,8 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
     password: your_password
     cron: "0 7 * * *" # 每天早上 7 点更新
     custom-isp:
-      - tag: "国内IP"
-        url: "https://example.com/cn.txt"
+      - tag: "演示ip分组"
+        url: "https://example.com/same.txt"
     ```
 
 ### 2. 运行模式
@@ -208,7 +208,7 @@ services:
 
 ## 更新日志
 - 2026-02-10 ip分组去掉注释功能
-- 2026-02-10 增加 单条数据记录配置能力，可以把国内地址的自定义运营商压缩为一条记录  [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
+- 2026-02-10 增加 单条数据记录配置能力，可以把自定义运营商压缩为一条记录  [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
 - 2026-02-10 修复 自定义运营商 会产生多条的bug [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
 - 2026-02-10 初步完成对爱快v4内测版的适配[#103](https://github.com/joyanhui/ikuai-bypass/issues/103),并发布 v4.4.2-Pre版本
 - 2026-02-10 清理模式下 必须显示配置tag不再默认为CleanAll 避免误删除

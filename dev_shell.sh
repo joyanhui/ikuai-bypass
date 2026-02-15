@@ -1,14 +1,3 @@
-go run *.go  -r clean -c  config.yml
-
-go run *.go  -r 1 -c config.yml -m ii
-
-
-go run *.go  -r 1 -c config.yml -m ipgroup -delOldRule before
-
-
-
-
-
 
 # kvm  /home/y/Downloads/iKuai8_x64_3.7.21_Build202508211345.iso
 
@@ -51,7 +40,7 @@ qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm 
     -nic user,model=e1000,mac=52:54:00:22:22:22 \
     -nic user,model=e1000,mac=52:54:00:33:33:33 \
     -nic user,model=e1000,mac=52:54:00:44:44:44
-
+codex resume 019c638d-f18a-7c81-9d33-5963f9c0342f
 
 
 
@@ -61,15 +50,4 @@ go run *.go  -r 1 -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login 
 
 
 
-go run *.go  -r 1 -m ipgroup -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login http://10.1.1.1,admin,123
-
-
-go run *.go  -r 1 -m ispdomain -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login http://10.1.1.1,admin,123
-
-
-go run *.go  -r clean -c  /home/yh/workspace/ikuai-bypass/config_example.yml  -login http://10.1.1.1,admin,123
-
-
-
-
-git tag -a v4.4.5-Pre -F Update.md
+git tag -a v4.4.7 -F Update.md

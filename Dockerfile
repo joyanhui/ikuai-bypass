@@ -25,7 +25,7 @@ RUN apk add --no-cache tzdata
 ENV TZ=Asia/Shanghai
 
 COPY --from=builder /out/ikuai-bypass /usr/local/bin/ikuai-bypass
-COPY config_example.yml /opt/ikuai-bypass/config.yml
+COPY config.yml /opt/ikuai-bypass/config.yml
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

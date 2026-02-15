@@ -1,4 +1,4 @@
-> 因爱快 v4 刚发布还处于内测阶段，且API改动较大，此版本ikuai-bypass仅作尝鲜体验(不适配ikuai 3.x版本)
+> 微调细节增加docker镜像
 
 ### 1. 完成爱快 v4 内测版适配 [#103]
 - 适配 iKuai8_x64_4.0.0_Build202512241218,
@@ -20,3 +20,5 @@
 - 增加配置 可以控制 单条条分组/分流规则的 最大记录数量，可以绕开爱快的限制，分别增加50%或者数倍. 
     - 参考[#105](https://github.com/joyanhui/ikuai-bypass/issues/105#issuecomment-3875268800)
     - 参考[config.yml#L67](https://github.com/joyanhui/ikuai-bypass/blob/4734b3a86cb5de3b38921f47ffadeb998888bf7d/config.yml#L67)
+### 4 增加docker镜像
+- 自动构建工作流测试

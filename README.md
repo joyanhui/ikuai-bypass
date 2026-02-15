@@ -104,7 +104,7 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 ```
 
 ### 3. WebUI 配置与使用
-在 `config.yml` 的 `webui` 配置项中设置端口、用户名和密码。运行 `./ikuai-bypass -r web` 启动后，浏览器访问 `http://IP:19000` 即可在线修改配置和生成命令参数。
+在 `config.yml` 的 `webui` 配置项中设置端口、用户名和密码。运行 `./ikuai-bypass -r web` 启动后，浏览器访问 `http://IP:19001` 即可在线修改配置和生成命令参数。
 
 ---
 
@@ -156,22 +156,26 @@ v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置�
 
 <details>
 <summary><b>Docker 部署</b></summary>
-我没有专门去维护一个docker镜像，因为这个项目没有任何外部依赖只需要一个二进制程序和一个配置文件就可以运行了。你需要先从 Releases 下载对应系统的二进制文件。然后随便找一个linux的docker镜像就可以了。
+<a href="https://hub.docker.com/repository/docker/joyanhui/ikuai-bypass/general">joyanhui/ikuai-bypass</a>
+<br>
+说明：<code>mips/mipsle/mips64*</code> 由于 Alpine 官方基础镜像平台限制，建议使用 Releases 中对应架构二进制直接运行。
+<br><br>
+拉取镜像：
+<code>docker pull joyanhui/ikuai-bypass:latest</code>
+<br><br>
+运行示例（挂载配置文件目录）：
 <code>
 docker run -itd --name ikuai-bypass --privileged=true --restart=always \
-    -p 19000:19000 \
-    -v ~/ikuai-bypass/:/opt/ikuai-bypass/ \
-    alpine:latest /opt/ikuai-bypass/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron
+    -p 19001:19001 \
+    -e IKB_CONFIG_PATH=/etc/ikuai-bypass/config.yml \
+    -v ~/ikuai-bypass/:/etc/ikuai-bypass/ \
+    joyanhui/ikuai-bypass:latest -r cron
 </code>
-注意：<code>-p 19000:19000</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此参数。默认端口为 19000，可在配置文件中修改。
+说明：容器启动时会检查 <code>IKB_CONFIG_PATH</code> 指向的配置文件；如果不存在，会自动将镜像内置模板复制到该路径（默认模板路径：<code>/opt/ikuai-bypass/config.yml</code>）。
+<br>
+注意：<code>-p 19001:19001</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此参数。默认端口为 19001，可在配置文件中修改。
 </details>
 
-<details>
-<summary><b>iKuai Docker 环境</b></summary>
-使用 <code>alpine:latest</code> 镜像，挂载可执行文件，启动命令设置为：
-<code>/bin/sh -c "chmod +x /opt/ikuai-bypass/ikuai-bypass && /opt/ikuai-bypass/ikuai-bypass -r cron -c /opt/ikuai-bypass/config.yml"</code>
-注意：需要在 Docker 配置中添加端口映射 <code>19000:19000</code> 以访问 WebUI 管理界面。默认端口为 19000，可在配置文件中修改。
-</details>
 
 <details>
 <summary><b>群晖环境docker</b></summary>
@@ -181,21 +185,23 @@ docker run -itd --name ikuai-bypass --privileged=true --restart=always \
 version: '3.8'
 services:
   ikuai-bypass:
-    image: dscao/ikuai-bypass
+    image: joyanhui/ikuai-bypass:latest
     container_name: ikuai-bypass
     privileged: true
     environment:
       TZ: "Asia/Shanghai"
+      IKB_CONFIG_PATH: "/etc/ikuai-bypass/config.yml"
     volumes:
-      - /volume1/docker/ikuai-bypass/data/:/opt/ikuai-bypass
+      - /volume1/docker/ikuai-bypass/data/:/etc/ikuai-bypass
     ports:
-      - "19000:19000"
-    command: sh -c "/app/ikuai-bypass -c /opt/ikuai-bypass/config.yml -r cron -m ipv6group & sleep 30 ; /app/ikuai-bypass -c /opt/ikuai-bypass/config2.yml -r cron -m ii ; wait"
+      - "19001:19001"
+    command: ["-r", "cron"]
     tty: true
 ```
-注意：<code>ports: - "19000:19000"</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此配置。默认端口为 19000，可在配置文件中修改。
+说明：如果 <code>IKB_CONFIG_PATH</code> 指向的文件不存在，容器会先自动创建该配置文件再启动程序。
+<br>
+注意：<code>ports: - "19001:19001"</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此配置。默认端口为 19001，可在配置文件中修改。
 </details>
-
 ---
 
 ## 更新日志

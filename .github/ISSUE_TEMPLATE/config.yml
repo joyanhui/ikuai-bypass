@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: "🐛 报告 Bug (Report a Bug)"
-    url: https://github.com/fileuni/fileuni/issues/new?template=bug_report.md
+    url: https://github.com/joyanhui/ikuai-bypass/issues/new?template=bug_report.md
     about: "发现功能异常或崩溃？请在此提交，我们将优先处理影响稳定性的问题。"
   - name: "💡 功能建议 (Feature Request)"
-    url: https://github.com/fileuni/fileuni/discussions/new?category=ideas
+    url: https://github.com/joyanhui/ikuai-bypass/discussions/new?category=ideas
     about: "有很酷的想法？请在 Discussions 发起讨论。我们会定期评估并将其转化为正式路线图。"
   - name: "🙋 提问与求助 (Q&A)"
-    url: https://github.com/fileuni/fileuni/discussions/new?category=q-a
+    url: https://github.com/joyanhui/ikuai-bypass/discussions/new?category=q-a
     about: "不确定是 Bug 还是操作问题？在这里获取帮助。"

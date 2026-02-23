@@ -6,9 +6,13 @@ import (
 	"strings"
 
 	"ikuai-bypass/pkg/ikuai_common"
+	"ikuai-bypass/pkg/logger"
 )
 
 var tagNameSanitizer = regexp.MustCompile(`[^\p{Han}A-Za-z0-9]+`)
+
+// 包级 logger 用于打印截断警告 / Package-level logger for truncation warnings
+var tagLogger = logger.NewLogger("TAG:名称处理")
 
 func stripKnownPrefix(raw string) string {
 	raw = strings.TrimSpace(raw)
@@ -31,8 +35,23 @@ func buildTagName(raw string) string {
 	return ikuai_common.NAME_PREFIX_IKB + token
 }
 
+const maxTagNameLength = 15 // 爱快 4.0.101 对 tagname 的长度限制 / iKuai 4.0.101 tagname length limit
+
 func buildIndexedTagName(raw string, index int) string {
-	return buildTagName(raw) + strconv.Itoa(index+1)
+	suffix := strconv.Itoa(index + 1)
+	baseName := buildTagName(raw)
+	originalName := baseName + suffix
+	
+	// 如果总长度超过限制，截断 baseName
+	// Truncate baseName if total length exceeds limit
+	maxBaseLen := maxTagNameLength - len(suffix)
+	if len(baseName) > maxBaseLen {
+		truncatedName := baseName[:maxBaseLen] + suffix
+		tagLogger.Warn("TRUNCATE:名称截断", "Tag name truncated due to iKuai 15-char limit: '%s' -> '%s' (original tag: '%s')", originalName, truncatedName, raw)
+		return truncatedName
+	}
+	
+	return originalName
 }
 
 func buildTagNameCandidates(raw string) []string {

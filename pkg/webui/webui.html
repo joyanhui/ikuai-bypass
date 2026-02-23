@@ -870,7 +870,7 @@
                             if (data.AddWait) this.config.addWait = typeof data.AddWait === "number" ? data.AddWait / 1e9 + "s" : data.AddWait;
                             if (data.MaxNumberOfOneRecords) {
                                 this.config.maxNumberOfOneRecords = {
-                                    Isp: data.MaxNumberOfOneRecords.Isp || 5000,
+                                    Isp: data.MaxNumberOfOneRecords.Isp || 3000,
                                     Ipv4: data.MaxNumberOfOneRecords.Ipv4 || 1000,
                                     Ipv6: data.MaxNumberOfOneRecords.Ipv6 || 1000,
                                     Domain: data.MaxNumberOfOneRecords.Domain || 1000,
@@ -1021,7 +1021,7 @@
                                 if (doc.AddWait) this.config.addWait = String(doc.AddWait);
                                 if (doc.MaxNumberOfOneRecords) {
                                     this.config.maxNumberOfOneRecords = {
-                                        Isp: doc.MaxNumberOfOneRecords.Isp || 5000,
+                                        Isp: doc.MaxNumberOfOneRecords.Isp || 3000,
                                         Ipv4: doc.MaxNumberOfOneRecords.Ipv4 || 1000,
                                         Ipv6: doc.MaxNumberOfOneRecords.Ipv6 || 1000,
                                         Domain: doc.MaxNumberOfOneRecords.Domain || 1000,

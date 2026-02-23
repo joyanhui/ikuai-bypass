@@ -1,5 +1,13 @@
 #  iKuai Bypass 配置文件 大部分时候请使用默认设置即可
 #  详情参考: https://github.com/joyanhui/ikuai-bypass
+#
+#  【重要】tag 字段长度限制说明 / Important: tag field length limitation
+#  爱快固件 4.0.101 对规则名称(tagname)有 15 字符的长度限制
+#  系统会自动添加 "IKB" 前缀，因此 tag 字段建议不超过 11 个字符
+#  超过限制的 tag 会被自动截断并打印警告日志
+#  iKuai firmware 4.0.101 has a 15-character limit on tagname length
+#  System auto-adds "IKB" prefix, so tag field should not exceed 11 characters
+#  Tags exceeding the limit will be auto-truncated with a warning log
 ikuai-url: http://192.168.9.1 # 爱快控制台地址，结尾不要加 "/"
 username: admin # 爱快登陆用户名
 password: admin888 # 爱快登陆密码
@@ -19,17 +27,22 @@ stream-domain: # 域名分流 (优先级高于IP分流)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
-    tag: gfw # 规则TagName关键词（系统自动添加前缀 IKB）
+    tag: gfw # 规则TagName关键词（系统自动添加前缀 IKB,不超过 11 个字符）
   - interface: wan2 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
-    tag: private_bypass # 规则TagName关键词（系统自动添加前缀 IKB）
+    tag: MyBypass # 规则TagName关键词（系统自动添加前缀 IKB,不超过 11 个字符）
   - interface: wan1 # 分流线路 (如 wan1)
     src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
     src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
     url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
-    tag: private_direct # 规则TagName关键词（系统自动添加前缀 IKB）
+    tag: MyDirect # 规则TagName关键词（系统自动添加前缀 IKB,不超过 11 个字符）
+  #- interface: wan1 # 分流线路 (如 wan1)
+  #  src-addr: 192.168.1.10-192.168.1.254 # 分流源地址 (IP或范围)
+  #  src-addr-opt-ipgroup: "" # 分流源地址关联IP分组(用于匹配爱快中的IP分组 多个可以用逗号分割) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略
+  #  tag: MyChina # 规则TagName关键词（系统自动添加前缀 IKB,不超过 11 个字符）
+  #  url: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/refs/heads/release/china-list.txt # 不太建议用 数据太大，爱快处理可能会卡 这里只是演示
 ip-group: # IP分组 (与端口分流配合使用)
   - tag: 国内
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
@@ -68,4 +81,4 @@ MaxNumberOfOneRecords: # 单条记录最大写入几条数据,因为爱快v4还�
   Isp: 5000 # 自定义运营商IP，爱快限制是5000,本工具可以写入1w+，
   Ipv4: 2450 # ipv4分组最大写入几条数据,爱快限制最大1000，本工具可以写入1.8k+
   Ipv6: 1600 # ipv6分组最大写入几条数据,爱快限制最大1000，本工具可以写入1.5k+
-  Domain: 6000 # 域名分流规则最大写入几条数据,爱快建议是1000,本工具可以写入6K+，
+  Domain: 3000 # 域名分流规则最大写入几条数据,爱快 4.0.101 对 API 请求大小有限制(约 90KB), 有的分流规则里面有超长域名3000条就会超过90kb（提示 DOMAIN:域名分流 xxx 请求参数不合法），如果没有这种情况可以设置为6000,否则请2-3000较为合理。

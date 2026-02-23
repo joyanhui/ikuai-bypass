@@ -139,7 +139,7 @@ func Read(filename string) error {
 		GlobalConfig.MaxNumberOfOneRecords.Ipv6 = 1000
 	}
 	if GlobalConfig.MaxNumberOfOneRecords.Domain == 0 {
-		GlobalConfig.MaxNumberOfOneRecords.Domain = 1000
+		GlobalConfig.MaxNumberOfOneRecords.Domain = 5000 // 爱快 4.0.101 对 API 请求大小有限制（约 90KB），3000 条域名安全 5000多数情况安全
 	}
 
 	// 检查每个 StreamDomain 的 Tag，如果不存在，则使用 Interface
@@ -178,11 +178,11 @@ var ItemComments = map[string]string{
 	"ifaceband":            "线路绑定：0-不勾选，1-勾选",
 	"interface":            "分流线路 (如 wan1)",
 	"nexthop":              "下一跳网关地址",
-	"tag":                  "规则标识名称 (支持中文，系统自动添加 IKB 前缀)",
+	"tag":                  "规则标识名称 (支持中文，系统自动添加 IKB 前缀) 【重要】爱快 4.0.101 限制 tagname 长度为 15 字符，建议 tag 不超过 11 字符，超出会自动截断",
 	"src-addr":             "分流源地址 (IP或范围)",
 	"src-addr-opt-ipgroup": "分流源地址标签 (用于匹配爱快中的IP分组) 在设置了src-addr-opt-ipgroup后，src-addr参数会被忽略。多个名字可以逗号分隔",
 	"ip-group":             "关联的IP分组名称，多个名字可以逗号",
-	"opt-tagname":          "该条规则的 TagName (可选，如果不填写则自动根据其他条件区分)",
+	"opt-tagname":          "该条规则的 TagName (可选，如果不填写则自动根据其他条件区分) 【重要】爱快 4.0.101 限制 tagname 长度为 15 字符，超出会自动截断",
 }
 
 // WebuiComments WebUI 子项注释
@@ -200,7 +200,7 @@ var MaxNumberOfOneRecordsComments = map[string]string{
 	"Isp":    "自定义运营商IP最大单条写入数 (爱快限制5000，本工具可以写入1w+)",
 	"Ipv4":   "IPv4分组最大单条写入数 (爱快限制1000，本工具可以写入1.8k+)",
 	"Ipv6":   "IPv6分组最大单条写入数 (爱快限制1000，本工具可以写入1.5k+)",
-	"Domain": "域名分流最大单条写入数 (爱快限制1000，本工具可以写入6k+)",
+	"Domain": "域名分流最大单条写入数 (爱快 4.0.101 对 API 请求大小有限制约 90KB，建议不超过 6000 条,个别规则可能需要在3000以内，否则可能报 \"请求参数不合法\" 错误)",
 }
 
 // Save 将配置保存到指定文件

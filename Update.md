@@ -23,3 +23,10 @@
 ### 4 增加docker镜像
 - 自动构建工作流测试
 - 增加riscv64的支持
+
+### 5. 修复爱快 4.0.101 域名分流添加失败问题
+- [重要] 爱快固件 4.0.101 对 `tagname` 字段有 **15 字符长度限制**，超出会导致 "请求参数不合法" 错误
+- 修复 `buildIndexedTagName` 函数，自动截断超长的 tagname 并打印警告日志
+- 修复 `stream_domain.go` 和 `stream_ipport.go` 中 `time.custom[].comment` 字段必须为空字符串的问题
+- [建议] 配置文件中的 `tag` 字段建议不超过 **11 个字符**（系统自动添加 "IKB" 前缀）
+- 更新 `config.yml` 和 `pkg/config/config.go` 添加 tag 长度限制说明

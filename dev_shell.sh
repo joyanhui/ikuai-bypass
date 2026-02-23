@@ -49,4 +49,4 @@ go run *.go  -r 1 -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login 
 
 
 
-git tag -a v4.4.7 -F Update.md
+git tag -a v4.4.10 -F Update.md

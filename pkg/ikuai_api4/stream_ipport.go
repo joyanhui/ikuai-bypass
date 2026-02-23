@@ -105,7 +105,7 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 					"weekdays":   "1234567",
 					"start_time": "00:00",
 					"end_time":   "23:59",
-					"comment":    ikuai_common.NEW_COMMENT,
+					"comment":    "",
 				},
 			},
 			"object": []interface{}{},

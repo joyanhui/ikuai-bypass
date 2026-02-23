@@ -1,6 +1,7 @@
 package ikuai_api4
 
 import (
+	"encoding/json"
 	"errors"
 	"ikuai-bypass/pkg/ikuai_common"
 	"strconv"
@@ -100,7 +101,7 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 					"weekdays":   "1234567",
 					"start_time": "00:00",
 					"end_time":   "23:59",
-					"comment":    ikuai_common.NEW_COMMENT,
+					"comment":    "",
 				},
 			},
 			"object": []interface{}{},
@@ -113,12 +114,24 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 		Action:   "add",
 		Param:    &param,
 	}
+
+	// DEBUG: 打印请求参数
+	reqJson, _ := json.Marshal(req)
+	jsonStr := string(reqJson)
+	if len(jsonStr) > 500 {
+		jsonStr = jsonStr[:500]
+	}
+	i.L.Info("DEBUG:请求参数", "tagname=%s, domains_count=%d, req_size=%d bytes, req=%s", uniqueTagname, len(domainList), len(string(reqJson)), jsonStr)
+
 	resp := CallResp{}
 	err := postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
 	if err != nil {
 		return err
 	}
 	if resp.Code != 0 {
+		// DEBUG: 打印完整错误响应
+		respJson, _ := json.Marshal(resp)
+		i.L.Error("DEBUG:错误响应", "code=%d, message=%s, full_response=%s", resp.Code, resp.Message, string(respJson))
 		return errors.New(resp.Message)
 	}
 	return nil
@@ -191,6 +204,9 @@ func (i *IKuai) DelStreamDomain(id string) error {
 		return err
 	}
 	if resp.Code != 0 {
+		// DEBUG: 打印完整错误响应
+		respJson, _ := json.Marshal(resp)
+		i.L.Error("DEBUG:错误响应", "code=%d, message=%s, full_response=%s", resp.Code, resp.Message, string(respJson))
 		return errors.New(resp.Message)
 	}
 	return nil

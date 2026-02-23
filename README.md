@@ -207,7 +207,7 @@ services:
 ---
 
 ## 更新日志
-- 2026-02-24 适配 iKuai8_x64_4.0.101 对tag长度和api域名分流90kb的限制
+- 2026-02-24 适配 iKuai8_x64_4.0.101 对tag长度和api域名分流90kb的限制 [#108](https://github.com/joyanhui/ikuai-bypass/issues/108)
 - 2026-02-16 完善webui的文字提示 [#107](https://github.com/joyanhui/ikuai-bypass/issues/107) 避免歧义
 - 2026-02-16 增加自动构建docker `joyanhui/ikuai-bypass`,并新增支持linux/riscv64
 - 2026-02-10 增加 单条数据记录配置能力，可以把自定义运营商压缩为一条记录  [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)

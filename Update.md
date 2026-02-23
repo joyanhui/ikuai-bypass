@@ -1,7 +1,7 @@
 > 微调细节增加docker镜像
 
-### 1. 完成爱快 v4 内测版适配 [#103]
-- 适配 iKuai8_x64_4.0.0_Build202512241218,
+### 1. 完成爱快 v4 公测版适配 [#108]
+- 适配 iKuai8_x64_4.0.101_beta_Build202602111835.iso
 - [重要] v4.4 以后不再支持爱快 v3.x 版本（v3.7 及以下请用 v4.2）[v4.2](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)
 - [重要] 规则标识从备注改为名字前缀 `IKB`（v4 接口备注无返回）
 - [重要] 配置项统一使用 `tag`，删除 `name` 等混乱字段，参考 [config.yml](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml) 更新配置

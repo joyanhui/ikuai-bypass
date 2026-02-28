@@ -148,49 +148,6 @@ func (i *IKuai) DelCustomIsp(id string) error {
 	return nil
 }
 
-// GetCustomIspAll 准备查询需要删除的旧规则 ID
-// GetCustomIspAll prepares the IDs of old rules to be deleted
-func (i *IKuai) GetCustomIspAll(tag string) (preIds string, err error) {
-	i.L.Info("QUERY:查询规则", "Querying custom ISP rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
-	preIds = ""
-	err = nil
-	var data []ikuai_common.CustomIspData
-	data, err = i.ShowCustomIspByTagName("")
-	if err != nil {
-		return
-	}
-	var ids []string
-	for _, d := range data {
-		// 优先名字匹配，兼容序号
-		// Priority matching by name, compatible with sequence numbers
-		if matchTagNameFilter(tag, d.Name, d.Comment) {
-			ids = append(ids, strconv.Itoa(d.ID))
-		}
-	}
-	if len(ids) <= 0 {
-		return
-	}
-
-	id := strings.Join(ids, ",")
-	preIds = preIds + "||" + id
-	return
-}
-
-// DelCustomIspFromPreIds 根据提供的 ID 列表删除旧规则
-// DelCustomIspFromPreIds deletes old rules based on the provided ID list
-func (i *IKuai) DelCustomIspFromPreIds(preIds string) (err error) {
-	arr := strings.Split(preIds, "||")
-	for _, id := range arr {
-		if len(id) < 1 {
-			continue
-		}
-		err = i.DelCustomIsp(id)
-		if err != nil {
-			return
-		}
-	}
-	return
-}
 
 // DelCustomIspAll 清理所有符合条件的自定义运营商规则
 // DelCustomIspAll cleans up all custom ISP rules that match the condition

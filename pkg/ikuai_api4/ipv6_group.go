@@ -209,30 +209,6 @@ func (i *IKuai) GetIpv6GroupMap(tag string) (result map[int]int, err error) {
 	return result, nil
 }
 
-func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
-	i.L.Info("QUERY:查询列表", "Querying IPv6 group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
-	var ids []string
-
-	var data []ikuai_common.Ipv6GroupData
-	data, err = i.ShowIpv6GroupByTagName("")
-	if err != nil {
-		return "", err
-	}
-
-	for _, d := range data {
-		if matchTagNameFilter(tag, d.GroupName, d.Comment) {
-			ids = append(ids, strconv.Itoa(d.ID))
-		}
-	}
-
-	if len(ids) <= 0 {
-		return "", nil
-	}
-
-	preIds = strings.Join(ids, ",")
-
-	return preIds, nil
-}
 
 func (i *IKuai) DelIKuaiBypassIpv6Group(cleanTag string) (err error) {
 	for {

@@ -1,12 +1,8 @@
 package utils
-
 import (
-	"errors"
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/logger"
-	"io"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -14,16 +10,7 @@ import (
 
 // UpdateStreamDomain 更新域名分流规则
 func UpdateStreamDomain(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGroup, srcAddr, url string) (err error) {
-	logger.Info("HTTP:资源下载", "http.get %s", url)
-	resp, err := http.Get(GetFullUrl(url))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != 200 {
-		return errors.New(resp.Status)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := HttpGet(logger, url)
 	if err != nil {
 		return err
 	}

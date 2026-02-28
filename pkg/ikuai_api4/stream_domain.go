@@ -294,47 +294,6 @@ func (i *IKuai) DelStreamDomain(id string) error {
 	return nil
 }
 
-// GetStreamDomainAll 批量查询并返回逗号分隔的 ID
-// Batch query and return comma-separated IDs
-func (i *IKuai) GetStreamDomainAll(tag string) (preIds string, err error) {
-	i.L.Info("QUERY:查询列表", "Querying domain streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
-	preIds = ""
-	err = nil
-	var data []ikuai_common.StreamDomainData
-	data, err = i.ShowStreamDomainByTagName("")
-	if err != nil {
-		return
-	}
-	var ids []string
-	for _, d := range data {
-		if matchTagNameFilter(tag, d.TagName, d.Comment) {
-			ids = append(ids, strconv.Itoa(d.ID))
-		}
-	}
-	if len(ids) <= 0 {
-		return
-	}
-	id := strings.Join(ids, ",")
-	preIds = "||" + id
-	return
-}
-
-// DelStreamDomainFromPreIds 从预备删除的id中删除
-func (i *IKuai) DelStreamDomainFromPreIds(preIds string) (err error) {
-	arr := strings.Split(preIds, "||")
-	for _, id := range arr {
-		if len(id) < 1 {
-			continue
-		}
-		err = i.DelStreamDomain(id)
-		if err != nil {
-			return
-		}
-	}
-	return
-
-}
-
 // DelStreamDomainAll 删除所有的域名分流规则
 func (i *IKuai) DelStreamDomainAll(cleanTag string) (err error) {
 	for {

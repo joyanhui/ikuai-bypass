@@ -237,29 +237,6 @@ func (i *IKuai) DelIKuaiBypassStreamIpPort(cleanTag string) (err error) {
 	}
 }
 
-func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error) {
-	i.L.Info("QUERY:查询列表", "Querying port streaming rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
-	var data []ikuai_common.StreamIpPortData
-	data, err = i.ShowStreamIpPortByTagName("")
-	if err != nil {
-		return
-	}
-	var ids []string
-
-	for _, d := range data {
-		if matchTagNameFilter(tag, d.TagName, d.Comment) {
-			ids = append(ids, strconv.Itoa(d.ID))
-		}
-	}
-
-	if len(ids) <= 0 {
-		return "", nil
-	}
-
-	preDelIds = strings.Join(ids, ",")
-
-	return preDelIds, nil
-}
 func (i *IKuai) EditStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int, id int) error {
 	fType, _ := strconv.Atoi(forwardType)
 	srcAddr = strings.TrimSpace(srcAddr)

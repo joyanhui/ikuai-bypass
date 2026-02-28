@@ -1,5 +1,4 @@
 package utils
-
 import (
 	"errors"
 	"strings"
@@ -10,24 +9,7 @@ import (
 	"ikuai-bypass/pkg/ikuai_router"
 	"ikuai-bypass/pkg/logger"
 )
-
 var SysLog = logger.NewLogger("SYS:系统组件") // System Component Logger
-
-// GetFullUrl 根据配置的 GithubProxy 转换 URL
-func GetFullUrl(originalURL string) string {
-	proxy := config.GlobalConfig.GithubProxy
-	// 如果代理配置为空，或者原始 URL 不是以 raw.githubusercontent.com 开头，直接返回原始 URL
-	if proxy == "" || !strings.HasPrefix(originalURL, "https://raw.githubusercontent.com/") {
-		return originalURL
-	}
-
-	// 确保代理地址以 / 结尾
-	if !strings.HasSuffix(proxy, "/") {
-		proxy += "/"
-	}
-
-	return proxy + originalURL
-}
 
 func RemoveIpv6AndRemoveEmptyLine(l *logger.Logger, ips []string) []string {
 	l.Info("IP:v6规则清洗", "Removing IPv6 addresses, empty lines and comments...")

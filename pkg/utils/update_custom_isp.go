@@ -1,33 +1,19 @@
 package utils
-
 import (
-	"errors"
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/logger"
-	"io"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 )
-
 // UpdateCustomIsp 更新运营商分流规则
 // UpdateCustomIsp updates custom ISP routing rules
 // UpdateCustomIsp updates custom ISP routing rules
 // preDelIds: 如果非空，则在下载成功后、添加新规则前进行删除（Safe-Before 模式）
 // preDelIds: if not empty, old rules are deleted after successful download but before adding new ones (Safe-Before mode)
 func UpdateCustomIsp(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, name string, url string) (err error) {
-	logger.Info("HTTP:数据获取", "Downloading rules from URL: %s", url)
-	resp, err := http.Get(GetFullUrl(url))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != 200 {
-		return errors.New(resp.Status)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := HttpGet(logger, url)
 	if err != nil {
 		return err
 	}

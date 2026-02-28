@@ -209,30 +209,6 @@ func (i *IKuai) GetIpGroupMap(tag string) (result map[int]int, err error) {
 	return result, nil
 }
 
-func (i *IKuai) GetIpGroup(tag string) (preIds string, err error) {
-	i.L.Info("QUERY:查询列表", "Querying IP group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
-	var ids []string
-
-	var data []ikuai_common.IpGroupData
-	data, err = i.ShowIpGroupByTagName("")
-	if err != nil {
-		return "", err
-	}
-
-	for _, d := range data {
-		if matchTagNameFilter(tag, d.GroupName, d.Comment) {
-			ids = append(ids, strconv.Itoa(d.ID))
-		}
-	}
-
-	if len(ids) <= 0 {
-		return "", nil
-	}
-
-	preIds = strings.Join(ids, ",")
-
-	return preIds, nil
-}
 
 func (i *IKuai) DelIKuaiBypassIpGroup(cleanTag string) (err error) {
 	for {

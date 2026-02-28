@@ -63,18 +63,14 @@ type IKuaiClient interface {
 	AddCustomIsp(tag, ipgroup string, index int) error
 	EditCustomIsp(tag, ipgroup string, index int, id int) error
 	DelCustomIsp(id string) error
-	GetCustomIspAll(tag string) (string, error)
 	GetCustomIspMap(tag string) (map[int]int, error)
-	DelCustomIspFromPreIds(preIds string) error
 	DelCustomIspAll(cleanTag string) error
 
 	ShowStreamDomainByTagName(tagName string) ([]StreamDomainData, error)
 	AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int) error
 	EditStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int, id int) error
 	DelStreamDomain(id string) error
-	GetStreamDomainAll(tag string) (string, error)
 	GetStreamDomainMap(tag string) (map[int]int, error)
-	DelStreamDomainFromPreIds(preIds string) error
 	DelStreamDomainAll(cleanTag string) error
 
 	ShowIpGroupByTagName(tagName string) ([]IpGroupData, error)
@@ -82,7 +78,6 @@ type IKuaiClient interface {
 	AddIpGroup(tag, addrPool string, index int) error
 	EditIpGroup(tag, addrPool string, index int, id int) error
 	DelIpGroup(id string) error
-	GetIpGroup(tag string) (string, error)
 	GetIpGroupMap(tag string) (map[int]int, error)
 	DelIKuaiBypassIpGroup(cleanTag string) error
 	GetAllIKuaiBypassIpGroupNamesByName(name string) ([]string, error)
@@ -92,7 +87,6 @@ type IKuaiClient interface {
 	AddIpv6Group(tag, addrPool string, index int) error
 	EditIpv6Group(tag, addrPool string, index int, id int) error
 	DelIpv6Group(id string) error
-	GetIpv6Group(tag string) (string, error)
 	GetIpv6GroupMap(tag string) (map[int]int, error)
 	DelIKuaiBypassIpv6Group(cleanTag string) error
 	GetAllIKuaiBypassIpv6GroupNamesByName(name string) ([]string, error)
@@ -103,7 +97,6 @@ type IKuaiClient interface {
 	ShowStreamIpPortByTagName(tagName string) ([]StreamIpPortData, error)
 	DelStreamIpPort(id string) error
 	DelIKuaiBypassStreamIpPort(cleanTag string) error
-	GetStreamIpPortIdsByTag(tag string) (string, error)
 	GetStreamIpPortMap(tag string) (map[string]int, error)
 
 	BuildIndexedTagName(tag string, index int) string

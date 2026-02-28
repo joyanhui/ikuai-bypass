@@ -1,12 +1,8 @@
 package utils
-
 import (
-	"errors"
 	"ikuai-bypass/pkg/config"
 	"ikuai-bypass/pkg/ikuai_common"
 	"ikuai-bypass/pkg/logger"
-	"io"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -14,25 +10,9 @@ import (
 
 // UpdateIpv6Group 更新ipv6分组
 func UpdateIpv6Group(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, tag, url string) (err error) {
-	logger.Info("HTTP:资源下载", "http.get %s", url)
-	resp, err := http.Get(GetFullUrl(url))
+	body, err := HttpGet(logger, url)
 	if err != nil {
 		return err
-	}
-	if resp.StatusCode != 200 {
-		_ = resp.Body.Close()
-		return errors.New(resp.Status)
-	}
-	if err != nil {
-		return
-	}
-	if resp.StatusCode != 200 {
-		err = errors.New(resp.Status)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return
 	}
 	ips := strings.Split(string(body), "\n")
 	ips = RemoveIpv4AndRemoveEmptyLine(logger, ips)

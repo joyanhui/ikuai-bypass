@@ -208,7 +208,7 @@ services:
 
 ## 更新日志
 
-详细更新日志请查看 [docs/update/list.md](docs/update/list.md)
+详细更新日志请查看 [docs/UpdateList.md](docs/UpdateList.md)
 
 ---
 

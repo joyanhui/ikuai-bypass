@@ -1,0 +1,52 @@
+# 更新日志
+
+- 2026-03-01 改进所有模块的更新策略为 `先查询、匹配则 Edit、不匹配则 Add、获取失败则跳过(Safe-Before)`  [#111](https://github.com/joyanhui/ikuai-bypass/issues/111) [#113](https://github.com/joyanhui/ikuai-bypass/discussions/113)
+- 2026-02-24 适配 iKuai8_x64_4.0.101 对tag长度和api域名分流90kb的限制 [#108](https://github.com/joyanhui/ikuai-bypass/issues/108)
+- 2026-02-16 完善webui的文字提示 [#107](https://github.com/joyanhui/ikuai-bypass/issues/107) 避免歧义
+- 2026-02-16 增加自动构建docker `joyanhui/ikuai-bypass`,并新增支持linux/riscv64
+- 2026-02-10 增加 单条数据记录配置能力，可以把自定义运营商压缩为一条记录  [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
+- 2026-02-10 修复 自定义运营商 会产生多条的bug [#105](https://github.com/joyanhui/ikuai-bypass/issues/103)
+- 2026-02-10 初步完成对爱快v4内测版的适配[#103](https://github.com/joyanhui/ikuai-bypass/issues/103),并发布 v4.4.2-Pre版本
+- 2026-02-10 清理模式下 必须显示配置tag不再默认为CleanAll 避免误删除
+- 2026-02-10 统一配置文件中的规则名字为tag不再使用name作为命名 
+- 2026-02-09 去掉并发处理，改为顺序执行，避免日志混乱和爱快硬件性能不足导致的api失败问题
+- 2026-02-09 完善日志统一格式和高亮显示以及智能识别关键词等逻辑，并尽可能的适配不同的平台和终端
+- 2026-02-09 清理技术债 导出域名分流规则文件功能exportDomainSteamToTxt，因为api失败的原因可以确定是爱快硬件性能问题 导入规则文件功能并不能解决根本问题 也失去了自动维护工具的意义。
+- 2026-02-09 因爱快v4内测版本的api的备注信息在某些接口无返回，导致无法再通过备注信息区分规则，所以IKUAI-BYPASS改为统一使用名字前缀IKB来标识规则，清理模式也相应修改为通过名字前缀匹配删除。
+- 2026-02-09 大幅修改clean模式的删除逻辑，改为更为直观精确匹配和包含匹配，不再自动补全前缀避免容易误会。
+- 2026-02-09 因爱快v4版本部分接口禁止同name的分流规则存在，所以暂时移除delOldRule参数的支持，强制使用在获取到规则后先删除旧规则的再添加的模式（只会删除名字包含IKB的规则）。
+- 2026-02-09 增加ispgroup和ipv4group ipv6group 三分流模块 一起使用模式 `-m iip`模式 [#104](https://github.com/joyanhui/ikuai-bypass/issues/104)
+- 2026-02-09 支持自定义域名清单文本规则中 用 #开头的行注释 并忽略包含_的域名。
+- 2026-02-09 准备支持爱快4.x内侧版本 
+- 2026-01-15 重构部分代码结构，去掉对GitHub路径依赖，拆分utils包等。
+- 2026-01-15 fix [#101](https://github.com/joyanhui/ikuai-bypass)， stream-ipport配置为空的时候依旧添加分流规则的bug，新增可选配置项 stream-ipport[].opt-tagname
+- 2026-01-15 features  [#99](https://github.com/joyanhui/ikuai-bypass/issues/99)  可以按照ip分组名字自动搜索来源ip 不 新增配置项目 src-addr-opt-ipgroup（最终名）支持端口分流和域名分流
+- 2026-01-07 增加中文可视化界面 创建带参数的命令行 以及 在线可视化构建配置文件。
+- 2026-01-06 优化ip、ipv6分组的更新流程，先获取到新数据后删除旧分组，再增加新分组数据。分组名称保持统一。delOldRule与ip、ipv6分组不再有关联。[97](https://github.com/joyanhui/ikuai-bypass/pull/97)
+- 2026-01-05 代码目录结构调整 修复端口分流配置只能添加最后的一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
+- 2025-04-23 部分代码规范性处理以及nilness的逻辑修复
+- 2025-04-23 增加开关isIpGroupNameAddRandomSuff [[#76]](https://github.com/joyanhui/ikuai-bypass/issues/76)
+- 2025-04-23 修复域名分流规则末行空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+- 2025-03-25 增加端口分流时能够选择更多参数：负载模式、线路绑定，修复完善delOldRule参数，对于ip分组、ipv6分组及端口分流都默认为先增加后删除，防止增加失败导致原来的规则丢失.
+- 2025-03-23 增加ipv6分组
+- 2024-10-04 提供完整的最新的config.yml 文件，供参考
+- 2024-10-04 修复端口分流规则自动添加未能关联ip分组的bug，本次修改更新了一下config.yml的默认内容，请注意更新您的配置文件.[[#30]](https://github.com/joyanhui/ikuai-bypass/issues/30)
+- 2024-10-04 修复清理模式的删除规则问题 [[#27#issuecomment-2388114699]](https://github.com/joyanhui/ikuai-bypass/issues/27#issuecomment-2388114699)
+- 2024-10-04 ip分组第一行的备注问题 [[#22]](https://github.com/joyanhui/ikuai-bypass/issues/22)
+- 2024-10-04 修复 卡`ip分组== 正在查询  备注为: IKUAI_BYPASS_ 的ip分组规则` 的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24) [[#27]](https://github.com/joyanhui/ikuai-bypass/issues/27)
+- 2024-10-04 修复运营商分流的ip列表会添加一个空行的bug [[#24]](https://github.com/joyanhui/ikuai-bypass/issues/24)
+- 2024-06-29 修复清理模式无法清理ip分组和端口分流规则的问题 v2.0.1以后版本有效
+- 2024-06-29 增加运营商和域名分流规则旧规则删除模式参数 `-delOldRule` [[#15]](https://github.com/joyanhui/ikuai-bypass/issues/15) v2.0.1以后版本有效
+- 2024-06-29 修改-m参数默认值错误导致的不配置-m参数无法执行的问题 构建 v2.0.0-beta2 版本 这是一个未经过详细测试的版本，请谨慎使用.
+- 2024-05-26 修复OLOrz996分支里端口分流规则模式无法删除的bug
+- 2024-05-26 合并ztc1997的ip分组和下一跳网关功能[[#7]](https://github.com/joyanhui/ikuai-bypass/issues/7) 增加了 `-m`参数
+- 2024-05-26 命令行参数增加-login参数，可以覆盖配置文件内的爱快地址和用户名密码
+- 2024-03-23 增加域名分流规则导出为爱快兼容的可导入的txt文件 [[5#2016320900]](https://github.com/joyanhui/ikuai-bypass/issues/5#issuecomment-2016320900)
+- 2024-03-23 尝试修复列表太多导致爱快处理超时的问题 [[#5]](https://github.com/joyanhui/ikuai-bypass/issues/5)
+- 2024-03-07 openwrt服务安装脚本增加无代理环境安装
+- 2024-02-25 增加去广告功能演示规则 [[参考]](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)
+- 2024-02-7 添加一个openwrt下开机自动运行 [[参考脚本]](https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh)
+- 2024-02-1 优化清理模式的提示信息，增加`once`或 `1`模式等同于nocron模式
+- 2024-02-1 某一分组规则更新失败导致相关的旧规则被删除的bug [[#3]](https://github.com/joyanhui/ikuai-bypass/issues/3)
+- 2024-02-1 清理模式增加附加参数`-tag` 可以清理全部备注名包含`IKUAI_BYPASS`的分流规则，或者指定备注名全程或者后缀名的分流规则
+- 旧的更新记录没啥价值也未单独记，小工具代码简单，请参考commit记录

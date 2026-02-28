@@ -1,6 +1,6 @@
 # 更新日志
 
-- 2026-03-01 改进所有模块的更新策略为 `先查询、匹配则 Edit、不匹配则 Add、获取失败则跳过(Safe-Before)`  [#111](https://github.com/joyanhui/ikuai-bypass/issues/111) [#113](https://github.com/joyanhui/ikuai-bypass/discussions/113)
+- 2026-03-01 改进所有模块的更新策略为 `先查询、匹配则 Edit、不匹配则 Add、获取失败则跳过(Safe-Before)`  [#111](https://github.com/joyanhui/ikuai-bypass/issues/111) [#113](https://github.com/joyanhui/ikuai-bypass/discussions/113) [详情](./update/20260301-1.md)
 - 2026-02-24 适配 iKuai8_x64_4.0.101 对tag长度和api域名分流90kb的限制 [#108](https://github.com/joyanhui/ikuai-bypass/issues/108)
 - 2026-02-16 完善webui的文字提示 [#107](https://github.com/joyanhui/ikuai-bypass/issues/107) 避免歧义
 - 2026-02-16 增加自动构建docker `joyanhui/ikuai-bypass`,并新增支持linux/riscv64

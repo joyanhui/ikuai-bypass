@@ -36,14 +36,6 @@ type Ipv6GroupData struct {
 	Type      int    `json:"type"`
 }
 
-type DomainGroupData struct {
-	GroupName string `json:"group_name"`
-	GroupID   string `json:"group_id"`
-	ID        int    `json:"id"`
-	Type      int    `json:"type"`
-	Comment   string `json:"comment"`
-	Domains   string `json:"domains"`
-}
 
 type StreamIpPortData struct {
 	Protocol  string `json:"protocol"`
@@ -105,13 +97,6 @@ type IKuaiClient interface {
 	DelIKuaiBypassIpv6Group(cleanTag string) error
 	GetAllIKuaiBypassIpv6GroupNamesByName(name string) ([]string, error)
 
-	ShowDomainGroupByTagName(tagName string) ([]DomainGroupData, error)
-	AddDomainGroup(tag, domains string, index int) error
-	EditDomainGroup(tag, domains string, index int, id int) error
-	DelDomainGroup(id string) error
-	GetDomainGroup(tag string) (string, error)
-	GetDomainGroupMap(tag string) (map[int]int, error)
-	DelIKuaiBypassDomainGroup(cleanTag string) error
 
 	AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error
 	EditStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int, id int) error

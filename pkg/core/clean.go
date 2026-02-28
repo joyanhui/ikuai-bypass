@@ -62,13 +62,6 @@ func MainClean() {
 	} else {
 		cleanLogger.Success("CLEAN:清理成功", "Removed old IPv6 group for tag %s", cleanTag)
 	}
-	//删除域名分组
-	err = iKuai.DelIKuaiBypassDomainGroup(cleanTag)
-	if err != nil {
-		cleanLogger.Error("CLEAN:清理失败", "Failed to remove old domain group for tag %s: %v", cleanTag, err)
-	} else {
-		cleanLogger.Success("CLEAN:清理成功", "Removed old domain group for tag %s", cleanTag)
-	}
 	//删除端口分流规则
 	err = iKuai.DelIKuaiBypassStreamIpPort(cleanTag)
 	if err != nil {

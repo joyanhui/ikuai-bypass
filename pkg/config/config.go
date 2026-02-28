@@ -37,6 +37,10 @@ type Config struct {
 		Tag string `yaml:"tag" json:"tag"`
 		URL string `yaml:"url" json:"url"`
 	} `yaml:"custom-isp" json:"custom-isp"`
+	StreamDomain []struct {
+		Interface         string `yaml:"interface" json:"interface"`
+		SrcAddr           string `yaml:"src-addr" json:"src-addr"`
+		SrcAddrOptIpGroup string `yaml:"src-addr-opt-ipgroup" json:"src-addr-opt-ipgroup"`
 		URL               string `yaml:"url" json:"url"`
 		Tag               string `yaml:"tag" json:"tag"`
 	} `yaml:"stream-domain" json:"stream-domain"`

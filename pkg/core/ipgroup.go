@@ -38,13 +38,7 @@ func MainUpdateIpgroup() {
 			continue
 		}
 
-		preIds, err := iKuai.GetStreamIpPortIdsByTag(tag)
-		if err != nil {
-			streamLogger.Error("QUERY:查询列表", "Failed to get port streaming list for %s: %v", tag, err)
-			continue
-		}
-
-		// 强制执行 Safe-Before 模式
+		streamLogger.Info("UPDATE:开始更新", "Updating port streaming for tag %s...", tag)
 		err = utils.UpdateStreamIpPort(
 			streamLogger,
 			iKuai,
@@ -55,9 +49,7 @@ func MainUpdateIpgroup() {
 			streamIpPort.IpGroup,
 			streamIpPort.Mode,
 			streamIpPort.IfaceBand,
-			preIds,
 		)
-
 		if err != nil {
 			streamLogger.Error("UPDATE:更新失败", "Failed to update port streaming '%s@%s': %v",
 				streamIpPort.Interface+streamIpPort.Nexthop,

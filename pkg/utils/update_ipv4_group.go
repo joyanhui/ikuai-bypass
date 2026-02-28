@@ -7,6 +7,7 @@ import (
 	"ikuai-bypass/pkg/logger"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,6 +16,13 @@ import (
 func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, tag, url string) (err error) {
 	logger.Info("HTTP:资源下载", "http.get %s", url)
 	resp, err := http.Get(GetFullUrl(url))
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != 200 {
+		_ = resp.Body.Close() // Close body if we have one but status is bad
+		return errors.New(resp.Status)
+	}
 	if err != nil {
 		return
 	}
@@ -30,38 +38,45 @@ func UpdateIpGroup(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, tag, u
 	ips = RemoveIpv6AndRemoveEmptyLine(logger, ips)
 	ipGroups := Group(ips, config.GlobalConfig.MaxNumberOfOneRecords.Ipv4)
 	logger.Success("PARSE:解析成功", "%s: obtained new data", tag)
-	preIds, err := iKuai.GetIpGroup(tag)
+	ipGroupMap, err := iKuai.GetIpGroupMap(tag)
 	if err != nil {
-		logger.Error("QUERY:查询列表", "Failed to get IP group list for update: %s, error: %v", tag, err)
+		logger.Error("QUERY:查询列表", "Failed to get IP group map for update: %s, error: %v", tag, err)
 		return
 	} else {
-		logger.Info("QUERY:查询成功", "%s: old group IDs found: %s", tag, preIds)
+		logger.Info("QUERY:查询成功", "%s: found %d existing groups", tag, len(ipGroupMap))
 	}
 
-	if preIds != "" {
-		count := len(strings.Split(preIds, ","))
-		err = iKuai.DelIpGroup(preIds)
-		if err == nil {
-			logger.Success("CLEAN:清理旧规", "%s: cleared %d old IP groups", tag, count)
+	for i, ig := range ipGroups {
+		index := i + 1
+		name := iKuai.BuildIndexedTagName(tag, i)
+		ipGroup := strings.Join(ig, ",")
+		if id, ok := ipGroupMap[index]; ok {
+			logger.Info("EDIT:正在修改", "[%d/%d] %s: updating %s (ID: %d)...", i+1, len(ipGroups), tag, name, id)
+			err = iKuai.EditIpGroup(tag, ipGroup, i, id)
+			delete(ipGroupMap, index) // Mark as updated
 		} else {
-			logger.Error("CLEAN:清理失败", "%s: error clearing old IP group list: %v", tag, err)
-			return
+			logger.Info("ADD:正在添加", "[%d/%d] %s: adding %s...", i+1, len(ipGroups), tag, name)
+			err = iKuai.AddIpGroup(tag, ipGroup, i)
+		}
+
+		if err != nil {
+			logger.Error("UPDATE:更新失败", "[%d/%d] %s: failed, error: %v", i+1, len(ipGroups), tag, err)
+			time.Sleep(config.GlobalConfig.AddErrRetryWait)
 		}
 	}
 
-	preIds = ""
-	for i, ig := range ipGroups {
-		logger.Info("ADD:正在添加", "[%d/%d] %s: adding...", i+1, len(ipGroups), tag)
-		ipGroup := strings.Join(ig, ",")
-		err := iKuai.AddIpGroup(tag, ipGroup, i)
+	// Delete extra groups that were not updated
+	if len(ipGroupMap) > 0 {
+		var extraIds []string
+		for _, id := range ipGroupMap {
+			extraIds = append(extraIds, strconv.Itoa(id))
+		}
+		logger.Info("CLEAN:冗余删除", "%s: %d groups are no longer needed, deleting IDs: %s", tag, len(ipGroupMap), strings.Join(extraIds, ","))
+		err = iKuai.DelIpGroup(strings.Join(extraIds, ","))
 		if err != nil {
-			logger.Error("ADD:添加失败", "[%d/%d] %s: failed, retrying after %v seconds. error: %v", i+1, len(ipGroups), tag, config.GlobalConfig.AddErrRetryWait, err)
-			time.Sleep(config.GlobalConfig.AddWait)
-			err = iKuai.AddIpGroup(tag, ipGroup, i)
-			if err != nil {
-				logger.Error("ADD:重试失败", "[%d/%d] %s: retry failed, skipping this operation", i+1, len(ipGroups), tag)
-				break
-			}
+			logger.Error("CLEAN:删除失败", "%s: failed to delete extra groups: %v", tag, err)
+		} else {
+			logger.Success("CLEAN:清理成功", "%s: deleted %d extra groups", tag, len(extraIds))
 		}
 	}
 	return

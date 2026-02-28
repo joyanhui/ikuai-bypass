@@ -9,9 +9,7 @@ import (
 )
 
 // UpdateStreamIpPort 更新ip端口分流
-func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptIpGroup string, ipGroupName string, mode int, ifaceband int, preDelIds string) (err error) {
-
-	// #101 fix ip-group为空时会默认添加实际不匹配的规则
+func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, forwardType string, tag string, iface string, nexthop string, srcAddr string, srcAddrOptIpGroup string, ipGroupName string, mode int, ifaceband int) (err error) {
 	var dstAddr string
 	var dstIpGroupList []string
 	if strings.TrimSpace(ipGroupName) == "" {
@@ -21,11 +19,10 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 			var data []string
 			data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(ipGroupItem)
 			if err != nil {
-				return
+				return err
 			}
 			dstIpGroupList = append(dstIpGroupList, data...)
 		}
-		// #101 fix ip-group为空时会默认添加
 		if len(dstIpGroupList) == 0 {
 			logger.Info("SKIP:跳过操作", "No matching destination IP groups found, skipping port streaming rule addition. ip-group: %s", ipGroupName)
 			return nil
@@ -33,48 +30,54 @@ func UpdateStreamIpPort(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, f
 			dstAddr = strings.Join(dstIpGroupList, ",")
 		}
 	}
-	if strings.TrimSpace(srcAddrOptIpGroup) != "" { // 优先使用 srcAddrOptIpGroup #99
+	if strings.TrimSpace(srcAddrOptIpGroup) != "" {
 		var srcIpGroupList []string
 		for srcIpGroupItem := range strings.SplitSeq(srcAddrOptIpGroup, ",") {
 			var data []string
 			data, err = iKuai.GetAllIKuaiBypassIpGroupNamesByName(srcIpGroupItem)
 			if err != nil {
-				return
+				return err
 			}
 			srcIpGroupList = append(srcIpGroupList, data...)
 		}
 		if len(srcIpGroupList) > 0 {
-			srcAddr = strings.Join(srcIpGroupList, ",") // #99
+			srcAddr = strings.Join(srcIpGroupList, ",")
 		} else {
 			logger.Info("SKIP:跳过操作", "No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: %s", srcAddrOptIpGroup)
 			return nil
 		}
 	}
 
-	// 如果提供了预删除 ID，则在添加前清理
-	if preDelIds != "" {
-		count := len(strings.Split(preDelIds, ","))
-		err = iKuai.DelStreamIpPort(preDelIds)
-		if err != nil {
-			logger.Error("CLEAN:清理旧规", "Failed to clear old rules, skipping update: %v", err)
-			return
-		}
-		logger.Success("CLEAN:清理旧规", "Cleared %d old port streaming rules", count)
+	streamMap, err := iKuai.GetStreamIpPortMap(tag)
+	if err != nil {
+		logger.Error("QUERY:查询规则", "Failed to get existing port streaming rules: %v", err)
+		return err
+	}
+	var foundId int
+	var foundName string
+	for name, id := range streamMap {
+		// In iKuai API, port streaming TagName is what we care about.
+		// streamMap is map[string]int where key is TagName.
+		// We search for a TagName that matches our current tag.
+		// Since Port streaming usually has only one rule per config item, we just pick the first match.
+		foundId = id
+		foundName = name
+		break
 	}
 
-	logger.Info("ADD:正在添加", "[1/1] %s: adding...", tag)
-	err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
-	if err != nil {
-		logger.Error("ADD:添加失败", "[1/1] %s: failed, retrying after %v seconds. error: %v", tag, config.GlobalConfig.AddErrRetryWait, err)
-		time.Sleep(config.GlobalConfig.AddErrRetryWait)
-		err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
-		if err != nil {
-			logger.Error("ADD:重试失败", "[1/1] %s: retry failed, skipping this operation", tag)
-		} else {
-			logger.Success("ADD:添加成功", "Port streaming rule added successfully after retry: %s", tag)
-		}
+	if foundId > 0 {
+		logger.Info("EDIT:正在修改", "[1/1] %s: updating existing rule %s (ID: %d)...", tag, foundName, foundId)
+		err = iKuai.EditStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband, foundId)
 	} else {
-		logger.Success("ADD:添加成功", "Port streaming rule added successfully: %s", tag)
+		logger.Info("ADD:正在添加", "[1/1] %s: adding new rule...", tag)
+		err = iKuai.AddStreamIpPort(forwardType, iface, dstAddr, srcAddr, nexthop, tag, mode, ifaceband)
 	}
-	return
+
+	if err != nil {
+		logger.Error("UPDATE:更新失败", "[1/1] %s: failed: %v", tag, err)
+		time.Sleep(config.GlobalConfig.AddErrRetryWait)
+	} else {
+		logger.Success("UPDATE:更新成功", "[1/1] %s: updated successfully", tag)
+	}
+	return nil
 }

@@ -17,42 +17,23 @@ func MainUpdateIspRule() {
 	domainLogger := logger.NewLogger("DOMAIN:域名分流")
 
 	for _, customIsp := range config.GlobalConfig.CustomIsp {
-		//记录旧的自定义运营商，仅使用 Tag 匹配
-		preIds, err := iKuai.GetCustomIspAll(customIsp.Tag)
-		if err != nil {
-			ispLogger.Error("QUERY:查询列表", "Failed to get old custom ISP list for %s: %v", customIsp.Tag, err)
-			break
-		} else {
-			ispLogger.Info("QUERY:查询成功", "Obtained old custom ISP list for %s", customIsp.Tag)
-		}
-
-		// 强制执行 "Safe-Before" 模式：先成功获取远程数据，再清理旧规则，后添加新分片
 		ispLogger.Info("UPDATE:开始更新", "Updating %s...", customIsp.Tag)
-		err = utils.UpdateCustomIsp(ispLogger, iKuai, customIsp.Tag, customIsp.URL, preIds)
+		err = utils.UpdateCustomIsp(ispLogger, iKuai, customIsp.Tag, customIsp.URL)
 		if err != nil {
 			ispLogger.Error("UPDATE:更新失败", "Failed to update custom ISP '%s': %v", customIsp.Tag, err)
+			// Continue to next ISP rule even if one fails
 		} else {
 			ispLogger.Success("UPDATE:更新成功", "Successfully updated custom ISP '%s'", customIsp.Tag)
 		}
 	}
 
 	for _, streamDomain := range config.GlobalConfig.StreamDomain {
-		//记录旧的域名分流，同时匹配 Tag 和 Interface
-		preIds, err := iKuai.GetStreamDomainAll(streamDomain.Tag + "," + streamDomain.Interface)
-		if err != nil {
-			domainLogger.Error("QUERY:查询列表", "Failed to get old domain list for tag %s: %v", streamDomain.Tag, err)
-			break
-		} else {
-			domainLogger.Info("QUERY:查询成功", "Obtained old domain list for tag %s", streamDomain.Tag)
-		}
-
-		//更新域名分流 (强制 Safe-Before)
 		domainLogger.Info("UPDATE:开始更新", "Updating %s (Interface: %s, Tag: %s)...", streamDomain.URL, streamDomain.Interface, streamDomain.Tag)
-		err = utils.UpdateStreamDomain(domainLogger, iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr, streamDomain.URL, preIds)
+		err = utils.UpdateStreamDomain(domainLogger, iKuai, streamDomain.Interface, streamDomain.Tag, streamDomain.SrcAddrOptIpGroup, streamDomain.SrcAddr, streamDomain.URL)
 		if err != nil {
-			domainLogger.Error("UPDATE:更新失败", "Failed to update domain streaming '%s': %v", streamDomain.Interface, err)
+			domainLogger.Error("UPDATE:更新失败", "Failed to update domain streaming for tag %s: %v", streamDomain.Tag, err)
 		} else {
-			domainLogger.Success("UPDATE:更新成功", "Successfully updated domain streaming '%s'", streamDomain.Interface)
+			domainLogger.Success("UPDATE:更新成功", "Successfully updated domain streaming for tag %s", streamDomain.Tag)
 		}
 	}
 

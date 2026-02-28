@@ -103,3 +103,6 @@ func matchTagNameFilter(filterTagName, currentName, legacyComment string) bool {
 	}
 	return false
 }
+func (i *IKuai) BuildIndexedTagName(raw string, index int) string {
+	return buildIndexedTagName(raw, index)
+}

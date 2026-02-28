@@ -151,6 +151,64 @@ func (i *IKuai) DelIpv6Group(id string) error {
 	return nil
 }
 
+func (i *IKuai) EditIpv6Group(tag string, addrPool string, index int, id int) error {
+	addrPool = strings.TrimSpace(addrPool)
+	ips := strings.Split(addrPool, ",")
+	groupValue := make([]map[string]string, 0)
+	for _, ip := range ips {
+		ip = strings.TrimSpace(ip)
+		if ip != "" {
+			groupValue = append(groupValue, map[string]string{
+				"ipv6":    ip,
+				"comment": "", //不要加注释，因为 ikuai v4.x 的IP分组 的注释很蛋疼
+			})
+		}
+	}
+
+	param := map[string]interface{}{
+		"group_name":  buildIndexedTagName(tag, index),
+		"type":        1, // IPv6
+		"group_value": groupValue,
+		"comment":     "", //不要加注释，因为 ikuai v4.x 的IP分组 的注释很蛋疼
+		"id":          id,
+	}
+	req := CallReq{
+		FuncName: FUNC_NAME_ROUTE_OBJECT,
+		Action:   "edit",
+		Param:    &param,
+	}
+	resp := CallResp{}
+	err := postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
+	}
+	return nil
+}
+
+func (i *IKuai) GetIpv6GroupMap(tag string) (result map[int]int, err error) {
+	result = make(map[int]int)
+	var data []ikuai_common.Ipv6GroupData
+	data, err = i.ShowIpv6GroupByTagName("")
+	if err != nil {
+		return nil, err
+	}
+
+	baseName := buildTagName(tag)
+	for _, d := range data {
+		if matchTagNameFilter(tag, d.GroupName, d.Comment) {
+			// Try to extract numeric suffix
+			suffix := strings.TrimPrefix(d.GroupName, baseName)
+			if idx, err := strconv.Atoi(suffix); err == nil {
+				result[idx] = d.ID
+			}
+		}
+	}
+	return result, nil
+}
+
 func (i *IKuai) GetIpv6Group(tag string) (preIds string, err error) {
 	i.L.Info("QUERY:查询列表", "Querying IPv6 group rules (Prefix: %s, Tag: %s)", ikuai_common.NAME_PREFIX_IKB, tag)
 	var ids []string

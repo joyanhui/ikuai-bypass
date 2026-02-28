@@ -47,26 +47,16 @@ func (i *IKuai) ShowCustomIspByTagName(tagName string) (result []ikuai_common.Cu
 // AddCustomIsp 添加自定义运营商规则
 // AddCustomIsp adds a custom ISP rule
 func (i *IKuai) AddCustomIsp(tag, ipgroup string, index int) error {
-	// https://github.com/joyanhui/ikuai-bypass/issues/24
-	// 去掉末尾空行、空格
-	// Remove trailing empty lines and spaces
 	ipgroup = strings.TrimSpace(ipgroup)
-
-	// 自定义运营商支持同名，这里统一使用 buildTagName，并在备注中区分编号
-	// Custom ISP supports duplicate names. Use buildTagName and distinguish by index in comment.
-	comment := ikuai_common.NEW_COMMENT
-	if index > 0 {
-		comment += "-" + strconv.Itoa(index+1)
-	}
 
 	param := struct {
 		Name    string `json:"name"`
 		Ipgroup string `json:"ipgroup"`
 		Comment string `json:"comment"`
 	}{
-		Name:    buildTagName(tag),
+		Name:    buildIndexedTagName(tag, index),
 		Ipgroup: ipgroup,
-		Comment: comment,
+		Comment: ikuai_common.NEW_COMMENT,
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_CUSTOM_ISP,
@@ -82,6 +72,56 @@ func (i *IKuai) AddCustomIsp(tag, ipgroup string, index int) error {
 		return errors.New(resp.Message)
 	}
 	return nil
+}
+
+func (i *IKuai) EditCustomIsp(tag, ipgroup string, index int, id int) error {
+	ipgroup = strings.TrimSpace(ipgroup)
+
+	param := struct {
+		Name    string `json:"name"`
+		Ipgroup string `json:"ipgroup"`
+		Comment string `json:"comment"`
+		ID      int    `json:"id"`
+	}{
+		Name:    buildIndexedTagName(tag, index),
+		Ipgroup: ipgroup,
+		Comment: ikuai_common.NEW_COMMENT,
+		ID:      id,
+	}
+	req := CallReq{
+		FuncName: FUNC_NAME_CUSTOM_ISP,
+		Action:   "edit",
+		Param:    &param,
+	}
+	resp := CallResp{}
+	err := postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
+	}
+	return nil
+}
+
+func (i *IKuai) GetCustomIspMap(tag string) (result map[int]int, err error) {
+	result = make(map[int]int)
+	var data []ikuai_common.CustomIspData
+	data, err = i.ShowCustomIspByTagName("")
+	if err != nil {
+		return nil, err
+	}
+
+	baseName := buildTagName(tag)
+	for _, d := range data {
+		if matchTagNameFilter(tag, d.Name, d.Comment) {
+			suffix := strings.TrimPrefix(d.Name, baseName)
+			if idx, err := strconv.Atoi(suffix); err == nil {
+				result[idx] = d.ID
+			}
+		}
+	}
+	return result, nil
 }
 
 // DelCustomIsp 删除自定义运营商规则

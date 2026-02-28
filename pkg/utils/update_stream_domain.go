@@ -7,79 +7,71 @@ import (
 	"ikuai-bypass/pkg/logger"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 // UpdateStreamDomain 更新域名分流规则
-// preDelIds: 如果非空，则在下载成功后、添加新规则前进行删除（Safe-Before 模式）
-func UpdateStreamDomain(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGroup, srcAddr, url string, preDelIds string) (err error) {
+func UpdateStreamDomain(logger *logger.Logger, iKuai ikuai_common.IKuaiClient, iface, tag, srcAddrIpGroup, srcAddr, url string) (err error) {
 	logger.Info("HTTP:资源下载", "http.get %s", url)
 	resp, err := http.Get(GetFullUrl(url))
 	if err != nil {
-		return
+		return err
 	}
 	if resp.StatusCode != 200 {
-		err = errors.New(resp.Status)
-		return
+		return errors.New(resp.Status)
 	}
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(resp.Body)
+	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return err
 	}
 	domains := strings.Split(string(body), "\n")
-	// 清理无效域名
 	domains = FilterDomains(logger, domains)
-
 	logger.Info("PARSE:解析成功", "%s %s: obtained %d valid domains", iface, tag, len(domains))
 
-	// 如果提供了预删除 ID，则在开始添加前进行清理（确保下载成功后才删除）
-	if preDelIds != "" {
-		count := len(strings.Split(preDelIds, ","))
-		err = iKuai.DelStreamDomainFromPreIds(preDelIds)
-		if err != nil {
-			logger.Error("CLEAN:清理旧规", "Failed to clear old rules, skipping update: %v", err)
-			return
-		}
-		logger.Success("CLEAN:清理旧规", "Cleared %d old domain streaming rules", count)
+	domainMap, err := iKuai.GetStreamDomainMap(tag)
+	if err != nil {
+		logger.Error("QUERY:查询列表", "Failed to get existing domain streaming rules: %v", err)
+		return err
 	}
 
-	domainGroup := Group(domains, config.GlobalConfig.MaxNumberOfOneRecords.Domain) //1000条
-	// #99 fix srcAddr 优先使用 srcAddrIpGroup
-	if strings.TrimSpace(srcAddrIpGroup) != "" {
-		var found bool
-		for srcIpGroupItem := range strings.SplitSeq(srcAddrIpGroup, ",") {
-			data, err := iKuai.GetAllIKuaiBypassIpGroupNamesByName(srcIpGroupItem)
-			if err == nil && len(data) > 0 {
-				found = true
-				break
-			}
-		}
-		if !found {
-			logger.Info("SKIP:跳过操作", "No matching source IP groups found, skipping rule addition. srcAddrIpGroup: %s", srcAddrIpGroup)
-			return nil
-		}
-	}
-
-	for index, d := range domainGroup {
-		logger.Info("ADD:正在添加", "[%d/%d] %s %s: adding...", index+1, len(domainGroup), iface, tag)
-		domain := strings.Join(d, ",")
-		err = iKuai.AddStreamDomain(iface, tag, srcAddr, srcAddrIpGroup, domain, index)
-		if err != nil {
-			logger.Error("ADD:添加失败", "[%d/%d] %s %s: failed, retrying after %v seconds. error: %v", index+1, len(domainGroup), iface, tag, config.GlobalConfig.AddErrRetryWait, err)
-			time.Sleep(config.GlobalConfig.AddErrRetryWait)
-			err = iKuai.AddStreamDomain(iface, tag, srcAddr, srcAddrIpGroup, domain, index)
-			if err != nil {
-				logger.Error("ADD:重试失败", "[%d/%d] %s %s: retry failed, skipping this operation", index+1, len(domainGroup), iface, tag)
-				break
-			}
+	domainGroup := Group(domains, config.GlobalConfig.MaxNumberOfOneRecords.Domain)
+	for i, d := range domainGroup {
+		index := i + 1
+		name := iKuai.BuildIndexedTagName(tag, i)
+		domainList := strings.Join(d, ",")
+		if id, ok := domainMap[index]; ok {
+			logger.Info("EDIT:正在修改", "[%d/%d] %s %s: updating %s (ID: %d)...", i+1, len(domainGroup), iface, tag, name, id)
+			err = iKuai.EditStreamDomain(iface, tag, srcAddr, srcAddrIpGroup, domainList, i, id)
+			delete(domainMap, index)
 		} else {
-			logger.Success("ADD:添加成功", "%s %s: added %d domains. Waiting %v seconds...", iface, tag, len(d), config.GlobalConfig.AddWait)
-			time.Sleep(config.GlobalConfig.AddWait)
+			logger.Info("ADD:正在添加", "[%d/%d] %s %s: adding %s...", i+1, len(domainGroup), iface, tag, name)
+			err = iKuai.AddStreamDomain(iface, tag, srcAddr, srcAddrIpGroup, domainList, i)
+		}
+		if err != nil {
+			logger.Error("UPDATE:更新失败", "[%d/%d] %s %s: failed: %v", i+1, len(domainGroup), iface, tag, err)
+			time.Sleep(config.GlobalConfig.AddErrRetryWait)
+		} else {
+			if config.GlobalConfig.AddWait > 0 {
+				time.Sleep(config.GlobalConfig.AddWait)
+			}
 		}
 	}
-	return
+
+	if len(domainMap) > 0 {
+		var extraIds []string
+		for idx, id := range domainMap {
+			logger.Info("CLEAN:冗余删除", "%s: chunk %d (ID: %d) is no longer needed, deleting...", tag, idx, id)
+			extraIds = append(extraIds, strconv.Itoa(id))
+		}
+		err = iKuai.DelStreamDomain(strings.Join(extraIds, ","))
+		if err != nil {
+			logger.Error("CLEAN:删除失败", "%s: failed to delete extra domain rules: %v", tag, err)
+		} else {
+			logger.Success("CLEAN:清理成功", "%s: deleted %d extra domain rules", tag, len(extraIds))
+		}
+	}
+	return nil
 }

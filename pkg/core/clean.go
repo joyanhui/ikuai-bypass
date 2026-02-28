@@ -112,10 +112,6 @@ func cleanAllByManagedMark(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (er
 	if err != nil {
 		return err
 	}
-	err = cleanAllDomainGroup(l, iKuai)
-	if err != nil {
-		return err
-	}
 	err = cleanAllStreamIpPort(l, iKuai)
 	if err != nil {
 		return err
@@ -214,30 +210,6 @@ func cleanAllIpv6Group(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err er
 		l.Success("CLEAN:清理详情", "Removed %d managed IPv6 groups", len(ids))
 	}
 }
-
-func cleanAllDomainGroup(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
-	for {
-		data, showErr := iKuai.ShowDomainGroupByTagName("")
-		if showErr != nil {
-			return showErr
-		}
-		var ids []string
-		for _, d := range data {
-			if isManagedBypassRule(d.Comment, d.GroupName) {
-				ids = append(ids, strconv.Itoa(d.ID))
-			}
-		}
-		if len(ids) == 0 {
-			return nil
-		}
-		err = iKuai.DelDomainGroup(strings.Join(ids, ","))
-		if err != nil {
-			return err
-		}
-		l.Success("CLEAN:清理详情", "Removed %d managed domain groups", len(ids))
-	}
-}
-
 func cleanAllStreamIpPort(l *logger.Logger, iKuai ikuai_common.IKuaiClient) (err error) {
 	for {
 		data, showErr := iKuai.ShowStreamIpPortByTagName("")

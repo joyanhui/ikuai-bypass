@@ -69,43 +69,57 @@ type IKuaiClient interface {
 
 	ShowCustomIspByTagName(tagName string) ([]CustomIspData, error)
 	AddCustomIsp(tag, ipgroup string, index int) error
+	EditCustomIsp(tag, ipgroup string, index int, id int) error
 	DelCustomIsp(id string) error
 	GetCustomIspAll(tag string) (string, error)
+	GetCustomIspMap(tag string) (map[int]int, error)
 	DelCustomIspFromPreIds(preIds string) error
 	DelCustomIspAll(cleanTag string) error
 
 	ShowStreamDomainByTagName(tagName string) ([]StreamDomainData, error)
 	AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int) error
+	EditStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int, id int) error
 	DelStreamDomain(id string) error
 	GetStreamDomainAll(tag string) (string, error)
+	GetStreamDomainMap(tag string) (map[int]int, error)
 	DelStreamDomainFromPreIds(preIds string) error
 	DelStreamDomainAll(cleanTag string) error
 
 	ShowIpGroupByTagName(tagName string) ([]IpGroupData, error)
 	ShowIpGroupByName(name string) ([]IpGroupData, error)
 	AddIpGroup(tag, addrPool string, index int) error
+	EditIpGroup(tag, addrPool string, index int, id int) error
 	DelIpGroup(id string) error
 	GetIpGroup(tag string) (string, error)
+	GetIpGroupMap(tag string) (map[int]int, error)
 	DelIKuaiBypassIpGroup(cleanTag string) error
 	GetAllIKuaiBypassIpGroupNamesByName(name string) ([]string, error)
 
 	ShowIpv6GroupByTagName(tagName string) ([]Ipv6GroupData, error)
 	ShowIpv6GroupByName(name string) ([]Ipv6GroupData, error)
 	AddIpv6Group(tag, addrPool string, index int) error
+	EditIpv6Group(tag, addrPool string, index int, id int) error
 	DelIpv6Group(id string) error
 	GetIpv6Group(tag string) (string, error)
+	GetIpv6GroupMap(tag string) (map[int]int, error)
 	DelIKuaiBypassIpv6Group(cleanTag string) error
 	GetAllIKuaiBypassIpv6GroupNamesByName(name string) ([]string, error)
 
 	ShowDomainGroupByTagName(tagName string) ([]DomainGroupData, error)
 	AddDomainGroup(tag, domains string, index int) error
+	EditDomainGroup(tag, domains string, index int, id int) error
 	DelDomainGroup(id string) error
 	GetDomainGroup(tag string) (string, error)
+	GetDomainGroupMap(tag string) (map[int]int, error)
 	DelIKuaiBypassDomainGroup(cleanTag string) error
 
 	AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error
+	EditStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int, id int) error
 	ShowStreamIpPortByTagName(tagName string) ([]StreamIpPortData, error)
 	DelStreamIpPort(id string) error
 	DelIKuaiBypassStreamIpPort(cleanTag string) error
 	GetStreamIpPortIdsByTag(tag string) (string, error)
+	GetStreamIpPortMap(tag string) (map[string]int, error)
+
+	BuildIndexedTagName(tag string, index int) string
 }

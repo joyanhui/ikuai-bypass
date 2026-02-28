@@ -40,8 +40,6 @@ type streamDomain4 struct {
 }
 
 func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int) error {
-	// https://github.com/joyanhui/ikuai-bypass/issues/24
-	// 去掉末尾空行、空格
 	domains = strings.TrimSpace(domains)
 	domainList := strings.Split(domains, ",")
 
@@ -49,7 +47,6 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 	var srcObjects []ipGroupObject4
 
 	if strings.TrimSpace(srcAddrOptIpGroup) != "" {
-		// 如果设置了 srcAddrOptIpGroup，则通过名字查询 IP 分组并构建对象，忽略 srcAddr
 		names := strings.Split(srcAddrOptIpGroup, ",")
 		var resolvedNames []string
 		for _, name := range names {
@@ -57,7 +54,6 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 			if name == "" {
 				continue
 			}
-			// 支持模糊匹配
 			matches, err := i.GetAllIKuaiBypassIpGroupNamesByName(name)
 			if err == nil {
 				resolvedNames = append(resolvedNames, matches...)
@@ -66,7 +62,6 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 		srcObjects = i.resolveIpGroupObjects(resolvedNames)
 		srcCustom = []string{}
 	} else {
-		// 否则使用原来的 srcAddr 逻辑
 		srcAddr = strings.TrimSpace(srcAddr)
 		var srcAddrList []string
 		if srcAddr != "" {
@@ -77,10 +72,8 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 		srcObjects = i.resolveIpGroupObjects(srcObjectNames)
 	}
 
-	// 使用序号作为 tagname 后缀，从 1 开始，防止 chunks 冲突
 	uniqueTagname := buildIndexedTagName(tag, index)
 
-	// 构造 4.0 格式的参数
 	param := map[string]interface{}{
 		"enabled":   "yes",
 		"tagname":   uniqueTagname,
@@ -115,13 +108,85 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 		Param:    &param,
 	}
 
-	// DEBUG: 打印请求参数
-	reqJson, _ := json.Marshal(req)
-	jsonStr := string(reqJson)
-	if len(jsonStr) > 500 {
-		jsonStr = jsonStr[:500]
+	resp := CallResp{}
+	err := postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
+	if err != nil {
+		return err
 	}
-	i.L.Info("DEBUG:请求参数", "tagname=%s, domains_count=%d, req_size=%d bytes, req=%s", uniqueTagname, len(domainList), len(string(reqJson)), jsonStr)
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
+	}
+	return nil
+}
+
+func (i *IKuai) EditStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains string, index int, id int) error {
+	domains = strings.TrimSpace(domains)
+	domainList := strings.Split(domains, ",")
+
+	var srcCustom []string
+	var srcObjects []ipGroupObject4
+	if strings.TrimSpace(srcAddrOptIpGroup) != "" {
+		names := strings.Split(srcAddrOptIpGroup, ",")
+		var resolvedNames []string
+		for _, name := range names {
+			name = strings.TrimSpace(name)
+			if name == "" {
+				continue
+			}
+			matches, err := i.GetAllIKuaiBypassIpGroupNamesByName(name)
+			if err == nil {
+				resolvedNames = append(resolvedNames, matches...)
+			}
+		}
+		srcObjects = i.resolveIpGroupObjects(resolvedNames)
+		srcCustom = []string{}
+	} else {
+		srcAddr = strings.TrimSpace(srcAddr)
+		var srcAddrList []string
+		if srcAddr != "" {
+			srcAddrList = strings.Split(srcAddr, ",")
+		}
+		var srcObjectNames []string
+		srcCustom, srcObjectNames = CategorizeAddrs(srcAddrList)
+		srcObjects = i.resolveIpGroupObjects(srcObjectNames)
+	}
+
+	uniqueTagname := buildIndexedTagName(tag, index)
+
+	param := map[string]interface{}{
+		"enabled":   "yes",
+		"tagname":   uniqueTagname,
+		"interface": iface,
+		"src_addr": map[string]interface{}{
+			"custom": srcCustom,
+			"object": srcObjects,
+		},
+		"domain": map[string]interface{}{
+			"custom": domainList,
+			"object": []interface{}{},
+		},
+		"comment": ikuai_common.NEW_COMMENT,
+		"time": map[string]interface{}{
+			"custom": []map[string]interface{}{
+				{
+					"type":       "weekly",
+					"weekdays":   "1234567",
+					"start_time": "00:00",
+					"end_time":   "23:59",
+					"comment":    "",
+				},
+			},
+			"object": []interface{}{},
+		},
+		"prio": 31,
+		"id":   id,
+	}
+
+	req := CallReq{
+		FuncName: FuncNameStreamDomain,
+		Action:   "edit",
+		Param:    &param,
+	}
 
 	resp := CallResp{}
 	err := postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
@@ -129,12 +194,29 @@ func (i *IKuai) AddStreamDomain(iface, tag, srcAddr, srcAddrOptIpGroup, domains 
 		return err
 	}
 	if resp.Code != 0 {
-		// DEBUG: 打印完整错误响应
-		respJson, _ := json.Marshal(resp)
-		i.L.Error("DEBUG:错误响应", "code=%d, message=%s, full_response=%s", resp.Code, resp.Message, string(respJson))
 		return errors.New(resp.Message)
 	}
 	return nil
+}
+
+func (i *IKuai) GetStreamDomainMap(tag string) (result map[int]int, err error) {
+	result = make(map[int]int)
+	var data []ikuai_common.StreamDomainData
+	data, err = i.ShowStreamDomainByTagName("")
+	if err != nil {
+		return nil, err
+	}
+
+	baseName := buildTagName(tag)
+	for _, d := range data {
+		if matchTagNameFilter(tag, d.TagName, d.Comment) {
+			suffix := strings.TrimPrefix(d.TagName, baseName)
+			if idx, err := strconv.Atoi(suffix); err == nil {
+				result[idx] = d.ID
+			}
+		}
+	}
+	return result, nil
 }
 
 func (i *IKuai) ShowStreamDomainByTagName(tagName string) (result []ikuai_common.StreamDomainData, err error) {

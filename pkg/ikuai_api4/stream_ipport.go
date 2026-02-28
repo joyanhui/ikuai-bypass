@@ -51,24 +51,19 @@ type streamIpPort4 struct {
 }
 
 func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int) error {
-	// forwardType is "0" or "1" as string from utils
 	fType, _ := strconv.Atoi(forwardType)
-
 	srcAddr = strings.TrimSpace(srcAddr)
 	var srcAddrList []string
 	if srcAddr != "" {
 		srcAddrList = strings.Split(srcAddr, ",")
 	}
-
 	dstAddr = strings.TrimSpace(dstAddr)
 	var dstAddrList []string
 	if dstAddr != "" {
 		dstAddrList = strings.Split(dstAddr, ",")
 	}
-
 	srcCustom, srcObjectNames := CategorizeAddrs(srcAddrList)
 	dstCustom, dstObjectNames := CategorizeAddrs(dstAddrList)
-
 	srcObjects := i.resolveIpGroupObjects(srcObjectNames)
 	dstObjects := i.resolveIpGroupObjects(dstObjectNames)
 
@@ -114,7 +109,6 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		"area_code": "",
 		"dst_type":  "",
 	}
-
 	req := CallReq{
 		FuncName: FUNC_NAME_STREAM_IPPORT,
 		Action:   "add",
@@ -129,6 +123,20 @@ func (i *IKuai) AddStreamIpPort(forwardType string, iface string, dstAddr string
 		return errors.New(resp.Message)
 	}
 	return nil
+}
+func (i *IKuai) GetStreamIpPortMap(tag string) (result map[string]int, err error) {
+	result = make(map[string]int)
+	var data []ikuai_common.StreamIpPortData
+	data, err = i.ShowStreamIpPortByTagName("")
+	if err != nil {
+		return nil, err
+	}
+	for _, d := range data {
+		if matchTagNameFilter(tag, d.TagName, d.Comment) {
+			result[d.TagName] = d.ID
+		}
+	}
+	return result, nil
 }
 
 func (i *IKuai) ShowStreamIpPortByTagName(tagName string) (result []ikuai_common.StreamIpPortData, err error) {
@@ -251,4 +259,79 @@ func (i *IKuai) GetStreamIpPortIdsByTag(tag string) (preDelIds string, err error
 	preDelIds = strings.Join(ids, ",")
 
 	return preDelIds, nil
+}
+func (i *IKuai) EditStreamIpPort(forwardType string, iface string, dstAddr string, srcAddr string, nexthop string, tag string, mode int, ifaceband int, id int) error {
+	fType, _ := strconv.Atoi(forwardType)
+	srcAddr = strings.TrimSpace(srcAddr)
+	var srcAddrList []string
+	if srcAddr != "" {
+		srcAddrList = strings.Split(srcAddr, ",")
+	}
+	dstAddr = strings.TrimSpace(dstAddr)
+	var dstAddrList []string
+	if dstAddr != "" {
+		dstAddrList = strings.Split(dstAddr, ",")
+	}
+	srcCustom, srcObjectNames := CategorizeAddrs(srcAddrList)
+	dstCustom, dstObjectNames := CategorizeAddrs(dstAddrList)
+	srcObjects := i.resolveIpGroupObjects(srcObjectNames)
+	dstObjects := i.resolveIpGroupObjects(dstObjectNames)
+
+	param := map[string]interface{}{
+		"enabled":    "yes",
+		"tagname":    buildTagName(tag),
+		"interface":  iface,
+		"nexthop":    nexthop,
+		"iface_band": ifaceband,
+		"comment":    ikuai_common.NEW_COMMENT,
+		"type":       fType,
+		"mode":       mode,
+		"protocol":   "tcp+udp",
+		"src_addr": map[string]interface{}{
+			"custom": srcCustom,
+			"object": srcObjects,
+		},
+		"dst_addr": map[string]interface{}{
+			"custom": dstCustom,
+			"object": dstObjects,
+		},
+		"src_port": map[string]interface{}{
+			"custom": []string{},
+			"object": []string{},
+		},
+		"dst_port": map[string]interface{}{
+			"custom": []string{},
+			"object": []string{},
+		},
+		"time": map[string]interface{}{
+			"custom": []map[string]string{
+				{
+					"type":       "weekly",
+					"weekdays":   "1234567",
+					"start_time": "00:00",
+					"end_time":   "23:59",
+					"comment":    "",
+				},
+			},
+			"object": []interface{}{},
+		},
+		"prio":      0,
+		"area_code": "",
+		"dst_type":  "",
+		"id":        id,
+	}
+	req := CallReq{
+		FuncName: FUNC_NAME_STREAM_IPPORT,
+		Action:   "edit",
+		Param:    &param,
+	}
+	resp := CallResp{}
+	err := postJson(i.client, i.baseurl+"/Action/call", &req, &resp)
+	if err != nil {
+		return err
+	}
+	if resp.Code != 0 {
+		return errors.New(resp.Message)
+	}
+	return nil
 }

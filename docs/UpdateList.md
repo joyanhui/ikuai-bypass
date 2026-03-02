@@ -1,5 +1,6 @@
 # 更新日志
 
+- 2026-03-02 修复 v4.4.11 自定义运营商 ISP 分片兼容性回归：恢复同名 `IKB+tag` + 备注序号匹配策略（命中 Edit、未命中 Add、冗余清理） [#105](https://github.com/joyanhui/ikuai-bypass/issues/105) [详情](./update/20260302-1.md)
 - 2026-03-01 改进所有模块的更新策略为 `先查询、匹配则 Edit、不匹配则 Add、获取失败则跳过(Safe-Before)`  [#111](https://github.com/joyanhui/ikuai-bypass/issues/111) [#113](https://github.com/joyanhui/ikuai-bypass/discussions/113) [详情](./update/20260301-1.md)
 - 2026-02-24 适配 iKuai8_x64_4.0.101 对tag长度和api域名分流90kb的限制 [#108](https://github.com/joyanhui/ikuai-bypass/issues/108)
 - 2026-02-16 完善webui的文字提示 [#107](https://github.com/joyanhui/ikuai-bypass/issues/107) 避免歧义

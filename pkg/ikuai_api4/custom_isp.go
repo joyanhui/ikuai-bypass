@@ -54,9 +54,9 @@ func (i *IKuai) AddCustomIsp(tag, ipgroup string, index int) error {
 		Ipgroup string `json:"ipgroup"`
 		Comment string `json:"comment"`
 	}{
-		Name:    buildIndexedTagName(tag, index),
+		Name:    buildTagName(tag),
 		Ipgroup: ipgroup,
-		Comment: ikuai_common.NEW_COMMENT,
+		Comment: buildCustomIspChunkComment(index),
 	}
 	req := CallReq{
 		FuncName: FUNC_NAME_CUSTOM_ISP,
@@ -83,9 +83,9 @@ func (i *IKuai) EditCustomIsp(tag, ipgroup string, index int, id int) error {
 		Comment string `json:"comment"`
 		ID      int    `json:"id"`
 	}{
-		Name:    buildIndexedTagName(tag, index),
+		Name:    buildTagName(tag),
 		Ipgroup: ipgroup,
-		Comment: ikuai_common.NEW_COMMENT,
+		Comment: buildCustomIspChunkComment(index),
 		ID:      id,
 	}
 	req := CallReq{
@@ -112,16 +112,76 @@ func (i *IKuai) GetCustomIspMap(tag string) (result map[int]int, err error) {
 		return nil, err
 	}
 
-	baseName := buildTagName(tag)
 	for _, d := range data {
 		if matchTagNameFilter(tag, d.Name, d.Comment) {
-			suffix := strings.TrimPrefix(d.Name, baseName)
-			if idx, err := strconv.Atoi(suffix); err == nil {
-				result[idx] = d.ID
+			idx, ok := parseCustomIspChunkIndexFromComment(d.Comment)
+			if !ok {
+				idx, ok = parseCustomIspChunkIndexFromName(d.Name, tag)
 			}
+			if !ok {
+				continue
+			}
+			if existedID, existed := result[idx]; existed {
+				i.L.Warn("QUERY:序号冲突", "Duplicate custom ISP chunk %d for tag %s (keep ID: %d, skip ID: %d)", idx, tag, existedID, d.ID)
+				continue
+			}
+			result[idx] = d.ID
 		}
 	}
 	return result, nil
+}
+
+func buildCustomIspChunkComment(index int) string {
+	chunk := index + 1
+	if chunk <= 1 {
+		return ikuai_common.NEW_COMMENT
+	}
+	return ikuai_common.NEW_COMMENT + "-" + strconv.Itoa(chunk)
+}
+
+func parseCustomIspChunkIndexFromComment(comment string) (int, bool) {
+	comment = strings.TrimSpace(comment)
+	if comment == "" {
+		return 0, false
+	}
+
+	prefixes := []string{ikuai_common.NEW_COMMENT, ikuai_common.COMMENT_IKUAI_BYPASS}
+	for _, prefix := range prefixes {
+		if comment == prefix {
+			return 1, true
+		}
+		if !strings.HasPrefix(comment, prefix) {
+			continue
+		}
+
+		suffix := strings.TrimPrefix(comment, prefix)
+		suffix = strings.TrimPrefix(suffix, "-")
+		suffix = strings.TrimPrefix(suffix, "_")
+		suffix = strings.TrimSpace(suffix)
+		if suffix == "" {
+			return 1, true
+		}
+
+		idx, err := strconv.Atoi(suffix)
+		if err == nil && idx > 0 {
+			return idx, true
+		}
+	}
+
+	return 0, false
+}
+
+func parseCustomIspChunkIndexFromName(name, tag string) (int, bool) {
+	baseName := buildTagName(tag)
+	suffix := strings.TrimPrefix(strings.TrimSpace(name), baseName)
+	if suffix == "" {
+		return 0, false
+	}
+	idx, err := strconv.Atoi(suffix)
+	if err != nil || idx <= 0 {
+		return 0, false
+	}
+	return idx, true
 }
 
 // DelCustomIsp 删除自定义运营商规则
@@ -147,7 +207,6 @@ func (i *IKuai) DelCustomIsp(id string) error {
 	}
 	return nil
 }
-
 
 // DelCustomIspAll 清理所有符合条件的自定义运营商规则
 // DelCustomIspAll cleans up all custom ISP rules that match the condition

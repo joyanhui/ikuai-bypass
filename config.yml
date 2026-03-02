@@ -74,7 +74,7 @@ webui: # WebUI 管理服务设置
   port: "19001" # WebUI 服务端口
   user: admin # WebUI 用户名 (留空禁用认证)
   pass: admin888 # WebUI 密码
-  enable: false # 是否启用 WebUI 服务
+  enable: true # 是否启用 WebUI 服务
   enable-update: false # 是否启用配置文件在线更新功能
   cdn-prefix: https://cdn.jsdelivr.net/npm # CDN 前缀 (例如: https://cdn.jsdelivr.net/npm |  https://cdn.jsdmirror.com/npm（国内）)
 MaxNumberOfOneRecords: # 单条记录最大写入几条数据,因为爱快v4还未稳定，建议按照爱快限制来配置，注意太长的话使用浏览器编辑查看对应规则的时候限于浏览器不适合处理大数据浏览器可能会卡，但是爱快运行时候并不会卡

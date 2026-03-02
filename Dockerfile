@@ -21,7 +21,7 @@ FROM alpine:latest
 
 WORKDIR /opt/ikuai-bypass
 
-RUN apk add --no-cache tzdata
+RUN apk add --no-cache tzdata iputils
 ENV TZ=Asia/Shanghai
 
 COPY --from=builder /out/ikuai-bypass /usr/local/bin/ikuai-bypass

@@ -1,26 +1,38 @@
 ---
-name: Bug report bug反馈或者未知问题
-about: Create a report to help us improve
-title: ''
+name: Bug 反馈
+about: 提交问题帮助改进项目
+title: '[Bug] '
 labels: ''
 assignees: ''
 
 ---
 
-**简单描述**
+**问题描述**
+请清晰描述遇到的问题。如果觉得项目有帮助，请点亮 ⭐ Star 支持作者。
 
-请大概描述清楚问题，并点亮star支持本项目。
+**环境信息**
+- 爱快版本：`3.XX.XX x64 BuildXXXX`
+- ikuai-bypass 版本：`v4.X.X`
 
+**运行信息**（必填，请使用代码块格式）
+请提供完整的命令参数、配置文件和运行日志，便于定位问题。**请使用 Markdown 代码块格式粘贴：**
 
-爱快版本：免费版本3.XX.XX x64 BuildXXXX    ikuai-bypass版本：v4.X.X
+```bash
+# 示例：运行命令
+./ikuai-bypass -r once -m ispdomain
+```
 
-**运行命令/运行日志/配置文件/爱快截图** 支持md格式
+```yaml
+# 示例：配置文件（敏感信息请脱敏）
+ikuai-url: http://192.168.1.1
+username: admin
+```
 
-务必提供 完整命令参数  和配置文件 以及运行日志，否则很有可能无法判断问题（配置文件和命令行参数/日志尽量不要截图）
+```
+# 示例：运行日志
+[INFO] 开始更新...
+```
 
-爱快本身的使用问题，还有网络top结构问题，在移步 爱快官方论坛或恩山或者discussions  https://github.com/joyanhui/ikuai-bypass/discussions  ,此类问题提交到issue 会直接被关闭。
-
-如果是新增需求请描述清楚 需求场景和预期行为，每个人玩法不同，太过于简单的描述会很难让被旁人理解。
-
-
->
+**说明**
+- 爱快使用问题或网络拓扑问题请移步 [Discussions](https://github.com/joyanhui/ikuai-bypass/discussions)，此类 Issue 将直接关闭。
+- 功能需求请描述使用场景和预期行为。

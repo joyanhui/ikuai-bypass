@@ -6,35 +6,189 @@ on:
       - "v*"
 
 jobs:
-  build-release:
+  build-cli:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: "1.25.6"
           check-latest: true
           cache: true
 
-      #- name: Test
-      #  run: go test -race -v ./...
-
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.8"
+          python-version: "3.11"
 
-      - name: Build
-        run: python ./release.py
+      - name: Install UPX
+        run: sudo apt-get update && sudo apt-get install -y upx-ucl
+
+      - name: Build CLI (release.py with UPX)
+        run: python ./release.py -upx
         env:
           CGO_ENABLED: "0"
+
+      - name: Upload CLI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-release
+          path: ./release/*.zip
+
+  build-gui-desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+          - os: windows-latest
+            target: windows
+          - os: macos-latest
+            target: darwin
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.6"
+          check-latest: true
+          cache: true
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev \
+            xorg-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxi-dev \
+            libglfw3-dev
+
+      - name: Install AppImage tooling
+        if: runner.os == 'Linux'
+        run: |
+          curl -L -o /usr/local/bin/appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: Install Windows toolchain
+        if: runner.os == 'Windows'
+        run: choco install -y mingw
+
+      - name: Install Fyne CLI
+        run: go install fyne.io/tools/cmd/fyne@latest
+
+      - name: Build GUI package
+        working-directory: apps/gui
+        env:
+          CGO_ENABLED: "1"
+        run: |
+          if [ "${{ matrix.target }}" = "darwin" ]; then
+            fyne package -os darwin -arch arm64 -release
+          else
+            fyne package -os ${{ matrix.target }} -release
+          fi
+
+      - name: Collect GUI artifacts
+        shell: bash
+        run: |
+          mkdir -p gui-dist
+          find apps/gui -maxdepth 2 -type f \( -name "*.AppImage" -o -name "*.exe" -o -name "*.dmg" \) -print -exec cp {} gui-dist/ \;
+          if [ "${{ matrix.target }}" = "linux" ]; then
+            test -n "$(ls -1 gui-dist/*.AppImage 2>/dev/null)" || (echo "AppImage not found" && exit 1)
+          fi
+
+      - name: Upload GUI artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-${{ matrix.target }}
+          path: gui-dist/*
+
+  build-gui-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.6"
+          check-latest: true
+          cache: true
+
+      - name: Install Fyne CLI
+        run: go install fyne.io/tools/cmd/fyne@latest
+
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross@latest
+
+      - name: Build Android APK
+        working-directory: apps/gui
+        env:
+          CGO_ENABLED: "1"
+        run: fyne-cross android -arch arm64
+
+      - name: Collect Android artifacts
+        shell: bash
+        run: |
+          mkdir -p gui-dist
+          find fyne-cross/dist -type f -name "*.apk" -print -exec cp {} gui-dist/ \;
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gui-android
+          path: gui-dist/*
+
+  publish-release:
+    runs-on: ubuntu-latest
+    needs: [build-cli, build-gui-desktop, build-gui-android]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download CLI artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-release
+          path: release
+
+      - name: Download GUI Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gui-linux
+          path: release
+
+      - name: Download GUI Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gui-windows
+          path: release
+
+      - name: Download GUI macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gui-darwin
+          path: release
+
+      - name: Download GUI Android artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gui-android
+          path: release
 
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: "./release/*.zip"
+          files: "./release/*"
           body_path: Update.md
           prerelease: false
         env:
@@ -42,7 +196,7 @@ jobs:
 
   publish-docker:
     runs-on: ubuntu-latest
-    needs: build-release
+    needs: build-cli
     permissions:
       contents: read
     steps:

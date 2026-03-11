@@ -27,7 +27,10 @@ pub async fn show_custom_isp_by_tag_name(
     let resp = api
         .call::<_, Vec<CustomIspData>>(FUNC_NAME_CUSTOM_ISP, "show", &param)
         .await?;
-    let data = resp.results.ok_or(IKuaiError::InvalidResponse)?.data;
+    let data = resp
+        .results
+        .ok_or_else(|| IKuaiError::InvalidResponse("missing results".to_string()))?
+        .data;
     Ok(data
         .into_iter()
         .filter(|d| match_tag_name_filter(tag_name, &d.name, &d.comment))

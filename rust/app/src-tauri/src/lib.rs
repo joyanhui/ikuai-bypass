@@ -10,12 +10,59 @@ async fn get_config(state: tauri::State<'_, AppState>) -> Result<Config, String>
     Ok(state.config.lock().await.clone())
 }
 
+#[derive(serde::Serialize)]
+struct ConfigMeta {
+    #[serde(flatten)]
+    config: Config,
+    conf_path: String,
+    top_level_comments: std::collections::BTreeMap<String, String>,
+    item_comments: std::collections::BTreeMap<String, String>,
+    webui_comments: std::collections::BTreeMap<String, String>,
+    max_number_of_one_records_comments: std::collections::BTreeMap<String, String>,
+}
+
+#[tauri::command]
+async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
+    let cfg = state.config.lock().await.clone();
+    Ok(ConfigMeta {
+        config: cfg,
+        conf_path: state.config_path.to_string_lossy().to_string(),
+        top_level_comments: ikb_core::config::top_level_comments(),
+        item_comments: ikb_core::config::item_comments(),
+        webui_comments: ikb_core::config::webui_comments(),
+        max_number_of_one_records_comments: ikb_core::config::max_number_of_one_records_comments(),
+    })
+}
+
 #[tauri::command]
 async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), String> {
+    let allow = state.config.lock().await.webui.enable_update;
+    if !allow {
+        return Err("Forbidden: Online update is disabled in configuration".to_string());
+    }
     if let Err(e) = config.save_to_path(&state.config_path) {
         return Err(format!("Failed to save config: {}", e));
     }
 
+    let new_cron = config.cron.clone();
+    *state.config.lock().await = config;
+    state.runtime.set_defaults(None, Some(new_cron)).await;
+    Ok(())
+}
+
+#[tauri::command]
+async fn save_config_with_comments(
+    state: tauri::State<'_, AppState>,
+    config: Config,
+    with_comments: bool,
+) -> Result<(), String> {
+    let allow = state.config.lock().await.webui.enable_update;
+    if !allow {
+        return Err("Forbidden: Online update is disabled in configuration".to_string());
+    }
+    if let Err(e) = config.save_to_path_with_comments(&state.config_path, with_comments) {
+        return Err(format!("Failed to save config: {}", e));
+    }
     let new_cron = config.cron.clone();
     *state.config.lock().await = config;
     state.runtime.set_defaults(None, Some(new_cron)).await;
@@ -54,6 +101,14 @@ async fn runtime_cron_stop(state: tauri::State<'_, AppState>) -> Result<(), Stri
         .stop_cron()
         .await
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn runtime_tail_logs(
+    state: tauri::State<'_, AppState>,
+    tail: Option<usize>,
+) -> Result<Vec<ikb_core::logger::LogRecord>, String> {
+    Ok(state.runtime.tail_logs(tail.unwrap_or(200)).await)
 }
 
 pub struct AppState {
@@ -121,11 +176,14 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             get_config,
+            get_config_meta,
             save_config,
+            save_config_with_comments,
             runtime_status,
             runtime_run_once,
             runtime_cron_start,
             runtime_cron_stop,
+            runtime_tail_logs,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

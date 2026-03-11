@@ -198,7 +198,8 @@ impl RuntimeService {
             }
         }
 
-        let schedule = Schedule::from_str(&expr).map_err(|e| e.to_string())?;
+        let schedule_expr = normalize_cron_expr_for_parser(&expr)?;
+        let schedule = Schedule::from_str(&schedule_expr).map_err(|e| e.to_string())?;
         let module = if module.trim().is_empty() {
             self.inner.lock().await.module.clone()
         } else {
@@ -262,5 +263,18 @@ impl RuntimeService {
             level,
             detail,
         });
+    }
+}
+
+fn normalize_cron_expr_for_parser(expr: &str) -> Result<String, String> {
+    let raw = expr.trim();
+    if raw.is_empty() {
+        return Err("cron expression is empty".to_string());
+    }
+    let parts: Vec<&str> = raw.split_whitespace().collect();
+    match parts.len() {
+        5 => Ok(format!("0 {}", raw)),
+        6 => Ok(raw.to_string()),
+        _ => Err("Invalid cron expression".to_string()),
     }
 }

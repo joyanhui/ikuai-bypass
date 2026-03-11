@@ -12,6 +12,7 @@ struct RouteObject4 {
     pub r#type: i64,
     #[serde(rename = "group_value")]
     pub group_value: Vec<std::collections::HashMap<String, String>>,
+    #[serde(default)]
     pub comment: String,
 }
 
@@ -38,7 +39,10 @@ pub async fn show_ip_group_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Res
     let resp = api
         .call::<_, Vec<RouteObject4>>(FUNC_NAME_ROUTE_OBJECT, "show", &param)
         .await?;
-    let data = resp.results.ok_or(IKuaiError::InvalidResponse)?.data;
+    let data = resp
+        .results
+        .ok_or_else(|| IKuaiError::InvalidResponse("missing results".to_string()))?
+        .data;
 
     let mut out = Vec::new();
     for d in data {

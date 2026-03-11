@@ -1,4 +1,5 @@
 ---
+import appUrl from '../scripts/app.ts?url';
 ---
 
 <html lang="zh-CN">
@@ -7,212 +8,506 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>iKuai Bypass</title>
     <style>
-      :root { color-scheme: light; }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei"; margin: 0; background: #f6f8fb; color: #102a43; }
-      header { background: #1f6feb; color: #fff; padding: 16px 20px; }
-      main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
-      .card { background: #fff; border: 1px solid #e6eef8; border-radius: 12px; padding: 12px; }
-      .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-      button { border: 1px solid #d0d7de; background: #fff; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
-      button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
-      button.danger { background: #d1242f; border-color: #d1242f; color: #fff; }
-      button:disabled { opacity: .6; cursor: not-allowed; }
-      textarea { width: 100%; min-height: 240px; border: 1px solid #d0d7de; border-radius: 10px; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New"; }
-      pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
-      .muted { color: #52606d; font-size: 12px; }
-      .status { font-size: 12px; }
-      .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
-      @media (min-width: 960px) { .grid2 { grid-template-columns: 1.2fr .8fr; } }
+      :root {
+        color-scheme: dark;
+        /* Dark theme (default) */
+        --bg-primary: #0b1220;
+        --bg-secondary: #111a2e;
+        --bg-input: rgba(255,255,255,.04);
+        --bg-panel: rgba(255,255,255,.02);
+        --bg-logbox: rgba(0,0,0,.35);
+        --bg-badge: rgba(255,255,255,.03);
+        --border-color: rgba(255,255,255,.10);
+        --border-active: rgba(79,140,255,.4);
+        --text-primary: #e6edf3;
+        --text-muted: rgba(230,237,243,.72);
+        --text-muted2: rgba(230,237,243,.75);
+        --text-muted3: rgba(230,237,243,.70);
+        --accent-blue: rgba(79,140,255,.18);
+        --accent-blue-border: rgba(79,140,255,.4);
+        --accent-blue-bg: rgba(79,140,255,.22);
+        --accent-red: rgba(220,38,38,.20);
+        --accent-red-border: rgba(220,38,38,.45);
+        --btn-bg: rgba(255,255,255,.04);
+      }
+      /* Explicit dark class (toggled by JS) */
+      .dark {
+        color-scheme: dark;
+      }
+      /* Light theme */
+      .light, :root[data-theme="light"] {
+        color-scheme: light;
+        --bg-primary: #f5f7fa;
+        --bg-secondary: #ffffff;
+        --bg-input: #ffffff;
+        --bg-panel: #ffffff;
+        --bg-logbox: #f0f2f5;
+        --bg-badge: #e8eaed;
+        --border-color: rgba(0,0,0,.12);
+        --border-active: rgba(79,140,255,.6);
+        --text-primary: #1f2937;
+        --text-muted: rgba(31,41,55,.72);
+        --text-muted2: rgba(31,41,55,.75);
+        --text-muted3: rgba(31,41,55,.70);
+        --accent-blue: rgba(79,140,255,.12);
+        --accent-blue-border: rgba(79,140,255,.5);
+        --accent-blue-bg: rgba(79,140,255,.18);
+        --accent-red: rgba(220,38,38,.12);
+        --accent-red-border: rgba(220,38,38,.5);
+        --btn-bg: rgba(0,0,0,.04);
+      }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei"; background: var(--bg-primary); color: var(--text-primary); transition: background .2s, color .2s; }
+      header { background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); transition: background .2s; }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 14px 16px; }
+      .top { display:flex; justify-content:space-between; align-items:center; gap: 12px; flex-wrap:wrap; }
+      .brand { display:flex; flex-direction:column; }
+      .brand b { font-size: 15px; }
+      .muted { color: var(--text-muted); font-size: 12px; }
+      .tabs { display:flex; gap: 8px; margin-top: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .tab { border: 1px solid var(--border-color); background: var(--btn-bg); color: var(--text-primary); padding: 8px 10px; border-radius: 10px; cursor:pointer; font-size: 13px; white-space: nowrap; }
+      .tab.active { background: var(--accent-blue); border-color: var(--accent-blue-border); }
+      main { max-width: 1200px; margin: 0 auto; padding: 16px; display:grid; grid-template-columns: 1fr; gap: 12px; }
+      @media (min-width: 980px) { main:not(.single) { grid-template-columns: 340px 1fr; } }
+      .panel { border: 1px solid var(--border-color); background: var(--bg-panel); border-radius: 14px; padding: 12px; transition: background .2s, border-color .2s; }
+      .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+      label { display:block; font-size: 12px; color: var(--text-muted2); margin-bottom: 6px; }
+      input, select, textarea { background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 10px; padding: 9px 10px; font-size: 13px; outline:none; transition: background .2s, border-color .2s, color .2s; }
+      select, option { background: var(--bg-input); color: var(--text-primary); }
+      input:focus, select:focus, textarea:focus { border-color: var(--accent-blue-border); box-shadow: 0 0 0 3px rgba(79,140,255,.15); }
+      textarea { width: 100%; min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New"; }
+      button { border: 1px solid var(--border-color); background: var(--btn-bg); color: var(--text-primary); padding: 9px 10px; border-radius: 10px; cursor:pointer; font-size: 13px; transition: background .2s, border-color .2s, color .2s; }
+      button.primary { background: var(--accent-blue-bg); border-color: var(--accent-blue-border); }
+      button.danger { background: var(--accent-red); border-color: var(--accent-red-border); }
+      button:disabled { opacity: .55; cursor: not-allowed; }
+      .grid2 { display:grid; grid-template-columns: 1fr; gap: 12px; }
+      @media (min-width: 980px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+      pre { margin:0; white-space: pre-wrap; word-break: break-word; }
+      .logbox { background: var(--bg-logbox); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; min-height: 240px; max-height: 420px; overflow:auto; transition: background .2s, border-color .2s; }
+      .kv { display:grid; grid-template-columns: 1fr; gap: 10px; }
+      @media (min-width: 720px) { .kv { grid-template-columns: 1fr 1fr; } }
+      .hint { font-size: 12px; color: var(--text-muted3); }
+      .badge { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border-color); background: var(--bg-badge); color: var(--text-primary); transition: background .2s, border-color .2s; }
+      .sep { height: 1px; background: var(--border-color); margin: 10px 0; }
+      .list { display:flex; flex-direction:column; gap: 10px; }
+      .item { border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; background: var(--bg-panel); transition: background .2s, border-color .2s; }
+      .actions { display:flex; gap: 8px; flex-wrap:wrap; align-items:center; }
+      .right { display:flex; gap: 8px; align-items:center; justify-content:flex-end; }
+      @media (max-width: 720px) {
+        .wrap { padding: 12px; }
+        main { padding: 12px; }
+        .tab { padding: 6px 8px; font-size: 12px; }
+        input, select, textarea, button { font-size: 12px; padding: 8px 9px; }
+        .panel { padding: 10px; }
+        .logbox { min-height: 200px; }
+      }
+      /* Mobile responsive */
+      @media (max-width: 600px) {
+        .wrap { padding: 10px 12px; }
+        .top { gap: 8px; }
+        .brand b { font-size: 14px; }
+        .tabs { gap: 6px; margin-top: 8px; }
+        .tab { padding: 6px 8px; font-size: 12px; }
+        main { padding: 12px; gap: 10px; }
+        .panel { padding: 10px; border-radius: 10px; }
+        .grid2 { gap: 10px; }
+        .kv { gap: 8px; }
+        button { padding: 8px 9px; font-size: 12px; }
+        input, select, textarea { padding: 8px 9px; font-size: 12px; }
+      }
+      /* Theme buttons responsive */
+      @media (max-width: 480px) {
+        .top .row { gap: 4px; }
+        .top .row > button { padding: 4px 6px; font-size: 11px; }
+        .badge { padding: 2px 6px; font-size: 11px; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-weight:700;">iKuai Bypass</div>
-          <div class="muted" style="color:rgba(255,255,255,.85)">WebUI（Astro）</div>
-        </div>
-        <div class="status" id="statusLine">状态加载中...</div>
-      </div>
-    </header>
-    <main>
-      <div class="grid2">
-        <section class="card">
-          <div class="row" style="justify-content:space-between;">
-            <div>
-              <div style="font-weight:600;">配置（JSON）</div>
-              <div class="muted">后端提供 /api/config 与 /api/save。保存需要 webui.enable-update=true。</div>
-            </div>
-            <div class="row">
-              <button id="btnLoad" class="primary">刷新配置</button>
-              <button id="btnSave">保存配置</button>
-            </div>
-          </div>
-          <div style="margin-top:10px;">
-            <textarea id="configEditor" spellcheck="false"></textarea>
-          </div>
-          <div class="muted" id="configHint" style="margin-top:6px;"></div>
-        </section>
-
-        <section class="card">
-          <div style="font-weight:600;">运行控制</div>
-          <div class="row" style="margin-top:10px;">
-            <select id="moduleSelect" style="padding:8px;border:1px solid #d0d7de;border-radius:10px;">
-              <option value="ispdomain">运营商/域名分流</option>
-              <option value="ipgroup">IPv4 分组/端口分流</option>
-              <option value="ipv6group">IPv6 分组</option>
-              <option value="ii">混合模式(运营商+IPv4)</option>
-              <option value="ip">IP混合(v4+v6)</option>
-              <option value="iip">全能模式</option>
-            </select>
-            <button id="btnRunOnce" class="primary">执行一次</button>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <input id="cronExpr" placeholder="Cron 表达式" style="flex:1;min-width:220px;padding:8px;border:1px solid #d0d7de;border-radius:10px;" />
-            <button id="btnCronStart">启动计划任务</button>
-            <button id="btnCronStop" class="danger">停止计划任务</button>
-          </div>
-          <div class="muted" id="runtimeHint" style="margin-top:6px;"></div>
-        </section>
-      </div>
-
-      <section class="card">
-        <div class="row" style="justify-content:space-between;">
-          <div>
-            <div style="font-weight:600;">日志</div>
-            <div class="muted">/api/runtime/logs + /api/runtime/logs/stream(SSE)</div>
+      <div class="wrap">
+        <div class="top">
+          <div class="brand">
+            <b>iKuai Bypass</b>
+            <span class="muted" id="subtitle">WebUI（Bun + Astro）</span>
           </div>
           <div class="row">
-            <button id="btnTail">拉取 Tail</button>
-            <button id="btnStream" class="primary">开启实时</button>
-            <button id="btnStopStream">停止实时</button>
+            <span class="badge" id="envBadge">env=web</span>
+            <span class="badge" id="confBadge">conf=</span>
+            <span class="badge" id="themeBadge">theme=auto</span>
+            <button id="themeLight" class="tab" style="padding:6px 8px">浅色</button>
+            <button id="themeDark" class="tab" style="padding:6px 8px">深色</button>
+            <button id="themeAuto" class="tab" style="padding:6px 8px">自动</button>
           </div>
         </div>
-        <div style="margin-top:10px;background:#0b1220;color:#dce7ff;border-radius:12px;padding:10px;min-height:240px;">
-          <pre id="logBox"></pre>
+
+        <div class="tabs" id="tabs">
+          <button class="tab" data-tab="help">使用说明</button>
+          <button class="tab" data-tab="config">配置助手</button>
+          <button class="tab" data-tab="runtime">运行与日志</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <aside class="panel" id="tauriSidebar" style="display:none">
+        <div class="row" style="justify-content:space-between">
+          <b>运行面板</b>
+          <span class="hint" id="statusLine">状态加载中...</span>
+        </div>
+        <div class="sep"></div>
+        <div class="row">
+          <label style="width:100%">模块</label>
+          <select id="rtModule" style="width:100%">
+            <option value="ispdomain">ispdomain（运营商+域名）</option>
+            <option value="ipgroup">ipgroup（IPv4分组+端口）</option>
+            <option value="ipv6group">ipv6group（IPv6分组）</option>
+            <option value="ii">ii（ispdomain+ipgroup）</option>
+            <option value="ip">ip（v4+v6分组）</option>
+            <option value="iip">iip（全能）</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="btnRunOnce">执行一次</button>
+          <button id="btnTail">拉取日志</button>
+          <button class="primary" id="btnStream">开启实时</button>
+          <button id="btnStopStream">停止实时</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label style="width:100%">Cron</label>
+          <input id="rtCron" placeholder="0 7 * * *" style="width:100%" />
+          <button id="btnCronStart">启动定时</button>
+          <button class="danger" id="btnCronStop">停止定时</button>
+        </div>
+        <div class="sep"></div>
+        <button class="tab active" data-tab="runtime" style="width:100%">日志视图</button>
+        <button class="tab" data-tab="config" style="width:100%">配置助手</button>
+        <button class="tab" data-tab="help" style="width:100%">使用说明</button>
+      </aside>
+
+      <section class="panel" id="pageHelp" style="display:none">
+        <b>使用说明</b>
+        <div class="sep"></div>
+        <div class="hint">
+          <div>1) 先在「配置助手」填写 iKuai 登录信息、订阅 URL、Cron 等。</div>
+          <div>2) 保存配置（需要 webui.enable-update=true）。</div>
+          <div>3) 在「运行与日志」执行一次或启动定时任务。</div>
+        </div>
+        <div class="sep"></div>
+        <div class="hint"></div>
+      </section>
+
+      <section class="panel" id="pageRuntime" style="display:none">
+        <div class="row" style="justify-content:space-between">
+          <b>运行与日志</b>
+          <span class="hint" id="runtimeHint"></span>
+        </div>
+        <div class="sep"></div>
+
+        <div class="grid2">
+          <div class="panel">
+            <b>运行控制</b>
+            <div class="sep"></div>
+            <div class="row">
+              <select id="moduleSelect" style="flex:1; min-width:220px">
+                <option value="ispdomain">ispdomain（运营商+域名）</option>
+                <option value="ipgroup">ipgroup（IPv4分组+端口）</option>
+                <option value="ipv6group">ipv6group（IPv6分组）</option>
+                <option value="ii">ii（ispdomain+ipgroup）</option>
+                <option value="ip">ip（v4+v6分组）</option>
+                <option value="iip">iip（全能）</option>
+              </select>
+              <button class="primary" id="btnRunOnce2">执行一次</button>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <input id="cronExpr" placeholder="Cron 表达式，例如 0 7 * * *" style="flex:1; min-width:220px" />
+              <button id="btnCronStart2">启动定时</button>
+              <button class="danger" id="btnCronStop2">停止定时</button>
+            </div>
+            <div class="sep"></div>
+            <div class="hint" id="statusLine2">状态加载中...</div>
+          </div>
+
+          <div class="panel">
+            <b>日志</b>
+            <div class="sep"></div>
+            <div class="row">
+              <button id="btnTail2">拉取 Tail</button>
+              <button class="primary" id="btnStream2">开启实时</button>
+              <button id="btnStopStream2">停止实时</button>
+            </div>
+            <div class="sep"></div>
+            <div class="logbox"><pre id="logBox"></pre></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="pageConfig" style="display:none">
+        <div class="row" style="justify-content:space-between">
+          <b>配置助手</b>
+          <span class="hint" id="configHint"></span>
+        </div>
+        <div class="sep"></div>
+
+        <div class="panel">
+          <b>命令生成</b>
+          <div class="sep"></div>
+          <div class="kv">
+            <div>
+              <label>可执行文件路径（从后端读取）</label>
+              <input id="cmdExePath" placeholder="" style="width:100%" readonly />
+            </div>
+            <div>
+              <label>路径模式</label>
+              <select id="cmdPathMode" style="width:100%">
+                <option value="relative">相对路径（./ikuai-bypass）</option>
+                <option value="absolute">绝对路径（exe_path）</option>
+              </select>
+            </div>
+            <div>
+              <label>运行模式 (-r)</label>
+              <select id="cmdRunMode" style="width:100%">
+                <option value="cron">cron（立即执行一次+定时）</option>
+                <option value="cronAft">cronAft（仅定时）</option>
+                <option value="once">once（执行一次退出）</option>
+                <option value="clean">clean（清理）</option>
+                <option value="web">web（仅WebUI）</option>
+              </select>
+            </div>
+            <div>
+              <label>模块 (-m)</label>
+              <select id="cmdModule" style="width:100%">
+                <option value="ispdomain">ispdomain</option>
+                <option value="ipgroup">ipgroup</option>
+                <option value="ipv6group">ipv6group</option>
+                <option value="ii">ii</option>
+                <option value="ip">ip</option>
+                <option value="iip">iip</option>
+              </select>
+            </div>
+            <div>
+              <label>配置路径 (-c)</label>
+              <input id="cmdConfigPath" placeholder="./config.yml" style="width:100%" />
+            </div>
+            <div>
+              <label>清理 tag (-tag)</label>
+              <input id="cmdCleanTag" placeholder="cleanAll" style="width:100%" />
+            </div>
+            <div>
+              <label>自定义登录 (-login)</label>
+              <input id="cmdLogin" placeholder="http://ip,username,password" style="width:100%" />
+            </div>
+            <div>
+              <label>exportPath (-exportPath)</label>
+              <input id="cmdExportPath" placeholder="/tmp" style="width:100%" />
+            </div>
+            <div>
+              <label>IP分组随机后缀 (-isIpGroupNameAddRandomSuff)</label>
+              <select id="cmdRandomSuff" style="width:100%">
+                <option value="1">1（添加）</option>
+                <option value="0">0（不添加）</option>
+              </select>
+            </div>
+          </div>
+          <div class="sep"></div>
+          <div class="row" style="justify-content:space-between">
+            <div class="row">
+              <button id="btnSavePreset">保存预设</button>
+              <button id="btnRestoreDefaults">重置参数</button>
+            </div>
+            <span class="hint" id="presetHint"></span>
+          </div>
+          <div class="sep"></div>
+          <div class="list" id="presetList"></div>
+          <div class="sep"></div>
+          <div class="row" style="justify-content:space-between">
+            <button id="btnCopyCmd" class="primary">复制命令</button>
+            <span class="hint" id="cmdHint"></span>
+          </div>
+          <div class="sep"></div>
+          <div class="logbox"><pre id="cmdOut"></pre></div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="panel">
+          <b>基础配置</b>
+          <div class="sep"></div>
+          <div class="kv">
+            <div>
+              <label>iKuai URL</label>
+              <input id="cfgIkuaiUrl" placeholder="http://192.168.9.1" style="width:100%" />
+            </div>
+            <div>
+              <label>Cron</label>
+              <input id="cfgCron" placeholder="0 7 * * *" style="width:100%" />
+            </div>
+            <div>
+              <label>用户名</label>
+              <input id="cfgUser" style="width:100%" />
+            </div>
+            <div>
+              <label>密码</label>
+              <input id="cfgPass" style="width:100%" />
+            </div>
+            <div>
+              <label>github-proxy</label>
+              <input id="cfgGhProxy" placeholder="https://gh-proxy.com/" style="width:100%" />
+            </div>
+            <div>
+              <label>AddErrRetryWait</label>
+              <input id="cfgRetryWait" placeholder="10s" style="width:100%" />
+            </div>
+            <div>
+              <label>AddWait</label>
+              <input id="cfgAddWait" placeholder="1s" style="width:100%" />
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="panel">
+          <div class="row" style="justify-content:space-between">
+            <b>WebUI 设置</b>
+            <span class="hint">保存功能受 webui.enable-update 控制</span>
+          </div>
+          <div class="sep"></div>
+          <div class="kv">
+            <div>
+              <label>enable</label>
+              <select id="cfgWebEnable" style="width:100%">
+                <option value="1">true</option>
+                <option value="0">false</option>
+              </select>
+            </div>
+            <div>
+              <label>enable-update</label>
+              <select id="cfgWebEnableUpdate" style="width:100%">
+                <option value="1">true</option>
+                <option value="0">false</option>
+              </select>
+            </div>
+            <div>
+              <label>port</label>
+              <input id="cfgWebPort" placeholder="19001" style="width:100%" />
+            </div>
+            <div>
+              <label>cdn-prefix</label>
+              <input id="cfgWebCdn" placeholder="https://cdn.jsdelivr.net/npm" style="width:100%" />
+            </div>
+            <div>
+              <label>user</label>
+              <input id="cfgWebUser" style="width:100%" />
+            </div>
+            <div>
+              <label>pass</label>
+              <input id="cfgWebPass" style="width:100%" />
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="panel">
+          <b>MaxNumberOfOneRecords</b>
+          <div class="sep"></div>
+          <div class="kv">
+            <div>
+              <label>Isp</label>
+              <input id="cfgMaxIsp" type="number" min="1" style="width:100%" />
+            </div>
+            <div>
+              <label>Ipv4</label>
+              <input id="cfgMaxIpv4" type="number" min="1" style="width:100%" />
+            </div>
+            <div>
+              <label>Ipv6</label>
+              <input id="cfgMaxIpv6" type="number" min="1" style="width:100%" />
+            </div>
+            <div>
+              <label>Domain</label>
+              <input id="cfgMaxDomain" type="number" min="1" style="width:100%" />
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="panel">
+          <div class="row" style="justify-content:space-between">
+            <b>远程配置加载</b>
+            <span class="hint">支持 raw.githubusercontent.com + github-proxy</span>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
+            <input id="remoteUrl" placeholder="https://raw.githubusercontent.com/.../config_example.yml" style="flex:1; min-width:260px" />
+            <button id="btnLoadRemote">加载并覆盖表单</button>
+            <button id="btnResetRemote">恢复默认URL</button>
+          </div>
+          <div class="hint" id="remoteHint" style="margin-top:8px"></div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="panel">
+          <div class="row" style="justify-content:space-between">
+            <b>规则列表</b>
+            <span class="hint">支持 custom-isp / ip-group / ipv6-group / stream-domain / stream-ipport</span>
+          </div>
+          <div class="sep"></div>
+          <div class="grid2">
+            <div class="panel">
+              <div class="row" style="justify-content:space-between"><b>custom-isp</b><button id="addCustomIsp">新增</button></div>
+              <div class="sep"></div>
+              <div class="list" id="listCustomIsp"></div>
+            </div>
+            <div class="panel">
+              <div class="row" style="justify-content:space-between"><b>ip-group</b><button id="addIpGroup">新增</button></div>
+              <div class="sep"></div>
+              <div class="list" id="listIpGroup"></div>
+            </div>
+            <div class="panel">
+              <div class="row" style="justify-content:space-between"><b>ipv6-group</b><button id="addIpv6Group">新增</button></div>
+              <div class="sep"></div>
+              <div class="list" id="listIpv6Group"></div>
+            </div>
+            <div class="panel">
+              <div class="row" style="justify-content:space-between"><b>stream-domain</b><button id="addStreamDomain">新增</button></div>
+              <div class="sep"></div>
+              <div class="list" id="listStreamDomain"></div>
+            </div>
+            <div class="panel" style="grid-column:1 / -1">
+              <div class="row" style="justify-content:space-between"><b>stream-ipport</b><button id="addStreamIpPort">新增</button></div>
+              <div class="sep"></div>
+              <div class="list" id="listStreamIpPort"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="panel">
+          <div class="row" style="justify-content:space-between">
+            <b>YAML 预览与保存</b>
+            <div class="actions">
+              <button id="btnPreview">生成预览</button>
+              <select id="previewMode" style="padding:9px 10px">
+                <option value="plain">预览: 无注释</option>
+                <option value="comments">预览: 带注释</option>
+              </select>
+              <button id="btnCopyYaml">复制YAML</button>
+              <button id="btnSaveNoComments" class="primary">保存(无注释)</button>
+              <button id="btnSaveWithComments">保存(带注释)</button>
+            </div>
+          </div>
+          <div class="sep"></div>
+          <div class="hint" id="saveHint"></div>
+          <div class="sep"></div>
+          <textarea id="yamlBox" spellcheck="false" readonly></textarea>
         </div>
       </section>
     </main>
 
-    <script type="module">
-      const el = (id) => document.getElementById(id);
-      const configEditor = el('configEditor');
-      const configHint = el('configHint');
-      const statusLine = el('statusLine');
-      const moduleSelect = el('moduleSelect');
-      const cronExpr = el('cronExpr');
-      const runtimeHint = el('runtimeHint');
-      const logBox = el('logBox');
-
-      let es = null;
-
-      function setHint(node, msg) {
-        node.textContent = msg;
-      }
-
-      async function fetchJson(url, options) {
-        const r = await fetch(url, { headers: { 'content-type': 'application/json' }, ...options });
-        if (!r.ok) throw new Error(await r.text());
-        return await r.json();
-      }
-
-      async function loadConfig() {
-        const data = await fetchJson('/api/config');
-        configEditor.value = JSON.stringify(data, null, 2);
-        if (data?.cron) cronExpr.value = data.cron;
-        setHint(configHint, `conf_path=${data.conf_path || ''}`);
-      }
-
-      async function saveConfig() {
-        const raw = configEditor.value;
-        const obj = JSON.parse(raw);
-        const payload = { ...obj, with_comments: false };
-        const r = await fetch('/api/save', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (!r.ok) throw new Error(await r.text());
-        setHint(configHint, '保存成功');
-      }
-
-      async function refreshStatus() {
-        const st = await fetchJson('/api/runtime/status');
-        statusLine.textContent = `Running=${st.running} Cron=${st.cron_running} Next=${st.next_run_at || ''}`;
-      }
-
-      async function runOnce() {
-        const mod = moduleSelect.value;
-        const r = await fetchJson('/api/runtime/run-once', { method: 'POST', body: JSON.stringify({ module: mod }) });
-        setHint(runtimeHint, r.started ? '已启动' : '任务已在运行中');
-      }
-
-      async function cronStart() {
-        const mod = moduleSelect.value;
-        const expr = cronExpr.value;
-        await fetchJson('/api/runtime/cron/start', { method: 'POST', body: JSON.stringify({ expr, module: mod }) });
-        setHint(runtimeHint, '计划任务已启动');
-      }
-
-      async function cronStop() {
-        await fetchJson('/api/runtime/cron/stop', { method: 'POST' });
-        setHint(runtimeHint, '计划任务已停止');
-      }
-
-      function appendLogLine(line) {
-        const prev = logBox.textContent || '';
-        const next = (prev + '\n' + line).trim();
-        const lines = next.split('\n');
-        logBox.textContent = lines.slice(-2000).join('\n');
-      }
-
-      async function tailLogs() {
-        const arr = await fetchJson('/api/runtime/logs?tail=200');
-        logBox.textContent = '';
-        for (const it of arr) {
-          const t = it.ts || '';
-          const mod = it.module || '';
-          const tag = it.tag || '';
-          const detail = it.detail || '';
-          appendLogLine(`${t} [${mod}] [${tag}] ${detail}`);
-        }
-      }
-
-      function startStream() {
-        stopStream();
-        es = new EventSource('/api/runtime/logs/stream');
-        es.onmessage = (ev) => {
-          try {
-            const it = JSON.parse(ev.data);
-            appendLogLine(`${it.ts} [${it.module}] [${it.tag}] ${it.detail}`);
-          } catch (e) {
-            appendLogLine(ev.data);
-          }
-        };
-        es.onerror = () => {
-          appendLogLine('[SSE] disconnected');
-        };
-      }
-
-      function stopStream() {
-        if (es) {
-          es.close();
-          es = null;
-        }
-      }
-
-      el('btnLoad').onclick = () => loadConfig().catch(e => setHint(configHint, String(e)));
-      el('btnSave').onclick = () => saveConfig().catch(e => setHint(configHint, String(e)));
-      el('btnRunOnce').onclick = () => runOnce().catch(e => setHint(runtimeHint, String(e)));
-      el('btnCronStart').onclick = () => cronStart().catch(e => setHint(runtimeHint, String(e)));
-      el('btnCronStop').onclick = () => cronStop().catch(e => setHint(runtimeHint, String(e)));
-      el('btnTail').onclick = () => tailLogs().catch(e => appendLogLine(String(e)));
-      el('btnStream').onclick = () => startStream();
-      el('btnStopStream').onclick = () => stopStream();
-
-      await loadConfig().catch(() => {});
-      await refreshStatus().catch(() => {});
-      setInterval(() => refreshStatus().catch(() => {}), 1500);
-    </script>
+    <script type="module" src={appUrl}></script>
   </body>
 </html>

@@ -23,8 +23,8 @@ pub enum IKuaiError {
     Http(#[from] reqwest::Error),
     #[error("api error: {0}")]
     Api(String),
-    #[error("invalid response")]
-    InvalidResponse,
+    #[error("invalid response: {0}")]
+    InvalidResponse(String),
 }
 
 #[derive(Debug, Serialize)]
@@ -143,14 +143,8 @@ impl IKuaiClient {
             "username": username,
         });
         let url = format!("{}/Action/login", self.base_url.trim_end_matches('/'));
-        let resp: CallResp<serde_json::Value> = self
-            .client
-            .post(url)
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let text = self.post_json_text(&url, &req).await?;
+        let resp: CallResp<serde_json::Value> = parse_call_response(&text)?;
         if resp.code != 0 {
             return Err(IKuaiError::Api(resp.message));
         }
@@ -169,17 +163,42 @@ impl IKuaiClient {
             action: action.to_string(),
             param,
         };
-        let resp: CallResp<TData> = self
-            .client
-            .post(url)
-            .json(&req)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let text = self.post_json_text(&url, &req).await?;
+        let resp: CallResp<TData> = parse_call_response(&text)?;
         if resp.code != 0 {
             return Err(IKuaiError::Api(resp.message.clone()));
         }
         Ok(resp)
     }
+
+    async fn post_json_text<T: Serialize>(&self, url: &str, body: &T) -> Result<String, IKuaiError> {
+        let resp = self.client.post(url).json(body).send().await?;
+        let status = resp.status();
+        let text = resp.text().await?;
+        if !status.is_success() {
+            return Err(IKuaiError::Api(format!(
+                "http status {}: {}",
+                status,
+                trim_body(&text)
+            )));
+        }
+        Ok(text)
+    }
+}
+
+fn parse_call_response<T: for<'de> Deserialize<'de>>(text: &str) -> Result<CallResp<T>, IKuaiError> {
+    serde_json::from_str(text).map_err(|e| {
+        IKuaiError::InvalidResponse(format!("decode error: {} body: {}", e, trim_body(text)))
+    })
+}
+
+fn trim_body(text: &str) -> String {
+    let trimmed = text.trim();
+    const LIMIT: usize = 200;
+    if trimmed.len() <= LIMIT {
+        return trimmed.to_string();
+    }
+    let mut out = trimmed[..LIMIT].to_string();
+    out.push_str("...");
+    out
 }

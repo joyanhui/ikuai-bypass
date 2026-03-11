@@ -34,6 +34,7 @@ struct StreamIpPort4 {
     tagname: String,
     interface: String,
     nexthop: String,
+    #[serde(default)]
     comment: String,
     #[serde(rename = "iface_band")]
     iface_band: i64,
@@ -67,7 +68,10 @@ pub async fn show_stream_ipport_by_tag_name(api: &IKuaiClient, tag_name: &str) -
     let resp = api
         .call::<_, Vec<StreamIpPort4>>(FUNC_NAME_STREAM_IPPORT, "show", &param)
         .await?;
-    let data = resp.results.ok_or(IKuaiError::InvalidResponse)?.data;
+    let data = resp
+        .results
+        .ok_or_else(|| IKuaiError::InvalidResponse("missing results".to_string()))?
+        .data;
     let mut out = Vec::new();
     for d in data {
         if !match_tag_name_filter(tag_name, &d.tagname, &d.comment) {

@@ -9,6 +9,7 @@ base64 = "0.22"
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 cron = "0.13"
 humantime-serde = "1.1"
+humantime = "2.1"
 md5 = "0.8"
 once_cell = "1.21"
 regex = "1.11"

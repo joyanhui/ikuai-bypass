@@ -13,7 +13,7 @@ tauri-plugin-log = "2"
 tokio = { version = "1.47", features = ["rt-multi-thread", "macros"] }
 
 [build-dependencies]
-tauri-build = "2"
+tauri-build = { version = "2", features = [] }
 
 [lib]
 name = "ikb_app_lib"

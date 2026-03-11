@@ -34,6 +34,7 @@ struct StreamDomain4 {
     #[serde(rename = "tagname")]
     tagname: String,
     interface: String,
+    #[serde(default)]
     comment: String,
     #[serde(rename = "src_addr")]
     src_addr: AddrBlock,
@@ -61,7 +62,10 @@ pub async fn show_stream_domain_by_tag_name(api: &IKuaiClient, tag_name: &str) -
     let resp = api
         .call::<_, Vec<StreamDomain4>>(FUNC_NAME_STREAM_DOMAIN, "show", &param)
         .await?;
-    let data = resp.results.ok_or(IKuaiError::InvalidResponse)?.data;
+    let data = resp
+        .results
+        .ok_or_else(|| IKuaiError::InvalidResponse("missing results".to_string()))?
+        .data;
 
     let mut out = Vec::new();
     for d in data {

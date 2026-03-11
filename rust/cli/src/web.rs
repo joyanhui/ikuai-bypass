@@ -30,6 +30,10 @@ struct ConfigResponse {
     config: ikb_core::config::Config,
     exe_path: String,
     conf_path: String,
+    top_level_comments: std::collections::BTreeMap<String, String>,
+    item_comments: std::collections::BTreeMap<String, String>,
+    webui_comments: std::collections::BTreeMap<String, String>,
+    max_number_of_one_records_comments: std::collections::BTreeMap<String, String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -151,17 +155,24 @@ async fn api_config(State(state): State<AppState>) -> impl IntoResponse {
         .and_then(|p| p.to_str().map(|s| s.to_string()))
         .unwrap_or_default();
 
-    let conf_path = state
-        .config_path
-        .to_str()
-        .map(|s| s.to_string())
-        .unwrap_or_default();
+    let conf_path = if state.config_path.is_absolute() {
+        state.config_path.clone()
+    } else {
+        std::env::current_dir()
+            .unwrap_or_else(|_| std::path::PathBuf::from("."))
+            .join(&state.config_path)
+    };
+    let conf_path = conf_path.to_string_lossy().to_string();
 
     let cfg = state.config.lock().await.clone();
     let resp = ConfigResponse {
         config: cfg,
         exe_path,
         conf_path,
+        top_level_comments: ikb_core::config::top_level_comments(),
+        item_comments: ikb_core::config::item_comments(),
+        webui_comments: ikb_core::config::webui_comments(),
+        max_number_of_one_records_comments: ikb_core::config::max_number_of_one_records_comments(),
     };
     (StatusCode::OK, Json(resp))
 }
@@ -176,8 +187,10 @@ async fn api_save(State(state): State<AppState>, Json(req): Json<SaveRequest>) -
             .into_response();
     }
 
-    let _ = req.with_comments;
-    if let Err(e) = req.config.save_to_path(&state.config_path) {
+    if let Err(e) = req
+        .config
+        .save_to_path_with_comments(&state.config_path, req.with_comments)
+    {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to save config: {}", e),
@@ -332,10 +345,23 @@ async fn basic_auth(
     let mut parts = decoded.splitn(2, ':');
     let u = parts.next().unwrap_or("");
     let p = parts.next().unwrap_or("");
-    if u != user || p != pass {
+    if !constant_time_eq(u.as_bytes(), user.as_bytes())
+        || !constant_time_eq(p.as_bytes(), pass.as_bytes())
+    {
         return unauthorized();
     }
     next.run(req).await
+}
+
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    let max = a.len().max(b.len());
+    let mut diff: u8 = (a.len() ^ b.len()) as u8;
+    for i in 0..max {
+        let aa = a.get(i).copied().unwrap_or(0);
+        let bb = b.get(i).copied().unwrap_or(0);
+        diff |= aa ^ bb;
+    }
+    diff == 0
 }
 
 fn unauthorized() -> Response {

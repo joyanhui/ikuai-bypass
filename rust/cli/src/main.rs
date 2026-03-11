@@ -107,7 +107,10 @@ fn main() {
             if cfg.webui.enable {
                 let port = cfg.webui.port.trim();
                 let port = if port.is_empty() { "8080" } else { port };
-                let _ = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string());
+                if let Err(e) = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string()) {
+                    eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                    std::process::exit(1);
+                }
             }
             if cfg.cron.trim().is_empty() {
                 println!("[CRON:定时任务] Cron configuration is empty, exiting...");
@@ -138,7 +141,10 @@ fn main() {
             if cfg.webui.enable {
                 let port = cfg.webui.port.trim();
                 let port = if port.is_empty() { "8080" } else { port };
-                let _ = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string());
+                if let Err(e) = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string()) {
+                    eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                    std::process::exit(1);
+                }
             }
             if cfg.cron.trim().is_empty() {
                 println!("[CRON:定时任务] Cron configuration is empty, exiting...");

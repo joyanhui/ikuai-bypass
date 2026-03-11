@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "identifier": "com.joyanhui.ikuai-bypass",
   "build": {
-    "beforeDevCommand": "bun run dev",
-    "beforeBuildCommand": "bun run build",
+    "beforeDevCommand": "cd ../frontend && bun run dev",
+    "beforeBuildCommand": "cd ../frontend && bun run build",
     "devUrl": "http://localhost:4321",
     "frontendDist": "../frontend/dist"
   },
@@ -28,10 +28,5 @@
     "targets": ["deb", "appimage"],
     "icon": []
   },
-  "plugins": {
-    "log": {
-      "level": "info",
-      "timezone": "Asia/Shanghai"
-    }
-  }
+  "plugins": {}
 }

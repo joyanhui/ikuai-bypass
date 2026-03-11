@@ -5,35 +5,82 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-colorable"
 )
 
+var (
+	baseOutput atomic.Value
+
+	extraMu      sync.RWMutex
+	extraOutputs []io.Writer
+)
+
+func init() {
+	baseOutput.Store(io.Writer(colorable.NewColorableStdout()))
+}
+
+// SetBaseOutput 设置日志基础输出 / Set base output writer.
+func SetBaseOutput(w io.Writer) {
+	if w == nil {
+		return
+	}
+	baseOutput.Store(w)
+}
+
+// AddOutput 增加额外输出 / Add extra output writer.
+func AddOutput(w io.Writer) {
+	if w == nil {
+		return
+	}
+	extraMu.Lock()
+	extraOutputs = append(extraOutputs, w)
+	extraMu.Unlock()
+}
+
+func resolveOutput() io.Writer {
+	base, _ := baseOutput.Load().(io.Writer)
+	if base == nil {
+		base = colorable.NewColorableStdout()
+	}
+
+	extraMu.RLock()
+	extras := append([]io.Writer(nil), extraOutputs...)
+	extraMu.RUnlock()
+	if len(extras) == 0 {
+		return base
+	}
+	ws := make([]io.Writer, 0, 1+len(extras))
+	ws = append(ws, base)
+	ws = append(ws, extras...)
+	return io.MultiWriter(ws...)
+}
+
 // Logger 统一日志工具，支持并发标识、颜色显示和多平台适配
 type Logger struct {
 	Module string
-	out    io.Writer
 }
 
 // 预定义颜色方案
 var (
-	colorTime      = color.New(color.FgHiBlack)                 // 时间戳颜色
-	colorModule    = color.New(color.FgCyan).Add(color.Bold)    // 模块名颜色
-	colorTagInfo   = color.New(color.FgBlue)                    // 信息标签颜色
-	colorTagSucc   = color.New(color.FgGreen)                   // 成功标签颜色
-	colorTagErr    = color.New(color.FgRed).Add(color.Bold)     // 错误标签颜色
-	colorTagWarn   = color.New(color.FgYellow)                  // 警告标签颜色
+	colorTime      = color.New(color.FgHiBlack)                  // 时间戳颜色
+	colorModule    = color.New(color.FgCyan).Add(color.Bold)     // 模块名颜色
+	colorTagInfo   = color.New(color.FgBlue)                     // 信息标签颜色
+	colorTagSucc   = color.New(color.FgGreen)                    // 成功标签颜色
+	colorTagErr    = color.New(color.FgRed).Add(color.Bold)      // 错误标签颜色
+	colorTagWarn   = color.New(color.FgYellow)                   // 警告标签颜色
 	colorHighlight = color.New(color.FgHiYellow).Add(color.Bold) // 关键内容高亮
-	colorNumber    = color.New(color.FgHiMagenta)               // 数字高亮
+	colorNumber    = color.New(color.FgHiMagenta)                // 数字高亮
 )
 
 // NewLogger 创建一个新的日志记录器
 func NewLogger(module string) *Logger {
 	return &Logger{
 		Module: module,
-		out:    colorable.NewColorableStdout(),
 	}
 }
 
@@ -83,11 +130,22 @@ func (l *Logger) formatLog(tagColor *color.Color, tag, format string, v ...inter
 	detailStr := fmt.Sprintf(format, v...)
 	detailStr = highlight(detailStr)
 
-	fmt.Fprintf(l.out, "%s %s %s %s\n", timeStr, moduleStr, tagStr, detailStr)
+	out := resolveOutput()
+	fmt.Fprintf(out, "%s %s %s %s\n", timeStr, moduleStr, tagStr, detailStr)
 }
 
-func (l *Logger) Log(tag, format string, v ...interface{})     { l.formatLog(colorTagInfo, tag, format, v...) }
-func (l *Logger) Info(tag, format string, v ...interface{})    { l.formatLog(colorTagInfo, tag, format, v...) }
-func (l *Logger) Error(tag, format string, v ...interface{})   { l.formatLog(colorTagErr, tag, format, v...) }
-func (l *Logger) Success(tag, format string, v ...interface{}) { l.formatLog(colorTagSucc, tag, format, v...) }
-func (l *Logger) Warn(tag, format string, v ...interface{})    { l.formatLog(colorTagWarn, tag, format, v...) }
+func (l *Logger) Log(tag, format string, v ...interface{}) {
+	l.formatLog(colorTagInfo, tag, format, v...)
+}
+func (l *Logger) Info(tag, format string, v ...interface{}) {
+	l.formatLog(colorTagInfo, tag, format, v...)
+}
+func (l *Logger) Error(tag, format string, v ...interface{}) {
+	l.formatLog(colorTagErr, tag, format, v...)
+}
+func (l *Logger) Success(tag, format string, v ...interface{}) {
+	l.formatLog(colorTagSucc, tag, format, v...)
+}
+func (l *Logger) Warn(tag, format string, v ...interface{}) {
+	l.formatLog(colorTagWarn, tag, format, v...)
+}

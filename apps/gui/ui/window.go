@@ -109,6 +109,14 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		text := strings.Join(logLines, "\n")
 		fyne.Do(func() {
 			_ = logBinding.Set(text)
+			if logScroll != nil {
+				go func() {
+					time.Sleep(50 * time.Millisecond)
+					fyne.Do(func() {
+						logScroll.ScrollToBottom()
+					})
+				}()
+			}
 		})
 	}
 
@@ -586,12 +594,10 @@ func (b *roundActionButton) Tapped(*fyne.PointEvent) {
 func (b *roundActionButton) TappedSecondary(*fyne.PointEvent) {}
 
 func (b *roundActionButton) CreateRenderer() fyne.WidgetRenderer {
-	outer := canvas.NewRectangle(startRingOuter)
-	outer.CornerRadius = 14
-	inner := canvas.NewRectangle(startRingInner)
-	inner.CornerRadius = 12
+	outer := canvas.NewCircle(startRingOuter)
+	inner := canvas.NewCircle(startRingInner)
 	outer.StrokeWidth = 0
-	inner.StrokeWidth = 3
+	inner.StrokeWidth = 4
 	inner.StrokeColor = brandBlueSoft
 
 	title := canvas.NewText(b.title, brandBlue)
@@ -599,61 +605,48 @@ func (b *roundActionButton) CreateRenderer() fyne.WidgetRenderer {
 	title.TextStyle = fyne.TextStyle{Bold: true}
 	title.TextSize = 14
 
-	subtitle := canvas.NewText(b.subtitle, panelMuted)
-	subtitle.Alignment = fyne.TextAlignCenter
-	subtitle.TextSize = 9
-
 	r := &roundActionButtonRenderer{
-		button:   b,
-		outer:    outer,
-		inner:    inner,
-		title:    title,
-		subtitle: subtitle,
-		objects:  []fyne.CanvasObject{outer, inner, title, subtitle},
+		button:  b,
+		outer:   outer,
+		inner:   inner,
+		title:   title,
+		objects: []fyne.CanvasObject{outer, inner, title},
 	}
 	r.Refresh()
 	return r
 }
 
 type roundActionButtonRenderer struct {
-	button   *roundActionButton
-	outer    *canvas.Rectangle
-	inner    *canvas.Rectangle
-	title    *canvas.Text
-	subtitle *canvas.Text
-	objects  []fyne.CanvasObject
+	button  *roundActionButton
+	outer   *canvas.Circle
+	inner   *canvas.Circle
+	title   *canvas.Text
+	objects []fyne.CanvasObject
 }
 
 func (r *roundActionButtonRenderer) Layout(size fyne.Size) {
-	r.outer.Move(fyne.NewPos(0, 0))
-	r.outer.Resize(size)
+	side := float32(64) // Fixed size regardless of text length
 
-	innerInset := float32(2)
-	r.inner.Move(fyne.NewPos(innerInset, innerInset))
-	r.inner.Resize(fyne.NewSize(size.Width-innerInset*2, size.Height-innerInset*2))
+	centerX := (size.Width - side) / 2
+	centerY := (size.Height - side) / 2
+
+	r.outer.Move(fyne.NewPos(centerX, centerY))
+	r.outer.Resize(fyne.NewSize(side, side))
+
+	innerInset := float32(4)
+	r.inner.Move(fyne.NewPos(centerX+innerInset, centerY+innerInset))
+	r.inner.Resize(fyne.NewSize(side-innerInset*2, side-innerInset*2))
 
 	titleSize := r.title.MinSize()
-	// Stack them vertically and center
-	subSize := r.subtitle.MinSize()
-
-	totalHeight := titleSize.Height + subSize.Height
-	startY := (size.Height - totalHeight) / 2
-
-	r.title.Move(fyne.NewPos((size.Width-titleSize.Width)/2, startY))
+	r.title.Move(fyne.NewPos(
+		centerX+(side-titleSize.Width)/2,
+		centerY+(side-titleSize.Height)/2,
+	))
 	r.title.Resize(titleSize)
-
-	r.subtitle.Move(fyne.NewPos((size.Width-subSize.Width)/2, startY+titleSize.Height))
-	r.subtitle.Resize(subSize)
 }
 
 func (r *roundActionButtonRenderer) MinSize() fyne.Size {
-	titleSize := r.title.MinSize()
-	subSize := r.subtitle.MinSize()
-	w := titleSize.Width
-	if subSize.Width > w {
-		w = subSize.Width
-	}
-	return fyne.NewSize(w+30, titleSize.Height+subSize.Height+20)
+	return fyne.NewSize(64, 64)
 }
 
 func (r *roundActionButtonRenderer) Refresh() {

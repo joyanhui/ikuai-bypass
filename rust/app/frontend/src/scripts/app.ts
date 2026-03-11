@@ -1,6 +1,9 @@
 import { bridge } from '../lib/bridge.ts';
-import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDump, yamlParse } from '../lib/config_model.ts';
+import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComments, yamlParse } from '../lib/config_model.ts';
 import { loadJson, saveJson } from '../lib/storage.ts';
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
 
 // ============================================
 // 全局状态
@@ -11,10 +14,26 @@ const state = {
   confPath: '',
   selectedModule: 'ispdomain',
   selectedRunMode: 'once' as 'cron' | 'cronAft' | 'once' | 'clean',
+  selectedConfigTab: 'visual' as 'visual' | 'raw',
   isRunning: false,
   isCronRunning: false,
   unlistenLogs: null as (() => void) | null,
   streamReconnectTimer: null as ReturnType<typeof setTimeout> | null,
+  ruleEditor: null as null | {
+    listKey: 'customIsp' | 'ipGroup' | 'ipv6Group' | 'streamDomain' | 'streamIpPort';
+    index: number;
+  },
+  rawEditor: null as monaco.editor.IStandaloneCodeEditor | null,
+};
+
+(globalThis as typeof globalThis & {
+  MonacoEnvironment?: {
+    getWorker: (_workerId: string, _label: string) => Worker;
+  };
+}).MonacoEnvironment = {
+  getWorker() {
+    return new EditorWorker();
+  },
 };
 
 const RECONNECT_DELAY = 3000;
@@ -60,6 +79,32 @@ const closeModal = (modalId: string) => {
   }, 300);
 };
 
+const ensureRawEditor = () => {
+  if (state.rawEditor) return state.rawEditor;
+  const container = document.getElementById('rawEditorContainer');
+  if (!container) return null;
+
+  state.rawEditor = monaco.editor.create(container, {
+    value: '',
+    language: 'yaml',
+    theme: document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs',
+    automaticLayout: true,
+    minimap: { enabled: false },
+    fontSize: 14,
+    lineNumbers: 'on',
+    roundedSelection: false,
+    scrollBeyondLastLine: false,
+    wordWrap: 'on',
+    tabSize: 2,
+    insertSpaces: true,
+    glyphMargin: false,
+    folding: true,
+    padding: { top: 16, bottom: 16 },
+  });
+
+  return state.rawEditor;
+};
+
 // ============================================
 // 主题管理
 // ============================================
@@ -85,6 +130,7 @@ const applyTheme = (mode: 'auto' | 'dark' | 'light') => {
   
   root.classList.toggle('dark', useDark);
   root.classList.toggle('light', mode === 'light');
+  monaco.editor.setTheme(useDark ? 'vs-dark' : 'vs');
 };
 
 // ============================================
@@ -249,7 +295,7 @@ const updateCronButton = () => {
     once: '执行一次',
     cron: '启动 cron',
     cronAft: '启动 cronAft',
-    clean: '切到命令生成器',
+    clean: '执行清理',
   };
   runBtn.textContent = labels[state.selectedRunMode];
 };
@@ -292,6 +338,29 @@ const initMainTabs = () => {
       panels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.tabPanel !== tabName));
     });
   });
+};
+
+const updateConfigSubTabUI = () => {
+  document.querySelectorAll<HTMLElement>('.config-sub-tab').forEach((tab) => {
+    tab.classList.toggle('active', tab.dataset.configTab === state.selectedConfigTab);
+  });
+  document.querySelectorAll<HTMLElement>('.config-sub-panel').forEach((panel) => {
+    panel.classList.toggle('hidden', panel.dataset.configPanel !== state.selectedConfigTab);
+  });
+  if (state.selectedConfigTab === 'raw') {
+    openRawEditor();
+    requestAnimationFrame(() => state.rawEditor?.layout());
+  }
+};
+
+const initConfigSubTabs = () => {
+  document.querySelectorAll<HTMLElement>('.config-sub-tab').forEach((tab) => {
+    tab.addEventListener('click', () => {
+      state.selectedConfigTab = (tab.dataset.configTab as 'visual' | 'raw') || 'visual';
+      updateConfigSubTabUI();
+    });
+  });
+  updateConfigSubTabUI();
 };
 
 const initRunModeSelection = () => {
@@ -398,23 +467,24 @@ const initQuickActions = () => {
 // 配置 Modal
 // ============================================
 const initConfigModal = () => {
-  // 打开配置
-  document.getElementById('btnOpenConfig')?.addEventListener('click', () => {
-    openModal('configModal');
+  document.getElementById('btnOpenBasicConfig')?.addEventListener('click', () => {
+    openModal('basicConfigModal');
     bindConfigFields();
   });
-  
-  // 关闭配置
-  document.getElementById('btnCloseConfig')?.addEventListener('click', () => {
-    closeModal('configModal');
+
+  document.getElementById('btnCloseBasicConfig')?.addEventListener('click', () => {
+    closeModal('basicConfigModal');
   });
-  
-  document.getElementById('configModalBackdrop')?.addEventListener('click', () => {
-    closeModal('configModal');
+
+  document.getElementById('basicConfigBackdrop')?.addEventListener('click', () => {
+    closeModal('basicConfigModal');
   });
-  
-  // 远程配置
+
   document.getElementById('btnLoadRemote')?.addEventListener('click', loadRemoteConfig);
+  document.getElementById('btnSaveRawEditor')?.addEventListener('click', saveRawEditor);
+  document.getElementById('btnCloseRuleEditor')?.addEventListener('click', () => closeModal('ruleEditorModal'));
+  document.getElementById('btnCancelRuleEditor')?.addEventListener('click', () => closeModal('ruleEditorModal'));
+  document.getElementById('ruleEditorBackdrop')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('btnResetRemote')?.addEventListener('click', () => {
     const def = 'https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config.yml';
     const input = document.getElementById('remoteUrl') as HTMLInputElement;
@@ -423,30 +493,33 @@ const initConfigModal = () => {
     showToast('已恢复默认地址');
   });
   
-  // 保存配置
   document.getElementById('btnSaveNoComments')?.addEventListener('click', () => saveConfig(false));
   document.getElementById('btnSaveWithComments')?.addEventListener('click', () => saveConfig(true));
-  
-  // 添加规则项
+
   document.getElementById('addCustomIsp')?.addEventListener('click', () => {
     state.cfg.customIsp.push({ tag: '', url: '' });
     renderCustomIspList();
+    openRuleEditor('customIsp', state.cfg.customIsp.length - 1, false);
   });
   document.getElementById('addIpGroup')?.addEventListener('click', () => {
     state.cfg.ipGroup.push({ tag: '', url: '' });
     renderIpGroupList();
+    openRuleEditor('ipGroup', state.cfg.ipGroup.length - 1, false);
   });
   document.getElementById('addIpv6Group')?.addEventListener('click', () => {
     state.cfg.ipv6Group.push({ tag: '', url: '' });
     renderIpv6GroupList();
+    openRuleEditor('ipv6Group', state.cfg.ipv6Group.length - 1, false);
   });
   document.getElementById('addStreamDomain')?.addEventListener('click', () => {
-    state.cfg.streamDomain.push({ interface: '', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' });
+    state.cfg.streamDomain.push({ interface: 'wan1', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' });
     renderStreamDomainList();
+    openRuleEditor('streamDomain', state.cfg.streamDomain.length - 1, false);
   });
   document.getElementById('addStreamIpPort')?.addEventListener('click', () => {
-    state.cfg.streamIpPort.push({ optTagName: '', type: '0', interface: '', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', ipGroup: '', mode: '0', ifaceband: '0' });
+    state.cfg.streamIpPort.push({ optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', ipGroup: '', mode: '0', ifaceband: '0' });
     renderStreamIpPortList();
+    openRuleEditor('streamIpPort', state.cfg.streamIpPort.length - 1, false);
   });
 };
 
@@ -577,38 +650,347 @@ const loadRemoteConfig = async () => {
 // ============================================
 // 列表渲染
 // ============================================
-const createRuleItem = (fields: Array<{ key: string; placeholder: string; width?: string }>, 
-                        data: any, 
-                        onChange: (key: string, value: string) => void,
-                        onDelete: () => void) => {
+type RuleField = {
+  key: string;
+  label: string;
+  placeholder?: string;
+  fullRow?: boolean;
+  type?: 'text' | 'select' | 'toggle';
+  options?: Array<{ value: string; label: string }>;
+};
+
+type RuleListKey = 'customIsp' | 'ipGroup' | 'ipv6Group' | 'streamDomain' | 'streamIpPort';
+
+const RULE_LIST_META: Record<RuleListKey, {
+  title: string;
+  columns: Array<{ label: string; key: string; empty?: string }>;
+  fields: RuleField[];
+}> = {
+  customIsp: {
+    title: '自定义运营商',
+    columns: [
+      { label: '标签', key: 'tag', empty: '--' },
+      { label: '订阅地址', key: 'url', empty: '--' },
+    ],
+    fields: [
+      { key: 'tag', label: '标签', placeholder: '例如：telegram' },
+      { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+    ],
+  },
+  ipGroup: {
+    title: 'IPv4 分组',
+    columns: [
+      { label: '标签', key: 'tag', empty: '--' },
+      { label: '订阅地址', key: 'url', empty: '--' },
+    ],
+    fields: [
+      { key: 'tag', label: '标签', placeholder: '例如：国内' },
+      { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+    ],
+  },
+  ipv6Group: {
+    title: 'IPv6 分组',
+    columns: [
+      { label: '标签', key: 'tag', empty: '--' },
+      { label: '订阅地址', key: 'url', empty: '--' },
+    ],
+    fields: [
+      { key: 'tag', label: '标签', placeholder: '例如：国内v6' },
+      { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+    ],
+  },
+  streamDomain: {
+    title: '域名分流',
+    columns: [
+      { label: '标签', key: 'tag', empty: '--' },
+      { label: '接口', key: 'interface', empty: '--' },
+      { label: '源地址 / 分组', key: 'sourceSummary', empty: '--' },
+      { label: '域名列表地址', key: 'url', empty: '--' },
+    ],
+    fields: [
+      { key: 'tag', label: '标签', placeholder: '例如：gfw' },
+      { key: 'interface', label: '出站接口', placeholder: '例如：wan2' },
+      { key: 'srcAddr', label: '源地址', placeholder: '可选，支持单 IP 或范围' },
+      { key: 'srcAddrOptIpGroup', label: '源地址 IP 分组', placeholder: '可选，填写已存在分组名' },
+      { key: 'url', label: '域名列表地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+    ],
+  },
+  streamIpPort: {
+    title: 'IP / 端口分流',
+    columns: [
+      { label: '名称', key: 'optTagName', empty: '--' },
+      { label: '类型', key: 'typeSummary', empty: '--' },
+      { label: '目标', key: 'targetSummary', empty: '--' },
+      { label: '源地址 / 分组', key: 'sourceSummary', empty: '--' },
+    ],
+    fields: [
+      { key: 'optTagName', label: '规则名称', placeholder: '可选，用于识别这条规则' },
+      {
+        key: 'type',
+        label: '分流类型',
+        type: 'select',
+        options: [
+          { value: '0', label: '0 - 外网线路' },
+          { value: '1', label: '1 - 下一跳网关' },
+        ],
+      },
+      { key: 'interface', label: '接口', placeholder: 'type=0 时填写，例如：wan1' },
+      { key: 'nexthop', label: '下一跳', placeholder: 'type=1 时填写，例如：192.168.1.2' },
+      { key: 'ipGroup', label: '关联 IP 分组', placeholder: '例如：国内流量' },
+      { key: 'srcAddr', label: '源地址', placeholder: '可选，支持单 IP 或范围' },
+      { key: 'srcAddrOptIpGroup', label: '源地址 IP 分组', placeholder: '可选，填写已存在分组名' },
+      {
+        key: 'mode',
+        label: '负载模式',
+        type: 'select',
+        fullRow: true,
+        options: [
+          { value: '0', label: '0 - 新建连接数' },
+          { value: '1', label: '1 - 源IP' },
+          { value: '2', label: '2 - 源IP+源端口' },
+          { value: '3', label: '3 - 源IP+目的IP' },
+          { value: '4', label: '4 - 源IP+目的IP+目的端口' },
+          { value: '5', label: '5 - 主备模式' },
+        ],
+      },
+      { key: 'ifaceband', label: '线路绑定', type: 'toggle', fullRow: true },
+    ],
+  },
+};
+
+const createEmptyState = (text: string) => {
   const div = document.createElement('div');
-  div.className = 'rule-item space-y-2';
-  
-  const grid = document.createElement('div');
-  grid.className = 'grid gap-2';
-  grid.style.gridTemplateColumns = fields.map(f => f.width || '1fr').join(' ');
-  
-  fields.forEach(field => {
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = field.placeholder;
-    input.value = data[field.key] || '';
-    input.className = 'bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-primary-500 dark:focus:border-primary-400 outline-none py-1 text-sm text-gray-900 dark:text-white transition-colors';
-    input.addEventListener('input', (e) => {
-      onChange(field.key, (e.target as HTMLInputElement).value);
-    });
-    grid.appendChild(input);
-  });
-  
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'text-xs text-red-500 hover:text-red-600 font-medium mt-1';
-  deleteBtn.textContent = '删除';
-  deleteBtn.addEventListener('click', onDelete);
-  
-  div.appendChild(grid);
-  div.appendChild(deleteBtn);
-  
+  div.className = 'rounded-2xl border border-dashed border-gray-200 bg-white/50 px-4 py-6 text-center text-sm text-gray-400 dark:border-gray-700 dark:bg-gray-900/20 dark:text-gray-500';
+  div.textContent = text;
   return div;
+};
+
+const getRuleList = (listKey: RuleListKey) => state.cfg[listKey] as any[];
+
+const getRuleValue = (item: any, key: string) => {
+  if (key === 'sourceSummary') {
+    return item.srcAddrOptIpGroup || item.srcAddr || '--';
+  }
+  if (key === 'typeSummary') {
+    return item.type === '1' ? '下一跳网关' : '外网线路';
+  }
+  if (key === 'targetSummary') {
+    return item.type === '1' ? (item.nexthop || '--') : (item.interface || '--');
+  }
+  return item[key];
+};
+
+const rerenderRuleList = (listKey: RuleListKey) => {
+  const renderers: Record<RuleListKey, () => void> = {
+    customIsp: renderCustomIspList,
+    ipGroup: renderIpGroupList,
+    ipv6Group: renderIpv6GroupList,
+    streamDomain: renderStreamDomainList,
+    streamIpPort: renderStreamIpPortList,
+  };
+  renderers[listKey]();
+};
+
+const createRuleTable = (listKey: RuleListKey) => {
+  const meta = RULE_LIST_META[listKey];
+  const list = getRuleList(listKey);
+  if (list.length === 0) {
+    return createEmptyState(`暂无${meta.title}数据`);
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'rule-table';
+  const gridTemplate = `repeat(${meta.columns.length}, minmax(120px, 1fr)) 170px`;
+
+  const head = document.createElement('div');
+  head.className = 'rule-table-head';
+  head.style.gridTemplateColumns = gridTemplate;
+  meta.columns.forEach((column) => {
+    const cell = document.createElement('div');
+    cell.textContent = column.label;
+    head.appendChild(cell);
+  });
+  const actionHead = document.createElement('div');
+  actionHead.textContent = '操作';
+  head.appendChild(actionHead);
+  wrap.appendChild(head);
+
+  list.forEach((item, index) => {
+    const row = document.createElement('div');
+    row.className = 'rule-table-row';
+    row.style.gridTemplateColumns = gridTemplate;
+
+    meta.columns.forEach((column) => {
+      const cell = document.createElement('div');
+      cell.className = 'rule-table-cell';
+      cell.textContent = String(getRuleValue(item, column.key) || column.empty || '--');
+      row.appendChild(cell);
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'rule-table-actions';
+
+    const viewBtn = document.createElement('button');
+    viewBtn.type = 'button';
+    viewBtn.className = 'rule-inline-btn';
+    viewBtn.textContent = '查看';
+    viewBtn.addEventListener('click', () => openRuleEditor(listKey, index, true));
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'rule-inline-btn rule-inline-btn-primary';
+    editBtn.textContent = '修改';
+    editBtn.addEventListener('click', () => openRuleEditor(listKey, index, false));
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'rule-inline-btn rule-inline-btn-danger';
+    deleteBtn.textContent = '删除';
+    deleteBtn.addEventListener('click', () => {
+      list.splice(index, 1);
+      rerenderRuleList(listKey);
+      showToast('规则已删除');
+    });
+
+    actions.appendChild(viewBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+    row.appendChild(actions);
+    wrap.appendChild(row);
+  });
+
+  return wrap;
+};
+
+const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) => {
+  const list = getRuleList(listKey);
+  const item = list[index];
+  if (!item) return;
+
+  state.ruleEditor = { listKey, index };
+  const meta = RULE_LIST_META[listKey];
+
+  const title = document.getElementById('ruleEditorTitle');
+  const subtitle = document.getElementById('ruleEditorSubtitle');
+  const form = document.getElementById('ruleEditorForm');
+  const saveBtn = document.getElementById('btnSaveRuleEditor') as HTMLButtonElement | null;
+  const delBtn = document.getElementById('btnDeleteRuleFromModal') as HTMLButtonElement | null;
+
+  if (!form) return;
+  if (title) title.textContent = `${readonly ? '查看' : '编辑'}${meta.title}`;
+  if (subtitle) subtitle.textContent = readonly ? '当前规则的只读视图。' : '修改后会直接写回当前页面状态。';
+  if (saveBtn) saveBtn.classList.toggle('hidden', readonly);
+  if (delBtn) delBtn.classList.toggle('hidden', readonly);
+
+  const draft = structuredClone(item);
+  form.innerHTML = '';
+
+  meta.fields.forEach((field) => {
+    const fieldWrap = document.createElement('label');
+    fieldWrap.className = field.fullRow ? 'rule-field md:col-span-2' : 'rule-field';
+
+    const label = document.createElement('span');
+    label.className = 'rule-label';
+    label.textContent = field.label;
+    fieldWrap.appendChild(label);
+
+    if (field.type === 'select') {
+      const select = document.createElement('select');
+      select.className = 'rule-input';
+      select.disabled = readonly;
+      (field.options || []).forEach((option) => {
+        const opt = document.createElement('option');
+        opt.value = option.value;
+        opt.textContent = option.label;
+        select.appendChild(opt);
+      });
+      select.value = draft[field.key] || '';
+      select.addEventListener('change', (e) => {
+        draft[field.key] = (e.target as HTMLSelectElement).value;
+      });
+      fieldWrap.appendChild(select);
+    } else if (field.type === 'toggle') {
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/60';
+      const text = document.createElement('span');
+      text.className = 'text-sm text-gray-700 dark:text-gray-300';
+      text.textContent = draft[field.key] === '1' ? '已开启' : '已关闭';
+      const toggle = document.createElement('label');
+      toggle.className = 'toggle-switch';
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.disabled = readonly;
+      input.checked = draft[field.key] === '1';
+      input.addEventListener('change', (e) => {
+        const checked = (e.target as HTMLInputElement).checked;
+        draft[field.key] = checked ? '1' : '0';
+        text.textContent = checked ? '已开启' : '已关闭';
+      });
+      const slider = document.createElement('span');
+      slider.className = 'toggle-slider';
+      toggle.appendChild(input);
+      toggle.appendChild(slider);
+      row.appendChild(text);
+      row.appendChild(toggle);
+      fieldWrap.appendChild(row);
+    } else {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'rule-input';
+      input.placeholder = field.placeholder || '';
+      input.value = draft[field.key] || '';
+      input.readOnly = readonly;
+      input.addEventListener('input', (e) => {
+        draft[field.key] = (e.target as HTMLInputElement).value;
+      });
+      fieldWrap.appendChild(input);
+    }
+
+    form.appendChild(fieldWrap);
+  });
+
+  saveBtn!.onclick = () => {
+    list[index] = draft;
+    rerenderRuleList(listKey);
+    closeModal('ruleEditorModal');
+    showToast('规则已更新');
+  };
+
+  delBtn!.onclick = () => {
+    list.splice(index, 1);
+    rerenderRuleList(listKey);
+    closeModal('ruleEditorModal');
+    showToast('规则已删除');
+  };
+
+  openModal('ruleEditorModal');
+};
+
+const openRawEditor = () => {
+  const editor = ensureRawEditor();
+  const payload = toBackendPayload(state.cfg);
+  if (editor) {
+    editor.setValue(yamlDumpWithComments(payload, state.comments));
+    requestAnimationFrame(() => editor.layout());
+  }
+  const hint = document.getElementById('rawEditorHint');
+  if (hint) hint.textContent = '保存时会校验 YAML 结构。';
+};
+
+const saveRawEditor = async () => {
+  const editor = ensureRawEditor();
+  const hint = document.getElementById('rawEditorHint');
+  const text = editor?.getValue() || '';
+  try {
+    const doc = yamlParse(text) || {};
+    await bridge.saveConfig(doc, false);
+    if (hint) hint.textContent = '保存成功';
+    await loadBackend();
+    showToast('文本配置已保存');
+  } catch (e: any) {
+    if (hint) hint.textContent = `保存失败: ${e.message || '未知错误'}`;
+    showToast('YAML 保存失败');
+  }
 };
 
 const renderCustomIspList = () => {
@@ -617,19 +999,10 @@ const renderCustomIspList = () => {
   
   container.innerHTML = '';
   if (state.cfg.customIsp.length === 0) {
-    container.innerHTML = '<div class="text-sm text-gray-400 italic py-2">暂无规则</div>';
+    container.appendChild(createEmptyState('暂无自定义运营商规则'));
     return;
   }
-  
-  state.cfg.customIsp.forEach((item, index) => {
-    const el = createRuleItem(
-      [{ key: 'tag', placeholder: '标签', width: '1fr' }, { key: 'url', placeholder: 'URL', width: '2fr' }],
-      item,
-      (key, value) => { (item as any)[key] = value; },
-      () => { state.cfg.customIsp.splice(index, 1); renderCustomIspList(); }
-    );
-    container.appendChild(el);
-  });
+  container.appendChild(createRuleTable('customIsp'));
 };
 
 const renderIpGroupList = () => {
@@ -638,19 +1011,11 @@ const renderIpGroupList = () => {
   
   container.innerHTML = '';
   if (state.cfg.ipGroup.length === 0) {
-    container.innerHTML = '<div class="text-sm text-gray-400 italic py-2">暂无规则</div>';
+    container.appendChild(createEmptyState('暂无 IPv4 分组规则'));
     return;
   }
   
-  state.cfg.ipGroup.forEach((item, index) => {
-    const el = createRuleItem(
-      [{ key: 'tag', placeholder: '标签', width: '1fr' }, { key: 'url', placeholder: 'URL', width: '2fr' }],
-      item,
-      (key, value) => { (item as any)[key] = value; },
-      () => { state.cfg.ipGroup.splice(index, 1); renderIpGroupList(); }
-    );
-    container.appendChild(el);
-  });
+  container.appendChild(createRuleTable('ipGroup'));
 };
 
 const renderIpv6GroupList = () => {
@@ -659,19 +1024,11 @@ const renderIpv6GroupList = () => {
   
   container.innerHTML = '';
   if (state.cfg.ipv6Group.length === 0) {
-    container.innerHTML = '<div class="text-sm text-gray-400 italic py-2">暂无规则</div>';
+    container.appendChild(createEmptyState('暂无 IPv6 分组规则'));
     return;
   }
   
-  state.cfg.ipv6Group.forEach((item, index) => {
-    const el = createRuleItem(
-      [{ key: 'tag', placeholder: '标签', width: '1fr' }, { key: 'url', placeholder: 'URL', width: '2fr' }],
-      item,
-      (key, value) => { (item as any)[key] = value; },
-      () => { state.cfg.ipv6Group.splice(index, 1); renderIpv6GroupList(); }
-    );
-    container.appendChild(el);
-  });
+  container.appendChild(createRuleTable('ipv6Group'));
 };
 
 const renderStreamDomainList = () => {
@@ -680,23 +1037,11 @@ const renderStreamDomainList = () => {
   
   container.innerHTML = '';
   if (state.cfg.streamDomain.length === 0) {
-    container.innerHTML = '<div class="text-sm text-gray-400 italic py-2">暂无规则</div>';
+    container.appendChild(createEmptyState('暂无域名分流规则'));
     return;
   }
   
-  state.cfg.streamDomain.forEach((item, index) => {
-    const el = createRuleItem(
-      [
-        { key: 'tag', placeholder: '标签', width: '1fr' },
-        { key: 'interface', placeholder: '接口', width: '1fr' },
-        { key: 'url', placeholder: 'URL', width: '2fr' }
-      ],
-      item,
-      (key, value) => { (item as any)[key] = value; },
-      () => { state.cfg.streamDomain.splice(index, 1); renderStreamDomainList(); }
-    );
-    container.appendChild(el);
-  });
+  container.appendChild(createRuleTable('streamDomain'));
 };
 
 const renderStreamIpPortList = () => {
@@ -705,24 +1050,11 @@ const renderStreamIpPortList = () => {
   
   container.innerHTML = '';
   if (state.cfg.streamIpPort.length === 0) {
-    container.innerHTML = '<div class="text-sm text-gray-400 italic py-2">暂无规则</div>';
+    container.appendChild(createEmptyState('暂无 IP/端口分流规则'));
     return;
   }
   
-  state.cfg.streamIpPort.forEach((item, index) => {
-    const el = createRuleItem(
-      [
-        { key: 'optTagName', placeholder: '标签名', width: '1fr' },
-        { key: 'type', placeholder: '类型', width: '80px' },
-        { key: 'interface', placeholder: '接口', width: '1fr' },
-        { key: 'nexthop', placeholder: '下一跳', width: '1fr' }
-      ],
-      item,
-      (key, value) => { (item as any)[key] = value; },
-      () => { state.cfg.streamIpPort.splice(index, 1); renderStreamIpPortList(); }
-    );
-    container.appendChild(el);
-  });
+  container.appendChild(createRuleTable('streamIpPort'));
 };
 
 // ============================================
@@ -963,6 +1295,7 @@ const init = async () => {
   // 初始化主题
   initTheme();
   initMainTabs();
+  initConfigSubTabs();
   initRunModeSelection();
   
   // 初始化模块选择

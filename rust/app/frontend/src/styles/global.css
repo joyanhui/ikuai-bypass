@@ -92,7 +92,8 @@ svg.w-12 { width: 3rem; height: 3rem; }
 }
 
 .main-tab,
-.run-mode-chip {
+.run-mode-chip,
+.config-sub-tab {
   padding: 12px 10px;
   border-radius: 14px;
   background: transparent;
@@ -103,12 +104,14 @@ svg.w-12 { width: 3rem; height: 3rem; }
 }
 
 .dark .main-tab,
-.dark .run-mode-chip {
+.dark .run-mode-chip,
+.dark .config-sub-tab {
   color: rgb(156, 163, 175);
 }
 
 .main-tab.active,
-.run-mode-chip.active {
+.run-mode-chip.active,
+.config-sub-tab.active {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.15));
   color: rgb(37, 99, 235);
   border-color: rgba(59, 130, 246, 0.3);
@@ -116,7 +119,8 @@ svg.w-12 { width: 3rem; height: 3rem; }
 }
 
 .dark .main-tab.active,
-.dark .run-mode-chip.active {
+.dark .run-mode-chip.active,
+.dark .config-sub-tab.active {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(6, 182, 212, 0.25));
   color: rgb(96, 165, 250);
   border-color: rgba(59, 130, 246, 0.4);
@@ -231,14 +235,207 @@ svg.w-12 { width: 3rem; height: 3rem; }
 .log-error { color: rgb(239, 68, 68); }
 
 .rule-item {
-  background: rgba(243, 244, 246, 0.8);
-  border-radius: 12px;
-  padding: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.82));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 20px;
+  padding: 18px;
   transition: all 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .dark .rule-item {
-  background: rgba(55, 65, 81, 0.6);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.62), rgba(30, 41, 59, 0.52));
+  border-color: rgba(148, 163, 184, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.rule-table {
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.dark .rule-table {
+  border-color: rgba(71, 85, 105, 0.55);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.rule-table-head,
+.rule-table-row {
+  display: grid;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(92px, 0.8fr) minmax(120px, 1fr) minmax(160px, 1.4fr) 170px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+}
+
+.rule-table-head {
+  background: rgba(248, 250, 252, 0.92);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(100, 116, 139);
+}
+
+.dark .rule-table-head {
+  background: rgba(2, 6, 23, 0.78);
+  color: rgb(148, 163, 184);
+}
+
+.rule-table-row {
+  border-top: 1px solid rgba(226, 232, 240, 0.82);
+}
+
+.dark .rule-table-row {
+  border-top-color: rgba(51, 65, 85, 0.8);
+}
+
+.rule-table-cell {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: rgb(31, 41, 55);
+}
+
+.dark .rule-table-cell {
+  color: rgb(226, 232, 240);
+}
+
+.rule-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.rule-inline-btn {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: rgb(71, 85, 105);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.dark .rule-inline-btn {
+  background: rgba(71, 85, 105, 0.28);
+  color: rgb(203, 213, 225);
+}
+
+.rule-inline-btn:hover {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.rule-inline-btn-primary {
+  background: rgba(37, 99, 235, 0.12);
+  color: rgb(37, 99, 235);
+}
+
+.dark .rule-inline-btn-primary {
+  background: rgba(37, 99, 235, 0.22);
+  color: rgb(147, 197, 253);
+}
+
+.rule-inline-btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: rgb(220, 38, 38);
+}
+
+.dark .rule-inline-btn-danger {
+  background: rgba(239, 68, 68, 0.18);
+  color: rgb(252, 165, 165);
+}
+
+@media (max-width: 1100px) {
+  .rule-table {
+    overflow-x: auto;
+  }
+
+  .rule-table-head,
+  .rule-table-row {
+    min-width: 780px;
+  }
+}
+
+.rule-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .rule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rule-field {
+  display: block;
+}
+
+.rule-label {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(107, 114, 128);
+}
+
+.dark .rule-label {
+  color: rgb(148, 163, 184);
+}
+
+.rule-input {
+  width: 100%;
+  min-width: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(203, 213, 225, 0.9);
+  background: rgba(255, 255, 255, 0.88);
+  padding: 12px 14px;
+  font-size: 14px;
+  color: rgb(17, 24, 39);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.rule-input:focus {
+  border-color: rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.rule-input::placeholder {
+  color: rgb(156, 163, 175);
+}
+
+.dark .rule-input {
+  border-color: rgba(71, 85, 105, 0.95);
+  background: rgba(15, 23, 42, 0.8);
+  color: rgb(241, 245, 249);
+}
+
+.rule-delete-btn {
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.1);
+  color: rgb(239, 68, 68);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.rule-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.16);
+}
+
+.rule-delete-btn:active {
+  transform: scale(0.98);
 }
 
 @keyframes slideUp {
@@ -266,12 +463,16 @@ svg.w-12 { width: 3rem; height: 3rem; }
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
-.modal-open #configModalBackdrop,
+.modal-open #basicConfigBackdrop,
+.modal-open #ruleEditorBackdrop,
+.modal-open #rawEditorBackdrop,
 .modal-open #cmdModalBackdrop {
   opacity: 1;
 }
 
-.modal-open #configModalContent,
+.modal-open #basicConfigContent,
+.modal-open #ruleEditorContent,
+.modal-open #rawEditorContent,
 .modal-open #cmdModalContent {
   transform: translateY(0);
 }
@@ -292,13 +493,22 @@ svg.w-12 { width: 3rem; height: 3rem; }
 }
 
 select {
+  background-color: rgba(255, 255, 255, 0.88);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 0.75rem center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
+  color-scheme: light;
 }
 
 .dark select {
+  background-color: rgba(15, 23, 42, 0.88);
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  color-scheme: dark;
+}
+
+.dark select option {
+  background-color: rgb(15, 23, 42);
+  color: rgb(241, 245, 249);
 }

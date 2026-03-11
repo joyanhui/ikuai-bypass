@@ -16,3 +16,4 @@
 GEMINI.md
 *.bak
 rust/target/
+.bun-install/

@@ -156,13 +156,10 @@ import appUrl from '../scripts/app.ts?url';
               <div class="text-sm text-gray-500 dark:text-gray-400" id="saveHint"></div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="flex flex-col items-start gap-3">
-                <button id="btnOpenBasicConfig" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">基本配置</button>
-                <div class="glass-card rounded-2xl p-1">
-                  <div class="grid grid-cols-2 gap-1" id="configSubTabGrid">
-                    <button class="config-sub-tab active" data-config-tab="visual">可视化编辑</button>
-                    <button class="config-sub-tab" data-config-tab="raw">文本编辑</button>
-                  </div>
+              <div class="glass-card rounded-2xl p-1">
+                <div class="grid grid-cols-2 gap-1" id="configSubTabGrid">
+                  <button class="config-sub-tab active" data-config-tab="visual">可视化编辑</button>
+                  <button class="config-sub-tab" data-config-tab="raw">文本编辑</button>
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-2">
@@ -174,6 +171,15 @@ import appUrl from '../scripts/app.ts?url';
 
           <div class="config-sub-panel" data-config-panel="visual">
             <div class="grid gap-6 xl:grid-cols-2">
+              <div class="glass-card rounded-3xl p-6 xl:col-span-2">
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">基本配置</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">爱快连接、代理、WebUI、分页参数</p>
+                  </div>
+                  <button id="btnOpenBasicConfig" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">打开</button>
+                </div>
+              </div>
               <div class="glass-card rounded-3xl p-6">
                 <div class="mb-4 flex items-center justify-between">
                   <h3 class="text-base font-semibold text-gray-900 dark:text-white">ISP / IP 分组 / IPv6 分组</h3>
@@ -234,8 +240,7 @@ import appUrl from '../scripts/app.ts?url';
               </div>
               <div id="rawEditorContainer" class="min-h-[32rem] overflow-hidden rounded-3xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"></div>
               <div class="mt-4 flex items-center justify-between gap-3">
-                <div id="rawEditorHint" class="text-xs text-gray-500 dark:text-gray-400">保存时会校验 YAML 结构。</div>
-                <button id="btnSaveRawEditor" class="rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition hover:bg-primary-700">保存文本</button>
+                <div id="rawEditorHint" class="text-xs text-gray-500 dark:text-gray-400">切换回可视化编辑或点击顶部保存时会自动同步。</div>
               </div>
             </div>
           </div>

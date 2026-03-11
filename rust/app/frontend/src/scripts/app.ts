@@ -353,6 +353,27 @@ const initMainTabs = () => {
   });
 };
 
+const applyRawEditorToState = () => {
+  const editor = state.rawEditor;
+  const hint = document.getElementById('rawEditorHint');
+  if (!editor) return true;
+
+  try {
+    const doc = yamlParse(editor.getValue()) || {};
+    const parsed = fromBackendMeta(doc);
+    state.cfg = parsed.cfg;
+    state.comments = parsed.comments;
+    if (hint) hint.textContent = 'YAML 已同步到表单。';
+    bindConfigFields();
+    renderCmd();
+    return true;
+  } catch (e: any) {
+    if (hint) hint.textContent = `YAML 解析失败: ${e.message || '未知错误'}`;
+    showToast('请先修正 YAML');
+    return false;
+  }
+};
+
 const updateConfigSubTabUI = () => {
   document.querySelectorAll<HTMLElement>('.config-sub-tab').forEach((tab) => {
     tab.classList.toggle('active', tab.dataset.configTab === state.selectedConfigTab);
@@ -361,6 +382,7 @@ const updateConfigSubTabUI = () => {
     panel.classList.toggle('hidden', panel.dataset.configPanel !== state.selectedConfigTab);
   });
   if (state.selectedConfigTab === 'raw') {
+    syncConfigFromInputs();
     openRawEditor();
     requestAnimationFrame(() => state.rawEditor?.layout());
   }
@@ -369,7 +391,12 @@ const updateConfigSubTabUI = () => {
 const initConfigSubTabs = () => {
   document.querySelectorAll<HTMLElement>('.config-sub-tab').forEach((tab) => {
     tab.addEventListener('click', () => {
-      state.selectedConfigTab = (tab.dataset.configTab as 'visual' | 'raw') || 'visual';
+      const nextTab = (tab.dataset.configTab as 'visual' | 'raw') || 'visual';
+      if (nextTab === state.selectedConfigTab) return;
+      if (state.selectedConfigTab === 'raw' && nextTab === 'visual' && !applyRawEditorToState()) {
+        return;
+      }
+      state.selectedConfigTab = nextTab;
       updateConfigSubTabUI();
     });
   });
@@ -494,7 +521,6 @@ const initConfigModal = () => {
   });
 
   document.getElementById('btnLoadRemote')?.addEventListener('click', loadRemoteConfig);
-  document.getElementById('btnSaveRawEditor')?.addEventListener('click', saveRawEditor);
   document.getElementById('btnCloseRuleEditor')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('btnCancelRuleEditor')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('ruleEditorBackdrop')?.addEventListener('click', () => closeModal('ruleEditorModal'));
@@ -508,6 +534,42 @@ const initConfigModal = () => {
   
   document.getElementById('btnSaveNoComments')?.addEventListener('click', () => saveConfig(false));
   document.getElementById('btnSaveWithComments')?.addEventListener('click', () => saveConfig(true));
+
+  const liveSyncIds = [
+    'cfgIkuaiUrl',
+    'cfgUser',
+    'cfgPass',
+    'cfgGhProxy',
+    'cfgRetryWait',
+    'cfgAddWait',
+    'cfgCronInline',
+    'cfgWebPort',
+    'cfgWebCdn',
+    'cfgWebUser',
+    'cfgWebPass',
+    'cfgMaxIsp',
+    'cfgMaxIpv4',
+    'cfgMaxIpv6',
+    'cfgMaxDomain',
+  ];
+
+  liveSyncIds.forEach((id) => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      syncConfigFromInputs();
+      if (state.selectedConfigTab === 'raw') {
+        openRawEditor();
+      }
+    });
+  });
+
+  ['cfgWebEnable', 'cfgWebEnableUpdate'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('change', () => {
+      syncConfigFromInputs();
+      if (state.selectedConfigTab === 'raw') {
+        openRawEditor();
+      }
+    });
+  });
 
   document.getElementById('addCustomIsp')?.addEventListener('click', () => {
     state.cfg.customIsp.push({ tag: '', url: '' });
@@ -610,6 +672,9 @@ const syncConfigFromInputs = () => {
 
 const saveConfig = async (withComments: boolean) => {
   try {
+    if (state.selectedConfigTab === 'raw' && !applyRawEditorToState()) {
+      return;
+    }
     syncConfigFromInputs();
     const payload = toBackendPayload(state.cfg);
     await bridge.saveConfig(payload, withComments);
@@ -676,15 +741,10 @@ type RuleListKey = 'customIsp' | 'ipGroup' | 'ipv6Group' | 'streamDomain' | 'str
 
 const RULE_LIST_META: Record<RuleListKey, {
   title: string;
-  columns: Array<{ label: string; key: string; empty?: string }>;
   fields: RuleField[];
 }> = {
   customIsp: {
     title: '自定义运营商',
-    columns: [
-      { label: '标签', key: 'tag', empty: '--' },
-      { label: '订阅地址', key: 'url', empty: '--' },
-    ],
     fields: [
       { key: 'tag', label: '标签', placeholder: '例如：telegram' },
       { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
@@ -692,10 +752,6 @@ const RULE_LIST_META: Record<RuleListKey, {
   },
   ipGroup: {
     title: 'IPv4 分组',
-    columns: [
-      { label: '标签', key: 'tag', empty: '--' },
-      { label: '订阅地址', key: 'url', empty: '--' },
-    ],
     fields: [
       { key: 'tag', label: '标签', placeholder: '例如：国内' },
       { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
@@ -703,10 +759,6 @@ const RULE_LIST_META: Record<RuleListKey, {
   },
   ipv6Group: {
     title: 'IPv6 分组',
-    columns: [
-      { label: '标签', key: 'tag', empty: '--' },
-      { label: '订阅地址', key: 'url', empty: '--' },
-    ],
     fields: [
       { key: 'tag', label: '标签', placeholder: '例如：国内v6' },
       { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
@@ -714,12 +766,6 @@ const RULE_LIST_META: Record<RuleListKey, {
   },
   streamDomain: {
     title: '域名分流',
-    columns: [
-      { label: '标签', key: 'tag', empty: '--' },
-      { label: '接口', key: 'interface', empty: '--' },
-      { label: '源地址 / 分组', key: 'sourceSummary', empty: '--' },
-      { label: '域名列表地址', key: 'url', empty: '--' },
-    ],
     fields: [
       { key: 'tag', label: '标签', placeholder: '例如：gfw' },
       { key: 'interface', label: '出站接口', placeholder: '例如：wan2' },
@@ -730,12 +776,6 @@ const RULE_LIST_META: Record<RuleListKey, {
   },
   streamIpPort: {
     title: 'IP / 端口分流',
-    columns: [
-      { label: '名称', key: 'optTagName', empty: '--' },
-      { label: '类型', key: 'typeSummary', empty: '--' },
-      { label: '目标', key: 'targetSummary', empty: '--' },
-      { label: '源地址 / 分组', key: 'sourceSummary', empty: '--' },
-    ],
     fields: [
       { key: 'optTagName', label: '规则名称', placeholder: '可选，用于识别这条规则' },
       {
@@ -780,19 +820,6 @@ const createEmptyState = (text: string) => {
 
 const getRuleList = (listKey: RuleListKey) => state.cfg[listKey] as any[];
 
-const getRuleValue = (item: any, key: string) => {
-  if (key === 'sourceSummary') {
-    return item.srcAddrOptIpGroup || item.srcAddr || '--';
-  }
-  if (key === 'typeSummary') {
-    return item.type === '1' ? '下一跳网关' : '外网线路';
-  }
-  if (key === 'targetSummary') {
-    return item.type === '1' ? (item.nexthop || '--') : (item.interface || '--');
-  }
-  return item[key];
-};
-
 const rerenderRuleList = (listKey: RuleListKey) => {
   const renderers: Record<RuleListKey, () => void> = {
     customIsp: renderCustomIspList,
@@ -804,20 +831,65 @@ const rerenderRuleList = (listKey: RuleListKey) => {
   renderers[listKey]();
 };
 
-const getRuleGridTemplate = (listKey: RuleListKey) => {
+const getRulePrimaryText = (listKey: RuleListKey, item: any) => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
     case 'ipv6Group':
-      return 'minmax(120px, 0.55fr) minmax(320px, 2.45fr) 170px';
+      return item.tag || '--';
     case 'streamDomain':
-      return 'minmax(120px, 0.7fr) minmax(92px, 0.5fr) minmax(140px, 0.8fr) minmax(320px, 2fr) 170px';
+      return item.tag || '--';
     case 'streamIpPort':
-      return 'minmax(120px, 0.8fr) minmax(96px, 0.55fr) minmax(130px, 0.8fr) minmax(180px, 1.4fr) 170px';
+      return item.optTagName || '--';
   }
 };
 
-const createRuleTable = (listKey: RuleListKey) => {
+const getRuleSecondaryText = (listKey: RuleListKey, item: any) => {
+  switch (listKey) {
+    case 'customIsp':
+      return '自定义运营商';
+    case 'ipGroup':
+      return 'IPv4 分组';
+    case 'ipv6Group':
+      return 'IPv6 分组';
+    case 'streamDomain':
+      return `接口 ${item.interface || '--'}`;
+    case 'streamIpPort':
+      return item.type === '1' ? '下一跳网关' : '外网线路';
+  }
+};
+
+const getRuleMetaItems = (listKey: RuleListKey, item: any) => {
+  switch (listKey) {
+    case 'customIsp':
+    case 'ipGroup':
+    case 'ipv6Group':
+      return [];
+    case 'streamDomain':
+      return [
+        { label: '源地址/分组', value: item.srcAddrOptIpGroup || item.srcAddr || '--' },
+      ];
+    case 'streamIpPort':
+      return [
+        { label: '目标', value: item.type === '1' ? (item.nexthop || '--') : (item.interface || '--') },
+        { label: '源地址/分组', value: item.srcAddrOptIpGroup || item.srcAddr || '--' },
+      ];
+  }
+};
+
+const getRuleDetailText = (listKey: RuleListKey, item: any) => {
+  switch (listKey) {
+    case 'customIsp':
+    case 'ipGroup':
+    case 'ipv6Group':
+    case 'streamDomain':
+      return item.url || '--';
+    case 'streamIpPort':
+      return item.ipGroup || '--';
+  }
+};
+
+const createRuleList = (listKey: RuleListKey) => {
   const meta = RULE_LIST_META[listKey];
   const list = getRuleList(listKey);
   if (list.length === 0) {
@@ -825,36 +897,51 @@ const createRuleTable = (listKey: RuleListKey) => {
   }
 
   const wrap = document.createElement('div');
-  wrap.className = 'rule-table';
-  const gridTemplate = getRuleGridTemplate(listKey);
-
-  const head = document.createElement('div');
-  head.className = 'rule-table-head';
-  head.style.gridTemplateColumns = gridTemplate;
-  meta.columns.forEach((column) => {
-    const cell = document.createElement('div');
-    cell.textContent = column.label;
-    head.appendChild(cell);
-  });
-  const actionHead = document.createElement('div');
-  actionHead.textContent = '操作';
-  head.appendChild(actionHead);
-  wrap.appendChild(head);
+  wrap.className = 'rule-list';
 
   list.forEach((item, index) => {
     const row = document.createElement('div');
-    row.className = 'rule-table-row';
-    row.style.gridTemplateColumns = gridTemplate;
+    row.className = 'rule-list-item';
 
-    meta.columns.forEach((column) => {
-      const cell = document.createElement('div');
-      cell.className = 'rule-table-cell';
-      cell.textContent = String(getRuleValue(item, column.key) || column.empty || '--');
-      row.appendChild(cell);
+    const body = document.createElement('div');
+    body.className = 'rule-list-body';
+
+    const top = document.createElement('div');
+    top.className = 'rule-list-top';
+
+    const heading = document.createElement('div');
+    heading.className = 'min-w-0';
+
+    const title = document.createElement('div');
+    title.className = 'rule-list-title';
+    title.textContent = getRulePrimaryText(listKey, item);
+
+    const subtitle = document.createElement('div');
+    subtitle.className = 'rule-list-subtitle';
+    subtitle.textContent = getRuleSecondaryText(listKey, item);
+
+    heading.appendChild(title);
+    heading.appendChild(subtitle);
+    top.appendChild(heading);
+
+    const metaWrap = document.createElement('div');
+    metaWrap.className = 'rule-meta-wrap';
+    getRuleMetaItems(listKey, item).forEach((metaItem) => {
+      const chip = document.createElement('span');
+      chip.className = 'rule-meta-chip';
+      chip.textContent = `${metaItem.label}: ${metaItem.value}`;
+      metaWrap.appendChild(chip);
     });
+    if (metaWrap.childElementCount > 0) {
+      top.appendChild(metaWrap);
+    }
+
+    const detail = document.createElement('div');
+    detail.className = 'rule-list-detail';
+    detail.textContent = getRuleDetailText(listKey, item);
 
     const actions = document.createElement('div');
-    actions.className = 'rule-table-actions';
+    actions.className = 'rule-list-actions';
 
     const viewBtn = document.createElement('button');
     viewBtn.type = 'button';
@@ -881,6 +968,10 @@ const createRuleTable = (listKey: RuleListKey) => {
     actions.appendChild(viewBtn);
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
+
+    body.appendChild(top);
+    body.appendChild(detail);
+    row.appendChild(body);
     row.appendChild(actions);
     wrap.appendChild(row);
   });
@@ -1003,22 +1094,6 @@ const openRawEditor = () => {
   if (hint) hint.textContent = '保存时会校验 YAML 结构。';
 };
 
-const saveRawEditor = async () => {
-  const editor = ensureRawEditor();
-  const hint = document.getElementById('rawEditorHint');
-  const text = editor?.getValue() || '';
-  try {
-    const doc = yamlParse(text) || {};
-    await bridge.saveConfig(doc, false);
-    if (hint) hint.textContent = '保存成功';
-    await loadBackend();
-    showToast('文本配置已保存');
-  } catch (e: any) {
-    if (hint) hint.textContent = `保存失败: ${e.message || '未知错误'}`;
-    showToast('YAML 保存失败');
-  }
-};
-
 const renderCustomIspList = () => {
   const container = document.getElementById('listCustomIsp');
   if (!container) return;
@@ -1028,7 +1103,7 @@ const renderCustomIspList = () => {
     container.appendChild(createEmptyState('暂无自定义运营商规则'));
     return;
   }
-  container.appendChild(createRuleTable('customIsp'));
+  container.appendChild(createRuleList('customIsp'));
 };
 
 const renderIpGroupList = () => {
@@ -1041,7 +1116,7 @@ const renderIpGroupList = () => {
     return;
   }
   
-  container.appendChild(createRuleTable('ipGroup'));
+  container.appendChild(createRuleList('ipGroup'));
 };
 
 const renderIpv6GroupList = () => {
@@ -1054,7 +1129,7 @@ const renderIpv6GroupList = () => {
     return;
   }
   
-  container.appendChild(createRuleTable('ipv6Group'));
+  container.appendChild(createRuleList('ipv6Group'));
 };
 
 const renderStreamDomainList = () => {
@@ -1067,7 +1142,7 @@ const renderStreamDomainList = () => {
     return;
   }
   
-  container.appendChild(createRuleTable('streamDomain'));
+  container.appendChild(createRuleList('streamDomain'));
 };
 
 const renderStreamIpPortList = () => {
@@ -1080,7 +1155,7 @@ const renderStreamIpPortList = () => {
     return;
   }
   
-  container.appendChild(createRuleTable('streamIpPort'));
+  container.appendChild(createRuleList('streamIpPort'));
 };
 
 // ============================================

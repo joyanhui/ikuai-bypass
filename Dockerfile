@@ -18,7 +18,7 @@ COPY . .
 RUN set -eux; \
     if [ "${TARGETARCH}" = "arm" ]; then export GOARM="${TARGETVARIANT#v}"; fi; \
     CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
-    go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/ikuai-bypass ./
+    go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/ikuai-bypass ./apps/cli
 
 FROM alpine:latest
 

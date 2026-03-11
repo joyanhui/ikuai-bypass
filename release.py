@@ -10,57 +10,55 @@ parser.add_argument("-upx", action="store_true")
 parser.add_argument("-i", type=int)
 args = parser.parse_args()
 
-PROJECT_NAME = 'ikuai-bypass'
-RELEASE_DIR = './release'
+PROJECT_NAME = "ikuai-bypass"
+RELEASE_DIR = "./release"
 
 logger = logging.getLogger(__name__)
 
 # more info: https://golang.org/doc/install/source
 # [(env : value),(env : value)]
 envs = [
-    [['GOOS', 'darwin'], ['GOARCH', 'amd64']],
-    [['GOOS', 'darwin'], ['GOARCH', 'arm64']],
-
-    [['GOOS', 'linux'], ['GOARCH', '386']],
-    [['GOOS', 'linux'], ['GOARCH', 'amd64']],
-    [['GOOS', 'linux'], ['GOARCH', 'arm'], ['GOARM', '5']],
-    [['GOOS', 'linux'], ['GOARCH', 'arm'], ['GOARM', '6']],
-    [['GOOS', 'linux'], ['GOARCH', 'arm'], ['GOARM', '7']],
-    [['GOOS', 'linux'], ['GOARCH', 'arm64']],
-
+    [["GOOS", "darwin"], ["GOARCH", "amd64"]],
+    [["GOOS", "darwin"], ["GOARCH", "arm64"]],
+    [["GOOS", "linux"], ["GOARCH", "386"]],
+    [["GOOS", "linux"], ["GOARCH", "amd64"]],
+    [["GOOS", "linux"], ["GOARCH", "arm"], ["GOARM", "5"]],
+    [["GOOS", "linux"], ["GOARCH", "arm"], ["GOARM", "6"]],
+    [["GOOS", "linux"], ["GOARCH", "arm"], ["GOARM", "7"]],
+    [["GOOS", "linux"], ["GOARCH", "arm64"]],
     # [['GOOS', 'linux'], ['GOARCH', 'mips'], ['GOMIPS', 'hardfloat']],
-    [['GOOS', 'linux'], ['GOARCH', 'mips'], ['GOMIPS', 'softfloat']],
+    [["GOOS", "linux"], ["GOARCH", "mips"], ["GOMIPS", "softfloat"]],
     # [['GOOS', 'linux'], ['GOARCH', 'mipsle'], ['GOMIPS', 'hardfloat']],
-    [['GOOS', 'linux'], ['GOARCH', 'mipsle'], ['GOMIPS', 'softfloat']],
-
+    [["GOOS", "linux"], ["GOARCH", "mipsle"], ["GOMIPS", "softfloat"]],
     # [['GOOS', 'linux'], ['GOARCH', 'mips64'], ['GOMIPS64', 'hardfloat']],
-    [['GOOS', 'linux'], ['GOARCH', 'mips64'], ['GOMIPS64', 'softfloat']],
+    [["GOOS", "linux"], ["GOARCH", "mips64"], ["GOMIPS64", "softfloat"]],
     # [['GOOS', 'linux'], ['GOARCH', 'mips64le'], ['GOMIPS64', 'hardfloat']],
-    [['GOOS', 'linux'], ['GOARCH', 'mips64le'], ['GOMIPS64', 'softfloat']],
-
-    [['GOOS', 'linux'], ['GOARCH', 'ppc64le']],
-    [['GOOS', 'linux'], ['GOARCH', 'riscv64']],
-
-    [['GOOS', 'freebsd'], ['GOARCH', '386']],
-    [['GOOS', 'freebsd'], ['GOARCH', 'amd64']],
-
-    [['GOOS', 'windows'], ['GOARCH', '386']],
-    [['GOOS', 'windows'], ['GOARCH', 'amd64']],
+    [["GOOS", "linux"], ["GOARCH", "mips64le"], ["GOMIPS64", "softfloat"]],
+    [["GOOS", "linux"], ["GOARCH", "ppc64le"]],
+    [["GOOS", "linux"], ["GOARCH", "riscv64"]],
+    [["GOOS", "freebsd"], ["GOARCH", "386"]],
+    [["GOOS", "freebsd"], ["GOARCH", "amd64"]],
+    [["GOOS", "windows"], ["GOARCH", "386"]],
+    [["GOOS", "windows"], ["GOARCH", "amd64"]],
 ]
 
 
 def go_build():
-    logger.info(f'building {PROJECT_NAME}')
+    logger.info(f"building {PROJECT_NAME}")
 
     global envs
     if args.i:
         envs = [envs[args.i]]
 
-    version = 'dev/unknown'
+    version = "dev/unknown"
     try:
-        version = subprocess.check_output('git describe --tags --long --always', shell=True).decode().rstrip()
+        version = (
+            subprocess.check_output("git describe --tags --long --always", shell=True)
+            .decode()
+            .rstrip()
+        )
     except subprocess.CalledProcessError as e:
-        logger.error(f'get git tag failed: {e.args}')
+        logger.error(f"get git tag failed: {e.args}")
 
     # try:
     #    subprocess.check_call('go run ../ config gen config.yaml', shell=True, env=os.environ)
@@ -74,39 +72,49 @@ def go_build():
         s = PROJECT_NAME
         for pairs in env:
             os_env[pairs[0]] = pairs[1]  # add env
-            s = s + '-' + pairs[1]
-        zip_filename = s + '.zip'
+            s = s + "-" + pairs[1]
+        zip_filename = s + ".zip"
 
-        suffix = '.exe' if os_env['GOOS'] == 'windows' else ''
+        suffix = ".exe" if os_env["GOOS"] == "windows" else ""
         bin_filename = PROJECT_NAME + suffix
 
-        logger.info(f'building {zip_filename}')
+        logger.info(f"building {zip_filename}")
         try:
             subprocess.check_call(
-                f'go build -ldflags "-s -w -X main.version={version}" -trimpath -o {bin_filename} ../', shell=True,
-                env=os_env)
+                f'go build -ldflags "-s -w -X main.version={version}" -trimpath -o {bin_filename} ../apps/cli',
+                shell=True,
+                env=os_env,
+            )
 
             if args.upx:
                 try:
-                    subprocess.check_call(f'upx -9 -q {bin_filename}', shell=True, stderr=subprocess.DEVNULL,
-                                          stdout=subprocess.DEVNULL)
+                    subprocess.check_call(
+                        f"upx -9 -q {bin_filename}",
+                        shell=True,
+                        stderr=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                    )
                 except subprocess.CalledProcessError as e:
-                    logger.error(f'upx failed: {e.args}')
+                    logger.error(f"upx failed: {e.args}")
 
-            with zipfile.ZipFile(zip_filename, mode='w', compression=zipfile.ZIP_DEFLATED,
-                                 compresslevel=5) as zf:
+            with zipfile.ZipFile(
+                zip_filename,
+                mode="w",
+                compression=zipfile.ZIP_DEFLATED,
+                compresslevel=5,
+            ) as zf:
                 zf.write(bin_filename)
-                zf.write('../README.md', 'README.md')
-                zf.write('../config.yml', 'config.yml')
+                zf.write("../README.md", "README.md")
+                zf.write("../config.yml", "config.yml")
                 # zf.write('../LICENSE', 'LICENSE')
 
         except subprocess.CalledProcessError as e:
-            logger.error(f'build {zip_filename} failed: {e.args}')
+            logger.error(f"build {zip_filename} failed: {e.args}")
         except Exception as e:
-            logger.exception(f'unknown err: {e}')
+            logger.exception(f"unknown err: {e}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     if len(RELEASE_DIR) != 0:

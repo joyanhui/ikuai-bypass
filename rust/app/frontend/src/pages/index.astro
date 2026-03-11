@@ -1,875 +1,427 @@
 ---
+import '../styles/global.css';
 import appUrl from '../scripts/app.ts?url';
 ---
 
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>iKuai Bypass</title>
-    <script is:inline src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style type="text/tailwindcss">
-      @theme {
-        --color-primary-50: var(--color-blue-50);
-        --color-primary-500: var(--color-blue-500);
-        --color-primary-600: var(--color-blue-600);
-        --color-primary-700: var(--color-blue-700);
-      }
-      @custom-variant dark (&:where(.dark, .dark *));
-      [x-cloak] { display: none !important; }
-    </style>
   </head>
-  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 min-h-screen font-sans">
-    <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-300 shadow-sm">
-      <div class="max-w-[1400px] mx-auto px-4 py-4">
-        <div class="flex flex-wrap justify-between items-center gap-3">
-          <div class="flex flex-col">
-            <b class="text-lg font-semibold tracking-tight">iKuai Bypass</b>
-            <span class="text-xs text-gray-500 dark:text-gray-400" id="subtitle">WebUI</span>
-          </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" id="envBadge">env=web</span>
-            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" id="confBadge">conf=</span>
-            <span class="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300" id="themeBadge">theme=auto</span>
-            <button id="themeLight" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 transition-all">浅色</button>
-            <button id="themeDark" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 transition-all">深色</button>
-            <button id="themeAuto" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 transition-all">自动</button>
-          </div>
-        </div>
+  <body class="bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900 transition-colors duration-500 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 dark:text-gray-100">
+    <div class="pointer-events-none fixed inset-0 overflow-hidden">
+      <div class="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-primary-400/20 to-accent-cyan/20 blur-3xl dark:from-primary-600/10 dark:to-accent-cyan/10"></div>
+      <div class="absolute top-1/2 -left-20 h-60 w-60 rounded-full bg-gradient-to-br from-accent-purple/20 to-accent-rose/20 blur-3xl dark:from-accent-purple/10 dark:to-accent-rose/10"></div>
+      <div class="absolute right-1/4 -bottom-20 h-72 w-72 rounded-full bg-gradient-to-br from-accent-emerald/20 to-accent-cyan/20 blur-3xl dark:from-accent-emerald/10 dark:to-accent-cyan/10"></div>
+    </div>
 
-        <!-- Tabs -->
-        <div class="flex gap-2 mt-3.5 overflow-x-auto -webkit-overflow-scrolling-touch" id="tabs">
-          <button class="tab-btn" data-tab="help">使用说明</button>
-          <button class="tab-btn" data-tab="config">配置助手</button>
-          <button class="tab-btn" data-tab="cmd">命令生成器</button>
-          <button class="tab-btn" data-tab="runtime">运行与日志</button>
+    <header class="fixed top-0 left-0 right-0 z-40 border-b border-white/20 bg-white/70 backdrop-blur-xl transition-all duration-300 dark:border-gray-800/50 dark:bg-gray-950/70">
+      <div class="mx-auto max-w-6xl px-4 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-cyan shadow-lg shadow-primary-500/25">
+              <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-lg font-bold text-transparent dark:from-white dark:to-gray-400">iKuai Bypass</h1>
+              <p class="text-xs text-gray-500 dark:text-gray-400" id="subtitle">智能分流管理</p>
+            </div>
+          </div>
+          <button id="themeToggle" class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 text-gray-600 transition-all duration-200 active:scale-95 hover:bg-gray-200 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:bg-gray-700">
+            <svg class="hidden h-5 w-5 dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg class="block h-5 w-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
         </div>
       </div>
     </header>
 
-    <main class="max-w-[1400px] mx-auto p-6">
-      <!-- Help Page -->
-      <section class="panel" id="pageHelp" style="display:none">
-        <div class="flex flex-wrap justify-between items-center mb-5">
-          <span class="text-lg font-semibold tracking-tight">配置助手</span>
-          <span class="text-sm text-gray-500 dark:text-gray-400" id="configHint"></span>
+    <main class="relative z-10 mx-auto max-w-6xl px-4 pt-20 pb-24">
+      <div class="mb-6">
+        <div class="glass-card rounded-2xl p-2">
+          <div class="grid grid-cols-3 gap-2" id="mainTabGrid">
+            <button class="main-tab active" data-tab="runtime">运行模式</button>
+            <button class="main-tab" data-tab="config">配置助手</button>
+            <button class="main-tab" data-tab="cmd">命令生成器</button>
+          </div>
         </div>
-        <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">
-          <div class="mb-3"><b>1)</b> 在「配置助手」中填写 iKuai 登录信息、订阅 URL、Cron 等。</div>
-          <div class="mb-3"><b>2)</b> 保存配置（需要 webui.enable-update=true）。</div>
-          <div><b>3)</b> 在「运行与日志」执行一次或启动定时任务。</div>
+      </div>
+
+      <section class="tab-panel" data-tab-panel="runtime">
+        <div class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <div class="glass-card relative overflow-hidden rounded-3xl p-6">
+            <div class="absolute top-0 right-0 -mt-10 -mr-10 h-32 w-32 rounded-full bg-gradient-to-br from-primary-500/10 to-accent-cyan/10 blur-2xl"></div>
+            <div class="relative space-y-6">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div class="text-sm font-medium text-gray-500 dark:text-gray-400">运行状态</div>
+                  <div id="mainStatus" class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">--</div>
+                  <p id="subStatus" class="mt-1 text-sm text-gray-500 dark:text-gray-400">正在连接服务...</p>
+                </div>
+                <div class="flex flex-col items-end gap-3">
+                  <span id="statusBadge" class="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                    <span class="h-2 w-2 rounded-full bg-gray-400 animate-pulse"></span>
+                    加载中...
+                  </span>
+                  <button id="btnRunAction" class="rounded-2xl bg-primary-600 px-5 py-3 text-sm font-bold text-white shadow-xl shadow-primary-600/30 transition-all active:scale-[0.98] hover:bg-primary-700">执行一次</button>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">运行模式</h2>
+                </div>
+                <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4" id="runModeGrid">
+                  <button class="run-mode-chip active" data-run-mode="once">
+                    <span class="block text-sm font-semibold">once</span>
+                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">执行一次</span>
+                  </button>
+                  <button class="run-mode-chip" data-run-mode="cron">
+                    <span class="block text-sm font-semibold">cron</span>
+                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">先执行后定时</span>
+                  </button>
+                  <button class="run-mode-chip" data-run-mode="cronAft">
+                    <span class="block text-sm font-semibold">cronAft</span>
+                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">直接定时</span>
+                  </button>
+                  <button class="run-mode-chip" data-run-mode="clean">
+                    <span class="block text-sm font-semibold">clean</span>
+                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">清理模式</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">分流模块</h2>
+                <div class="rounded-2xl border border-white/20 bg-white/20 p-2 dark:border-gray-800/60 dark:bg-gray-900/10">
+                  <div class="grid grid-cols-3 gap-1" id="moduleGrid">
+                    <button class="module-chip active" data-module="ispdomain"><span class="text-xs font-medium">运营商</span></button>
+                    <button class="module-chip" data-module="ipgroup"><span class="text-xs font-medium">IP分组</span></button>
+                    <button class="module-chip" data-module="ipv6group"><span class="text-xs font-medium">IPv6</span></button>
+                    <button class="module-chip" data-module="ii"><span class="text-xs font-medium">混合</span></button>
+                    <button class="module-chip" data-module="ip"><span class="text-xs font-medium">IP混合</span></button>
+                    <button class="module-chip" data-module="iip"><span class="text-xs font-medium">全能</span></button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="cronSection" class="hidden rounded-2xl border border-primary-500/15 bg-primary-500/5 p-4">
+                <div class="flex items-center gap-3">
+                  <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Cron</span>
+                  <input id="cronInput" type="text" value="0 7 * * *" class="w-full bg-transparent py-1 text-sm text-gray-900 outline-none dark:text-white" placeholder="0 7 * * *" />
+                </div>
+              </div>
+
+              <div id="cleanSection" class="hidden rounded-2xl border border-red-500/15 bg-red-500/5 p-4">
+                <label class="mb-1 block text-xs text-gray-500 dark:text-gray-400">清理标签</label>
+                <input id="cleanTagInput" type="text" class="w-full border-b border-gray-200 bg-transparent py-2 text-sm text-gray-900 outline-none transition-colors focus:border-red-500 dark:border-gray-700 dark:text-white" placeholder="请输入 tag 或 cleanAll" />
+                <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">安全要求：必须显式填写 tag 或 `cleanAll`。</p>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-5">
+            <div class="mb-3 flex items-center justify-between px-1">
+              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">实时日志</h2>
+              <button id="btnClearLogs" class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200" title="清空日志" aria-label="清空日志">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+            <div class="relative overflow-hidden rounded-2xl bg-gray-950/90 p-4">
+              <div id="logContainer" class="scrollbar-thin h-[28rem] space-y-1.5 overflow-y-auto font-mono text-xs text-gray-300">
+                <div class="italic text-gray-500">等待日志输出...</div>
+              </div>
+              <div class="pointer-events-none absolute right-0 bottom-0 left-0 h-8 bg-gradient-to-t from-gray-950 to-transparent"></div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- Config Page -->
-      <section class="panel" id="pageConfig" style="display:none">
-        <div class="flex flex-wrap justify-between items-center mb-5">
-          <span class="text-lg font-semibold tracking-tight">配置助手</span>
-          <span class="text-sm text-gray-500 dark:text-gray-400" id="configHint"></span>
-        </div>
-        
-        <!-- Save bar -->
-        <div class="flex flex-wrap items-center gap-3 p-5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-xl mb-6 shadow-sm">
-          <button id="btnSaveNoComments" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all border border-transparent">保存配置</button>
-          <button id="btnSaveWithComments" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">保存(带注释)</button>
-          <span class="text-sm text-gray-500 dark:text-gray-400 flex-1 text-right" id="saveHint"></span>
-        </div>
-        
-        <!-- Edit mode tabs -->
-        <div class="flex gap-2 mb-6 border-b-2 border-gray-200 dark:border-gray-700 pb-0" id="editTabs">
-          <button class="edit-tab active" data-edit="visual">可视化编辑</button>
-          <button class="edit-tab" data-edit="manual">手动编辑</button>
-        </div>
-        
-        <!-- Visual Edit Mode -->
-        <div id="visualEditContainer">
-          <!-- Sub-tabs -->
-          <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-200 dark:border-gray-700 pb-3" id="configSubTabs">
-            <button class="sub-tab active" data-subtab="basic">基础</button>
-            <button class="sub-tab" data-subtab="limits">数据分页</button>
-            <button class="sub-tab" data-subtab="rules">规则</button>
-          </div>
-
-          <!-- Basic Section (includes remote + webui) -->
-          <div class="config-section active" id="sectionBasic">
-            <!-- Remote Config - FIRST -->
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">远程配置加载</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">支持 raw.githubusercontent.com + github-proxy</div>
-              <div class="flex flex-col gap-3">
-                <input id="remoteUrl" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="https://raw.githubusercontent.com/.../config.yml" />
-                <div class="flex flex-wrap gap-3">
-                  <button id="btnLoadRemote" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all border border-transparent">加载并覆盖</button>
-                  <button id="btnResetRemote" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">恢复默认</button>
-                </div>
+      <section class="tab-panel hidden" data-tab-panel="config">
+        <div class="space-y-6">
+          <div class="glass-card rounded-3xl p-6">
+            <div class="mb-6 flex items-center justify-between gap-3">
+              <div>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white">配置助手</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">参考 `pkg/webui/webui.html`，已收敛为当前 SPA 风格。</p>
               </div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mt-3" id="remoteHint"></div>
+              <div class="text-sm text-gray-500 dark:text-gray-400" id="saveHint"></div>
             </div>
 
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
+            <div class="grid gap-6 xl:grid-cols-2">
+              <div class="space-y-6">
+                <section class="space-y-3">
+                  <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">远程配置</h3>
+                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                    <input id="remoteUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://raw.githubusercontent.com/.../config.yml" />
+                    <div class="mt-3 flex gap-2">
+                      <button id="btnLoadRemote" class="flex-1 rounded-xl bg-primary-600 py-2.5 text-sm font-medium text-white transition hover:bg-primary-700">加载</button>
+                      <button id="btnResetRemote" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">默认</button>
+                    </div>
+                    <p id="remoteHint" class="mt-2 text-xs text-gray-500"></p>
+                  </div>
+                </section>
 
-            <!-- iKuai Connection -->
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">iKuai 连接</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">ikuai-url</label>
-                  <input id="cfgIkuaiUrl" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="http://192.168.9.1" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">username</label>
-                  <input id="cfgUser" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">password</label>
-                  <input id="cfgPass" type="password" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">cron</label>
-                  <input id="cfgCron" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="0 7 * * *" />
-                </div>
-              </div>
-            </div>
-            
-            <!-- Proxy -->
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">代理</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">github-proxy</label>
-                  <input id="cfgGhProxy" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="https://ghproxy.net/" />
-                </div>
-              </div>
-            </div>
-            
-            <!-- Timing Parameters -->
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">Timing 参数</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">AddErrRetryWait</label>
-                  <input id="cfgRetryWait" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="10s" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">AddWait</label>
-                  <input id="cfgAddWait" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="1s" />
-                </div>
-              </div>
-            </div>
+                <section class="space-y-3">
+                  <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">iKuai 连接</h3>
+                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">路由器地址</label>
+                      <input id="cfgIkuaiUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://192.168.9.1" />
+                    </div>
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                      <div>
+                        <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">用户名</label>
+                        <input id="cfgUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">密码</label>
+                        <input id="cfgPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                      </div>
+                    </div>
+                  </div>
+                </section>
 
-            <!-- WebUI Settings - MOVED INTO BASIC -->
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">WebUI 设置</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">保存功能受 webui.enable-update 控制</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">enable</label>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="cfgWebEnable" />
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">enable-update</label>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="cfgWebEnableUpdate" />
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">port</label>
-                  <input id="cfgWebPort" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="19001" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">cdn-prefix</label>
-                  <input id="cfgWebCdn" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="https://cdn.jsdelivr.net/npm" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">user</label>
-                  <input id="cfgWebUser" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">pass</label>
-                  <input id="cfgWebPass" type="password" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
+                <section class="space-y-3">
+                  <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">调度与代理</h3>
+                  <div class="grid gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40 md:grid-cols-2">
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">GitHub 代理</label>
+                      <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">错误重试等待</label>
+                      <input id="cfgRetryWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="10s" />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">添加等待</label>
+                      <input id="cfgAddWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="1s" />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Cron</label>
+                      <input id="cfgCronInline" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="0 7 * * *" />
+                    </div>
+                  </div>
+                </section>
               </div>
-            </div>
-          </div>
 
-          <!-- Data Pagination Section (renamed from Limits) -->
-          <div class="config-section" id="sectionDataPagination">
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">单条数据长度</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">单条数据长度，需要根据路由器性能和数据情况调整。(参考值：ISP: 3000, IPv4: 1000, IPv6: 1000, Domain: 1000)</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">Isp</label>
-                  <input id="cfgMaxIsp" type="number" min="1" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">Ipv4</label>
-                  <input id="cfgMaxIpv4" type="number" min="1" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">Ipv6</label>
-                  <input id="cfgMaxIpv6" type="number" min="1" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
-                </div>
-                <div>
-                  <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">Domain</label>
-                  <input id="cfgMaxDomain" type="number" min="1" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" />
+              <div class="space-y-6">
+                <section class="space-y-3">
+                  <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">WebUI 设置</h3>
+                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                    <div class="space-y-4">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">启用 WebUI</span>
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="cfgWebEnable" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">允许更新配置</span>
+                        <label class="toggle-switch">
+                          <input type="checkbox" id="cfgWebEnableUpdate" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                      <div class="grid grid-cols-2 gap-3">
+                        <div>
+                          <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">端口</label>
+                          <input id="cfgWebPort" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="19001" />
+                        </div>
+                        <div>
+                          <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">CDN 前缀</label>
+                          <input id="cfgWebCdn" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://cdn.jsdelivr.net/npm" />
+                        </div>
+                        <div>
+                          <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">用户名</label>
+                          <input id="cfgWebUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                        </div>
+                        <div>
+                          <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">密码</label>
+                          <input id="cfgWebPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="space-y-3">
+                  <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">数据分页</h3>
+                  <div class="grid grid-cols-2 gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">ISP 限制</label>
+                      <input id="cfgMaxIsp" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">IPv4 限制</label>
+                      <input id="cfgMaxIpv4" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">IPv6 限制</label>
+                      <input id="cfgMaxIpv6" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Domain 限制</label>
+                      <input id="cfgMaxDomain" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                    </div>
+                  </div>
+                </section>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <button id="btnSaveNoComments" class="rounded-2xl bg-primary-600 py-4 text-base font-semibold text-white shadow-lg shadow-primary-600/25 transition-all active:scale-95 hover:bg-primary-700">保存配置</button>
+                  <button id="btnSaveWithComments" class="rounded-2xl bg-gray-100 py-4 text-base font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">保存配置 (保留注释)</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Rules Section -->
-          <div class="config-section" id="sectionRules">
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">custom-isp</div>
-              <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <span class="text-sm text-gray-500 dark:text-gray-400">自定义运营商规则</span>
-                <button id="addCustomIsp" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">新增</button>
+          <div class="grid gap-6 xl:grid-cols-2">
+            <div class="glass-card rounded-3xl p-6">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">Custom ISP / IP Group / IPv6 Group</h3>
               </div>
-              <div class="flex flex-col gap-4" id="listCustomIsp"></div>
+              <div class="space-y-4">
+                <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                  <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Custom ISP</span>
+                    <button id="addCustomIsp" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                  </div>
+                  <div id="listCustomIsp" class="space-y-2"></div>
+                </div>
+                <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                  <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IP Group</span>
+                    <button id="addIpGroup" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                  </div>
+                  <div id="listIpGroup" class="space-y-2"></div>
+                </div>
+                <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                  <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IPv6 Group</span>
+                    <button id="addIpv6Group" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                  </div>
+                  <div id="listIpv6Group" class="space-y-2"></div>
+                </div>
+              </div>
             </div>
-            
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-            
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">ip-group</div>
-              <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <span class="text-sm text-gray-500 dark:text-gray-400">IP 分组规则</span>
-                <button id="addIpGroup" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">新增</button>
+
+            <div class="glass-card rounded-3xl p-6">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">流量分流规则</h3>
               </div>
-              <div class="flex flex-col gap-4" id="listIpGroup"></div>
-            </div>
-            
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-            
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">ipv6-group</div>
-              <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <span class="text-sm text-gray-500 dark:text-gray-400">IPv6 分组规则</span>
-                <button id="addIpv6Group" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">新增</button>
+              <div class="space-y-4">
+                <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                  <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Stream Domain</span>
+                    <button id="addStreamDomain" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                  </div>
+                  <div id="listStreamDomain" class="space-y-2"></div>
+                </div>
+                <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                  <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Stream IP Port</span>
+                    <button id="addStreamIpPort" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                  </div>
+                  <div id="listStreamIpPort" class="space-y-2"></div>
+                </div>
               </div>
-              <div class="flex flex-col gap-4" id="listIpv6Group"></div>
-            </div>
-            
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-            
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">stream-domain</div>
-              <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <span class="text-sm text-gray-500 dark:text-gray-400">域名分流规则</span>
-                <button id="addStreamDomain" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">新增</button>
-              </div>
-              <div class="flex flex-col gap-4" id="listStreamDomain"></div>
-            </div>
-            
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-            
-            <div class="mb-7">
-              <div class="text-base font-semibold text-gray-900 dark:text-gray-400 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">stream-ipport</div>
-              <div class="flex flex-wrap justify-between items-center gap-3 mb-3">
-                <span class="text-sm text-gray-500 dark:text-gray-400">端口分流规则</span>
-                <button id="addStreamIpPort" class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">新增</button>
-              </div>
-              <div class="flex flex-col gap-4" id="listStreamIpPort"></div>
             </div>
           </div>
         </div>
-
-        <!-- Manual Edit Mode (Monaco) -->
-        <div id="manualEditContainer" style="display: none;">
-          <!-- Remote Config - ALSO in Manual Edit -->
-          <div class="mb-7">
-            <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">远程配置加载</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">支持 raw.githubusercontent.com + github-proxy</div>
-            <div class="flex flex-col gap-3">
-              <input id="remoteUrlManual" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="https://raw.githubusercontent.com/.../config.yml" />
-              <div class="flex flex-wrap gap-3">
-                <button id="btnLoadRemoteManual" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all border border-transparent">加载并覆盖</button>
-                <button id="btnResetRemoteManual" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">恢复默认</button>
-              </div>
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-3" id="remoteHintManual"></div>
-          </div>
-
-          <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-          
-          <div class="mb-7">
-            <div class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 pb-2.5 border-b border-gray-200 dark:border-gray-700 tracking-tight">YAML 手动编辑</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">直接编辑 YAML/TOML。修改后可同步到可视化表单，或直接保存配置。</div>
-            <div id="monacoContainer" class="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm"></div>
-            <div class="flex flex-wrap gap-3 mt-4">
-              <button id="btnSyncToVisual" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all border border-transparent">同步到可视化</button>
-              <button id="btnSyncFromVisual" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">从可视化加载</button>
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-3" id="monacoHint"></div>
-          </div>
-        </div>
-
       </section>
 
-      <!-- CMD Generator Page (Separate Main Tab) -->
-      <section class="panel" id="pageCmd" style="display:none">
-        <div class="flex flex-wrap justify-between items-center mb-5">
-          <span class="text-lg font-semibold tracking-tight">命令生成器</span>
-        </div>
-        
-        <div class="mb-7">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">程序路径</label>
-              <input id="cmdExePath" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 cursor-not-allowed" placeholder="./ikuai-bypass" readonly />
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">路径模式</label>
-              <div class="toggle-group mt-2" id="cmdPathModeGroup">
-                <button class="toggle-btn active" data-value="relative">相对路径</button>
-                <button class="toggle-btn" data-value="absolute">绝对路径</button>
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">运行模式</label>
-              <select id="cmdRunMode" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]">
-                <option value="cron">cron (执行一次+定时)</option>
-                <option value="cronAft">cronAft (仅定时)</option>
-                <option value="once">once (执行一次退出)</option>
-                <option value="clean">clean (清理)</option>
-                <option value="web">web (仅WebUI)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">模块</label>
-              <select id="cmdModule" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]">
-                <option value="ispdomain">ispdomain</option>
-                <option value="ipgroup">ipgroup</option>
-                <option value="ipv6group">ipv6group</option>
-                <option value="ii">ii</option>
-                <option value="ip">ip</option>
-                <option value="iip">iip</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">配置路径</label>
-              <input id="cmdConfigPath" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="./config.yml" />
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">清理标签</label>
-              <input id="cmdCleanTag" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="cleanAll" />
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">自定义登录</label>
-              <input id="cmdLogin" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="http://ip,username,password" />
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">导出路径</label>
-              <input id="cmdExportPath" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all min-h-[44px]" placeholder="/tmp" />
-            </div>
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1.5 font-medium">随机后缀</label>
-              <div class="toggle-group mt-2" id="cmdRandomSuffGroup">
-                <button class="toggle-btn" data-value="0">关闭</button>
-                <button class="toggle-btn active" data-value="1">开启</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-        
-        <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-          <div class="flex flex-wrap gap-3">
-            <button id="btnSavePreset" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">保存预设</button>
-            <button id="btnRestoreDefaults" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">重置</button>
-          </div>
-          <span class="text-sm text-gray-500 dark:text-gray-400" id="presetHint"></span>
-        </div>
-        
-        <div class="flex flex-col gap-4" id="presetList"></div>
-        
-        <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-        
-        <div class="flex flex-wrap justify-between items-center gap-3">
-          <button id="btnCopyCmd" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all border border-transparent">复制命令</button>
-          <span class="text-sm text-gray-500 dark:text-gray-400" id="cmdHint"></span>
-        </div>
-        
-        <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-        
-        <div class="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-auto text-sm font-mono min-h-[60px]"><pre id="cmdOut"></pre></div>
-      </section>
-
-      <!-- Runtime Page -->
-      <section class="panel" id="pageRuntime" style="display:none">
-        <div class="flex flex-wrap justify-between items-center mb-5">
-          <span class="text-lg font-semibold tracking-tight">运行与日志</span>
-          <span class="text-sm text-gray-500 dark:text-gray-400" id="runtimeHint"></span>
-        </div>
-        <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-        <span class="text-sm text-gray-500 dark:text-gray-400" id="statusLine">状态加载中...</span>
-        <div class="h-px bg-gray-200 dark:bg-gray-700 my-6"></div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div id="runPanel">
-              <span class="text-lg font-semibold tracking-tight block mb-4">运行控制</span>
-              <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
-              <div class="mb-4">
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-medium w-full">分流模式</label>
-                <div class="flex flex-wrap gap-2" id="moduleChips"></div>
-              </div>
-              <div class="mb-4">
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-medium w-full">运行模式</label>
-                <div class="flex flex-wrap gap-2" id="runModeChips"></div>
-              </div>
-              <div class="mb-4" id="cronBox">
-                <label class="block text-sm text-gray-600 dark:text-gray-400 mb-2 font-medium w-full">Cron 表达式</label>
-                <input id="cronInput" class="w-full px-3.5 py-3 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all" placeholder="0 7 * * *" />
-              </div>
-              <div class="flex gap-3">
-                <button id="btnStart" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-all border border-transparent">启动</button>
-                <button id="btnStop" class="px-4 py-2.5 text-sm font-medium rounded-lg bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 transition-all border border-red-200 dark:border-red-800">停止</button>
-              </div>
-              <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
-              <span class="text-sm text-gray-500 dark:text-gray-400" id="statusLine2">加载中...</span>
-            </div>
+      <section class="tab-panel hidden" data-tab-panel="cmd">
+        <div class="glass-card rounded-3xl p-6">
+          <div class="mb-6">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">命令生成器</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">保留 Go 版 WebUI 的核心命令构造能力，并适配当前风格。</p>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <span class="text-lg font-semibold tracking-tight block mb-4">日志</span>
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
-            <span class="text-sm text-gray-500 dark:text-gray-400 block mb-4">日志实时显示</span>
-            <div class="h-px bg-gray-200 dark:bg-gray-700 my-4"></div>
-            <div class="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-auto text-sm font-mono min-h-[260px] max-h-[440px]" id="logScroll"><pre id="logBox"></pre></div>
+          <div class="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+            <div class="space-y-4">
+              <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                <div class="space-y-4">
+                  <div>
+                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">运行模式</label>
+                    <select id="cmdRunMode" class="w-full appearance-none rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
+                      <option value="cron">cron (执行一次+定时)</option>
+                      <option value="cronAft">cronAft (仅定时)</option>
+                      <option value="once">once (执行一次退出)</option>
+                      <option value="clean">clean (清理)</option>
+                      <option value="web">web (仅WebUI)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">模块</label>
+                    <select id="cmdModule" class="w-full appearance-none rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
+                      <option value="ispdomain">ispdomain</option>
+                      <option value="ipgroup">ipgroup</option>
+                      <option value="ipv6group">ipv6group</option>
+                      <option value="ii">ii</option>
+                      <option value="ip">ip</option>
+                      <option value="iip">iip</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">配置路径</label>
+                    <input id="cmdConfigPath" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="./config.yml" />
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">清理标签</label>
+                    <input id="cmdCleanTag" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="cleanAll" />
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">随机后缀</span>
+                    <div class="flex rounded-xl bg-white p-1 dark:bg-gray-800">
+                      <button class="cmd-toggle rounded-lg px-4 py-1.5 text-sm font-medium transition-all" data-value="0">关闭</button>
+                      <button class="cmd-toggle active rounded-lg px-4 py-1.5 text-sm font-medium transition-all" data-value="1">开启</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mb-3 flex items-center justify-between">
+                  <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">命令预设</h3>
+                  <button id="btnSavePreset" class="text-xs font-medium text-primary-600 dark:text-primary-400">保存当前</button>
+                </div>
+                <div id="presetList" class="space-y-2"></div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="rounded-3xl bg-gray-950 p-5 shadow-2xl shadow-black/20">
+                <div class="mb-3 flex items-center justify-between">
+                  <span class="text-sm font-medium text-gray-300">生成的命令</span>
+                  <button id="btnCopyCmd" class="text-xs font-medium text-primary-400">复制</button>
+                </div>
+                <code id="cmdOut" class="block min-h-32 whitespace-pre-wrap break-all font-mono text-xs text-gray-300"></code>
+              </div>
+              <div class="rounded-2xl border border-primary-500/15 bg-primary-500/5 p-4 text-sm text-gray-600 dark:text-gray-300">
+                <div class="font-medium text-gray-900 dark:text-white">说明</div>
+                <p class="mt-2">`clean`、`web` 等模式建议在命令行环境中使用。这里的命令生成器负责生成准确参数，便于直接复制执行。</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Custom Modal for Remote Config Confirmation -->
-    <div id="remoteConfigModal" class="modal-overlay" style="display: none;">
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg max-w-[480px] w-[90%]">
-        <div class="px-6 pt-5">
-          <span class="text-lg font-semibold text-gray-900 dark:text-gray-100">确认加载远程配置</span>
-        </div>
-        <div class="px-6 py-4">
-          <p class="text-sm text-gray-900 dark:text-gray-100 mb-3">确定要从远程 URL 覆盖当前配置吗？</p>
-          <p class="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg font-mono text-xs text-gray-500 dark:text-gray-400 break-all border border-gray-200 dark:border-gray-700" id="modalRemoteUrl"></p>
-        </div>
-        <div class="px-6 pb-6 flex gap-3 justify-end">
-          <button id="modalCancel" class="px-5 py-2.5 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-gray-700 dark:text-gray-300 transition-all border border-gray-200 dark:border-gray-600">取消</button>
-          <button id="modalConfirm" class="px-5 py-2.5 text-sm font-medium rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 transition-all border border-blue-200 dark:border-blue-700">确定加载</button>
-        </div>
+    <div id="toast" class="pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 translate-y-4 opacity-0 transition-all duration-300">
+      <div class="rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white shadow-xl dark:bg-white dark:text-gray-900">
+        <span id="toastText">操作成功</span>
       </div>
     </div>
-
-    <style>
-      /* Tab button styles */
-      .tab-btn {
-        border: 1px solid rgb(203 213 225 / 0.6);
-        background: rgb(241 245 249 / 0.8);
-        color: rgb(30 41 59);
-        padding: 10px 18px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 13px;
-        white-space: nowrap;
-        min-height: 40px;
-        transition: all 0.2s ease;
-      }
-      :global(.dark) .tab-btn {
-        background: rgb(51 65 85 / 0.6);
-        color: rgb(241 245 249);
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .tab-btn:hover {
-        background: rgb(59 130 246 / 0.1);
-        border-color: rgb(59 130 246 / 0.5);
-        transform: translateY(-1px);
-      }
-      .tab-btn.active {
-        background: rgb(59 130 246 / 0.15);
-        border-color: rgb(59 130 246 / 0.5);
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      }
-
-      /* Panel/Card styles */
-      .panel {
-        border: 1px solid rgb(203 213 225 / 0.6);
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-      }
-      :global(.dark) .panel {
-        background: rgb(30 41 59 / 0.6);
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .panel:hover {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-      }
-
-      /* Edit tabs */
-      .edit-tab {
-        border: none;
-        background: transparent;
-        color: rgb(100 116 139);
-        padding: 14px 24px;
-        border-radius: 10px 10px 0 0;
-        cursor: pointer;
-        font-size: 14px;
-        position: relative;
-        transition: all 0.2s ease;
-        margin-bottom: -2px;
-        border-bottom: 2px solid transparent;
-      }
-      :global(.dark) .edit-tab {
-        color: rgb(148 163 184);
-      }
-      .edit-tab:hover {
-        color: rgb(30 41 59);
-        background: rgb(59 130 246 / 0.05);
-      }
-      :global(.dark) .edit-tab:hover {
-        color: rgb(241 245 249);
-      }
-      .edit-tab.active {
-        color: rgb(30 41 59);
-        background: rgb(59 130 246 / 0.15);
-        border-bottom-color: rgb(59 130 246 / 0.5);
-        font-weight: 600;
-      }
-      :global(.dark) .edit-tab.active {
-        color: rgb(241 245 249);
-      }
-
-      /* Sub-tabs */
-      .sub-tab {
-        border: none;
-        background: transparent;
-        color: rgb(100 116 139);
-        padding: 12px 20px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-      }
-      :global(.dark) .sub-tab {
-        color: rgb(148 163 184);
-      }
-      .sub-tab:hover {
-        color: rgb(30 41 59);
-        background: rgb(59 130 246 / 0.05);
-      }
-      :global(.dark) .sub-tab:hover {
-        color: rgb(241 245 249);
-      }
-      .sub-tab.active {
-        color: rgb(30 41 59);
-        background: rgb(59 130 246 / 0.15);
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      }
-      :global(.dark) .sub-tab.active {
-        color: rgb(241 245 249);
-      }
-
-      /* Chip styles */
-      .chip {
-        border: 1px solid rgb(203 213 225 / 0.6);
-        background: rgb(241 245 249 / 0.8);
-        color: rgb(30 41 59);
-        padding: 8px 14px;
-        border-radius: 999px;
-        cursor: pointer;
-        font-size: 12px;
-        white-space: nowrap;
-        min-height: 36px;
-        transition: all 0.2s ease;
-      }
-      :global(.dark) .chip {
-        background: rgb(51 65 85 / 0.6);
-        color: rgb(241 245 249);
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .chip:hover {
-        border-color: rgb(59 130 246 / 0.5);
-      }
-      .chip.active {
-        background: rgb(59 130 246 / 0.15) !important;
-        border-color: rgb(59 130 246 / 0.5) !important;
-        color: rgb(30 41 59) !important;
-        font-weight: 500;
-      }
-      :global(.dark) .chip.active {
-        background: rgb(59 130 246 / 0.3) !important;
-        color: rgb(241 245 249) !important;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-      }
-
-      /* Section visibility */
-      .config-section { display: none; }
-      .config-section.active { display: block; animation: fadeIn 0.3s ease; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-      /* ===== TOGGLE SWITCH ===== */
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 52px;
-        height: 28px;
-        vertical-align: middle;
-        cursor: pointer;
-      }
-      .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-      .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgb(203 213 225);
-        transition: 0.3s ease;
-        border-radius: 28px;
-        border: 1px solid rgb(203 213 225 / 0.6);
-      }
-      :global(.dark) .toggle-slider {
-        background-color: rgb(71 85 105);
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 20px;
-        width: 20px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        transition: 0.3s ease;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
-      .toggle-switch input:checked + .toggle-slider {
-        background-color: rgb(59 130 246);
-        border-color: rgb(59 130 246);
-      }
-      .toggle-switch input:checked + .toggle-slider:before {
-        transform: translateX(24px);
-      }
-      .toggle-switch input:focus + .toggle-slider {
-        box-shadow: 0 0 0 3px rgb(59 130 246 / 0.2);
-      }
-
-      /* ===== TOGGLE BUTTON GROUPS (Segmented Controls) ===== */
-      .toggle-group {
-        display: inline-flex;
-        gap: 0;
-        border: 1px solid rgb(203 213 225 / 0.6);
-        border-radius: 10px;
-        overflow: hidden;
-        background: rgb(241 245 249 / 0.8);
-      }
-      :global(.dark) .toggle-group {
-        background: rgb(51 65 85 / 0.6);
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .toggle-group .toggle-btn {
-        border: none;
-        background: transparent;
-        color: rgb(100 116 139);
-        padding: 10px 16px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-height: 42px;
-        white-space: nowrap;
-      }
-      :global(.dark) .toggle-group .toggle-btn {
-        color: rgb(148 163 184);
-      }
-      .toggle-group .toggle-btn:hover {
-        background: rgb(59 130 246 / 0.1);
-        color: rgb(30 41 59);
-      }
-      :global(.dark) .toggle-group .toggle-btn:hover {
-        color: rgb(241 245 249);
-      }
-      .toggle-group .toggle-btn.active {
-        background: rgb(59 130 246 / 0.15);
-        color: rgb(30 41 59);
-        font-weight: 500;
-      }
-      :global(.dark) .toggle-group .toggle-btn.active {
-        background: rgb(59 130 246 / 0.3);
-        color: rgb(241 245 249);
-      }
-      .toggle-group .toggle-btn:not(:last-child) {
-        border-right: 1px solid rgb(203 213 225 / 0.6);
-      }
-      :global(.dark) .toggle-group .toggle-btn:not(:last-child) {
-        border-right-color: rgb(148 163 184 / 0.1);
-      }
-
-      /* ===== MODAL STYLES ===== */
-      .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 50;
-        animation: fadeInModal 0.2s ease;
-      }
-      @keyframes fadeInModal {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-
-      /* ===== MODERN RULES TABLE STYLES ===== */
-      .rules-table-wrapper {
-        overflow-x: auto;
-        border: 1px solid rgb(203 213 225 / 0.6);
-        border-radius: 12px;
-        margin-top: 12px;
-      }
-      :global(.dark) .rules-table-wrapper {
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .rules-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        font-size: 13px;
-      }
-      :global(.dark) .rules-table {
-        background: rgb(30 41 59 / 0.6);
-      }
-      .rules-table thead {
-        background: rgb(249 250 251);
-      }
-      :global(.dark) .rules-table thead {
-        background: rgb(51 65 85);
-      }
-      .rules-table th {
-        padding: 14px 12px;
-        text-align: left;
-        font-weight: 600;
-        color: rgb(30 41 59);
-        border-bottom: 1px solid rgb(203 213 225 / 0.6);
-        white-space: nowrap;
-      }
-      :global(.dark) .rules-table th {
-        color: rgb(241 245 249);
-        border-bottom-color: rgb(148 163 184 / 0.1);
-      }
-      .rules-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid rgb(203 213 225 / 0.6);
-        vertical-align: middle;
-      }
-      :global(.dark) .rules-table td {
-        border-bottom-color: rgb(148 163 184 / 0.1);
-      }
-      .rules-table tbody tr {
-        transition: background 0.2s ease;
-      }
-      .rules-table tbody tr:hover {
-        background: rgb(59 130 246 / 0.05);
-      }
-      :global(.dark) .rules-table tbody tr:hover {
-        background: rgb(51 65 85 / 0.5);
-      }
-      .rules-table tbody tr:last-child td {
-        border-bottom: none;
-      }
-      .rules-table input {
-        background: transparent;
-        border: 0;
-        color: inherit;
-        border-radius: 6px;
-        padding: 8px 10px;
-        font-size: 13px;
-        width: 100%;
-        min-height: 36px;
-        box-sizing: border-box;
-        outline: none;
-      }
-      :global(.dark) .rules-table input {
-        color: rgb(241 245 249);
-      }
-      .rules-table input:focus {
-        background: rgb(59 130 246 / 0.1);
-        border-radius: 6px;
-      }
-      .rules-table .delete-cell {
-        text-align: center;
-        width: 60px;
-      }
-      .rules-table .delete-btn {
-        background: rgb(239 68 68 / 0.1);
-        border: none;
-        color: rgb(239 68 68);
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-        transition: all 0.2s ease;
-        min-height: 32px;
-      }
-      .rules-table .delete-btn:hover {
-        background: rgb(239 68 68);
-        color: white;
-        transform: scale(1.05);
-      }
-      .table-empty {
-        padding: 40px;
-        text-align: center;
-        color: rgb(148 163 184);
-      }
-
-      /* Item/Card styles */
-      .item {
-        border: 1px solid rgb(203 213 225 / 0.6);
-        border-radius: 12px;
-        padding: 20px;
-        background: white;
-        transition: all 0.3s ease;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      }
-      :global(.dark) .item {
-        background: rgb(30 41 59 / 0.6);
-        border-color: rgb(148 163 184 / 0.1);
-      }
-      .item:hover {
-        border-color: rgb(59 130 246 / 0.5);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        transform: translateY(-2px);
-      }
-
-      /* Responsive */
-      @media (max-width: 720px) {
-        main { padding: 18px; }
-        .panel { padding: 18px; border-radius: 14px; }
-      }
-    </style>
 
     <script type="module" src={appUrl}></script>
   </body>

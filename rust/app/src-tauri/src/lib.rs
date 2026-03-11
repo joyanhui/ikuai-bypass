@@ -104,6 +104,56 @@ async fn runtime_cron_stop(state: tauri::State<'_, AppState>) -> Result<(), Stri
 }
 
 #[tauri::command]
+async fn runtime_stop(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    Arc::clone(&state.runtime)
+        .stop_all()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+async fn run_clean(config: Config, clean_tag: String) -> Result<(), String> {
+    let tag = clean_tag.trim().to_string();
+    if tag.is_empty() {
+        return Err("Clean mode requires clean_tag".to_string());
+    }
+
+    let params = ikb_core::session::resolve_login_params(&config, "")
+        .map_err(|_| "Invalid login parameters".to_string())?;
+    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.clone())
+        .map_err(|e| e.to_string())?;
+    api.login(&params.username, &params.password)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    ikb_core::ikuai::custom_isp::del_custom_isp_all(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::stream_domain::del_stream_domain_all(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::ip_group::del_ikuai_bypass_ip_group(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::ipv6_group::del_ikuai_bypass_ipv6_group(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::stream_ipport::del_ikuai_bypass_stream_ipport(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+async fn runtime_clean(
+    state: tauri::State<'_, AppState>,
+    clean_tag: String,
+) -> Result<(), String> {
+    let cfg = state.config.lock().await.clone();
+    run_clean(cfg, clean_tag).await
+}
+
+#[tauri::command]
 async fn runtime_tail_logs(
     state: tauri::State<'_, AppState>,
     tail: Option<usize>,
@@ -211,6 +261,8 @@ pub fn run() {
             runtime_run_once,
             runtime_cron_start,
             runtime_cron_stop,
+            runtime_stop,
+            runtime_clean,
             runtime_tail_logs,
             fetch_remote_config,
         ])

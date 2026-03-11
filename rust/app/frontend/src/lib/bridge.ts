@@ -105,6 +105,25 @@ export const bridge = {
     await fetchJson('/api/runtime/cron/stop', { method: 'POST' });
   },
 
+  async runtimeStop(): Promise<void> {
+    if (isTauri()) {
+      await tauriInvoke<void>('runtime_stop');
+      return;
+    }
+    await fetchJson('/api/runtime/stop', { method: 'POST' });
+  },
+
+  async runtimeClean(clean_tag: string): Promise<void> {
+    if (isTauri()) {
+      await tauriInvoke<void>('runtime_clean', { cleanTag: clean_tag });
+      return;
+    }
+    await fetchJson('/api/runtime/clean', {
+      method: 'POST',
+      body: JSON.stringify({ clean_tag }),
+    });
+  },
+
   async runtimeTailLogs(tail: number): Promise<LogRecord[]> {
     if (isTauri()) return await tauriInvoke<LogRecord[]>('runtime_tail_logs', { tail });
     return await fetchJson<LogRecord[]>(`/api/runtime/logs?tail=${tail}`);

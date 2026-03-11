@@ -69,6 +69,8 @@ pub fn start_web_server(
         .route("/api/runtime/run-once", post(api_runtime_run_once))
         .route("/api/runtime/cron/start", post(api_runtime_cron_start))
         .route("/api/runtime/cron/stop", post(api_runtime_cron_stop))
+        .route("/api/runtime/stop", post(api_runtime_stop))
+        .route("/api/runtime/clean", post(api_runtime_clean))
         .route("/api/runtime/logs", get(api_runtime_logs))
         .route("/api/runtime/logs/stream", get(api_runtime_logs_stream));
 
@@ -268,6 +270,66 @@ async fn api_runtime_cron_stop(State(state): State<AppState>) -> Response {
             .into_response();
     }
     (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
+}
+
+async fn api_runtime_stop(State(state): State<AppState>) -> Response {
+    if let Err(e) = Arc::clone(&state.runtime).stop_all().await {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to stop runtime: {}", e),
+        )
+            .into_response();
+    }
+    (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
+}
+
+#[derive(Debug, Deserialize)]
+struct CleanRequest {
+    clean_tag: String,
+}
+
+async fn run_clean(config: ikb_core::config::Config, clean_tag: String) -> Result<(), String> {
+    let tag = clean_tag.trim().to_string();
+    if tag.is_empty() {
+        return Err("Clean mode requires clean_tag".to_string());
+    }
+
+    let params = ikb_core::session::resolve_login_params(&config, "")
+        .map_err(|_| "Invalid login parameters".to_string())?;
+    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.clone())
+        .map_err(|e| e.to_string())?;
+    api.login(&params.username, &params.password)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    ikb_core::ikuai::custom_isp::del_custom_isp_all(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::stream_domain::del_stream_domain_all(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::ip_group::del_ikuai_bypass_ip_group(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::ipv6_group::del_ikuai_bypass_ipv6_group(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+    ikb_core::ikuai::stream_ipport::del_ikuai_bypass_stream_ipport(&api, &tag)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+async fn api_runtime_clean(
+    State(state): State<AppState>,
+    Json(req): Json<CleanRequest>,
+) -> Response {
+    let cfg = state.config.lock().await.clone();
+    match run_clean(cfg, req.clean_tag).await {
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, e).into_response(),
+    }
 }
 
 async fn api_runtime_logs(State(state): State<AppState>, req: axum::http::Request<axum::body::Body>) -> Response {

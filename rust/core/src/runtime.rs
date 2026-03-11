@@ -61,6 +61,7 @@ impl LogBroker {
 struct Inner {
     module: String,
     cron_expr: String,
+    run_task: Option<tokio::task::JoinHandle<()>>,
     cron_task: Option<tokio::task::JoinHandle<()>>,
     next_run_at: Option<String>,
     last_run_at: Option<String>,
@@ -86,6 +87,7 @@ impl RuntimeService {
             inner: Mutex::new(Inner {
                 module: default_module,
                 cron_expr: default_cron,
+                run_task: None,
                 cron_task: None,
                 next_run_at: None,
                 last_run_at: None,
@@ -158,7 +160,7 @@ impl RuntimeService {
             .await;
 
         let this = Arc::clone(&self);
-        tokio::spawn(async move {
+        let handle = tokio::spawn(async move {
             let cfg = this.config.lock().await.clone();
             this.append_sys(LogLevel::Info, "TASK:任务执行", format!("module={}", module))
                 .await;
@@ -177,9 +179,15 @@ impl RuntimeService {
             {
                 let mut inner = this.inner.lock().await;
                 inner.last_run_at = Some(Local::now().to_rfc3339());
+                inner.run_task = None;
             }
             this.running.store(false, Ordering::SeqCst);
         });
+
+        {
+            let mut inner = self.inner.lock().await;
+            inner.run_task = Some(handle);
+        }
 
         Ok(true)
     }
@@ -251,6 +259,26 @@ impl RuntimeService {
         if let Some(h) = handle {
             h.abort();
         }
+        Ok(())
+    }
+
+    pub async fn stop_all(self: Arc<Self>) -> Result<(), String> {
+        let (run_handle, cron_handle) = {
+            let mut inner = self.inner.lock().await;
+            inner.next_run_at = None;
+            (inner.run_task.take(), inner.cron_task.take())
+        };
+
+        if let Some(h) = run_handle {
+            h.abort();
+        }
+        if let Some(h) = cron_handle {
+            h.abort();
+        }
+
+        self.running.store(false, Ordering::SeqCst);
+        self.append_sys(LogLevel::Warn, "TASK:任务停止", "runtime stop requested".to_string())
+            .await;
         Ok(())
     }
 

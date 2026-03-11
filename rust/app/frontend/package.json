@@ -12,5 +12,11 @@
     "astro": "^4.16.0",
     "js-yaml": "^4.1.0",
     "monaco-editor": "^0.55.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1"
   }
 }

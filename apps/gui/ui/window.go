@@ -81,7 +81,6 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	prefs := app.Preferences()
 
 	// ========== 状态区域 ==========
-	statusBinding := binding.NewString()
 	cronBinding := binding.NewString()
 
 	cronLabel := widget.NewLabelWithData(cronBinding)
@@ -178,46 +177,9 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		}
 	}
 
-	refreshStatus := func() {
-		status := runtime.Status()
-		if !status.Running && !status.CronRunning {
-			pendingStop = false
-		}
-
-		setText := func(s string) {
-			_ = statusBinding.Set("状态: " + s)
-		}
-
-		if hintText != "" && time.Now().Before(hintUntil) {
-			setText(hintText)
-			return
-		}
-		if status.Running || status.CronRunning {
-			if status.CronRunning {
-				setText("计划任务运行中")
-				return
-			}
-			setText(fmt.Sprintf("运行中 · %s", getModuleLabel(status.Module)))
-			return
-		}
-		setText("未启动")
-	}
-	refreshStatus()
 	updateCronInfo()
 
-	// 定时刷新状态
-	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				fyne.Do(refreshStatus)
-			}
-		}
-	}()
+	var refreshStatus func()
 
 	startAction := func() {
 		switch selectedRunMode.Mode {
@@ -311,20 +273,38 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		startAction()
 	})
 
-	updateActionButton := func() {
+	refreshStatus = func() {
 		status := runtime.Status()
+		if !status.Running && !status.CronRunning {
+			pendingStop = false
+		}
+
+		var subText string
+		if hintText != "" && time.Now().Before(hintUntil) {
+			subText = hintText
+		} else if status.Running || status.CronRunning {
+			if pendingStop && status.Running && !status.CronRunning {
+				subText = "等待当前操作结束"
+			} else if status.CronRunning {
+				subText = "计划任务运行中"
+			} else {
+				subText = fmt.Sprintf("运行中: %s", getModuleLabel(status.Module))
+			}
+		} else {
+			subText = "未启动"
+		}
+
 		if status.Running || status.CronRunning {
 			if pendingStop && status.Running && !status.CronRunning {
-				actionButton.SetState(true, "正在停止", "等待当前操作结束")
-				return
+				actionButton.SetState(true, "正在停止", subText)
+			} else {
+				actionButton.SetState(true, "停止", subText)
 			}
-			actionButton.SetState(true, "停止", "点击停止当前任务")
-			return
+		} else {
+			actionButton.SetState(false, "启动", subText)
 		}
-		pendingStop = false
-		actionButton.SetState(false, "启动", "点击开始同步")
 	}
-	updateActionButton()
+	refreshStatus()
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
@@ -334,7 +314,7 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				fyne.Do(updateActionButton)
+				fyne.Do(refreshStatus)
 			}
 		}
 	}()
@@ -420,10 +400,6 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	// 合并主标题和副标题
 	headerTitle := widget.NewLabelWithStyle("iKuai Bypass - 分流同步控制台", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	statusLabel := widget.NewLabelWithData(statusBinding)
-	statusLabel.TextStyle = fyne.TextStyle{Italic: true}
-	statusLabel.Wrapping = fyne.TextWrapWord
-
 	modeCard := newInfoCard(container.NewVBox(
 		newSectionTitle("分流模式"),
 		moduleTags,
@@ -447,20 +423,16 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 
 	heroInfo := container.NewVBox(
 		headerTitle,
-		statusLabel,
 		newSpacer(2),
 		container.NewHBox(aboutBtn, webBtn),
 	)
 
-	// 修复状态文本换行和过长问题：将 heroInfo 放在 Center 而不是 Left
-	// 并让 actionButton 放在 Right，以确保 heroInfo 可以缩小宽度触发文字换行
-	statusLabel.Wrapping = fyne.TextWrapWord
 	heroCard := newHeroCard(container.NewBorder(
 		nil,
 		nil,
 		nil,
 		actionButton,
-		heroInfo,
+		heroInfo, // 中心组件，自动填满剩余空间
 	))
 
 	topPanel := container.NewVBox(heroCard, newSpacer(4), modeCard)
@@ -587,10 +559,12 @@ func (b *roundActionButton) Tapped(*fyne.PointEvent) {
 func (b *roundActionButton) TappedSecondary(*fyne.PointEvent) {}
 
 func (b *roundActionButton) CreateRenderer() fyne.WidgetRenderer {
-	outer := canvas.NewCircle(startRingOuter)
-	inner := canvas.NewCircle(startRingInner)
+	outer := canvas.NewRectangle(startRingOuter)
+	outer.CornerRadius = 14
+	inner := canvas.NewRectangle(startRingInner)
+	inner.CornerRadius = 12
 	outer.StrokeWidth = 0
-	inner.StrokeWidth = 6
+	inner.StrokeWidth = 3
 	inner.StrokeColor = brandBlueSoft
 
 	title := canvas.NewText(b.title, brandBlue)
@@ -616,47 +590,43 @@ func (b *roundActionButton) CreateRenderer() fyne.WidgetRenderer {
 
 type roundActionButtonRenderer struct {
 	button   *roundActionButton
-	outer    *canvas.Circle
-	inner    *canvas.Circle
+	outer    *canvas.Rectangle
+	inner    *canvas.Rectangle
 	title    *canvas.Text
 	subtitle *canvas.Text
 	objects  []fyne.CanvasObject
 }
 
 func (r *roundActionButtonRenderer) Layout(size fyne.Size) {
-	side := size.Width
-	if size.Height < side {
-		side = size.Height
-	}
-	centerX := (size.Width - side) / 2
-	centerY := 0.0 + (size.Height-side)/2
+	r.outer.Move(fyne.NewPos(0, 0))
+	r.outer.Resize(size)
 
-	r.outer.Move(fyne.NewPos(centerX, centerY))
-	r.outer.Resize(fyne.NewSize(side, side))
-
-	innerInset := float32(4)
-	r.inner.Move(fyne.NewPos(centerX+innerInset, centerY+innerInset))
-	r.inner.Resize(fyne.NewSize(side-innerInset*2, side-innerInset*2))
+	innerInset := float32(2)
+	r.inner.Move(fyne.NewPos(innerInset, innerInset))
+	r.inner.Resize(fyne.NewSize(size.Width-innerInset*2, size.Height-innerInset*2))
 
 	titleSize := r.title.MinSize()
-	titlePos := fyne.NewPos(
-		centerX+(side-titleSize.Width)/2,
-		centerY+side/2-titleSize.Height+2,
-	)
-	r.title.Move(titlePos)
+	// Stack them vertically and center
+	subSize := r.subtitle.MinSize()
+
+	totalHeight := titleSize.Height + subSize.Height
+	startY := (size.Height - totalHeight) / 2
+
+	r.title.Move(fyne.NewPos((size.Width-titleSize.Width)/2, startY))
 	r.title.Resize(titleSize)
 
-	subSize := r.subtitle.MinSize()
-	subPos := fyne.NewPos(
-		centerX+(side-subSize.Width)/2,
-		titlePos.Y+titleSize.Height+0,
-	)
-	r.subtitle.Move(subPos)
+	r.subtitle.Move(fyne.NewPos((size.Width-subSize.Width)/2, startY+titleSize.Height))
 	r.subtitle.Resize(subSize)
 }
 
 func (r *roundActionButtonRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(60, 60)
+	titleSize := r.title.MinSize()
+	subSize := r.subtitle.MinSize()
+	w := titleSize.Width
+	if subSize.Width > w {
+		w = subSize.Width
+	}
+	return fyne.NewSize(w+30, titleSize.Height+subSize.Height+20)
 }
 
 func (r *roundActionButtonRenderer) Refresh() {

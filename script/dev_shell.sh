@@ -23,7 +23,7 @@ sudo ip addr add 192.168.9.2/24 dev tap0
 qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm \
     -boot order=dc,menu=on \
     -drive file=/home/y/kvm/ikuai.qcow2,if=virtio \
-    -drive file=/home/y/Downloads/iKuai8_x64_4.0.101_beta_Build202602111835.iso,index=1,media=cdrom \
+    -drive file=/home/y/Downloads/iiKuai8_x64_4.0.110_beta_Build202603051848.iso,index=1,media=cdrom \
     -device usb-tablet -device VGA,vgamem_mb=256 -monitor stdio \
     -nic tap,ifname=tap0,script=no,downscript=no,model=e1000,mac=52:54:00:11:11:11 \
     -nic user,model=e1000,mac=52:54:00:22:22:22 \
@@ -34,7 +34,7 @@ qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm 
 
 qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm \
     -drive file=/home/y/kvm/ikuai.qcow2,if=virtio \
-    -drive file=/home/y/Downloads/iKuai8_x64_4.0.101_beta_Build202602111835.iso,index=1,media=cdrom \
+    -drive file=/home/y/Downloads/iKuai8_x64_4.0.110_beta_Build202603051848.iso,index=1,media=cdrom \
     -device usb-tablet -device VGA,vgamem_mb=256 -monitor stdio \
     -nic tap,ifname=tap0,script=no,downscript=no,model=e1000,mac=52:54:00:11:11:11 \
     -nic user,model=e1000,mac=52:54:00:22:22:22 \

@@ -11,7 +11,6 @@ import (
 	"ikuai-bypass/pkg/utils"
 	"ikuai-bypass/pkg/webui"
 
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 )
 
@@ -57,6 +56,6 @@ func main() {
 	gui.Settings().SetTheme(ui.NewChineseTheme(fontRes))
 
 	win := ui.BuildMainWindow(gui, rt, web.URL, config.GlobalConfig.Cron)
-	win.Resize(fyne.NewSize(1000, 720))
+	// 窗口大小在 BuildMainWindow 中设置，使用移动端尺寸
 	win.ShowAndRun()
 }

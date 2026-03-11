@@ -11,6 +11,7 @@ import { conf as yamlConf, language as yamlLanguage } from 'monaco-editor/esm/vs
 const state = {
   cfg: defaultUiConfig(),
   comments: { top: {}, item: {}, webui: {}, maxNumberOfOneRecords: {} },
+  rawYaml: '',
   confPath: '',
   selectedModule: 'ispdomain',
   selectedRunMode: 'once' as 'cron' | 'cronAft' | 'once' | 'clean',
@@ -38,6 +39,16 @@ const state = {
 
 const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
+
+const syncYamlFromState = () => {
+  state.rawYaml = yamlDumpWithComments(toBackendPayload(state.cfg), state.comments);
+  if (state.rawEditor && state.selectedConfigTab === 'raw') {
+    const current = state.rawEditor.getValue();
+    if (current !== state.rawYaml) {
+      state.rawEditor.setValue(state.rawYaml);
+    }
+  }
+};
 
 // ============================================
 // Toast 提示系统
@@ -359,7 +370,8 @@ const applyRawEditorToState = () => {
   if (!editor) return true;
 
   try {
-    const doc = yamlParse(editor.getValue()) || {};
+    state.rawYaml = editor.getValue();
+    const doc = yamlParse(state.rawYaml) || {};
     const parsed = fromBackendMeta(doc);
     state.cfg = parsed.cfg;
     state.comments = parsed.comments;
@@ -383,6 +395,7 @@ const updateConfigSubTabUI = () => {
   });
   if (state.selectedConfigTab === 'raw') {
     syncConfigFromInputs();
+    syncYamlFromState();
     openRawEditor();
     requestAnimationFrame(() => state.rawEditor?.layout());
   }
@@ -556,44 +569,45 @@ const initConfigModal = () => {
   liveSyncIds.forEach((id) => {
     document.getElementById(id)?.addEventListener('input', () => {
       syncConfigFromInputs();
-      if (state.selectedConfigTab === 'raw') {
-        openRawEditor();
-      }
+      syncYamlFromState();
     });
   });
 
   ['cfgWebEnable', 'cfgWebEnableUpdate'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', () => {
       syncConfigFromInputs();
-      if (state.selectedConfigTab === 'raw') {
-        openRawEditor();
-      }
+      syncYamlFromState();
     });
   });
 
   document.getElementById('addCustomIsp')?.addEventListener('click', () => {
     state.cfg.customIsp.push({ tag: '', url: '' });
     renderCustomIspList();
+    syncYamlFromState();
     openRuleEditor('customIsp', state.cfg.customIsp.length - 1, false);
   });
   document.getElementById('addIpGroup')?.addEventListener('click', () => {
     state.cfg.ipGroup.push({ tag: '', url: '' });
     renderIpGroupList();
+    syncYamlFromState();
     openRuleEditor('ipGroup', state.cfg.ipGroup.length - 1, false);
   });
   document.getElementById('addIpv6Group')?.addEventListener('click', () => {
     state.cfg.ipv6Group.push({ tag: '', url: '' });
     renderIpv6GroupList();
+    syncYamlFromState();
     openRuleEditor('ipv6Group', state.cfg.ipv6Group.length - 1, false);
   });
   document.getElementById('addStreamDomain')?.addEventListener('click', () => {
     state.cfg.streamDomain.push({ interface: 'wan1', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' });
     renderStreamDomainList();
+    syncYamlFromState();
     openRuleEditor('streamDomain', state.cfg.streamDomain.length - 1, false);
   });
   document.getElementById('addStreamIpPort')?.addEventListener('click', () => {
     state.cfg.streamIpPort.push({ optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', ipGroup: '', mode: '0', ifaceband: '0' });
     renderStreamIpPortList();
+    syncYamlFromState();
     openRuleEditor('streamIpPort', state.cfg.streamIpPort.length - 1, false);
   });
 };
@@ -676,6 +690,7 @@ const saveConfig = async (withComments: boolean) => {
       return;
     }
     syncConfigFromInputs();
+    syncYamlFromState();
     const payload = toBackendPayload(state.cfg);
     await bridge.saveConfig(payload, withComments);
     showToast(withComments ? '配置已保存(带注释)' : '配置已保存');
@@ -716,6 +731,7 @@ const loadRemoteConfig = async () => {
     state.comments = parsed.comments;
     
     bindConfigFields();
+    syncYamlFromState();
     saveJson('ikb_remote_url', url);
     if (hint) hint.textContent = '加载成功';
     showToast('远程配置已加载');
@@ -1069,6 +1085,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
   saveBtn!.onclick = () => {
     list[index] = draft;
     rerenderRuleList(listKey);
+    syncYamlFromState();
     closeModal('ruleEditorModal');
     showToast('规则已更新');
   };
@@ -1076,6 +1093,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
   delBtn!.onclick = () => {
     list.splice(index, 1);
     rerenderRuleList(listKey);
+    syncYamlFromState();
     closeModal('ruleEditorModal');
     showToast('规则已删除');
   };
@@ -1085,9 +1103,8 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
 
 const openRawEditor = () => {
   const editor = ensureRawEditor();
-  const payload = toBackendPayload(state.cfg);
   if (editor) {
-    editor.setValue(yamlDumpWithComments(payload, state.comments));
+    editor.setValue(state.rawYaml || yamlDumpWithComments(toBackendPayload(state.cfg), state.comments));
     requestAnimationFrame(() => editor.layout());
   }
   const hint = document.getElementById('rawEditorHint');
@@ -1373,6 +1390,7 @@ const loadBackend = async () => {
     state.cfg = parsed.cfg;
     state.comments = parsed.comments;
     state.confPath = parsed.confPath;
+    syncYamlFromState();
     bindConfigFields();
     renderCmd();
     

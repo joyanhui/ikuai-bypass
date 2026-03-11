@@ -72,6 +72,10 @@ import appUrl from '../scripts/app.ts?url';
       @media (min-width: 980px) { main:not(.single) { grid-template-columns: 340px 1fr; } }
       .panel { border: 1px solid var(--border-color); background: var(--bg-panel); border-radius: 14px; padding: 12px; transition: background .2s, border-color .2s; }
       .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+      .row > input { flex: 1 1 260px; min-width: 200px; }
+      .row > select { flex: 1 1 200px; min-width: 160px; }
+      .row > button { flex: 0 0 auto; }
+      .row.stack { flex-direction: column; align-items: stretch; }
       label { display:block; font-size: 12px; color: var(--text-muted2); margin-bottom: 6px; }
       input, select, textarea { background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 10px; padding: 9px 10px; font-size: 13px; outline:none; transition: background .2s, border-color .2s, color .2s; }
       select, option { background: var(--bg-input); color: var(--text-primary); }
@@ -85,8 +89,9 @@ import appUrl from '../scripts/app.ts?url';
       @media (min-width: 980px) { .grid2 { grid-template-columns: 1fr 1fr; } }
       pre { margin:0; white-space: pre-wrap; word-break: break-word; }
       .logbox { background: var(--bg-logbox); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; min-height: 240px; max-height: 420px; overflow:auto; transition: background .2s, border-color .2s; }
-      .kv { display:grid; grid-template-columns: 1fr; gap: 10px; }
-      @media (min-width: 720px) { .kv { grid-template-columns: 1fr 1fr; } }
+      .kv { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+      .kv > div { min-width: 0; }
+      @media (min-width: 720px) { .kv { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); } }
       .hint { font-size: 12px; color: var(--text-muted3); }
       .badge { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border-color); background: var(--bg-badge); color: var(--text-primary); transition: background .2s, border-color .2s; }
       .sep { height: 1px; background: var(--border-color); margin: 10px 0; }
@@ -204,7 +209,7 @@ import appUrl from '../scripts/app.ts?url';
               <span class="hint">日志实时显示中</span>
             </div>
             <div class="sep"></div>
-            <div class="logbox"><pre id="logBox"></pre></div>
+            <div class="logbox" id="logScroll"><pre id="logBox"></pre></div>
           </div>
         </div>
       </section>
@@ -412,7 +417,7 @@ import appUrl from '../scripts/app.ts?url';
             <span class="hint">支持 raw.githubusercontent.com + github-proxy</span>
           </div>
           <div class="sep"></div>
-          <div class="row">
+          <div class="row stack">
             <input id="remoteUrl" placeholder="https://raw.githubusercontent.com/.../config_example.yml" style="flex:1; min-width:260px" />
             <button id="btnLoadRemote">加载并覆盖表单</button>
             <button id="btnResetRemote">恢复默认URL</button>

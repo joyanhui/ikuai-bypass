@@ -37,6 +37,7 @@ const main = async () => {
   const pageRuntime = getEl<HTMLElement>('pageRuntime');
 
   const logBox = getEl<HTMLPreElement>('logBox');
+  const logScroll = getEl<HTMLDivElement>('logScroll');
   const runtimeHint = getEl<HTMLSpanElement>('runtimeHint');
   const statusLine2 = getEl<HTMLSpanElement>('statusLine2');
   const statusLine = getEl<HTMLSpanElement>('statusLine');
@@ -65,7 +66,7 @@ const main = async () => {
     const next = (prev + '\n' + line).trim();
     const lines = next.split('\n');
     logBox.textContent = lines.slice(-2000).join('\n');
-    logBox.scrollTop = logBox.scrollHeight;
+    logScroll.scrollTop = logScroll.scrollHeight;
   };
 
   const renderCmd = () => {
@@ -119,8 +120,10 @@ const main = async () => {
     getInput('cfgMaxIpv6').value = String(cfg.maxNumberOfOneRecords.Ipv6);
     getInput('cfgMaxDomain').value = String(cfg.maxNumberOfOneRecords.Domain);
 
-    getInput('rtCron').value = cfg.cron;
-    getInput('cronExpr').value = cfg.cron;
+    const cronInput = document.getElementById('cronInput') as HTMLInputElement | null;
+    if (cronInput) {
+      cronInput.value = cfg.cron;
+    }
   };
 
   const syncFromInputs = () => {
@@ -144,8 +147,10 @@ const main = async () => {
     cfg.maxNumberOfOneRecords.Ipv6 = Number(getInput('cfgMaxIpv6').value || 0) || cfg.maxNumberOfOneRecords.Ipv6;
     cfg.maxNumberOfOneRecords.Domain = Number(getInput('cfgMaxDomain').value || 0) || cfg.maxNumberOfOneRecords.Domain;
 
-    getInput('rtCron').value = cfg.cron;
-    getInput('cronExpr').value = cfg.cron;
+    const cronInput = document.getElementById('cronInput') as HTMLInputElement | null;
+    if (cronInput) {
+      cronInput.value = cfg.cron;
+    }
   };
 
   const renderListSimple = (
@@ -154,6 +159,10 @@ const main = async () => {
     onDel: (idx: number) => void,
   ) => {
     container.innerHTML = '';
+    if (arr.length === 0) {
+      container.innerHTML = '<div class="hint">暂无</div>';
+      return;
+    }
     for (let i = 0; i < arr.length; i++) {
       const it = arr[i];
       const div = document.createElement('div');
@@ -180,6 +189,10 @@ const main = async () => {
   const renderStreamDomain = () => {
     const container = getEl<HTMLElement>('listStreamDomain');
     container.innerHTML = '';
+    if (cfg.streamDomain.length === 0) {
+      container.innerHTML = '<div class="hint">暂无</div>';
+      return;
+    }
     for (let i = 0; i < cfg.streamDomain.length; i++) {
       const it = cfg.streamDomain[i];
       const div = document.createElement('div');
@@ -215,6 +228,10 @@ const main = async () => {
   const renderStreamIpPort = () => {
     const container = getEl<HTMLElement>('listStreamIpPort');
     container.innerHTML = '';
+    if (cfg.streamIpPort.length === 0) {
+      container.innerHTML = '<div class="hint">暂无</div>';
+      return;
+    }
     for (let i = 0; i < cfg.streamIpPort.length; i++) {
       const it = cfg.streamIpPort[i];
       const div = document.createElement('div');
@@ -389,7 +406,7 @@ const main = async () => {
   };
 
   const loadRemoteConfig = async () => {
-    const rawUrl = getInput('remoteUrl').value || '';
+    const rawUrl = (getInput('remoteUrl').value || '').trim();
     if (!rawUrl) {
       setHint(getEl('remoteHint'), 'Remote URL is empty');
       return;
@@ -403,8 +420,9 @@ const main = async () => {
         finalUrl = proxy.endsWith('/') ? (proxy + rawUrl) : (proxy + '/' + rawUrl);
       }
       const r = await fetch(finalUrl);
-      if (!r.ok) throw new Error(await r.text());
-      const doc = yamlParse(await r.text()) || {};
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+      const text = await r.text();
+      const doc = yamlParse(text) || {};
       const meta = {
         ...toBackendPayload(cfg),
         ...doc,
@@ -417,7 +435,33 @@ const main = async () => {
       saveJson('ikb_remote_url', rawUrl);
       setHint(getEl('remoteHint'), '加载成功');
     } catch (e: any) {
-      setHint(getEl('remoteHint'), String(e && e.message ? e.message : e));
+      const msg = String(e && e.message ? e.message : e);
+      let fallbackOk = false;
+      if (!cfg.githubProxy && rawUrl.startsWith('https://raw.githubusercontent.com/')) {
+        try {
+          const fallback = 'https://gh-proxy.com/' + rawUrl;
+          const r = await fetch(fallback);
+          if (r.ok) {
+            const text = await r.text();
+            const doc = yamlParse(text) || {};
+            const meta = {
+              ...toBackendPayload(cfg),
+              ...doc,
+            };
+            const parsed = fromBackendMeta(meta);
+            Object.assign(cfg, parsed.cfg);
+            bindBaseFields();
+            renderAllLists();
+            await previewYaml();
+            saveJson('ikb_remote_url', rawUrl);
+            setHint(getEl('remoteHint'), '加载成功 (自动使用 gh-proxy)');
+            fallbackOk = true;
+          }
+        } catch (_) {}
+      }
+      if (!fallbackOk) {
+        setHint(getEl('remoteHint'), msg);
+      }
     }
   };
 

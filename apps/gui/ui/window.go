@@ -606,22 +606,22 @@ func (b *roundActionButton) CreateRenderer() fyne.WidgetRenderer {
 	title.TextSize = 14
 
 	r := &roundActionButtonRenderer{
-		button:  b,
-		outer:   outer,
-		inner:   inner,
-		title:   title,
-		objects: []fyne.CanvasObject{outer, inner, title},
+		button:   b,
+		outer:    outer,
+		inner:    inner,
+		title:    title,
+		objects:  []fyne.CanvasObject{outer, inner, title},
 	}
 	r.Refresh()
 	return r
 }
 
 type roundActionButtonRenderer struct {
-	button  *roundActionButton
-	outer   *canvas.Circle
-	inner   *canvas.Circle
-	title   *canvas.Text
-	objects []fyne.CanvasObject
+	button   *roundActionButton
+	outer    *canvas.Circle
+	inner    *canvas.Circle
+	title    *canvas.Text
+	objects  []fyne.CanvasObject
 }
 
 func (r *roundActionButtonRenderer) Layout(size fyne.Size) {

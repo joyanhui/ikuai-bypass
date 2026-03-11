@@ -1,6 +1,4 @@
-use thiserror::Error;
-
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum RunError {
     #[error("Invalid -m parameter: {0}")]
     InvalidModule(String),

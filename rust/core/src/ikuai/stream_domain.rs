@@ -23,7 +23,8 @@ struct TimeCustom {
 #[derive(Debug, Deserialize)]
 struct TimeBlock {
     custom: Vec<TimeCustom>,
-    object: Value,
+    #[serde(rename = "object")]
+    _object: Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,7 +35,6 @@ struct StreamDomain4 {
     tagname: String,
     interface: String,
     comment: String,
-    prio: i64,
     #[serde(rename = "src_addr")]
     src_addr: AddrBlock,
     domain: AddrBlock,
@@ -53,10 +53,7 @@ struct DelParam {
     id: String,
 }
 
-pub async fn show_stream_domain_by_tag_name(
-    api: &IKuaiClient,
-    tag_name: &str,
-) -> Result<Vec<StreamDomainData>, IKuaiError> {
+pub async fn show_stream_domain_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Result<Vec<StreamDomainData>, IKuaiError> {
     let param = ShowParam {
         r#type: "total,data".to_string(),
         limit: "0,1000".to_string(),
@@ -65,21 +62,16 @@ pub async fn show_stream_domain_by_tag_name(
         .call::<_, Vec<StreamDomain4>>(FUNC_NAME_STREAM_DOMAIN, "show", &param)
         .await?;
     let data = resp.results.ok_or(IKuaiError::InvalidResponse)?.data;
+
     let mut out = Vec::new();
     for d in data {
         if !match_tag_name_filter(tag_name, &d.tagname, &d.comment) {
             continue;
         }
-        let srcs = {
-            let mut v = to_string_list(&d.src_addr.custom);
-            v.extend(to_string_list(&d.src_addr.object));
-            v
-        };
-        let domains = {
-            let mut v = to_string_list(&d.domain.custom);
-            v.extend(to_string_list(&d.domain.object));
-            v
-        };
+        let mut srcs = to_string_list(&d.src_addr.custom);
+        srcs.extend(to_string_list(&d.src_addr.object));
+        let mut domains = to_string_list(&d.domain.custom);
+        domains.extend(to_string_list(&d.domain.object));
         let mut item = StreamDomainData {
             id: d.id,
             enabled: d.enabled,
@@ -109,27 +101,21 @@ pub async fn add_stream_domain(
     domains: &str,
     index: i64,
 ) -> Result<(), IKuaiError> {
+    let (src_custom, src_objects) = resolve_src_addrs(api, src_addr, src_addr_opt_ipgroup).await?;
     let domain_list: Vec<String> = domains
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
-
-    let (src_custom, src_objects) = resolve_src_addrs(api, src_addr, src_addr_opt_ipgroup).await?;
-    let unique_tagname = build_indexed_tag_name(tag, index);
-
     let param = serde_json::json!({
         "enabled": "yes",
-        "tagname": unique_tagname,
+        "tagname": build_indexed_tag_name(tag, index),
         "interface": iface,
         "src_addr": {"custom": src_custom, "object": src_objects},
         "domain": {"custom": domain_list, "object": []},
         "comment": NEW_COMMENT,
-        "time": {
-            "custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}],
-            "object": []
-        },
+        "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
         "prio": 31
     });
     let _ = api
@@ -148,27 +134,21 @@ pub async fn edit_stream_domain(
     index: i64,
     id: i64,
 ) -> Result<(), IKuaiError> {
+    let (src_custom, src_objects) = resolve_src_addrs(api, src_addr, src_addr_opt_ipgroup).await?;
     let domain_list: Vec<String> = domains
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
-
-    let (src_custom, src_objects) = resolve_src_addrs(api, src_addr, src_addr_opt_ipgroup).await?;
-    let unique_tagname = build_indexed_tag_name(tag, index);
-
     let param = serde_json::json!({
         "enabled": "yes",
-        "tagname": unique_tagname,
+        "tagname": build_indexed_tag_name(tag, index),
         "interface": iface,
         "src_addr": {"custom": src_custom, "object": src_objects},
         "domain": {"custom": domain_list, "object": []},
         "comment": NEW_COMMENT,
-        "time": {
-            "custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}],
-            "object": []
-        },
+        "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
         "prio": 31,
         "id": id
     });
@@ -188,10 +168,7 @@ pub async fn del_stream_domain(api: &IKuaiClient, id_csv: &str) -> Result<(), IK
     Ok(())
 }
 
-pub async fn get_stream_domain_map(
-    api: &IKuaiClient,
-    tag: &str,
-) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
+pub async fn get_stream_domain_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
     let data = show_stream_domain_by_tag_name(api, "").await?;
     let base = super::tag_name::build_tag_name(tag);
     let mut out = std::collections::HashMap::new();
@@ -264,11 +241,7 @@ async fn resolve_ip_group_objects(api: &IKuaiClient, names: &[String]) -> Result
     let mut out = Vec::new();
     for name in names {
         if let Some(id) = map.get(name) {
-            out.push(serde_json::json!({
-                "type": 0,
-                "gid": format!("IPGP{}", id),
-                "gp_name": name
-            }));
+            out.push(serde_json::json!({"type": 0, "gid": format!("IPGP{}", id), "gp_name": name}));
         }
     }
     Ok(out)

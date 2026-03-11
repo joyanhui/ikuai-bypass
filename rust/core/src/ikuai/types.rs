@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-
 use base64::Engine;
+use serde::{Deserialize, Serialize};
 
 pub const NAME_PREFIX_IKB: &str = "IKB";
 pub const COMMENT_IKUAI_BYPASS: &str = "IKUAI_BYPASS";
@@ -128,9 +127,7 @@ pub struct StreamIpPortData {
 
 impl IKuaiClient {
     pub fn new(base_url: String) -> Result<Self, IKuaiError> {
-        let client = reqwest::Client::builder()
-            .cookie_store(true)
-            .build()?;
+        let client = reqwest::Client::builder().cookie_store(true).build()?;
         Ok(Self { base_url, client })
     }
 

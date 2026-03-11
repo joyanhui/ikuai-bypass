@@ -89,7 +89,6 @@ impl Renderer {
             LogLevel::Error => (31, true),
         };
         let tag = style(tag_color.0, tag_color.1, &format!("[{}]", rec.tag));
-
         let detail = highlight(&rec.detail);
         format!("{} {} {} {}", time, module, tag, detail)
     }

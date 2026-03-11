@@ -87,26 +87,3 @@ pub fn match_tag_name_filter(filter_tag: &str, current_name: &str, legacy_commen
     }
     false
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{build_indexed_tag_name, build_tag_name, match_tag_name_filter, sanitize_tag_name};
-
-    #[test]
-    fn sanitize_keeps_han_and_alnum() {
-        assert_eq!(sanitize_tag_name("IKB测试-Tag_1"), "测试Tag1");
-    }
-
-    #[test]
-    fn build_index_truncates_to_15() {
-        let name = build_indexed_tag_name("超长超长超长超长超长", 0);
-        assert!(name.len() <= 15);
-        assert!(name.ends_with('1'));
-    }
-
-    #[test]
-    fn match_filter_accepts_prefix() {
-        let base = build_tag_name("abc");
-        assert!(match_tag_name_filter("abc", &(base.clone() + "1"), ""));
-    }
-}

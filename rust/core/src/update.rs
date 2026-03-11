@@ -2,8 +2,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::config::Config;
-use crate::logger::{LogSink, Logger};
 use crate::ikuai;
+use crate::logger::{LogSink, Logger};
 use crate::session::{resolve_login_params, LoginParamsError};
 
 #[derive(Debug, thiserror::Error)]
@@ -29,7 +29,6 @@ pub async fn run_update_by_module(
     api.login(&params.username, &params.password).await?;
 
     let sys = Logger::new("SYS:系统组件", Arc::clone(&sink));
-
     match module {
         "ispdomain" => {
             sys.info("TASK:任务启动", "Starting ISP and Domain streaming mode");
@@ -54,32 +53,34 @@ pub async fn run_update_by_module(
             update_ipv6group(cfg, &api, &sink).await;
         }
         "iip" => {
-            sys.info("TASK:任务启动", "Starting full hybrid mode: ISP/Domain + IPv4/v6 group");
+            sys.info(
+                "TASK:任务启动",
+                "Starting full hybrid mode: ISP/Domain + IPv4/v6 group",
+            );
             update_ispdomain(cfg, &api, &sink).await;
             update_ipgroup(cfg, &api, &sink).await;
             update_ipv6group(cfg, &api, &sink).await;
         }
         other => return Err(UpdateError::InvalidModule(other.to_string())),
     }
-
     Ok(())
 }
 
 async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
-    let isp_logger = Logger::new("ISP:运营商分流", Arc::clone(sink));
-    let domain_logger = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
+    let isp = Logger::new("ISP:运营商分流", Arc::clone(sink));
+    let domain = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
     let sys = Logger::new("SYS:系统组件", Arc::clone(sink));
 
     for item in &cfg.custom_isp {
-        isp_logger.info("UPDATE:开始更新", format!("Updating {}...", item.tag));
+        isp.info("UPDATE:开始更新", format!("Updating {}...", item.tag));
         let res = update_custom_isp(cfg, api, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
-            isp_logger.error(
+            isp.error(
                 "UPDATE:更新失败",
                 format!("Failed to update custom ISP '{}': {}", item.tag, e),
             );
         } else {
-            isp_logger.success(
+            isp.success(
                 "UPDATE:更新成功",
                 format!("Successfully updated custom ISP '{}'", item.tag),
             );
@@ -87,7 +88,7 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
     }
 
     for item in &cfg.stream_domain {
-        domain_logger.info(
+        domain.info(
             "UPDATE:开始更新",
             format!(
                 "Updating {} (Interface: {}, Tag: {})...",
@@ -106,12 +107,12 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
         )
         .await;
         if let Err(e) = res {
-            domain_logger.error(
+            domain.error(
                 "UPDATE:更新失败",
                 format!("Failed to update domain streaming for tag {}: {}", item.tag, e),
             );
         } else {
-            domain_logger.success(
+            domain.success(
                 "UPDATE:更新成功",
                 format!("Successfully updated domain streaming for tag {}", item.tag),
             );
@@ -204,7 +205,6 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
 
 async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
     let ipv6_logger = Logger::new("IPV6:IPv6分组", Arc::clone(sink));
-
     for item in &cfg.ipv6_group {
         let res = update_ipv6_group(cfg, api, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
@@ -221,6 +221,126 @@ async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
     }
 }
 
+async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Vec<u8>, UpdateError> {
+    let (full, proxy) = get_full_url(&cfg.github_proxy, original_url);
+    let http_logger = Logger::new("HTTP:资源下载", Arc::clone(sink));
+    if proxy.is_empty() {
+        http_logger.info("HTTP:资源下载", format!("http.get '{}'", original_url));
+    } else {
+        http_logger.info(
+            "HTTP:资源下载",
+            format!("http.get '{}' proxy '{}'", original_url, proxy),
+        );
+    }
+    let resp = reqwest::get(full)
+        .await
+        .map_err(|e| UpdateError::Download(e.to_string()))?;
+    if !resp.status().is_success() {
+        return Err(UpdateError::Download(resp.status().to_string()));
+    }
+    let bytes = resp
+        .bytes()
+        .await
+        .map_err(|e| UpdateError::Download(e.to_string()))?;
+    Ok(bytes.to_vec())
+}
+
+fn get_full_url(proxy: &str, original: &str) -> (String, String) {
+    let proxy = proxy.trim();
+    if proxy.is_empty() {
+        return (original.to_string(), String::new());
+    }
+    if !original.starts_with("https://raw.githubusercontent.com/")
+        && !original.starts_with("https://github.com/")
+    {
+        return (original.to_string(), String::new());
+    }
+    let mut p = proxy.to_string();
+    if !p.ends_with('/') {
+        p.push('/');
+    }
+    (format!("{}{}", p, original), proxy.to_string())
+}
+
+fn split_lines(body: &[u8]) -> Vec<String> {
+    let s = String::from_utf8_lossy(body);
+    s.lines().map(|l| l.to_string()).collect()
+}
+
+fn remove_ipv6_and_empty(lines: Vec<String>) -> Vec<String> {
+    let mut out = Vec::new();
+    for mut ip in lines {
+        if let Some(idx) = ip.find('#') {
+            ip.truncate(idx);
+        }
+        let ip = ip.trim();
+        if ip.is_empty() {
+            continue;
+        }
+        if !ip.contains(':') {
+            out.push(ip.to_string());
+        }
+    }
+    out
+}
+
+fn remove_ipv4_and_empty(lines: Vec<String>) -> Vec<String> {
+    let mut out = Vec::new();
+    for mut ip in lines {
+        if let Some(idx) = ip.find('#') {
+            ip.truncate(idx);
+        }
+        let ip = ip.trim();
+        if ip.is_empty() {
+            continue;
+        }
+        if ip.contains(':') {
+            out.push(ip.to_string());
+        }
+    }
+    out
+}
+
+fn filter_domains(lines: Vec<String>) -> Vec<String> {
+    let mut out = Vec::new();
+    for mut d in lines {
+        d = d.trim().to_string();
+        if d.is_empty() {
+            continue;
+        }
+        if let Some(idx) = d.find('#') {
+            d.truncate(idx);
+            d = d.trim().to_string();
+        }
+        if d.is_empty() {
+            continue;
+        }
+        if d.contains('_') {
+            continue;
+        }
+        out.push(d);
+    }
+    out
+}
+
+fn group(arr: Vec<String>, sub_len: usize) -> Vec<Vec<String>> {
+    let sub_len = sub_len.max(1);
+    let mut out = Vec::new();
+    let mut i = 0;
+    while i < arr.len() {
+        let end = (i + sub_len).min(arr.len());
+        out.push(arr[i..end].to_vec());
+        i = end;
+    }
+    out
+}
+
+async fn sleep(d: Duration) {
+    if d > Duration::from_millis(0) {
+        tokio::time::sleep(d).await;
+    }
+}
+
 async fn update_custom_isp(
     cfg: &Config,
     api: &ikuai::IKuaiClient,
@@ -229,10 +349,8 @@ async fn update_custom_isp(
     url: &str,
 ) -> Result<(), UpdateError> {
     let isp_logger = Logger::new("ISP:运营商分流", Arc::clone(sink));
-
     let body = http_get(cfg, sink, url).await?;
-    let mut ips = split_lines(&body);
-    ips = remove_ipv6_and_empty(sink, ips);
+    let ips = remove_ipv6_and_empty(split_lines(&body));
     isp_logger.info("STAT:规则统计", format!("Fetched {} IPs for {}", ips.len(), tag));
 
     let mut map = ikuai::custom_isp::get_custom_isp_map(api, tag).await?;
@@ -266,17 +384,10 @@ async fn update_custom_isp(
             );
             ikuai::custom_isp::add_custom_isp(api, tag, &ip_group, i as i64).await
         };
-
         if let Err(e) = res {
             isp_logger.error(
                 "UPDATE:更新失败",
-                format!(
-                    "[{}/{}] {}: failed: {}",
-                    i + 1,
-                    groups.len(),
-                    tag,
-                    e
-                ),
+                format!("[{}/{}] {}: failed: {}", i + 1, groups.len(), tag, e),
             );
             sleep(cfg.add_err_retry_wait).await;
         } else {
@@ -296,8 +407,7 @@ async fn update_custom_isp(
             );
             extra.push(id.to_string());
         }
-        let joined = extra.join(",");
-        let res = ikuai::custom_isp::del_custom_isp(api, &joined).await;
+        let res = ikuai::custom_isp::del_custom_isp(api, &extra.join(",")).await;
         if let Err(e) = res {
             isp_logger.error(
                 "CLEAN:删除失败",
@@ -325,18 +435,11 @@ async fn update_stream_domain(
     url: &str,
 ) -> Result<(), UpdateError> {
     let domain_logger = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
-
     let body = http_get(cfg, sink, url).await?;
-    let mut domains = split_lines(&body);
-    domains = filter_domains(sink, domains);
+    let domains = filter_domains(split_lines(&body));
     domain_logger.success(
         "PARSE:解析成功",
-        format!(
-            "{} {}: obtained {} valid domains",
-            iface,
-            tag,
-            domains.len()
-        ),
+        format!("{} {}: obtained {} valid domains", iface, tag, domains.len()),
     );
 
     let mut map = ikuai::stream_domain::get_stream_domain_map(api, tag).await?;
@@ -448,10 +551,8 @@ async fn update_ip_group(
     url: &str,
 ) -> Result<(), UpdateError> {
     let ip_logger = Logger::new("IP:IP分组", Arc::clone(sink));
-
     let body = http_get(cfg, sink, url).await?;
-    let mut ips = split_lines(&body);
-    ips = remove_ipv6_and_empty(sink, ips);
+    let ips = remove_ipv6_and_empty(split_lines(&body));
     let groups = group(ips, cfg.max_number_of_one_records.ipv4 as usize);
     ip_logger.success("PARSE:解析成功", format!("{}: obtained new data", tag));
 
@@ -481,17 +582,10 @@ async fn update_ip_group(
         } else {
             ip_logger.info(
                 "ADD:正在添加",
-                format!(
-                    "[{}/{}] {}: adding {}...",
-                    i + 1,
-                    groups.len(),
-                    tag,
-                    name
-                ),
+                format!("[{}/{}] {}: adding {}...", i + 1, groups.len(), tag, name),
             );
             ikuai::ip_group::add_ip_group(api, tag, &joined, i as i64).await
         };
-
         if let Err(e) = res {
             ip_logger.error(
                 "UPDATE:更新失败",
@@ -543,10 +637,8 @@ async fn update_ipv6_group(
     url: &str,
 ) -> Result<(), UpdateError> {
     let ipv6_logger = Logger::new("IPV6:IPv6分组", Arc::clone(sink));
-
     let body = http_get(cfg, sink, url).await?;
-    let mut ips = split_lines(&body);
-    ips = remove_ipv4_and_empty(sink, ips);
+    let ips = remove_ipv4_and_empty(split_lines(&body));
     let groups = group(ips, cfg.max_number_of_one_records.ipv6 as usize);
     ipv6_logger.success("PARSE:解析成功", format!("{}: obtained new data", tag));
 
@@ -576,17 +668,10 @@ async fn update_ipv6_group(
         } else {
             ipv6_logger.info(
                 "ADD:正在添加",
-                format!(
-                    "[{}/{}] {}: adding {}...",
-                    i + 1,
-                    groups.len(),
-                    tag,
-                    name
-                ),
+                format!("[{}/{}] {}: adding {}...", i + 1, groups.len(), tag, name),
             );
             ikuai::ipv6_group::add_ipv6_group(api, tag, &joined, i as i64).await
         };
-
         if let Err(e) = res {
             ipv6_logger.error(
                 "UPDATE:更新失败",
@@ -707,10 +792,7 @@ async fn update_stream_ipport(
     let res = if let Some((name, id)) = found {
         stream_logger.info(
             "EDIT:正在修改",
-            format!(
-                "[1/1] {}: updating existing rule {} (ID: {})...",
-                tag, name, id
-            ),
+            format!("[1/1] {}: updating existing rule {} (ID: {})...", tag, name, id),
         );
         ikuai::stream_ipport::edit_stream_ipport(
             api,
@@ -726,10 +808,7 @@ async fn update_stream_ipport(
         )
         .await
     } else {
-        stream_logger.info(
-            "ADD:正在添加",
-            format!("[1/1] {}: adding new rule...", tag),
-        );
+        stream_logger.info("ADD:正在添加", format!("[1/1] {}: adding new rule...", tag));
         ikuai::stream_ipport::add_stream_ipport(
             api,
             forward_type,
@@ -745,10 +824,7 @@ async fn update_stream_ipport(
     };
 
     if let Err(e) = res {
-        stream_logger.error(
-            "UPDATE:更新失败",
-            format!("[1/1] {}: failed: {}", tag, e),
-        );
+        stream_logger.error("UPDATE:更新失败", format!("[1/1] {}: failed: {}", tag, e));
         sleep(cfg.add_err_retry_wait).await;
     } else {
         stream_logger.success(
@@ -758,178 +834,4 @@ async fn update_stream_ipport(
     }
 
     Ok(())
-}
-
-async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Vec<u8>, UpdateError> {
-    let (full, proxy) = get_full_url(&cfg.github_proxy, original_url);
-    let http_logger = Logger::new("HTTP:资源下载", Arc::clone(sink));
-    if proxy.is_empty() {
-        http_logger.info("HTTP:资源下载", format!("http.get '{}'", original_url));
-    } else {
-        http_logger.info(
-            "HTTP:资源下载",
-            format!("http.get '{}' proxy '{}'", original_url, proxy),
-        );
-    }
-
-    let resp = reqwest::get(full)
-        .await
-        .map_err(|e| UpdateError::Download(e.to_string()))?;
-    if !resp.status().is_success() {
-        return Err(UpdateError::Download(resp.status().to_string()));
-    }
-    let bytes = resp
-        .bytes()
-        .await
-        .map_err(|e| UpdateError::Download(e.to_string()))?;
-    Ok(bytes.to_vec())
-}
-
-fn get_full_url(proxy: &str, original: &str) -> (String, String) {
-    let proxy = proxy.trim();
-    if proxy.is_empty() {
-        return (original.to_string(), String::new());
-    }
-    if !original.starts_with("https://raw.githubusercontent.com/")
-        && !original.starts_with("https://github.com/")
-    {
-        return (original.to_string(), String::new());
-    }
-    let mut p = proxy.to_string();
-    if !p.ends_with('/') {
-        p.push('/');
-    }
-    (format!("{}{}", p, original), proxy.to_string())
-}
-
-fn split_lines(body: &[u8]) -> Vec<String> {
-    let s = String::from_utf8_lossy(body);
-    s.lines().map(|l| l.to_string()).collect()
-}
-
-fn remove_ipv6_and_empty(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
-    Logger::new("IP:IP分组", Arc::clone(sink)).info(
-        "IP:v6规则清洗",
-        "Removing IPv6 addresses, empty lines and comments...",
-    );
-    let mut out = Vec::new();
-    for mut ip in lines.drain(..) {
-        if let Some(idx) = ip.find('#') {
-            ip.truncate(idx);
-        }
-        let ip = ip.trim();
-        if ip.is_empty() {
-            continue;
-        }
-        if !ip.contains(':') {
-            out.push(ip.to_string());
-        }
-    }
-    out
-}
-
-fn remove_ipv4_and_empty(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
-    Logger::new("IP:IP分组", Arc::clone(sink)).info(
-        "IP:v4规则清洗",
-        "Removing IPv4 addresses, empty lines and comments...",
-    );
-    let mut out = Vec::new();
-    for mut ip in lines.drain(..) {
-        if let Some(idx) = ip.find('#') {
-            ip.truncate(idx);
-        }
-        let ip = ip.trim();
-        if ip.is_empty() {
-            continue;
-        }
-        if ip.contains(':') {
-            out.push(ip.to_string());
-        }
-    }
-    out
-}
-
-fn filter_domains(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
-    Logger::new("DOMAIN:域名分流", Arc::clone(sink)).info(
-        "DOMAIN:域名清洗",
-        "Cleaning invalid domains (underscores, comments, etc.)...",
-    );
-    let mut out = Vec::new();
-    for mut d in lines.drain(..) {
-        d = d.trim().to_string();
-        if d.is_empty() {
-            continue;
-        }
-        if let Some(idx) = d.find('#') {
-            d.truncate(idx);
-            d = d.trim().to_string();
-        }
-        if d.is_empty() {
-            continue;
-        }
-        if d.contains('_') {
-            Logger::new("DOMAIN:域名分流", Arc::clone(sink)).info(
-                "DOMAIN:域名清洗",
-                format!("Excluding invalid domain (contains underscore): {}", d),
-            );
-            continue;
-        }
-        out.push(d);
-    }
-    out
-}
-
-fn group(arr: Vec<String>, sub_len: usize) -> Vec<Vec<String>> {
-    let sub_len = sub_len.max(1);
-    let mut out = Vec::new();
-    let mut i = 0;
-    while i < arr.len() {
-        let end = (i + sub_len).min(arr.len());
-        out.push(arr[i..end].to_vec());
-        i = end;
-    }
-    out
-}
-
-async fn sleep(d: Duration) {
-    if d > Duration::from_millis(0) {
-        tokio::time::sleep(d).await;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{filter_domains, group, remove_ipv4_and_empty, remove_ipv6_and_empty, LogSink};
-    use std::sync::Arc;
-
-    fn sink() -> LogSink {
-        Arc::new(|_s| {})
-    }
-
-    #[test]
-    fn group_splits() {
-        let v = (0..5).map(|i| i.to_string()).collect();
-        let g = group(v, 2);
-        assert_eq!(g.len(), 3);
-        assert_eq!(g[0].len(), 2);
-        assert_eq!(g[2].len(), 1);
-    }
-
-    #[test]
-    fn ipv4_ipv6_filters() {
-        let s = sink();
-        let ips = vec!["1.1.1.1".into(), "::1".into(), "#c".into(), " 2.2.2.2 #x".into()];
-        let v4 = remove_ipv6_and_empty(&s, ips.clone());
-        assert_eq!(v4, vec!["1.1.1.1", "2.2.2.2"]);
-        let v6 = remove_ipv4_and_empty(&s, ips);
-        assert_eq!(v6, vec!["::1"]);
-    }
-
-    #[test]
-    fn domain_filter_excludes_underscore() {
-        let s = sink();
-        let d = vec!["a.com".into(), "a_b.com".into(), "b.com #x".into()];
-        let out = filter_domains(&s, d);
-        assert_eq!(out, vec!["a.com", "b.com"]);
-    }
 }

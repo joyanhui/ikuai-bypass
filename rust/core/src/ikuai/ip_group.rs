@@ -29,10 +29,7 @@ struct DelParam {
     id: String,
 }
 
-pub async fn show_ip_group_by_tag_name(
-    api: &IKuaiClient,
-    tag_name: &str,
-) -> Result<Vec<IpGroupData>, IKuaiError> {
+pub async fn show_ip_group_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Result<Vec<IpGroupData>, IKuaiError> {
     let param = ShowParam {
         r#type: "total,data".to_string(),
         limit: "0,1000".to_string(),
@@ -91,13 +88,7 @@ pub async fn add_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: 
     Ok(())
 }
 
-pub async fn edit_ip_group(
-    api: &IKuaiClient,
-    tag: &str,
-    addr_pool: &str,
-    index: i64,
-    id: i64,
-) -> Result<(), IKuaiError> {
+pub async fn edit_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: i64, id: i64) -> Result<(), IKuaiError> {
     let ips: Vec<&str> = addr_pool
         .split(',')
         .map(|s| s.trim())
@@ -166,11 +157,9 @@ pub async fn get_all_ikuai_bypass_ip_group_names_by_name(
     name: &str,
 ) -> Result<Vec<String>, IKuaiError> {
     let data = show_ip_group_by_name(api, name).await?;
-    let mut names = Vec::new();
-    for d in data {
-        if match_tag_name_filter(name, &d.group_name, &d.comment) {
-            names.push(d.group_name);
-        }
-    }
-    Ok(names)
+    Ok(data
+        .into_iter()
+        .filter(|d| match_tag_name_filter(name, &d.group_name, &d.comment))
+        .map(|d| d.group_name)
+        .collect())
 }

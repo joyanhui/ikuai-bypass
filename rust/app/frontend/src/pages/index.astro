@@ -1,0 +1,218 @@
+---
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iKuai Bypass</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei"; margin: 0; background: #f6f8fb; color: #102a43; }
+      header { background: #1f6feb; color: #fff; padding: 16px 20px; }
+      main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+      .card { background: #fff; border: 1px solid #e6eef8; border-radius: 12px; padding: 12px; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      button { border: 1px solid #d0d7de; background: #fff; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+      button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+      button.danger { background: #d1242f; border-color: #d1242f; color: #fff; }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      textarea { width: 100%; min-height: 240px; border: 1px solid #d0d7de; border-radius: 10px; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New"; }
+      pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+      .muted { color: #52606d; font-size: 12px; }
+      .status { font-size: 12px; }
+      .grid2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      @media (min-width: 960px) { .grid2 { grid-template-columns: 1.2fr .8fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;">iKuai Bypass</div>
+          <div class="muted" style="color:rgba(255,255,255,.85)">WebUI（Astro）</div>
+        </div>
+        <div class="status" id="statusLine">状态加载中...</div>
+      </div>
+    </header>
+    <main>
+      <div class="grid2">
+        <section class="card">
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <div style="font-weight:600;">配置（JSON）</div>
+              <div class="muted">后端提供 /api/config 与 /api/save。保存需要 webui.enable-update=true。</div>
+            </div>
+            <div class="row">
+              <button id="btnLoad" class="primary">刷新配置</button>
+              <button id="btnSave">保存配置</button>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <textarea id="configEditor" spellcheck="false"></textarea>
+          </div>
+          <div class="muted" id="configHint" style="margin-top:6px;"></div>
+        </section>
+
+        <section class="card">
+          <div style="font-weight:600;">运行控制</div>
+          <div class="row" style="margin-top:10px;">
+            <select id="moduleSelect" style="padding:8px;border:1px solid #d0d7de;border-radius:10px;">
+              <option value="ispdomain">运营商/域名分流</option>
+              <option value="ipgroup">IPv4 分组/端口分流</option>
+              <option value="ipv6group">IPv6 分组</option>
+              <option value="ii">混合模式(运营商+IPv4)</option>
+              <option value="ip">IP混合(v4+v6)</option>
+              <option value="iip">全能模式</option>
+            </select>
+            <button id="btnRunOnce" class="primary">执行一次</button>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <input id="cronExpr" placeholder="Cron 表达式" style="flex:1;min-width:220px;padding:8px;border:1px solid #d0d7de;border-radius:10px;" />
+            <button id="btnCronStart">启动计划任务</button>
+            <button id="btnCronStop" class="danger">停止计划任务</button>
+          </div>
+          <div class="muted" id="runtimeHint" style="margin-top:6px;"></div>
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <div style="font-weight:600;">日志</div>
+            <div class="muted">/api/runtime/logs + /api/runtime/logs/stream(SSE)</div>
+          </div>
+          <div class="row">
+            <button id="btnTail">拉取 Tail</button>
+            <button id="btnStream" class="primary">开启实时</button>
+            <button id="btnStopStream">停止实时</button>
+          </div>
+        </div>
+        <div style="margin-top:10px;background:#0b1220;color:#dce7ff;border-radius:12px;padding:10px;min-height:240px;">
+          <pre id="logBox"></pre>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      const el = (id) => document.getElementById(id);
+      const configEditor = el('configEditor');
+      const configHint = el('configHint');
+      const statusLine = el('statusLine');
+      const moduleSelect = el('moduleSelect');
+      const cronExpr = el('cronExpr');
+      const runtimeHint = el('runtimeHint');
+      const logBox = el('logBox');
+
+      let es = null;
+
+      function setHint(node, msg) {
+        node.textContent = msg;
+      }
+
+      async function fetchJson(url, options) {
+        const r = await fetch(url, { headers: { 'content-type': 'application/json' }, ...options });
+        if (!r.ok) throw new Error(await r.text());
+        return await r.json();
+      }
+
+      async function loadConfig() {
+        const data = await fetchJson('/api/config');
+        configEditor.value = JSON.stringify(data, null, 2);
+        if (data?.cron) cronExpr.value = data.cron;
+        setHint(configHint, `conf_path=${data.conf_path || ''}`);
+      }
+
+      async function saveConfig() {
+        const raw = configEditor.value;
+        const obj = JSON.parse(raw);
+        const payload = { ...obj, with_comments: false };
+        const r = await fetch('/api/save', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        setHint(configHint, '保存成功');
+      }
+
+      async function refreshStatus() {
+        const st = await fetchJson('/api/runtime/status');
+        statusLine.textContent = `Running=${st.running} Cron=${st.cron_running} Next=${st.next_run_at || ''}`;
+      }
+
+      async function runOnce() {
+        const mod = moduleSelect.value;
+        const r = await fetchJson('/api/runtime/run-once', { method: 'POST', body: JSON.stringify({ module: mod }) });
+        setHint(runtimeHint, r.started ? '已启动' : '任务已在运行中');
+      }
+
+      async function cronStart() {
+        const mod = moduleSelect.value;
+        const expr = cronExpr.value;
+        await fetchJson('/api/runtime/cron/start', { method: 'POST', body: JSON.stringify({ expr, module: mod }) });
+        setHint(runtimeHint, '计划任务已启动');
+      }
+
+      async function cronStop() {
+        await fetchJson('/api/runtime/cron/stop', { method: 'POST' });
+        setHint(runtimeHint, '计划任务已停止');
+      }
+
+      function appendLogLine(line) {
+        const prev = logBox.textContent || '';
+        const next = (prev + '\n' + line).trim();
+        const lines = next.split('\n');
+        logBox.textContent = lines.slice(-2000).join('\n');
+      }
+
+      async function tailLogs() {
+        const arr = await fetchJson('/api/runtime/logs?tail=200');
+        logBox.textContent = '';
+        for (const it of arr) {
+          const t = it.ts || '';
+          const mod = it.module || '';
+          const tag = it.tag || '';
+          const detail = it.detail || '';
+          appendLogLine(`${t} [${mod}] [${tag}] ${detail}`);
+        }
+      }
+
+      function startStream() {
+        stopStream();
+        es = new EventSource('/api/runtime/logs/stream');
+        es.onmessage = (ev) => {
+          try {
+            const it = JSON.parse(ev.data);
+            appendLogLine(`${it.ts} [${it.module}] [${it.tag}] ${it.detail}`);
+          } catch (e) {
+            appendLogLine(ev.data);
+          }
+        };
+        es.onerror = () => {
+          appendLogLine('[SSE] disconnected');
+        };
+      }
+
+      function stopStream() {
+        if (es) {
+          es.close();
+          es = null;
+        }
+      }
+
+      el('btnLoad').onclick = () => loadConfig().catch(e => setHint(configHint, String(e)));
+      el('btnSave').onclick = () => saveConfig().catch(e => setHint(configHint, String(e)));
+      el('btnRunOnce').onclick = () => runOnce().catch(e => setHint(runtimeHint, String(e)));
+      el('btnCronStart').onclick = () => cronStart().catch(e => setHint(runtimeHint, String(e)));
+      el('btnCronStop').onclick = () => cronStop().catch(e => setHint(runtimeHint, String(e)));
+      el('btnTail').onclick = () => tailLogs().catch(e => appendLogLine(String(e)));
+      el('btnStream').onclick = () => startStream();
+      el('btnStopStream').onclick = () => stopStream();
+
+      await loadConfig().catch(() => {});
+      await refreshStatus().catch(() => {});
+      setInterval(() => refreshStatus().catch(() => {}), 1500);
+    </script>
+  </body>
+</html>

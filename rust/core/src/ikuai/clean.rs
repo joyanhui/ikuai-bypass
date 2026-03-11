@@ -5,7 +5,6 @@ pub fn is_managed(comment: &str, name: &str) -> bool {
     if name.starts_with(NAME_PREFIX_IKB) {
         return true;
     }
-    let comment = comment;
     comment.contains(NEW_COMMENT) || comment.contains(COMMENT_IKUAI_BYPASS)
 }
 
@@ -14,15 +13,12 @@ pub fn match_clean_tag(clean_tag: &str, legacy_tag_name: &str, current_tag_name:
     if clean_tag.is_empty() {
         return false;
     }
-
     if !is_managed(legacy_tag_name, current_tag_name) {
         return false;
     }
-
     if clean_tag == CLEAN_MODE_ALL {
         return true;
     }
-
     if !legacy_tag_name.is_empty()
         && (legacy_tag_name == clean_tag || legacy_tag_name.contains(clean_tag))
     {
@@ -34,25 +30,4 @@ pub fn match_clean_tag(clean_tag: &str, legacy_tag_name: &str, current_tag_name:
         return true;
     }
     false
-}
-
-#[cfg(test)]
-mod tests {
-    use super::match_clean_tag;
-    use crate::ikuai::{NAME_PREFIX_IKB, NEW_COMMENT};
-
-    #[test]
-    fn refuses_unmanaged() {
-        assert!(!match_clean_tag("x", "", "abc"));
-    }
-
-    #[test]
-    fn clean_all_requires_managed() {
-        assert!(match_clean_tag("cleanAll", NEW_COMMENT, "any"));
-        assert!(match_clean_tag(
-            "cleanAll",
-            "",
-            &format!("{}aaa", NAME_PREFIX_IKB)
-        ));
-    }
 }

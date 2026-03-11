@@ -1,20 +1,18 @@
 use std::collections::VecDeque;
-use std::convert::Infallible;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
-use async_stream::stream;
-use axum::response::sse::{Event, Sse};
+use chrono::DateTime;
 use chrono::Local;
 use cron::Schedule;
-use serde::Serialize;
 use tokio::sync::{broadcast, Mutex};
 
-use ikb_core::logger::{LogLevel, LogRecord};
+use crate::config::Config;
+use crate::logger::{LogLevel, LogRecord, LogSink};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct RuntimeStatus {
     pub running: bool,
     pub cron_running: bool,
@@ -73,13 +71,13 @@ pub struct RuntimeService {
     inner: Mutex<Inner>,
     running: AtomicBool,
     logs: Mutex<LogBroker>,
-    config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    config: Arc<tokio::sync::Mutex<Config>>,
     cli_login: String,
 }
 
 impl RuntimeService {
     pub fn new(
-        config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+        config: Arc<tokio::sync::Mutex<Config>>,
         cli_login: String,
         default_cron: String,
         default_module: String,
@@ -93,7 +91,7 @@ impl RuntimeService {
                 last_run_at: None,
             }),
             running: AtomicBool::new(false),
-            logs: Mutex::new(LogBroker::new(2000)),
+            logs: Mutex::new(LogBroker::new(5000)),
             config,
             cli_login,
         }
@@ -112,8 +110,11 @@ impl RuntimeService {
     }
 
     pub async fn tail_logs(&self, n: usize) -> Vec<LogRecord> {
-        let b = self.logs.lock().await;
-        b.tail(n)
+        self.logs.lock().await.tail(n)
+    }
+
+    pub async fn subscribe_logs(&self) -> broadcast::Receiver<LogRecord> {
+        self.logs.lock().await.subscribe()
     }
 
     pub fn status(&self) -> RuntimeStatus {
@@ -128,7 +129,6 @@ impl RuntimeService {
                 next_run_at: i.next_run_at.clone().unwrap_or_default(),
             };
         }
-
         RuntimeStatus {
             running: self.running.load(Ordering::SeqCst),
             cron_running: false,
@@ -141,8 +141,7 @@ impl RuntimeService {
 
     pub async fn start_run_once(self: Arc<Self>, module: String) -> Result<bool, String> {
         let module = if module.trim().is_empty() {
-            let inner = self.inner.lock().await;
-            inner.module.clone()
+            self.inner.lock().await.module.clone()
         } else {
             module
         };
@@ -155,50 +154,26 @@ impl RuntimeService {
             return Ok(false);
         }
 
-        {
-            let mut logs = self.logs.lock().await;
-            logs.append(LogRecord {
-                ts: Local::now().format("%Y/%m/%d %H:%M:%S").to_string(),
-                module: "SYS:系统组件".to_string(),
-                tag: "TASK:任务启动".to_string(),
-                level: LogLevel::Info,
-                detail: format!("module={}", module),
-            });
-        }
+        self.append_sys(LogLevel::Info, "TASK:任务启动", format!("module={}", module))
+            .await;
 
         let this = Arc::clone(&self);
-        let module_clone = module.clone();
         tokio::spawn(async move {
             let cfg = this.config.lock().await.clone();
-            let sink: ikb_core::logger::LogSink = {
+            this.append_sys(LogLevel::Info, "TASK:任务执行", format!("module={}", module))
+                .await;
+
+            let sink: LogSink = {
                 let svc = Arc::clone(&this);
                 Arc::new(move |rec| {
                     let svc = Arc::clone(&svc);
                     tokio::spawn(async move {
-                        let mut b = svc.logs.lock().await;
-                        b.append(rec);
+                        svc.logs.lock().await.append(rec);
                     });
                 })
             };
 
-            {
-                let mut logs = this.logs.lock().await;
-                logs.append(LogRecord {
-                    ts: Local::now().format("%Y/%m/%d %H:%M:%S").to_string(),
-                    module: "SYS:系统组件".to_string(),
-                    tag: "TASK:任务执行".to_string(),
-                    level: LogLevel::Info,
-                    detail: format!("module={}", module_clone),
-                });
-            }
-
-            let _ = ikb_core::update::run_update_by_module(
-                &cfg,
-                &this.cli_login,
-                &module_clone,
-                sink,
-            )
-            .await;
+            let _ = crate::update::run_update_by_module(&cfg, &this.cli_login, &module, sink).await;
             {
                 let mut inner = this.inner.lock().await;
                 inner.last_run_at = Some(Local::now().to_rfc3339());
@@ -225,8 +200,7 @@ impl RuntimeService {
 
         let schedule = Schedule::from_str(&expr).map_err(|e| e.to_string())?;
         let module = if module.trim().is_empty() {
-            let inner = self.inner.lock().await;
-            inner.module.clone()
+            self.inner.lock().await.module.clone()
         } else {
             module
         };
@@ -235,8 +209,7 @@ impl RuntimeService {
         let handle = tokio::spawn(async move {
             let mut upcoming = schedule.upcoming(Local);
             loop {
-                let next = upcoming.next();
-                let next = match next {
+                let next: DateTime<Local> = match upcoming.next() {
                     Some(t) => t,
                     None => return,
                 };
@@ -280,20 +253,14 @@ impl RuntimeService {
         Ok(())
     }
 
-    pub async fn sse_stream(
-        self: Arc<Self>,
-    ) -> Sse<impl futures_core::Stream<Item = Result<Event, Infallible>> + Send + 'static> {
-        let mut rx = { self.logs.lock().await.subscribe() };
-
-        let out = stream! {
-            loop {
-                let msg = rx.recv().await;
-                if let Ok(entry) = msg {
-                    let data = serde_json::to_string(&entry).unwrap_or_default();
-                    yield Ok(Event::default().data(data));
-                }
-            }
-        };
-        Sse::new(out).keep_alive(axum::response::sse::KeepAlive::default())
+    async fn append_sys(&self, level: LogLevel, tag: &str, detail: String) {
+        let mut b = self.logs.lock().await;
+        b.append(LogRecord {
+            ts: Local::now().format("%Y/%m/%d %H:%M:%S").to_string(),
+            module: "SYS:系统组件".to_string(),
+            tag: tag.to_string(),
+            level,
+            detail,
+        });
     }
 }

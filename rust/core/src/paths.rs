@@ -45,7 +45,6 @@ fn unix_home_dir_no_env() -> Option<PathBuf> {
     if buf_len <= 0 {
         buf_len = 16 * 1024;
     }
-
     let mut buf = vec![0u8; buf_len as usize];
     let mut pwd: libc::passwd = unsafe { std::mem::zeroed() };
     let mut result: *mut libc::passwd = std::ptr::null_mut();
@@ -58,13 +57,10 @@ fn unix_home_dir_no_env() -> Option<PathBuf> {
             &mut result,
         )
     };
-
     if rc != 0 || result.is_null() || pwd.pw_dir.is_null() {
         return None;
     }
-
-    let dir_cstr = unsafe { CStr::from_ptr(pwd.pw_dir) };
-    let dir = dir_cstr.to_str().ok()?;
+    let dir = unsafe { CStr::from_ptr(pwd.pw_dir) }.to_str().ok()?;
     if dir.is_empty() {
         return None;
     }
@@ -86,13 +82,11 @@ fn windows_roaming_appdata() -> Option<PathBuf> {
 
     unsafe {
         let _ = CoInitializeEx(std::ptr::null_mut(), COINIT_APARTMENTTHREADED);
-
         let mut path_ptr: PWSTR = std::ptr::null_mut();
         let hr = SHGetKnownFolderPath(&FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, 0, &mut path_ptr);
         if hr < 0 || path_ptr.is_null() {
             return None;
         }
-
         let mut len = 0usize;
         while *path_ptr.add(len) != 0 {
             len += 1;

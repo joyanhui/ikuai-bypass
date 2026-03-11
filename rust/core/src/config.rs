@@ -10,13 +10,10 @@ use thiserror::Error;
 pub enum ConfigError {
     #[error("read config failed: {0}")]
     ReadFailed(#[from] std::io::Error),
-
     #[error("parse yaml failed: {0}")]
     ParseFailed(#[from] serde_yaml::Error),
-
     #[error("security violation: file extension must be .yml or .yaml")]
     InvalidExtension,
-
     #[error("security violation: cannot write to a symbolic link")]
     SymlinkDenied,
 }
@@ -210,11 +207,10 @@ impl Config {
         {
             use std::io::Write;
             use std::os::unix::fs::OpenOptionsExt;
-
             let mut options = fs::OpenOptions::new();
             options.create(true).truncate(true).write(true).mode(0o600);
-            let mut file = options.open(path)?;
-            file.write_all(data.as_bytes())?;
+            let mut f = options.open(path)?;
+            f.write_all(data.as_bytes())?;
             return Ok(());
         }
 

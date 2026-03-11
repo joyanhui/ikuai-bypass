@@ -1,0 +1,30 @@
+# Rust build artifacts
+/target/
+**/target/
+Cargo.lock
+!Cargo.lock
+
+# Rustfmt backups
+**/*.rs.bk
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Test artifacts
+*.profraw
+
+# Application specific
+/tmp/
+*.log
+config.yml
+!config_example.yml

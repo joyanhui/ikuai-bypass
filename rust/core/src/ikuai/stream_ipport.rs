@@ -22,7 +22,8 @@ struct TimeCustom {
 #[derive(Debug, Deserialize)]
 struct TimeBlock {
     custom: Vec<TimeCustom>,
-    object: Value,
+    #[serde(rename = "object")]
+    _object: Value,
 }
 
 #[derive(Debug, Deserialize)]
@@ -34,11 +35,11 @@ struct StreamIpPort4 {
     interface: String,
     nexthop: String,
     comment: String,
-    r#type: i64,
-    mode: i64,
     #[serde(rename = "iface_band")]
     iface_band: i64,
+    mode: i64,
     protocol: String,
+    r#type: i64,
     #[serde(rename = "src_addr")]
     src_addr: AddrBlock,
     #[serde(rename = "dst_addr")]
@@ -58,10 +59,7 @@ struct DelParam {
     id: String,
 }
 
-pub async fn show_stream_ipport_by_tag_name(
-    api: &IKuaiClient,
-    tag_name: &str,
-) -> Result<Vec<StreamIpPortData>, IKuaiError> {
+pub async fn show_stream_ipport_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Result<Vec<StreamIpPortData>, IKuaiError> {
     let param = ShowParam {
         r#type: "total,data".to_string(),
         limit: "0,1000".to_string(),
@@ -75,16 +73,10 @@ pub async fn show_stream_ipport_by_tag_name(
         if !match_tag_name_filter(tag_name, &d.tagname, &d.comment) {
             continue;
         }
-        let srcs = {
-            let mut v = to_string_list(&d.src_addr.custom);
-            v.extend(to_string_list(&d.src_addr.object));
-            v
-        };
-        let dsts = {
-            let mut v = to_string_list(&d.dst_addr.custom);
-            v.extend(to_string_list(&d.dst_addr.object));
-            v
-        };
+        let mut srcs = to_string_list(&d.src_addr.custom);
+        srcs.extend(to_string_list(&d.src_addr.object));
+        let mut dsts = to_string_list(&d.dst_addr.custom);
+        dsts.extend(to_string_list(&d.dst_addr.object));
         let mut item = StreamIpPortData {
             id: d.id,
             enabled: d.enabled,
@@ -92,10 +84,10 @@ pub async fn show_stream_ipport_by_tag_name(
             tag_name: d.tagname,
             interface: d.interface,
             nexthop: d.nexthop,
-            r#type: d.r#type,
-            mode: d.mode,
             iface_band: d.iface_band,
+            mode: d.mode,
             protocol: d.protocol,
+            r#type: d.r#type,
             src_addr: srcs.join(","),
             dst_addr: dsts.join(","),
             src_port: String::new(),
@@ -108,6 +100,17 @@ pub async fn show_stream_ipport_by_tag_name(
             item.time = format!("{}-{}", t.start_time, t.end_time);
         }
         out.push(item);
+    }
+    Ok(out)
+}
+
+pub async fn get_stream_ipport_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<String, i64>, IKuaiError> {
+    let data = show_stream_ipport_by_tag_name(api, "").await?;
+    let mut out = std::collections::HashMap::new();
+    for d in data {
+        if match_tag_name_filter(tag, &d.tag_name, &d.comment) {
+            out.insert(d.tag_name.clone(), d.id);
+        }
     }
     Ok(out)
 }
@@ -140,7 +143,6 @@ pub async fn add_stream_ipport(
     let (dst_custom, dst_obj) = categorize_addrs(&dst_list);
     let src_objects = resolve_ip_group_objects(api, &src_obj).await?;
     let dst_objects = resolve_ip_group_objects(api, &dst_obj).await?;
-
     let param = serde_json::json!({
         "enabled": "yes",
         "tagname": build_tag_name(tag),
@@ -195,7 +197,6 @@ pub async fn edit_stream_ipport(
     let (dst_custom, dst_obj) = categorize_addrs(&dst_list);
     let src_objects = resolve_ip_group_objects(api, &src_obj).await?;
     let dst_objects = resolve_ip_group_objects(api, &dst_obj).await?;
-
     let param = serde_json::json!({
         "enabled": "yes",
         "tagname": build_tag_name(tag),
@@ -247,17 +248,6 @@ pub async fn del_ikuai_bypass_stream_ipport(api: &IKuaiClient, clean_tag: &str) 
     }
 }
 
-pub async fn get_stream_ipport_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<String, i64>, IKuaiError> {
-    let data = show_stream_ipport_by_tag_name(api, "").await?;
-    let mut out = std::collections::HashMap::new();
-    for d in data {
-        if match_tag_name_filter(tag, &d.tag_name, &d.comment) {
-            out.insert(d.tag_name.clone(), d.id);
-        }
-    }
-    Ok(out)
-}
-
 async fn resolve_ip_group_objects(api: &IKuaiClient, names: &[String]) -> Result<Vec<Value>, IKuaiError> {
     if names.is_empty() {
         return Ok(Vec::new());
@@ -270,11 +260,7 @@ async fn resolve_ip_group_objects(api: &IKuaiClient, names: &[String]) -> Result
     let mut out = Vec::new();
     for name in names {
         if let Some(id) = map.get(name) {
-            out.push(serde_json::json!({
-                "type": 0,
-                "gid": format!("IPGP{}", id),
-                "gp_name": name
-            }));
+            out.push(serde_json::json!({"type": 0, "gid": format!("IPGP{}", id), "gp_name": name}));
         }
     }
     Ok(out)

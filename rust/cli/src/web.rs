@@ -10,8 +10,12 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
+use tower_http::services::ServeDir;
+use async_stream::stream;
+use axum::response::sse::{Event, Sse};
+use std::convert::Infallible;
 
-use crate::runtime::RuntimeService;
+use ikb_core::runtime::RuntimeService;
 
 #[derive(Clone)]
 struct AppState {
@@ -54,8 +58,7 @@ pub fn start_web_server(
         runtime,
     };
 
-    let app = Router::new()
-        .route("/", get(index))
+    let api = Router::new()
         .route("/api/config", get(api_config))
         .route("/api/save", post(api_save))
         .route("/api/runtime/status", get(api_runtime_status))
@@ -63,9 +66,22 @@ pub fn start_web_server(
         .route("/api/runtime/cron/start", post(api_runtime_cron_start))
         .route("/api/runtime/cron/stop", post(api_runtime_cron_stop))
         .route("/api/runtime/logs", get(api_runtime_logs))
-        .route("/api/runtime/logs/stream", get(api_runtime_logs_stream))
-        .layer(axum::middleware::from_fn_with_state(state.clone(), basic_auth))
-        .with_state(state);
+        .route("/api/runtime/logs/stream", get(api_runtime_logs_stream));
+
+    let dist = find_frontend_dist_dir();
+    let app = if let Some(dist) = dist {
+        Router::new()
+            .merge(api)
+            .fallback_service(ServeDir::new(dist))
+            .layer(axum::middleware::from_fn_with_state(state.clone(), basic_auth))
+            .with_state(state)
+    } else {
+        Router::new()
+            .route("/", get(index))
+            .merge(api)
+            .layer(axum::middleware::from_fn_with_state(state.clone(), basic_auth))
+            .with_state(state)
+    };
 
     let addr = format!("0.0.0.0:{}", port);
     let listener = TcpListener::bind(&addr).map_err(|e| e.to_string())?;
@@ -83,6 +99,46 @@ pub fn start_web_server(
 
     println!("[WEB:服务启动] WebUI is available at http://0.0.0.0:{}", port);
     Ok(())
+}
+
+fn find_frontend_dist_dir() -> Option<std::path::PathBuf> {
+    fn valid(p: &std::path::Path) -> bool {
+        p.join("index.html").is_file()
+    }
+
+    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+    if let Ok(cwd) = std::env::current_dir() {
+        candidates.push(cwd.join("app/frontend/dist"));
+        candidates.push(cwd.join("rust/app/frontend/dist"));
+        candidates.push(cwd.join("./app/frontend/dist"));
+        candidates.push(cwd.join("./rust/app/frontend/dist"));
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(exe_dir) = exe.parent() {
+            candidates.push(exe_dir.join("../rust/app/frontend/dist"));
+            candidates.push(exe_dir.join("../../rust/app/frontend/dist"));
+            candidates.push(exe_dir.join("../app/frontend/dist"));
+            candidates.push(exe_dir.join("../../app/frontend/dist"));
+
+            for ancestor in exe_dir.ancestors().take(8) {
+                candidates.push(ancestor.join("app/frontend/dist"));
+                candidates.push(ancestor.join("rust/app/frontend/dist"));
+            }
+        }
+    }
+
+    candidates.push(std::path::PathBuf::from("app/frontend/dist"));
+    candidates.push(std::path::PathBuf::from("./app/frontend/dist"));
+    candidates.push(std::path::PathBuf::from("rust/app/frontend/dist"));
+    candidates.push(std::path::PathBuf::from("./rust/app/frontend/dist"));
+
+    for p in candidates {
+        if valid(&p) {
+            return Some(p);
+        }
+    }
+    None
 }
 
 async fn index() -> Html<&'static str> {
@@ -225,7 +281,18 @@ fn parse_tail_query(query: &str) -> Option<usize> {
 }
 
 async fn api_runtime_logs_stream(State(state): State<AppState>) -> impl IntoResponse {
-    Arc::clone(&state.runtime).sse_stream().await
+    let runtime = Arc::clone(&state.runtime);
+    let out = stream! {
+        let mut rx = runtime.subscribe_logs().await;
+        loop {
+            let msg = rx.recv().await;
+            if let Ok(entry) = msg {
+                let data = serde_json::to_string(&entry).unwrap_or_default();
+                yield Ok::<Event, Infallible>(Event::default().data(data));
+            }
+        }
+    };
+    Sse::new(out).keep_alive(axum::response::sse::KeepAlive::default())
 }
 
 async fn basic_auth(

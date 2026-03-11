@@ -62,7 +62,7 @@ export const bridge = {
     if (isTauri()) {
       await tauriInvoke<void>('save_config_with_comments', {
         config: payload,
-        with_comments: withComments,
+        withComments: withComments,
       });
       return;
     }
@@ -140,5 +140,17 @@ export const bridge = {
         es.close();
       } catch (_) {}
     };
+  },
+
+  async fetchRemoteConfig(url: string, githubProxy: string): Promise<string> {
+    if (isTauri()) {
+      return await tauriInvoke<string>('fetch_remote_config', {
+        url,
+        githubProxy,
+      });
+    }
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+    return await r.text();
   },
 };

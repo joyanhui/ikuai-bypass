@@ -1908,6 +1908,7 @@ name = "ikb-app"
 version = "0.0.0"
 dependencies = [
  "ikb-core",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "tauri",

@@ -111,6 +111,34 @@ async fn runtime_tail_logs(
     Ok(state.runtime.tail_logs(tail.unwrap_or(200)).await)
 }
 
+#[tauri::command]
+async fn fetch_remote_config(url: String, github_proxy: String) -> Result<String, String> {
+    let url = url.trim();
+    if url.is_empty() {
+        return Err("Remote URL is empty".to_string());
+    }
+    let mut final_url = url.to_string();
+    let proxy = github_proxy.trim();
+    if !proxy.is_empty() && url.starts_with("https://raw.githubusercontent.com/") {
+        final_url = if proxy.ends_with('/') {
+            format!("{}{}", proxy, url)
+        } else {
+            format!("{}/{}", proxy, url)
+        };
+    }
+
+    let client = reqwest::Client::builder()
+        .user_agent("ikb-app")
+        .build()
+        .map_err(|e| e.to_string())?;
+    let resp = client.get(final_url).send().await.map_err(|e| e.to_string())?;
+    let status = resp.status();
+    if !status.is_success() {
+        return Err(format!("HTTP {}", status));
+    }
+    resp.text().await.map_err(|e| e.to_string())
+}
+
 pub struct AppState {
     config: Arc<tokio::sync::Mutex<Config>>,
     runtime: Arc<RuntimeService>,
@@ -184,6 +212,7 @@ pub fn run() {
             runtime_cron_start,
             runtime_cron_stop,
             runtime_tail_logs,
+            fetch_remote_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

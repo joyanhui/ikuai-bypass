@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "astro": "^4.16.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "monaco-editor": "^0.55.1"
   }
 }

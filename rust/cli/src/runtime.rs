@@ -9,15 +9,10 @@ use async_stream::stream;
 use axum::response::sse::{Event, Sse};
 use chrono::Local;
 use cron::Schedule;
-use regex::Regex;
 use serde::Serialize;
 use tokio::sync::{broadcast, Mutex};
 
-#[derive(Debug, Clone, Serialize)]
-pub struct LogEntry {
-    pub time: String,
-    pub line: String,
-}
+use ikb_core::logger::{LogLevel, LogRecord};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RuntimeStatus {
@@ -32,9 +27,8 @@ pub struct RuntimeStatus {
 #[derive(Debug)]
 struct LogBroker {
     max_lines: usize,
-    lines: VecDeque<LogEntry>,
-    tx: broadcast::Sender<LogEntry>,
-    ansi_re: Regex,
+    lines: VecDeque<LogRecord>,
+    tx: broadcast::Sender<LogRecord>,
 }
 
 impl LogBroker {
@@ -44,30 +38,23 @@ impl LogBroker {
             max_lines: max_lines.max(1),
             lines: VecDeque::with_capacity(max_lines.max(1)),
             tx,
-            ansi_re: Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]").expect("regex"),
         }
     }
 
-    fn append(&mut self, line: impl Into<String>) {
-        let mut line = line.into();
-        line = self.ansi_re.replace_all(&line, "").to_string();
-        let entry = LogEntry {
-            time: Local::now().to_rfc3339(),
-            line,
-        };
-        self.lines.push_back(entry.clone());
+    fn append(&mut self, rec: LogRecord) {
+        self.lines.push_back(rec.clone());
         while self.lines.len() > self.max_lines {
             self.lines.pop_front();
         }
-        let _ = self.tx.send(entry);
+        let _ = self.tx.send(rec);
     }
 
-    fn tail(&self, n: usize) -> Vec<LogEntry> {
+    fn tail(&self, n: usize) -> Vec<LogRecord> {
         let n = n.max(1).min(self.lines.len());
         self.lines.iter().skip(self.lines.len() - n).cloned().collect()
     }
 
-    fn subscribe(&self) -> broadcast::Receiver<LogEntry> {
+    fn subscribe(&self) -> broadcast::Receiver<LogRecord> {
         self.tx.subscribe()
     }
 }
@@ -124,7 +111,7 @@ impl RuntimeService {
         }
     }
 
-    pub async fn tail_logs(&self, n: usize) -> Vec<LogEntry> {
+    pub async fn tail_logs(&self, n: usize) -> Vec<LogRecord> {
         let b = self.logs.lock().await;
         b.tail(n)
     }
@@ -170,27 +157,39 @@ impl RuntimeService {
 
         {
             let mut logs = self.logs.lock().await;
-            logs.append(format!("[TASK:任务启动] module={}", module));
+            logs.append(LogRecord {
+                ts: Local::now().format("%Y/%m/%d %H:%M:%S").to_string(),
+                module: "SYS:系统组件".to_string(),
+                tag: "TASK:任务启动".to_string(),
+                level: LogLevel::Info,
+                detail: format!("module={}", module),
+            });
         }
 
         let this = Arc::clone(&self);
         let module_clone = module.clone();
         tokio::spawn(async move {
             let cfg = this.config.lock().await.clone();
-            let sink = {
-                let logs = Arc::clone(&this);
-                Arc::new(move |s: String| {
-                    let logs = Arc::clone(&logs);
+            let sink: ikb_core::logger::LogSink = {
+                let svc = Arc::clone(&this);
+                Arc::new(move |rec| {
+                    let svc = Arc::clone(&svc);
                     tokio::spawn(async move {
-                        let mut b = logs.logs.lock().await;
-                        b.append(s);
+                        let mut b = svc.logs.lock().await;
+                        b.append(rec);
                     });
                 })
             };
 
             {
                 let mut logs = this.logs.lock().await;
-                logs.append(format!("[TASK:任务执行] module={}", module_clone));
+                logs.append(LogRecord {
+                    ts: Local::now().format("%Y/%m/%d %H:%M:%S").to_string(),
+                    module: "SYS:系统组件".to_string(),
+                    tag: "TASK:任务执行".to_string(),
+                    level: LogLevel::Info,
+                    detail: format!("module={}", module_clone),
+                });
             }
 
             let _ = ikb_core::update::run_update_by_module(

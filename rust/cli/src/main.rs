@@ -3,6 +3,7 @@ use std::str::FromStr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+use std::io::IsTerminal;
 
 use clap::Parser;
 use cron::Schedule;
@@ -225,8 +226,10 @@ fn main() {
 
 fn run_update_once(cfg: &ikb_core::config::Config, cli_login: &str, module: &str) {
     let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
-    let sink = std::sync::Arc::new(|s: String| {
-        println!("{}", s);
+    let use_color = std::io::stdout().is_terminal();
+    let renderer = ikb_core::logger::Renderer::new(use_color);
+    let sink: ikb_core::logger::LogSink = std::sync::Arc::new(move |rec| {
+        println!("{}", renderer.render(&rec));
     });
     let cfg = cfg.clone();
     let cli_login = cli_login.to_string();

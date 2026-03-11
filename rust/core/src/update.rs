@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::config::Config;
+use crate::logger::{LogSink, Logger};
 use crate::ikuai;
 use crate::session::{resolve_login_params, LoginParamsError};
 
@@ -17,8 +18,6 @@ pub enum UpdateError {
     InvalidModule(String),
 }
 
-pub type LogSink = Arc<dyn Fn(String) + Send + Sync>;
-
 pub async fn run_update_by_module(
     cfg: &Config,
     cli_login: &str,
@@ -29,31 +28,33 @@ pub async fn run_update_by_module(
     let api = ikuai::IKuaiClient::new(params.base_url.clone())?;
     api.login(&params.username, &params.password).await?;
 
+    let sys = Logger::new("SYS:系统组件", Arc::clone(&sink));
+
     match module {
         "ispdomain" => {
-            log(&sink, "[TASK:任务启动] Starting ISP and Domain streaming mode");
+            sys.info("TASK:任务启动", "Starting ISP and Domain streaming mode");
             update_ispdomain(cfg, &api, &sink).await;
         }
         "ipgroup" => {
-            log(&sink, "[TASK:任务启动] Starting IP group and Next-hop gateway mode");
+            sys.info("TASK:任务启动", "Starting IP group and Next-hop gateway mode");
             update_ipgroup(cfg, &api, &sink).await;
         }
         "ipv6group" => {
-            log(&sink, "[TASK:任务启动] Starting IPv6 group mode");
+            sys.info("TASK:任务启动", "Starting IPv6 group mode");
             update_ipv6group(cfg, &api, &sink).await;
         }
         "ii" => {
-            log(&sink, "[TASK:任务启动] Starting hybrid mode: ISP/Domain + IP group");
+            sys.info("TASK:任务启动", "Starting hybrid mode: ISP/Domain + IP group");
             update_ispdomain(cfg, &api, &sink).await;
             update_ipgroup(cfg, &api, &sink).await;
         }
         "ip" => {
-            log(&sink, "[TASK:任务启动] Starting hybrid mode: IPv4 group + IPv6 group");
+            sys.info("TASK:任务启动", "Starting hybrid mode: IPv4 group + IPv6 group");
             update_ipgroup(cfg, &api, &sink).await;
             update_ipv6group(cfg, &api, &sink).await;
         }
         "iip" => {
-            log(&sink, "[TASK:任务启动] Starting full hybrid mode: ISP/Domain + IPv4/v6 group");
+            sys.info("TASK:任务启动", "Starting full hybrid mode: ISP/Domain + IPv4/v6 group");
             update_ispdomain(cfg, &api, &sink).await;
             update_ipgroup(cfg, &api, &sink).await;
             update_ipv6group(cfg, &api, &sink).await;
@@ -65,21 +66,31 @@ pub async fn run_update_by_module(
 }
 
 async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
+    let isp_logger = Logger::new("ISP:运营商分流", Arc::clone(sink));
+    let domain_logger = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
+    let sys = Logger::new("SYS:系统组件", Arc::clone(sink));
+
     for item in &cfg.custom_isp {
-        log(sink, format!("[ISP:运营商分流][UPDATE:开始更新] Updating {}...", item.tag));
+        isp_logger.info("UPDATE:开始更新", format!("Updating {}...", item.tag));
         let res = update_custom_isp(cfg, api, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
-            log(sink, format!("[ISP:运营商分流][UPDATE:更新失败] Failed to update custom ISP '{}': {}", item.tag, e));
+            isp_logger.error(
+                "UPDATE:更新失败",
+                format!("Failed to update custom ISP '{}': {}", item.tag, e),
+            );
         } else {
-            log(sink, format!("[ISP:运营商分流][UPDATE:更新成功] Successfully updated custom ISP '{}'", item.tag));
+            isp_logger.success(
+                "UPDATE:更新成功",
+                format!("Successfully updated custom ISP '{}'", item.tag),
+            );
         }
     }
 
     for item in &cfg.stream_domain {
-        log(
-            sink,
+        domain_logger.info(
+            "UPDATE:开始更新",
             format!(
-                "[DOMAIN:域名分流][UPDATE:开始更新] Updating {} (Interface: {}, Tag: {})...",
+                "Updating {} (Interface: {}, Tag: {})...",
                 item.url, item.interface, item.tag
             ),
         );
@@ -95,45 +106,39 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
         )
         .await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[DOMAIN:域名分流][UPDATE:更新失败] Failed to update domain streaming for tag {}: {}",
-                    item.tag, e
-                ),
+            domain_logger.error(
+                "UPDATE:更新失败",
+                format!("Failed to update domain streaming for tag {}: {}", item.tag, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[DOMAIN:域名分流][UPDATE:更新成功] Successfully updated domain streaming for tag {}",
-                    item.tag
-                ),
+            domain_logger.success(
+                "UPDATE:更新成功",
+                format!("Successfully updated domain streaming for tag {}", item.tag),
             );
         }
     }
 
-    log(sink, "[DONE:任务完成] ISP and Domain streaming update tasks completed");
+    sys.success(
+        "DONE:任务完成",
+        "ISP and Domain streaming update tasks completed",
+    );
 }
 
 async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
+    let ip_logger = Logger::new("IP:IP分组", Arc::clone(sink));
+    let stream_logger = Logger::new("STREAM:端口分流", Arc::clone(sink));
+
     for item in &cfg.ip_group {
         let res = update_ip_group(cfg, api, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[IP:IP分组][UPDATE:更新失败] Failed to add IP group '{}@{}': {}",
-                    item.tag, item.url, e
-                ),
+            ip_logger.error(
+                "UPDATE:更新失败",
+                format!("Failed to add IP group '{}@{}': {}", item.tag, item.url, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[IP:IP分组][UPDATE:更新成功] Successfully updated IP group '{}@{}'",
-                    item.tag, item.url
-                ),
+            ip_logger.success(
+                "UPDATE:更新成功",
+                format!("Successfully updated IP group '{}@{}'", item.tag, item.url),
             );
         }
     }
@@ -145,22 +150,19 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
             format!("{}{}", item.interface, item.nexthop)
         };
         if tag.trim().is_empty() {
-            log(
-                sink,
+            stream_logger.error(
+                "VALID:参数校验",
                 format!(
-                    "[STREAM:端口分流][VALID:参数校验] Rule name and IpGroup cannot both be empty, skipping: interface='{}' nexthop='{}'",
+                    "Rule name and IpGroup cannot both be empty, skipping: interface='{}' nexthop='{}'",
                     item.interface, item.nexthop
                 ),
             );
             continue;
         }
 
-        log(
-            sink,
-            format!(
-                "[STREAM:端口分流][UPDATE:开始更新] Updating port streaming for tag {}...",
-                tag
-            ),
+        stream_logger.info(
+            "UPDATE:开始更新",
+            format!("Updating port streaming for tag {}...", tag),
         );
         let res = update_stream_ipport(
             cfg,
@@ -178,20 +180,20 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
         )
         .await;
         if let Err(e) = res {
-            log(
-                sink,
+            stream_logger.error(
+                "UPDATE:更新失败",
                 format!(
-                    "[STREAM:端口分流][UPDATE:更新失败] Failed to update port streaming '{}@{}': {}",
+                    "Failed to update port streaming '{}@{}': {}",
                     format!("{}{}", item.interface, item.nexthop),
                     item.ip_group,
                     e
                 ),
             );
         } else {
-            log(
-                sink,
+            stream_logger.success(
+                "UPDATE:更新成功",
                 format!(
-                    "[STREAM:端口分流][UPDATE:更新成功] Successfully updated port streaming '{}@{}'",
+                    "Successfully updated port streaming '{}@{}'",
                     format!("{}{}", item.interface, item.nexthop),
                     item.ip_group
                 ),
@@ -201,23 +203,19 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
 }
 
 async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
+    let ipv6_logger = Logger::new("IPV6:IPv6分组", Arc::clone(sink));
+
     for item in &cfg.ipv6_group {
         let res = update_ipv6_group(cfg, api, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[IPV6:IPv6分组][UPDATE:更新失败] Failed to add IPv6 group '{}@{}': {}",
-                    item.tag, item.url, e
-                ),
+            ipv6_logger.error(
+                "UPDATE:更新失败",
+                format!("Failed to add IPv6 group '{}@{}': {}", item.tag, item.url, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[IPV6:IPv6分组][UPDATE:更新成功] Successfully updated IPv6 group '{}@{}'",
-                    item.tag, item.url
-                ),
+            ipv6_logger.success(
+                "UPDATE:更新成功",
+                format!("Successfully updated IPv6 group '{}@{}'", item.tag, item.url),
             );
         }
     }
@@ -230,13 +228,12 @@ async fn update_custom_isp(
     tag: &str,
     url: &str,
 ) -> Result<(), UpdateError> {
+    let isp_logger = Logger::new("ISP:运营商分流", Arc::clone(sink));
+
     let body = http_get(cfg, sink, url).await?;
     let mut ips = split_lines(&body);
     ips = remove_ipv6_and_empty(sink, ips);
-    log(
-        sink,
-        format!("[ISP:运营商分流][STAT:规则统计] Fetched {} IPs for {}", ips.len(), tag),
-    );
+    isp_logger.info("STAT:规则统计", format!("Fetched {} IPs for {}", ips.len(), tag));
 
     let mut map = ikuai::custom_isp::get_custom_isp_map(api, tag).await?;
     let groups = group(ips, cfg.max_number_of_one_records.isp as usize);
@@ -244,10 +241,10 @@ async fn update_custom_isp(
         let index = (i + 1) as i64;
         let ip_group = chunk.join(",");
         let res = if let Some(id) = map.remove(&index) {
-            log(
-                sink,
+            isp_logger.info(
+                "EDIT:正在修改",
                 format!(
-                    "[ISP:运营商分流][EDIT:正在修改] [{}/{}] {}: updating chunk {} (ID: {})...",
+                    "[{}/{}] {}: updating chunk {} (ID: {})...",
                     i + 1,
                     groups.len(),
                     tag,
@@ -257,10 +254,10 @@ async fn update_custom_isp(
             );
             ikuai::custom_isp::edit_custom_isp(api, tag, &ip_group, i as i64, id).await
         } else {
-            log(
-                sink,
+            isp_logger.info(
+                "ADD:正在添加",
                 format!(
-                    "[ISP:运营商分流][ADD:正在添加] [{}/{}] {}: adding chunk {}...",
+                    "[{}/{}] {}: adding chunk {}...",
                     i + 1,
                     groups.len(),
                     tag,
@@ -271,10 +268,10 @@ async fn update_custom_isp(
         };
 
         if let Err(e) = res {
-            log(
-                sink,
+            isp_logger.error(
+                "UPDATE:更新失败",
                 format!(
-                    "[ISP:运营商分流][UPDATE:更新失败] [{}/{}] {}: failed: {}",
+                    "[{}/{}] {}: failed: {}",
                     i + 1,
                     groups.len(),
                     tag,
@@ -290,10 +287,10 @@ async fn update_custom_isp(
     if !map.is_empty() {
         let mut extra = Vec::new();
         for (idx, id) in map {
-            log(
-                sink,
+            isp_logger.info(
+                "CLEAN:冗余删除",
                 format!(
-                    "[ISP:运营商分流][CLEAN:冗余删除] {}: chunk {} (ID: {}) is no longer needed, deleting...",
+                    "{}: chunk {} (ID: {}) is no longer needed, deleting...",
                     tag, idx, id
                 ),
             );
@@ -302,21 +299,14 @@ async fn update_custom_isp(
         let joined = extra.join(",");
         let res = ikuai::custom_isp::del_custom_isp(api, &joined).await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[ISP:运营商分流][CLEAN:删除失败] {}: failed to delete extra rules: {}",
-                    tag, e
-                ),
+            isp_logger.error(
+                "CLEAN:删除失败",
+                format!("{}: failed to delete extra rules: {}", tag, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[ISP:运营商分流][CLEAN:清理成功] {}: deleted {} extra rules",
-                    tag,
-                    extra.len()
-                ),
+            isp_logger.success(
+                "CLEAN:清理成功",
+                format!("{}: deleted {} extra rules", tag, extra.len()),
             );
         }
     }
@@ -334,13 +324,15 @@ async fn update_stream_domain(
     src_addr: &str,
     url: &str,
 ) -> Result<(), UpdateError> {
+    let domain_logger = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
+
     let body = http_get(cfg, sink, url).await?;
     let mut domains = split_lines(&body);
     domains = filter_domains(sink, domains);
-    log(
-        sink,
+    domain_logger.success(
+        "PARSE:解析成功",
         format!(
-            "[DOMAIN:域名分流][PARSE:解析成功] {} {}: obtained {} valid domains",
+            "{} {}: obtained {} valid domains",
             iface,
             tag,
             domains.len()
@@ -354,10 +346,10 @@ async fn update_stream_domain(
         let name = ikuai::tag_name::build_indexed_tag_name(tag, i as i64);
         let joined = chunk.join(",");
         let res = if let Some(id) = map.remove(&index) {
-            log(
-                sink,
+            domain_logger.info(
+                "EDIT:正在修改",
                 format!(
-                    "[DOMAIN:域名分流][EDIT:正在修改] [{}/{}] {} {}: updating {} (ID: {})...",
+                    "[{}/{}] {} {}: updating {} (ID: {})...",
                     i + 1,
                     groups.len(),
                     iface,
@@ -378,10 +370,10 @@ async fn update_stream_domain(
             )
             .await
         } else {
-            log(
-                sink,
+            domain_logger.info(
+                "ADD:正在添加",
                 format!(
-                    "[DOMAIN:域名分流][ADD:正在添加] [{}/{}] {} {}: adding {}...",
+                    "[{}/{}] {} {}: adding {}...",
                     i + 1,
                     groups.len(),
                     iface,
@@ -402,10 +394,10 @@ async fn update_stream_domain(
         };
 
         if let Err(e) = res {
-            log(
-                sink,
+            domain_logger.error(
+                "UPDATE:更新失败",
                 format!(
-                    "[DOMAIN:域名分流][UPDATE:更新失败] [{}/{}] {} {}: failed: {}",
+                    "[{}/{}] {} {}: failed: {}",
                     i + 1,
                     groups.len(),
                     iface,
@@ -422,10 +414,10 @@ async fn update_stream_domain(
     if !map.is_empty() {
         let mut extra = Vec::new();
         for (idx, id) in map {
-            log(
-                sink,
+            domain_logger.info(
+                "CLEAN:冗余删除",
                 format!(
-                    "[DOMAIN:域名分流][CLEAN:冗余删除] {}: chunk {} (ID: {}) is no longer needed, deleting...",
+                    "{}: chunk {} (ID: {}) is no longer needed, deleting...",
                     tag, idx, id
                 ),
             );
@@ -433,21 +425,14 @@ async fn update_stream_domain(
         }
         let res = ikuai::stream_domain::del_stream_domain(api, &extra.join(",")).await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[DOMAIN:域名分流][CLEAN:删除失败] {}: failed to delete extra domain rules: {}",
-                    tag, e
-                ),
+            domain_logger.error(
+                "CLEAN:删除失败",
+                format!("{}: failed to delete extra domain rules: {}", tag, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[DOMAIN:域名分流][CLEAN:清理成功] {}: deleted {} extra domain rules",
-                    tag,
-                    extra.len()
-                ),
+            domain_logger.success(
+                "CLEAN:清理成功",
+                format!("{}: deleted {} extra domain rules", tag, extra.len()),
             );
         }
     }
@@ -462,16 +447,18 @@ async fn update_ip_group(
     tag: &str,
     url: &str,
 ) -> Result<(), UpdateError> {
+    let ip_logger = Logger::new("IP:IP分组", Arc::clone(sink));
+
     let body = http_get(cfg, sink, url).await?;
     let mut ips = split_lines(&body);
     ips = remove_ipv6_and_empty(sink, ips);
     let groups = group(ips, cfg.max_number_of_one_records.ipv4 as usize);
-    log(sink, format!("[IP:IP分组][PARSE:解析成功] {}: obtained new data", tag));
+    ip_logger.success("PARSE:解析成功", format!("{}: obtained new data", tag));
 
     let mut map = ikuai::ip_group::get_ip_group_map(api, tag).await?;
-    log(
-        sink,
-        format!("[IP:IP分组][QUERY:查询成功] {}: found {} existing groups", tag, map.len()),
+    ip_logger.info(
+        "QUERY:查询成功",
+        format!("{}: found {} existing groups", tag, map.len()),
     );
 
     for (i, chunk) in groups.iter().enumerate() {
@@ -479,10 +466,10 @@ async fn update_ip_group(
         let name = ikuai::tag_name::build_indexed_tag_name(tag, i as i64);
         let joined = chunk.join(",");
         let res = if let Some(id) = map.remove(&index) {
-            log(
-                sink,
+            ip_logger.info(
+                "EDIT:正在修改",
                 format!(
-                    "[IP:IP分组][EDIT:正在修改] [{}/{}] {}: updating {} (ID: {})...",
+                    "[{}/{}] {}: updating {} (ID: {})...",
                     i + 1,
                     groups.len(),
                     tag,
@@ -492,10 +479,10 @@ async fn update_ip_group(
             );
             ikuai::ip_group::edit_ip_group(api, tag, &joined, i as i64, id).await
         } else {
-            log(
-                sink,
+            ip_logger.info(
+                "ADD:正在添加",
                 format!(
-                    "[IP:IP分组][ADD:正在添加] [{}/{}] {}: adding {}...",
+                    "[{}/{}] {}: adding {}...",
                     i + 1,
                     groups.len(),
                     tag,
@@ -506,10 +493,10 @@ async fn update_ip_group(
         };
 
         if let Err(e) = res {
-            log(
-                sink,
+            ip_logger.error(
+                "UPDATE:更新失败",
                 format!(
-                    "[IP:IP分组][UPDATE:更新失败] [{}/{}] {}: failed, error: {}",
+                    "[{}/{}] {}: failed, error: {}",
                     i + 1,
                     groups.len(),
                     tag,
@@ -522,10 +509,10 @@ async fn update_ip_group(
 
     if !map.is_empty() {
         let extra: Vec<String> = map.values().map(|v| v.to_string()).collect();
-        log(
-            sink,
+        ip_logger.info(
+            "CLEAN:冗余删除",
             format!(
-                "[IP:IP分组][CLEAN:冗余删除] {}: {} groups are no longer needed, deleting IDs: {}",
+                "{}: {} groups are no longer needed, deleting IDs: {}",
                 tag,
                 map.len(),
                 extra.join(",")
@@ -533,21 +520,14 @@ async fn update_ip_group(
         );
         let res = ikuai::ip_group::del_ip_group(api, &extra.join(",")).await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[IP:IP分组][CLEAN:删除失败] {}: failed to delete extra groups: {}",
-                    tag, e
-                ),
+            ip_logger.error(
+                "CLEAN:删除失败",
+                format!("{}: failed to delete extra groups: {}", tag, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[IP:IP分组][CLEAN:清理成功] {}: deleted {} extra groups",
-                    tag,
-                    extra.len()
-                ),
+            ip_logger.success(
+                "CLEAN:清理成功",
+                format!("{}: deleted {} extra groups", tag, extra.len()),
             );
         }
     }
@@ -562,20 +542,18 @@ async fn update_ipv6_group(
     tag: &str,
     url: &str,
 ) -> Result<(), UpdateError> {
+    let ipv6_logger = Logger::new("IPV6:IPv6分组", Arc::clone(sink));
+
     let body = http_get(cfg, sink, url).await?;
     let mut ips = split_lines(&body);
     ips = remove_ipv4_and_empty(sink, ips);
     let groups = group(ips, cfg.max_number_of_one_records.ipv6 as usize);
-    log(sink, format!("[IPV6:IPv6分组][PARSE:解析成功] {}: obtained new data", tag));
+    ipv6_logger.success("PARSE:解析成功", format!("{}: obtained new data", tag));
 
     let mut map = ikuai::ipv6_group::get_ipv6_group_map(api, tag).await?;
-    log(
-        sink,
-        format!(
-            "[IPV6:IPv6分组][QUERY:查询成功] {}: found {} existing IPv6 groups",
-            tag,
-            map.len()
-        ),
+    ipv6_logger.info(
+        "QUERY:查询成功",
+        format!("{}: found {} existing IPv6 groups", tag, map.len()),
     );
 
     for (i, chunk) in groups.iter().enumerate() {
@@ -583,10 +561,10 @@ async fn update_ipv6_group(
         let name = ikuai::tag_name::build_indexed_tag_name(tag, i as i64);
         let joined = chunk.join(",");
         let res = if let Some(id) = map.remove(&index) {
-            log(
-                sink,
+            ipv6_logger.info(
+                "EDIT:正在修改",
                 format!(
-                    "[IPV6:IPv6分组][EDIT:正在修改] [{}/{}] {}: updating {} (ID: {})...",
+                    "[{}/{}] {}: updating {} (ID: {})...",
                     i + 1,
                     groups.len(),
                     tag,
@@ -596,10 +574,10 @@ async fn update_ipv6_group(
             );
             ikuai::ipv6_group::edit_ipv6_group(api, tag, &joined, i as i64, id).await
         } else {
-            log(
-                sink,
+            ipv6_logger.info(
+                "ADD:正在添加",
                 format!(
-                    "[IPV6:IPv6分组][ADD:正在添加] [{}/{}] {}: adding {}...",
+                    "[{}/{}] {}: adding {}...",
                     i + 1,
                     groups.len(),
                     tag,
@@ -610,10 +588,10 @@ async fn update_ipv6_group(
         };
 
         if let Err(e) = res {
-            log(
-                sink,
+            ipv6_logger.error(
+                "UPDATE:更新失败",
                 format!(
-                    "[IPV6:IPv6分组][UPDATE:更新失败] [{}/{}] {}: failed, error: {}",
+                    "[{}/{}] {}: failed, error: {}",
                     i + 1,
                     groups.len(),
                     tag,
@@ -626,10 +604,10 @@ async fn update_ipv6_group(
 
     if !map.is_empty() {
         let extra: Vec<String> = map.values().map(|v| v.to_string()).collect();
-        log(
-            sink,
+        ipv6_logger.info(
+            "CLEAN:冗余删除",
             format!(
-                "[IPV6:IPv6分组][CLEAN:冗余删除] {}: {} IPv6 groups are no longer needed, deleting IDs: {}",
+                "{}: {} IPv6 groups are no longer needed, deleting IDs: {}",
                 tag,
                 map.len(),
                 extra.join(",")
@@ -637,21 +615,14 @@ async fn update_ipv6_group(
         );
         let res = ikuai::ipv6_group::del_ipv6_group(api, &extra.join(",")).await;
         if let Err(e) = res {
-            log(
-                sink,
-                format!(
-                    "[IPV6:IPv6分组][CLEAN:删除失败] {}: failed to delete extra IPv6 groups: {}",
-                    tag, e
-                ),
+            ipv6_logger.error(
+                "CLEAN:删除失败",
+                format!("{}: failed to delete extra IPv6 groups: {}", tag, e),
             );
         } else {
-            log(
-                sink,
-                format!(
-                    "[IPV6:IPv6分组][CLEAN:清理成功] {}: deleted {} extra IPv6 groups",
-                    tag,
-                    extra.len()
-                ),
+            ipv6_logger.success(
+                "CLEAN:清理成功",
+                format!("{}: deleted {} extra IPv6 groups", tag, extra.len()),
             );
         }
     }
@@ -673,9 +644,11 @@ async fn update_stream_ipport(
     mode: i64,
     ifaceband: i64,
 ) -> Result<(), UpdateError> {
+    let stream_logger = Logger::new("STREAM:端口分流", Arc::clone(sink));
+
     let mut dst_addr = String::new();
     if ip_group_name.trim().is_empty() {
-        log(sink, "[STREAM:端口分流][CHECK:参数校验] ip-group parameter is empty");
+        stream_logger.info("CHECK:参数校验", "ip-group parameter is empty");
     } else {
         let mut dst_groups = Vec::new();
         for item in ip_group_name.split(',') {
@@ -687,10 +660,10 @@ async fn update_stream_ipport(
             dst_groups.extend(matches);
         }
         if dst_groups.is_empty() {
-            log(
-                sink,
+            stream_logger.info(
+                "SKIP:跳过操作",
                 format!(
-                    "[STREAM:端口分流][SKIP:跳过操作] No matching destination IP groups found, skipping port streaming rule addition. ip-group: {}",
+                    "No matching destination IP groups found, skipping port streaming rule addition. ip-group: {}",
                     ip_group_name
                 ),
             );
@@ -713,10 +686,10 @@ async fn update_stream_ipport(
         if !src_groups.is_empty() {
             src_addr = src_groups.join(",");
         } else {
-            log(
-                sink,
+            stream_logger.info(
+                "SKIP:跳过操作",
                 format!(
-                    "[STREAM:端口分流][SKIP:跳过操作] No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: {}",
+                    "No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: {}",
                     src_addr_opt_ipgroup
                 ),
             );
@@ -732,10 +705,10 @@ async fn update_stream_ipport(
     }
 
     let res = if let Some((name, id)) = found {
-        log(
-            sink,
+        stream_logger.info(
+            "EDIT:正在修改",
             format!(
-                "[STREAM:端口分流][EDIT:正在修改] [1/1] {}: updating existing rule {} (ID: {})...",
+                "[1/1] {}: updating existing rule {} (ID: {})...",
                 tag, name, id
             ),
         );
@@ -753,12 +726,9 @@ async fn update_stream_ipport(
         )
         .await
     } else {
-        log(
-            sink,
-            format!(
-                "[STREAM:端口分流][ADD:正在添加] [1/1] {}: adding new rule...",
-                tag
-            ),
+        stream_logger.info(
+            "ADD:正在添加",
+            format!("[1/1] {}: adding new rule...", tag),
         );
         ikuai::stream_ipport::add_stream_ipport(
             api,
@@ -775,18 +745,15 @@ async fn update_stream_ipport(
     };
 
     if let Err(e) = res {
-        log(
-            sink,
-            format!("[STREAM:端口分流][UPDATE:更新失败] [1/1] {}: failed: {}", tag, e),
+        stream_logger.error(
+            "UPDATE:更新失败",
+            format!("[1/1] {}: failed: {}", tag, e),
         );
         sleep(cfg.add_err_retry_wait).await;
     } else {
-        log(
-            sink,
-            format!(
-                "[STREAM:端口分流][UPDATE:更新成功] [1/1] {}: updated successfully",
-                tag
-            ),
+        stream_logger.success(
+            "UPDATE:更新成功",
+            format!("[1/1] {}: updated successfully", tag),
         );
     }
 
@@ -795,15 +762,13 @@ async fn update_stream_ipport(
 
 async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Vec<u8>, UpdateError> {
     let (full, proxy) = get_full_url(&cfg.github_proxy, original_url);
+    let http_logger = Logger::new("HTTP:资源下载", Arc::clone(sink));
     if proxy.is_empty() {
-        log(sink, format!("[HTTP:资源下载] http.get '{}'", original_url));
+        http_logger.info("HTTP:资源下载", format!("http.get '{}'", original_url));
     } else {
-        log(
-            sink,
-            format!(
-                "[HTTP:资源下载] http.get '{}' proxy '{}'",
-                original_url, proxy
-            ),
+        http_logger.info(
+            "HTTP:资源下载",
+            format!("http.get '{}' proxy '{}'", original_url, proxy),
         );
     }
 
@@ -843,7 +808,10 @@ fn split_lines(body: &[u8]) -> Vec<String> {
 }
 
 fn remove_ipv6_and_empty(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
-    log(sink, "[IP:v6规则清洗] Removing IPv6 addresses, empty lines and comments...");
+    Logger::new("IP:IP分组", Arc::clone(sink)).info(
+        "IP:v6规则清洗",
+        "Removing IPv6 addresses, empty lines and comments...",
+    );
     let mut out = Vec::new();
     for mut ip in lines.drain(..) {
         if let Some(idx) = ip.find('#') {
@@ -861,7 +829,10 @@ fn remove_ipv6_and_empty(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> 
 }
 
 fn remove_ipv4_and_empty(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
-    log(sink, "[IP:v4规则清洗] Removing IPv4 addresses, empty lines and comments...");
+    Logger::new("IP:IP分组", Arc::clone(sink)).info(
+        "IP:v4规则清洗",
+        "Removing IPv4 addresses, empty lines and comments...",
+    );
     let mut out = Vec::new();
     for mut ip in lines.drain(..) {
         if let Some(idx) = ip.find('#') {
@@ -879,7 +850,10 @@ fn remove_ipv4_and_empty(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> 
 }
 
 fn filter_domains(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
-    log(sink, "[DOMAIN:域名清洗] Cleaning invalid domains (underscores, comments, etc.)...");
+    Logger::new("DOMAIN:域名分流", Arc::clone(sink)).info(
+        "DOMAIN:域名清洗",
+        "Cleaning invalid domains (underscores, comments, etc.)...",
+    );
     let mut out = Vec::new();
     for mut d in lines.drain(..) {
         d = d.trim().to_string();
@@ -894,12 +868,9 @@ fn filter_domains(sink: &LogSink, mut lines: Vec<String>) -> Vec<String> {
             continue;
         }
         if d.contains('_') {
-            log(
-                sink,
-                format!(
-                    "[DOMAIN:域名清洗] Excluding invalid domain (contains underscore): {}",
-                    d
-                ),
+            Logger::new("DOMAIN:域名分流", Arc::clone(sink)).info(
+                "DOMAIN:域名清洗",
+                format!("Excluding invalid domain (contains underscore): {}", d),
             );
             continue;
         }
@@ -924,10 +895,6 @@ async fn sleep(d: Duration) {
     if d > Duration::from_millis(0) {
         tokio::time::sleep(d).await;
     }
-}
-
-fn log(sink: &LogSink, msg: impl Into<String>) {
-    (sink)(msg.into());
 }
 
 #[cfg(test)]

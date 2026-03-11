@@ -100,21 +100,21 @@ func (c *ChineseTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 func (c *ChineseTheme) Size(name fyne.ThemeSizeName) float32 {
 	switch name {
 	case theme.SizeNameText:
-		return 14
+		return 13
 	case theme.SizeNameHeadingText:
-		return 22
-	case theme.SizeNameSubHeadingText:
 		return 18
+	case theme.SizeNameSubHeadingText:
+		return 15
 	case theme.SizeNameCaptionText:
 		return 11
 	case theme.SizeNameInputBorder:
 		return 1
 	case theme.SizeNameInputRadius:
-		return 8
+		return 6
 	case theme.SizeNamePadding:
-		return 12
+		return 8
 	case theme.SizeNameInlineIcon:
-		return 20
+		return 16
 	case theme.SizeNameScrollBar:
 		return 6
 	case theme.SizeNameScrollBarSmall:

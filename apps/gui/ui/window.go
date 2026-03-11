@@ -94,6 +94,8 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	logEntry.Wrapping = fyne.TextWrapWord
 	logEntry.Disable()
 
+	var logScroll *container.Scroll
+
 	// 日志管理
 	logMutex := &sync.Mutex{}
 	logLines := make([]string, 0, 2000)
@@ -181,19 +183,24 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		if !status.Running && !status.CronRunning {
 			pendingStop = false
 		}
+
+		setText := func(s string) {
+			_ = statusBinding.Set("状态: " + s)
+		}
+
 		if hintText != "" && time.Now().Before(hintUntil) {
-			_ = statusBinding.Set(hintText)
+			setText(hintText)
 			return
 		}
 		if status.Running || status.CronRunning {
 			if status.CronRunning {
-				_ = statusBinding.Set("计划任务运行中")
+				setText("计划任务运行中")
 				return
 			}
-			_ = statusBinding.Set(fmt.Sprintf("运行中 · %s", getModuleLabel(status.Module)))
+			setText(fmt.Sprintf("运行中 · %s", getModuleLabel(status.Module)))
 			return
 		}
-		_ = statusBinding.Set("未启动")
+		setText("未启动")
 	}
 	refreshStatus()
 	updateCronInfo()
@@ -353,7 +360,7 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	aboutBtn.Importance = widget.LowImportance
 
 	// ========== 标签选择区域 ==========
-	moduleTags := container.NewGridWithColumns(3)
+	moduleTags := container.NewGridWithColumns(2)
 	for i, module := range modules {
 		idx := i
 		btn := newChipButton(module.Label, func() {
@@ -390,76 +397,73 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		return runModes[i].Mode
 	})
 
-	cronTitle := widget.NewLabelWithStyle("Cron 表达式", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	cronHint := widget.NewLabel("仅在计划任务模式下显示")
-	cronHint.TextStyle = fyne.TextStyle{Italic: true}
-	cronCard := newInfoCard(container.NewVBox(
+	cronTitle := newSectionTitle("Cron 表达式 (仅在计划任务模式下显示)")
+	cronBox.Add(container.NewVBox(
 		cronTitle,
-		cronHint,
-		widget.NewSeparator(),
 		cronLabel,
 	))
-	cronBox.Add(cronCard)
 
 	// ========== 日志区域 ==========
-	logScroll := container.NewScroll(logEntry)
-	logScroll.SetMinSize(fyne.NewSize(0, 220))
+	logOverride := container.NewThemeOverride(logEntry, &customLogTheme{Theme: app.Settings().Theme()})
+	logScroll = container.NewScroll(logOverride)
+	logScroll.SetMinSize(fyne.NewSize(0, 100))
 
-	clearLogBtn := widget.NewButtonWithIcon("清空日志", theme.DeleteIcon(), func() {
+	clearLogBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
 		logMutex.Lock()
 		logLines = logLines[:0]
 		logMutex.Unlock()
 		logEntry.SetText("")
 	})
-	clearLogBtn.Importance = widget.MediumImportance
+	clearLogBtn.Importance = widget.LowImportance
 
 	// ========== 头部区域 ==========
-	headerTitle := widget.NewLabelWithStyle("iKuai Bypass", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	headerTitle.TextStyle = fyne.TextStyle{Bold: true}
-	headerSubTitle := widget.NewLabel("分流同步控制台")
-	headerSubTitle.TextStyle = fyne.TextStyle{Italic: true}
+	// 合并主标题和副标题
+	headerTitle := widget.NewLabelWithStyle("iKuai Bypass - 分流同步控制台", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	statusPill := newStatusPill(statusBinding)
+	statusLabel := widget.NewLabelWithData(statusBinding)
+	statusLabel.TextStyle = fyne.TextStyle{Italic: true}
+	statusLabel.Wrapping = fyne.TextWrapWord
 
 	modeCard := newInfoCard(container.NewVBox(
 		newSectionTitle("分流模式"),
 		moduleTags,
-		widget.NewSeparator(),
+		newSpacer(2),
 		newSectionTitle("运行模式"),
 		runModeTags,
 		cronBox,
 	))
 
-	logHeader := container.NewBorder(
-		nil,
-		nil,
-		newSectionTitle("运行日志"),
-		clearLogBtn,
+	// 去掉运行日志几个字和外层 border
+	logBg := canvas.NewRectangle(color.NRGBA{R: 255, G: 255, B: 255, A: 120})
+	logBg.CornerRadius = 8
+
+	// 删除按钮设为左下角悬浮
+	floatBtnBox := container.NewVBox(
+		layout.NewSpacer(),
+		container.NewHBox(clearLogBtn, layout.NewSpacer()),
 	)
-	logCard := newInfoCard(container.NewBorder(logHeader, nil, nil, nil, logScroll))
+	// 日志外层只用 Stack 叠起来即可
+	logCard := container.NewStack(logBg, container.NewPadded(logScroll), floatBtnBox)
 
 	heroInfo := container.NewVBox(
 		headerTitle,
-		headerSubTitle,
-		newSpacer(4),
-		statusPill,
-		newSpacer(6),
+		statusLabel,
+		newSpacer(2),
 		container.NewHBox(aboutBtn, webBtn),
 	)
 
-	heroCard := newHeroCard(container.NewVBox(
-		container.NewBorder(
-			nil,
-			nil,
-			heroInfo,
-			nil,
-			container.NewHBox(layout.NewSpacer(), actionButton),
-		),
-		newSpacer(8),
-		modeCard,
+	// 修复状态文本换行和过长问题：将 heroInfo 放在 Center 而不是 Left
+	// 并让 actionButton 放在 Right，以确保 heroInfo 可以缩小宽度触发文字换行
+	statusLabel.Wrapping = fyne.TextWrapWord
+	heroCard := newHeroCard(container.NewBorder(
+		nil,
+		nil,
+		nil,
+		actionButton,
+		heroInfo,
 	))
 
-	topPanel := container.NewVBox(heroCard)
+	topPanel := container.NewVBox(heroCard, newSpacer(4), modeCard)
 
 	body := container.NewBorder(
 		topPanel,
@@ -475,7 +479,7 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	)
 
 	win.SetContent(content)
-	win.Resize(fyne.NewSize(500, 740))
+	win.Resize(fyne.NewSize(360, 560))
 
 	return win
 }
@@ -541,25 +545,10 @@ func newInfoCard(content fyne.CanvasObject) fyne.CanvasObject {
 	return container.NewStack(bg, border, container.NewPadded(content))
 }
 
-func newStatusPill(data binding.String) fyne.CanvasObject {
-	label := widget.NewLabelWithData(data)
-	label.Alignment = fyne.TextAlignCenter
-	label.TextStyle = fyne.TextStyle{Bold: true}
-
-	bg := canvas.NewRectangle(color.NRGBA{R: 255, G: 255, B: 255, A: 54})
-	bg.CornerRadius = 13
-	border := canvas.NewRectangle(color.Transparent)
-	border.StrokeColor = color.NRGBA{R: 255, G: 255, B: 255, A: 90}
-	border.StrokeWidth = 1
-	border.CornerRadius = 13
-
-	return container.NewStack(bg, border, container.NewPadded(label))
-}
-
 func newSectionTitle(text string) fyne.CanvasObject {
-	title := canvas.NewText(text, panelText)
+	title := canvas.NewText(text, panelMuted)
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.TextSize = 14
+	title.TextSize = 11
 	return title
 }
 
@@ -607,11 +596,11 @@ func (b *roundActionButton) CreateRenderer() fyne.WidgetRenderer {
 	title := canvas.NewText(b.title, brandBlue)
 	title.Alignment = fyne.TextAlignCenter
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.TextSize = 28
+	title.TextSize = 14
 
 	subtitle := canvas.NewText(b.subtitle, panelMuted)
 	subtitle.Alignment = fyne.TextAlignCenter
-	subtitle.TextSize = 12
+	subtitle.TextSize = 9
 
 	r := &roundActionButtonRenderer{
 		button:   b,
@@ -645,14 +634,14 @@ func (r *roundActionButtonRenderer) Layout(size fyne.Size) {
 	r.outer.Move(fyne.NewPos(centerX, centerY))
 	r.outer.Resize(fyne.NewSize(side, side))
 
-	innerInset := float32(15)
+	innerInset := float32(4)
 	r.inner.Move(fyne.NewPos(centerX+innerInset, centerY+innerInset))
 	r.inner.Resize(fyne.NewSize(side-innerInset*2, side-innerInset*2))
 
 	titleSize := r.title.MinSize()
 	titlePos := fyne.NewPos(
 		centerX+(side-titleSize.Width)/2,
-		centerY+side/2-titleSize.Height,
+		centerY+side/2-titleSize.Height+2,
 	)
 	r.title.Move(titlePos)
 	r.title.Resize(titleSize)
@@ -660,14 +649,14 @@ func (r *roundActionButtonRenderer) Layout(size fyne.Size) {
 	subSize := r.subtitle.MinSize()
 	subPos := fyne.NewPos(
 		centerX+(side-subSize.Width)/2,
-		titlePos.Y+titleSize.Height+8,
+		titlePos.Y+titleSize.Height+0,
 	)
 	r.subtitle.Move(subPos)
 	r.subtitle.Resize(subSize)
 }
 
 func (r *roundActionButtonRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(118, 118)
+	return fyne.NewSize(60, 60)
 }
 
 func (r *roundActionButtonRenderer) Refresh() {
@@ -739,7 +728,7 @@ func (b *chipButton) CreateRenderer() fyne.WidgetRenderer {
 	border.StrokeColor = panelBorder
 	text := canvas.NewText(b.label, panelMuted)
 	text.Alignment = fyne.TextAlignCenter
-	text.TextSize = 12
+	text.TextSize = 10
 	text.TextStyle = fyne.TextStyle{Bold: true}
 
 	r := &chipButtonRenderer{
@@ -770,7 +759,7 @@ func (r *chipButtonRenderer) Layout(size fyne.Size) {
 }
 
 func (r *chipButtonRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(84, 24)
+	return fyne.NewSize(72, 22)
 }
 
 func (r *chipButtonRenderer) Refresh() {
@@ -803,4 +792,15 @@ func newSpacer(height float32) fyne.CanvasObject {
 	spacer := canvas.NewRectangle(color.Transparent)
 	spacer.SetMinSize(fyne.NewSize(1, height))
 	return spacer
+}
+
+type customLogTheme struct {
+	fyne.Theme
+}
+
+func (c *customLogTheme) Size(n fyne.ThemeSizeName) float32 {
+	if n == theme.SizeNameText {
+		return 10
+	}
+	return c.Theme.Size(n)
 }

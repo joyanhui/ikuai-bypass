@@ -19,6 +19,10 @@ func NewChineseTheme(font fyne.Resource) *ChineseTheme {
 
 // Color 返回颜色
 func (c *ChineseTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	// 强制使用明亮主题，避免深色模式下的默认组件（如下拉菜单、对话框、滚动条点击态）变成黑色
+	// Force light variant globally so it matches our hardcoded light/blue layout.
+	variant = theme.VariantLight
+
 	// 使用现代化的蓝色系作为主色调
 	switch name {
 	case theme.ColorNamePrimary:
@@ -72,7 +76,16 @@ func (c *ChineseTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant
 		return color.RGBA{R: 0, G: 0, B: 0, A: 50}
 	case theme.ColorNameScrollBar:
 		// 滚动条颜色
-		return color.RGBA{R: 180, G: 180, B: 180, A: 180}
+		return color.RGBA{R: 180, G: 180, B: 180, A: 120}
+	case theme.ColorNamePressed:
+		// 点击/按下时的统一高亮反馈色，不要让它变成深黑色
+		return color.RGBA{R: 74, G: 144, B: 217, A: 50}
+	case theme.ColorNameFocus:
+		// 获得焦点时不要有突兀的黑色边框或背景
+		return color.Transparent
+	case theme.ColorNameSelection:
+		// 选中文本时的颜色
+		return color.RGBA{R: 74, G: 144, B: 217, A: 80}
 	case theme.ColorNameSeparator:
 		// 分隔线颜色
 		if variant == theme.VariantLight {

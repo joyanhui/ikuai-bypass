@@ -89,10 +89,8 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 
 	// ========== 日志区域 ==========
 	logBinding := binding.NewString()
-	logEntry := widget.NewMultiLineEntry()
-	logEntry.Bind(logBinding)
-	logEntry.Wrapping = fyne.TextWrapWord
-	logEntry.Disable()
+	logLabel := widget.NewLabelWithData(logBinding)
+	logLabel.Wrapping = fyne.TextWrapWord
 
 	var logScroll *container.Scroll
 
@@ -304,10 +302,10 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 			if pendingStop && status.Running && !status.CronRunning {
 				actionButton.SetState(true, "停止中", "")
 			} else {
-				actionButton.SetState(true, "停止", "")
+				actionButton.SetState(true, "停 止", "")
 			}
 		} else {
-			actionButton.SetState(false, "启动", "")
+			actionButton.SetState(false, "启 动", "")
 		}
 	}
 	refreshStatus()
@@ -400,16 +398,16 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	))
 
 	// ========== 日志区域 ==========
-	logOverride := container.NewThemeOverride(logEntry, &customLogTheme{Theme: app.Settings().Theme()})
-	// Force max layout so it expands fully
-	logScroll = container.NewScroll(container.NewMax(logOverride))
+	// 使用 NewVScroll 确保只有垂直滚动，并且横向自动填充
+	logOverride := container.NewThemeOverride(logLabel, &customLogTheme{Theme: app.Settings().Theme()})
+	logScroll = container.NewVScroll(logOverride)
 	logScroll.SetMinSize(fyne.NewSize(0, 100))
 
 	clearLogBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
 		logMutex.Lock()
 		logLines = logLines[:0]
 		logMutex.Unlock()
-		logEntry.SetText("")
+		_ = logBinding.Set("")
 	})
 	clearLogBtn.Importance = widget.LowImportance
 
@@ -442,25 +440,27 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	// 日志外层只用 Stack 叠起来即可。使用 Max 布局让日志可以全宽，不用 padded 避免 100px 空白
 	logCard := container.NewStack(logBg, logScroll, floatBtnBox)
 
-	// 左侧包含标题和状态
-	leftInfo := container.NewVBox(
-		headerTitle,
+	// 顶部：标题和设置按钮
+	topBar := container.NewBorder(nil, nil, headerTitle, settingsMenu)
+
+	// 状态文字居中
+	statusLabel.Alignment = fyne.TextAlignCenter
+
+	// 按钮和状态文字区域（垂直堆叠并水平居中）
+	actionArea := container.NewVBox(
+		container.NewCenter(actionButton),
+		newSpacer(4),
 		statusLabel,
 	)
 
-	// 右侧包含操作按钮和齿轮菜单
-	rightActions := container.NewVBox(
-		container.NewHBox(layout.NewSpacer(), settingsMenu),
-		container.NewHBox(layout.NewSpacer(), actionButton),
+	heroInfo := container.NewVBox(
+		topBar,
+		newSpacer(8),
+		actionArea,
+		newSpacer(4),
 	)
 
-	heroCard := newHeroCard(container.NewBorder(
-		nil,
-		nil,
-		nil,
-		rightActions,
-		leftInfo,
-	))
+	heroCard := newHeroCard(heroInfo)
 
 	topPanel := container.NewVBox(heroCard, newSpacer(4), modeCard)
 
@@ -562,7 +562,7 @@ type roundActionButton struct {
 func newRoundActionButton(onTapped func()) *roundActionButton {
 	btn := &roundActionButton{
 		onTapped: onTapped,
-		title:    "启动",
+		title:    "启 动",
 		subtitle: "点击开始同步",
 	}
 	btn.ExtendBaseWidget(btn)

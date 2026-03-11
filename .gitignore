@@ -1,6 +1,16 @@
 /ikuai-bypass
 /ikuai-bypass.exe
 /ikuai-bypass_exe
+/apps/cli/ikuai-bypass
+/release/
+/apps/gui/ikuai-bypass-gui
+/apps/gui/frontend/
+/apps/gui/frontend/**
+/gui
+/node_modules/
+**/node_modules/
+**/dist/
+**/.DS_Store
 *.psd
 /aaa_*.md
 GEMINI.md

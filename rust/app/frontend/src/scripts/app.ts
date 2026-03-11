@@ -3,7 +3,7 @@ import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComment
 import { loadJson, saveJson } from '../lib/storage.ts';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
+import { conf as yamlConf, language as yamlLanguage } from 'monaco-editor/esm/vs/basic-languages/yaml/yaml.js';
 
 // ============================================
 // 全局状态
@@ -37,6 +37,7 @@ const state = {
 };
 
 const RECONNECT_DELAY = 3000;
+let yamlLanguageRegistered = false;
 
 // ============================================
 // Toast 提示系统
@@ -80,6 +81,13 @@ const closeModal = (modalId: string) => {
 };
 
 const ensureRawEditor = () => {
+  if (!yamlLanguageRegistered) {
+    monaco.languages.register({ id: 'yaml', extensions: ['.yaml', '.yml'], aliases: ['YAML', 'yaml'] });
+    monaco.languages.setMonarchTokensProvider('yaml', yamlLanguage as monaco.languages.IMonarchLanguage);
+    monaco.languages.setLanguageConfiguration('yaml', yamlConf);
+    yamlLanguageRegistered = true;
+  }
+
   if (state.rawEditor) return state.rawEditor;
   const container = document.getElementById('rawEditorContainer');
   if (!container) return null;
@@ -101,6 +109,11 @@ const ensureRawEditor = () => {
     folding: true,
     padding: { top: 16, bottom: 16 },
   });
+
+  const model = state.rawEditor.getModel();
+  if (model) {
+    monaco.editor.setModelLanguage(model, 'yaml');
+  }
 
   return state.rawEditor;
 };
@@ -791,6 +804,19 @@ const rerenderRuleList = (listKey: RuleListKey) => {
   renderers[listKey]();
 };
 
+const getRuleGridTemplate = (listKey: RuleListKey) => {
+  switch (listKey) {
+    case 'customIsp':
+    case 'ipGroup':
+    case 'ipv6Group':
+      return 'minmax(120px, 0.55fr) minmax(320px, 2.45fr) 170px';
+    case 'streamDomain':
+      return 'minmax(120px, 0.7fr) minmax(92px, 0.5fr) minmax(140px, 0.8fr) minmax(320px, 2fr) 170px';
+    case 'streamIpPort':
+      return 'minmax(120px, 0.8fr) minmax(96px, 0.55fr) minmax(130px, 0.8fr) minmax(180px, 1.4fr) 170px';
+  }
+};
+
 const createRuleTable = (listKey: RuleListKey) => {
   const meta = RULE_LIST_META[listKey];
   const list = getRuleList(listKey);
@@ -800,7 +826,7 @@ const createRuleTable = (listKey: RuleListKey) => {
 
   const wrap = document.createElement('div');
   wrap.className = 'rule-table';
-  const gridTemplate = `repeat(${meta.columns.length}, minmax(120px, 1fr)) 170px`;
+  const gridTemplate = getRuleGridTemplate(listKey);
 
   const head = document.createElement('div');
   head.className = 'rule-table-head';

@@ -264,7 +264,6 @@ svg.w-12 { width: 3rem; height: 3rem; }
 .rule-table-head,
 .rule-table-row {
   display: grid;
-  grid-template-columns: minmax(92px, 0.8fr) minmax(92px, 0.8fr) minmax(120px, 1fr) minmax(160px, 1.4fr) 170px;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
@@ -357,7 +356,7 @@ svg.w-12 { width: 3rem; height: 3rem; }
 
   .rule-table-head,
   .rule-table-row {
-    min-width: 780px;
+    min-width: 860px;
   }
 }
 

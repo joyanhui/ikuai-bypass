@@ -81,6 +81,7 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	prefs := app.Preferences()
 
 	// ========== 状态区域 ==========
+	statusBinding := binding.NewString()
 	cronBinding := binding.NewString()
 
 	cronLabel := widget.NewLabelWithData(cronBinding)
@@ -279,6 +280,7 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 			pendingStop = false
 		}
 
+		// 更新状态文本
 		var subText string
 		if hintText != "" && time.Now().Before(hintUntil) {
 			subText = hintText
@@ -294,14 +296,18 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 			subText = "未启动"
 		}
 
+		// Set to the status label
+		_ = statusBinding.Set("运行状态: " + subText)
+
+		// 只有 启动/停止/停止中 三个字
 		if status.Running || status.CronRunning {
 			if pendingStop && status.Running && !status.CronRunning {
-				actionButton.SetState(true, "正在停止", subText)
+				actionButton.SetState(true, "停止中", "")
 			} else {
-				actionButton.SetState(true, "停止", subText)
+				actionButton.SetState(true, "停止", "")
 			}
 		} else {
-			actionButton.SetState(false, "启动", subText)
+			actionButton.SetState(false, "启动", "")
 		}
 	}
 	refreshStatus()
@@ -319,25 +325,35 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		}
 	}()
 
-	// ========== 快捷操作区域 ==========
-	webBtn := widget.NewButtonWithIcon("打开 WebUI 配置", theme.ComputerIcon(), func() {
-		if webURL == "" {
-			dialog.ShowInformation("提示", "WebUI 未启动", win)
-			return
-		}
-		parsed, err := url.Parse(webURL)
-		if err != nil {
-			dialog.ShowError(err, win)
-			return
-		}
-		_ = app.OpenURL(parsed)
-	})
-	webBtn.Importance = widget.LowImportance
+	// ========== 快捷操作区域 (齿轮菜单) ==========
+	settingsMenu := widget.NewButtonWithIcon("", theme.SettingsIcon(), nil)
+	settingsMenu.Importance = widget.LowImportance
+	settingsMenu.OnTapped = func() {
+		menu := fyne.NewMenu("",
+			fyne.NewMenuItem("打开 WebUI 配置", func() {
+				if webURL == "" {
+					dialog.ShowInformation("提示", "WebUI 未启动", win)
+					return
+				}
+				parsed, err := url.Parse(webURL)
+				if err != nil {
+					dialog.ShowError(err, win)
+					return
+				}
+				_ = app.OpenURL(parsed)
+			}),
+			fyne.NewMenuItem("关于", func() {
+				dialog.ShowInformation("关于", "iKuai Bypass v4.4.10\n智能分流管理工具", win)
+			}),
+		)
+		// Pop it up under the button
 
-	aboutBtn := widget.NewButtonWithIcon("关于", theme.InfoIcon(), func() {
-		dialog.ShowInformation("关于", "iKuai Bypass v4.4.10\n智能分流管理工具", win)
-	})
-	aboutBtn.Importance = widget.LowImportance
+		// Use canvas to show popup
+		pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(settingsMenu)
+		pos.Y += settingsMenu.Size().Height
+		widget.ShowPopUpMenuAtPosition(menu, win.Canvas(), pos)
+
+	}
 
 	// ========== 标签选择区域 ==========
 	moduleTags := container.NewGridWithColumns(2)
@@ -385,7 +401,8 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 
 	// ========== 日志区域 ==========
 	logOverride := container.NewThemeOverride(logEntry, &customLogTheme{Theme: app.Settings().Theme()})
-	logScroll = container.NewScroll(logOverride)
+	// Force max layout so it expands fully
+	logScroll = container.NewScroll(container.NewMax(logOverride))
 	logScroll.SetMinSize(fyne.NewSize(0, 100))
 
 	clearLogBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
@@ -399,6 +416,10 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 	// ========== 头部区域 ==========
 	// 合并主标题和副标题
 	headerTitle := widget.NewLabelWithStyle("iKuai Bypass - 分流同步控制台", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	statusLabel := widget.NewLabelWithData(statusBinding)
+	statusLabel.TextStyle = fyne.TextStyle{Italic: true}
+	statusLabel.Wrapping = fyne.TextWrapWord
 
 	modeCard := newInfoCard(container.NewVBox(
 		newSectionTitle("分流模式"),
@@ -418,21 +439,27 @@ func BuildMainWindow(app fyne.App, runtime *service.RuntimeService, webURL strin
 		layout.NewSpacer(),
 		container.NewHBox(clearLogBtn, layout.NewSpacer()),
 	)
-	// 日志外层只用 Stack 叠起来即可
-	logCard := container.NewStack(logBg, container.NewPadded(logScroll), floatBtnBox)
+	// 日志外层只用 Stack 叠起来即可。使用 Max 布局让日志可以全宽，不用 padded 避免 100px 空白
+	logCard := container.NewStack(logBg, logScroll, floatBtnBox)
 
-	heroInfo := container.NewVBox(
+	// 左侧包含标题和状态
+	leftInfo := container.NewVBox(
 		headerTitle,
-		newSpacer(2),
-		container.NewHBox(aboutBtn, webBtn),
+		statusLabel,
+	)
+
+	// 右侧包含操作按钮和齿轮菜单
+	rightActions := container.NewVBox(
+		container.NewHBox(layout.NewSpacer(), settingsMenu),
+		container.NewHBox(layout.NewSpacer(), actionButton),
 	)
 
 	heroCard := newHeroCard(container.NewBorder(
 		nil,
 		nil,
 		nil,
-		actionButton,
-		heroInfo, // 中心组件，自动填满剩余空间
+		rightActions,
+		leftInfo,
 	))
 
 	topPanel := container.NewVBox(heroCard, newSpacer(4), modeCard)
@@ -643,11 +670,9 @@ func (r *roundActionButtonRenderer) Refresh() {
 	}
 
 	r.title.Text = r.button.title
-	r.subtitle.Text = r.button.subtitle
 	canvas.Refresh(r.outer)
 	canvas.Refresh(r.inner)
 	canvas.Refresh(r.title)
-	canvas.Refresh(r.subtitle)
 }
 
 func (r *roundActionButtonRenderer) Destroy() {}

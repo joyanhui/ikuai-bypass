@@ -35,7 +35,6 @@ const main = async () => {
   const pageHelp = getEl<HTMLElement>('pageHelp');
   const pageConfig = getEl<HTMLElement>('pageConfig');
   const pageRuntime = getEl<HTMLElement>('pageRuntime');
-  const tauriSidebar = getEl<HTMLElement>('tauriSidebar');
 
   const logBox = getEl<HTMLPreElement>('logBox');
   const runtimeHint = getEl<HTMLSpanElement>('runtimeHint');
@@ -332,6 +331,15 @@ const main = async () => {
   let streamReconnectTimer: ReturnType<typeof setTimeout> | null = null;
   const RECONNECT_DELAY = 3000;
 
+  const scheduleReconnect = () => {
+    if (streamReconnectTimer) {
+      clearTimeout(streamReconnectTimer);
+    }
+    streamReconnectTimer = setTimeout(() => {
+      startStream().catch(() => {});
+    }, RECONNECT_DELAY);
+  };
+
   const startStream = async () => {
     if (streamReconnectTimer) {
       clearTimeout(streamReconnectTimer);
@@ -343,22 +351,10 @@ const main = async () => {
         (r) => {
           appendLogLine((r.ts || '') + ' [' + (r.module || '') + '] [' + (r.tag || '') + '] ' + (r.detail || ''));
         },
-        () => {
-          appendLogLine('[LogStream] 连接断开，3秒后自动重连...');
-          if (streamReconnectTimer) {
-            clearTimeout(streamReconnectTimer);
-          }
-          streamReconnectTimer = setTimeout(() => {
-            startStream().catch(() => {});
-          }, RECONNECT_DELAY);
-        },
+        () => scheduleReconnect(),
       );
-    } catch (e) {
-      const errMsg = e instanceof Error ? e.message : String(e);
-      appendLogLine('[LogStream] 连接断开(' + errMsg + ')，3秒后自动重连...');
-      streamReconnectTimer = setTimeout(() => {
-        startStream().catch(() => {});
-      }, RECONNECT_DELAY);
+    } catch (_) {
+      scheduleReconnect();
     }
   };
 
@@ -378,9 +374,6 @@ const main = async () => {
     envBadge.textContent = 'env=' + (t ? 'tauri' : 'web');
     subtitle.textContent = t ? 'App（Tauri v2）' : 'WebUI（Bun + Astro）';
     document.body.classList.toggle('tauri', t);
-    if (t) {
-      tauriSidebar.style.display = '';
-    }
   };
 
   const applyTheme = (mode: string) => {
@@ -515,6 +508,14 @@ const main = async () => {
       setTab(b.dataset.tab || 'config');
     });
 
+    const cmdToggle = getEl<HTMLButtonElement>('cmdToggle');
+    const cmdSection = getEl<HTMLElement>('cmdSection');
+    cmdToggle.onclick = () => {
+      const open = cmdSection.style.display !== 'none';
+      cmdSection.style.display = open ? 'none' : '';
+      cmdToggle.textContent = open ? '展开' : '收起';
+    };
+
     for (const id of ['cmdPathMode', 'cmdRunMode', 'cmdModule', 'cmdConfigPath', 'cmdCleanTag', 'cmdLogin', 'cmdExportPath', 'cmdRandomSuff']) {
       getEl<HTMLInputElement | HTMLSelectElement>(id).addEventListener('input', () => { renderCmd(); persistCmdSettings(); });
       getEl<HTMLInputElement | HTMLSelectElement>(id).addEventListener('change', () => { renderCmd(); persistCmdSettings(); });
@@ -584,19 +585,95 @@ const main = async () => {
     getEl<HTMLButtonElement>('addStreamDomain').onclick = () => { cfg.streamDomain.push({ interface: '', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' }); renderAllLists(); };
     getEl<HTMLButtonElement>('addStreamIpPort').onclick = () => { cfg.streamIpPort.push({ optTagName: '', type: '0', interface: '', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', ipGroup: '', mode: '0', ifaceband: '0' }); renderAllLists(); };
 
-    getEl<HTMLButtonElement>('btnRunOnce').onclick = () => runOnce(getSelect('rtModule').value).catch((e) => setHint(runtimeHint, String(e)));
-    getEl<HTMLButtonElement>('btnRunOnce2').onclick = () => runOnce(getSelect('moduleSelect').value).catch((e) => setHint(runtimeHint, String(e)));
-    getEl<HTMLButtonElement>('btnCronStart').onclick = () => cronStart(getInput('rtCron').value, getSelect('rtModule').value).catch((e) => setHint(runtimeHint, String(e)));
-    getEl<HTMLButtonElement>('btnCronStart2').onclick = () => cronStart(getInput('cronExpr').value, getSelect('moduleSelect').value).catch((e) => setHint(runtimeHint, String(e)));
-    getEl<HTMLButtonElement>('btnCronStop').onclick = () => cronStop().catch((e) => setHint(runtimeHint, String(e)));
-    getEl<HTMLButtonElement>('btnCronStop2').onclick = () => cronStop().catch((e) => setHint(runtimeHint, String(e)));
+    const moduleChips = getEl<HTMLDivElement>('moduleChips');
+    const runModeChips = getEl<HTMLDivElement>('runModeChips');
+    const cronBox = getEl<HTMLDivElement>('cronBox');
+    const cronInput = getInput('cronInput');
 
-    getEl<HTMLButtonElement>('btnTail').onclick = () => tailLogs().catch((e) => appendLogLine(String(e)));
-    getEl<HTMLButtonElement>('btnTail2').onclick = () => tailLogs().catch((e) => appendLogLine(String(e)));
-    getEl<HTMLButtonElement>('btnStream').style.display = 'none';
-    getEl<HTMLButtonElement>('btnStream2').style.display = 'none';
-    getEl<HTMLButtonElement>('btnStopStream').style.display = 'none';
-    getEl<HTMLButtonElement>('btnStopStream2').style.display = 'none';
+    const modules = [
+      { label: '运营商/域名分流', value: 'ispdomain', desc: 'ISP + Domain' },
+      { label: 'IPv4 分组/端口分流', value: 'ipgroup', desc: 'IPv4 + Port' },
+      { label: 'IPv6 分组', value: 'ipv6group', desc: 'IPv6 Group' },
+      { label: '混合模式(运营商+IPv4)', value: 'ii', desc: 'ISP + IPv4' },
+      { label: 'IP混合(v4+v6)', value: 'ip', desc: 'IPv4 + IPv6' },
+      { label: '全能模式', value: 'iip', desc: 'All In One' },
+    ];
+
+    const runModes = [
+      { label: '只执行一次', value: 'once', desc: '立即执行后退出', needCron: false },
+      { label: '计划任务(先执行)', value: 'cron', desc: '先执行一次后进入定时', needCron: true },
+      { label: '计划任务(延迟)', value: 'cronAft', desc: '等待定时后再执行', needCron: true },
+      { label: '清理模式', value: 'clean', desc: '清理所有 IKB 规则', needCron: false },
+    ];
+
+    let selectedModule = modules[0].value;
+    let selectedRunMode = runModes[0].value;
+
+    const updateCronBox = () => {
+      const rm = runModes.find((m) => m.value === selectedRunMode);
+      if (rm && rm.needCron) {
+        cronInput.value = cfg.cron || '';
+        cronBox.style.display = '';
+      } else {
+        cronBox.style.display = 'none';
+      }
+    };
+
+    const renderChips = (host: HTMLElement, items: Array<{ label: string; value: string }>, current: string, onChange: (v: string) => void) => {
+      host.innerHTML = '';
+      for (const it of items) {
+        const btn = document.createElement('button');
+        btn.className = 'chip' + (it.value === current ? ' active' : '');
+        btn.textContent = it.label;
+        btn.onclick = () => {
+          onChange(it.value);
+          renderChips(host, items, it.value, onChange);
+        };
+        host.appendChild(btn);
+      }
+    };
+
+    renderChips(moduleChips, modules, selectedModule, (v) => { selectedModule = v; });
+    renderChips(runModeChips, runModes, selectedRunMode, (v) => { selectedRunMode = v; updateCronBox(); });
+    updateCronBox();
+
+    getEl<HTMLButtonElement>('btnStart').onclick = async () => {
+      try {
+        if (selectedRunMode === 'once') {
+          await runOnce(selectedModule);
+          return;
+        }
+        if (selectedRunMode === 'clean') {
+          if (!confirm('确定要清理所有 IKB 规则吗？')) return;
+          await runOnce('clean');
+          return;
+        }
+        const expr = cronInput.value.trim();
+        if (!expr) {
+          setHint(runtimeHint, '当前未配置 Cron 表达式，请先在配置中设置');
+          return;
+        }
+        if (selectedRunMode === 'cron') {
+          await runOnce(selectedModule);
+          await cronStart(expr, selectedModule);
+          return;
+        }
+        if (selectedRunMode === 'cronAft') {
+          await cronStart(expr, selectedModule);
+        }
+      } catch (e) {
+        setHint(runtimeHint, String(e));
+      }
+    };
+
+    getEl<HTMLButtonElement>('btnStop').onclick = async () => {
+      try {
+        await cronStop();
+      } catch (e) {
+        setHint(runtimeHint, String(e));
+      }
+    };
+
   };
 
   initEnvUi();
@@ -609,6 +686,7 @@ const main = async () => {
   await loadBackend().catch((e) => setHint(getEl('configHint'), String(e)));
   await previewYaml().catch(() => {});
   await refreshStatus().catch(() => {});
+  await tailLogs().catch(() => {});
   setInterval(() => refreshStatus().catch(() => {}), 1500);
   startStream().catch(() => {});
 };

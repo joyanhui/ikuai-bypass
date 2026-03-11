@@ -66,6 +66,8 @@ import appUrl from '../scripts/app.ts?url';
       .tabs { display:flex; gap: 8px; margin-top: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
       .tab { border: 1px solid var(--border-color); background: var(--btn-bg); color: var(--text-primary); padding: 8px 10px; border-radius: 10px; cursor:pointer; font-size: 13px; white-space: nowrap; }
       .tab.active { background: var(--accent-blue); border-color: var(--accent-blue-border); }
+      .chip { border: 1px solid var(--border-color); background: var(--btn-bg); color: var(--text-primary); padding: 6px 10px; border-radius: 999px; cursor:pointer; font-size: 12px; white-space: nowrap; }
+      .chip.active { background: var(--accent-blue-bg); border-color: var(--accent-blue-border); }
       main { max-width: 1200px; margin: 0 auto; padding: 16px; display:grid; grid-template-columns: 1fr; gap: 12px; }
       @media (min-width: 980px) { main:not(.single) { grid-template-columns: 340px 1fr; } }
       .panel { border: 1px solid var(--border-color); background: var(--bg-panel); border-radius: 14px; padding: 12px; transition: background .2s, border-color .2s; }
@@ -148,42 +150,7 @@ import appUrl from '../scripts/app.ts?url';
       </div>
     </header>
 
-    <main>
-      <aside class="panel" id="tauriSidebar" style="display:none">
-        <div class="row" style="justify-content:space-between">
-          <b>运行面板</b>
-          <span class="hint" id="statusLine">状态加载中...</span>
-        </div>
-        <div class="sep"></div>
-        <div class="row">
-          <label style="width:100%">模块</label>
-          <select id="rtModule" style="width:100%">
-            <option value="ispdomain">ispdomain（运营商+域名）</option>
-            <option value="ipgroup">ipgroup（IPv4分组+端口）</option>
-            <option value="ipv6group">ipv6group（IPv6分组）</option>
-            <option value="ii">ii（ispdomain+ipgroup）</option>
-            <option value="ip">ip（v4+v6分组）</option>
-            <option value="iip">iip（全能）</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="primary" id="btnRunOnce">执行一次</button>
-          <button id="btnTail">拉取日志</button>
-          <button class="primary" id="btnStream">开启实时</button>
-          <button id="btnStopStream">停止实时</button>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <label style="width:100%">Cron</label>
-          <input id="rtCron" placeholder="0 7 * * *" style="width:100%" />
-          <button id="btnCronStart">启动定时</button>
-          <button class="danger" id="btnCronStop">停止定时</button>
-        </div>
-        <div class="sep"></div>
-        <button class="tab active" data-tab="runtime" style="width:100%">日志视图</button>
-        <button class="tab" data-tab="config" style="width:100%">配置助手</button>
-        <button class="tab" data-tab="help" style="width:100%">使用说明</button>
-      </aside>
-
+    <main class="single">
       <section class="panel" id="pageHelp" style="display:none">
         <b>使用说明</b>
         <div class="sep"></div>
@@ -200,40 +167,41 @@ import appUrl from '../scripts/app.ts?url';
         <div class="row" style="justify-content:space-between">
           <b>运行与日志</b>
           <span class="hint" id="runtimeHint"></span>
+          <span class="hint" id="statusLine">状态加载中...</span>
         </div>
         <div class="sep"></div>
 
         <div class="grid2">
-          <div class="panel">
-            <b>运行控制</b>
-            <div class="sep"></div>
-            <div class="row">
-              <select id="moduleSelect" style="flex:1; min-width:220px">
-                <option value="ispdomain">ispdomain（运营商+域名）</option>
-                <option value="ipgroup">ipgroup（IPv4分组+端口）</option>
-                <option value="ipv6group">ipv6group（IPv6分组）</option>
-                <option value="ii">ii（ispdomain+ipgroup）</option>
-                <option value="ip">ip（v4+v6分组）</option>
-                <option value="iip">iip（全能）</option>
-              </select>
-              <button class="primary" id="btnRunOnce2">执行一次</button>
+          <div class="panel" id="runPanelHostRuntime">
+            <div id="runPanel">
+              <b>运行控制</b>
+              <div class="sep"></div>
+              <div class="row">
+                <label style="width:100%">分流模式</label>
+                <div class="row" id="moduleChips"></div>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <label style="width:100%">运行模式</label>
+                <div class="row" id="runModeChips"></div>
+              </div>
+              <div id="cronBox" style="margin-top:10px">
+                <label style="width:100%">Cron</label>
+                <input id="cronInput" placeholder="0 7 * * *" style="width:100%" />
+              </div>
+              <div class="row" style="margin-top:10px">
+                <button class="primary" id="btnStart">启动</button>
+                <button class="danger" id="btnStop">停止</button>
+              </div>
+              <div class="sep"></div>
+              <div class="hint" id="statusLine2">状态加载中...</div>
             </div>
-            <div class="row" style="margin-top:10px">
-              <input id="cronExpr" placeholder="Cron 表达式，例如 0 7 * * *" style="flex:1; min-width:220px" />
-              <button id="btnCronStart2">启动定时</button>
-              <button class="danger" id="btnCronStop2">停止定时</button>
-            </div>
-            <div class="sep"></div>
-            <div class="hint" id="statusLine2">状态加载中...</div>
           </div>
 
           <div class="panel">
             <b>日志</b>
             <div class="sep"></div>
             <div class="row">
-              <button id="btnTail2">拉取 Tail</button>
-              <button class="primary" id="btnStream2">开启实时</button>
-              <button id="btnStopStream2">停止实时</button>
+              <span class="hint">日志实时显示中</span>
             </div>
             <div class="sep"></div>
             <div class="logbox"><pre id="logBox"></pre></div>
@@ -249,8 +217,12 @@ import appUrl from '../scripts/app.ts?url';
         <div class="sep"></div>
 
         <div class="panel">
-          <b>命令生成</b>
+          <div class="row" style="justify-content:space-between">
+            <b>命令生成</b>
+            <button id="cmdToggle" class="tab" style="padding:6px 8px">展开</button>
+          </div>
           <div class="sep"></div>
+          <div id="cmdSection" style="display:none">
           <div class="kv">
             <div>
               <label>可执行文件路径（从后端读取）</label>
@@ -325,6 +297,7 @@ import appUrl from '../scripts/app.ts?url';
           </div>
           <div class="sep"></div>
           <div class="logbox"><pre id="cmdOut"></pre></div>
+          </div>
         </div>
 
         <div class="sep"></div>

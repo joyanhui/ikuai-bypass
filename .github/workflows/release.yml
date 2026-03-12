@@ -110,8 +110,8 @@ jobs:
             echo "docker_creds_available=${docker_creds_available}"
           } >> "${GITHUB_OUTPUT}"
 
-  build-cli:
-    name: CLI ${{ matrix.label }}
+  build-cli-linux:
+    name: CLI Linux ${{ matrix.label }}
     needs: meta
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -124,8 +124,6 @@ jobs:
             package_suffix: linux-amd64
             use_cross: true
             package_format: zip
-            extra_package_suffix: lxc-alpine-musl-amd64
-            extra_package_format: tar.gz
           - runner: ubuntu-latest
             label: linux-386
             target: i686-unknown-linux-musl
@@ -168,6 +166,125 @@ jobs:
             package_suffix: linux-riscv64
             use_cross: true
             package_format: zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
+
+      - name: Add native rust target
+        if: ${{ !matrix.use_cross }}
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Add cross targets
+        if: runner.os == 'Linux' && matrix.use_cross
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install cross
+        if: runner.os == 'Linux' && matrix.use_cross
+        run: cargo install cross --locked
+
+      - name: Install UPX
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y upx-ucl
+
+      - name: Install UPX
+        if: runner.os == 'Windows'
+        run: choco install upx -y
+
+      - name: Build CLI with cargo
+        if: ${{ !matrix.use_cross }}
+        run: cargo build --locked --release --target ${{ matrix.target }} -p ikb-cli
+
+      - name: Build CLI with cross
+        if: matrix.use_cross
+        run: cross build --locked --release --target ${{ matrix.target }} -p ikb-cli
+
+      - name: Package CLI artifact
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
+          PACKAGE_FORMAT: ${{ matrix.package_format }}
+        run: |
+          mkdir -p release
+          python <<'PY'
+          import os
+          import pathlib
+          import subprocess
+          import shutil
+          import tarfile
+          import zipfile
+
+          target = os.environ["TARGET"]
+          suffix = os.environ["PACKAGE_SUFFIX"]
+          package_format = os.environ["PACKAGE_FORMAT"]
+          release_dir = pathlib.Path("release")
+          build_dir = pathlib.Path("target") / target / "release"
+          src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
+          if not src.exists():
+              raise SystemExit(f"missing binary: {src}")
+
+          stage = release_dir / f"ikuai-bypass-{suffix}"
+          if stage.exists():
+              shutil.rmtree(stage)
+          stage.mkdir(parents=True)
+
+          dst = stage / ("ikuai-bypass.exe" if "windows" in target else "ikuai-bypass")
+          shutil.copy2(src, dst)
+
+          upx = shutil.which("upx")
+          if upx:
+              try:
+                  subprocess.run([upx, "-9", str(dst)], check=True)
+              except subprocess.CalledProcessError:
+                  print(f"UPX unsupported for {target}, keep original binary.")
+
+          shutil.copy2("README.md", stage / "README.md")
+          shutil.copy2("config.yml", stage / "config.yml")
+
+          def pack(stage_dir: pathlib.Path, out_suffix: str, out_format: str) -> None:
+              if out_format == "tar.gz":
+                  tar_path = release_dir / f"ikuai-bypass-{out_suffix}.tar.gz"
+                  if tar_path.exists():
+                      tar_path.unlink()
+                  with tarfile.open(tar_path, "w:gz") as tf:
+                      for path in stage_dir.rglob("*"):
+                          tf.add(path, arcname=path.relative_to(stage_dir))
+              else:
+                  zip_path = release_dir / f"ikuai-bypass-{out_suffix}.zip"
+                  if zip_path.exists():
+                      zip_path.unlink()
+                  with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+                      for path in stage_dir.rglob("*"):
+                          zf.write(path, path.relative_to(stage_dir))
+
+          pack(stage, suffix, package_format)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.package_suffix }}
+          path: release/*.zip
+
+  build-cli-others:
+    name: CLI ${{ matrix.label }}
+    needs: meta
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
           - runner: ubuntu-latest
             label: freebsd-386
             target: i686-unknown-freebsd
@@ -254,8 +371,6 @@ jobs:
           TARGET: ${{ matrix.target }}
           PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
           PACKAGE_FORMAT: ${{ matrix.package_format }}
-          EXTRA_PACKAGE_SUFFIX: ${{ matrix.extra_package_suffix || '' }}
-          EXTRA_PACKAGE_FORMAT: ${{ matrix.extra_package_format || '' }}
         run: |
           mkdir -p release
           python <<'PY'
@@ -269,8 +384,6 @@ jobs:
           target = os.environ["TARGET"]
           suffix = os.environ["PACKAGE_SUFFIX"]
           package_format = os.environ["PACKAGE_FORMAT"]
-          extra_suffix = os.environ["EXTRA_PACKAGE_SUFFIX"]
-          extra_format = os.environ["EXTRA_PACKAGE_FORMAT"]
           release_dir = pathlib.Path("release")
           build_dir = pathlib.Path("target") / target / "release"
           src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
@@ -312,21 +425,57 @@ jobs:
                           zf.write(path, path.relative_to(stage_dir))
 
           pack(stage, suffix, package_format)
-
-          if extra_suffix and extra_format:
-              extra_stage = release_dir / f"ikuai-bypass-{extra_suffix}"
-              if extra_stage.exists():
-                  shutil.rmtree(extra_stage)
-              shutil.copytree(stage, extra_stage)
-              pack(extra_stage, extra_suffix, extra_format)
           PY
 
       - uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.package_suffix }}
-          path: |
-            release/*.zip
-            release/*.tar.gz
+          path: release/*.zip
+
+  build-lxc:
+    name: LXC/Alpine Package
+    needs: build-cli-linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cli-linux-amd64
+          path: release
+
+      - name: Build LXC/Alpine package
+        shell: bash
+        run: |
+          python <<'PY'
+          import pathlib
+          import shutil
+          import tarfile
+          import zipfile
+
+          release_dir = pathlib.Path("release")
+          zip_path = release_dir / "ikuai-bypass-linux-amd64.zip"
+          if not zip_path.exists():
+              raise SystemExit(f"missing artifact: {zip_path}")
+
+          stage = release_dir / "lxc-alpine-musl-amd64"
+          if stage.exists():
+              shutil.rmtree(stage)
+          stage.mkdir(parents=True)
+
+          with zipfile.ZipFile(zip_path, "r") as zf:
+              zf.extractall(stage)
+
+          tar_path = release_dir / "ikuai-bypass-lxc-alpine-musl-amd64.tar.gz"
+          if tar_path.exists():
+              tar_path.unlink()
+          with tarfile.open(tar_path, "w:gz") as tf:
+              for path in stage.rglob("*"):
+                  tf.add(path, arcname=path.relative_to(stage))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-lxc-alpine-musl-amd64
+          path: release/*.tar.gz
 
   build-gui:
     name: GUI ${{ matrix.label }}
@@ -403,7 +552,7 @@ jobs:
         run: cargo install tauri-cli --locked
 
       - name: Build GUI bundle
-        run: cargo tauri build --manifest-path app/src-tauri/Cargo.toml ${{ matrix.bundle_args }}
+        run: cargo tauri build ${{ matrix.bundle_args }} -- --manifest-path app/src-tauri/Cargo.toml
 
       - name: Collect GUI artifacts
         shell: bash
@@ -441,7 +590,7 @@ jobs:
     name: Docker Multi-Arch
     needs:
       - meta
-      - build-cli
+      - build-cli-linux
     if: needs.meta.outputs.push_docker == 'true' && needs.meta.outputs.docker_creds_available == 'true'
     runs-on: ubuntu-latest
 
@@ -524,7 +673,9 @@ jobs:
     name: Publish Release
     needs:
       - meta
-      - build-cli
+      - build-cli-linux
+      - build-cli-others
+      - build-lxc
       - build-gui
     if: needs.meta.outputs.publish_release == 'true'
     runs-on: ubuntu-latest

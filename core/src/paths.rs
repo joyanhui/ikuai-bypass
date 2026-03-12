@@ -72,7 +72,7 @@ fn windows_roaming_appdata() -> Option<PathBuf> {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
 
-    use windows_sys::Win32::Foundation::PWSTR;
+    use windows_sys::core::PWSTR;
     use windows_sys::Win32::System::Com::{
         CoInitializeEx, CoTaskMemFree, COINIT_APARTMENTTHREADED,
     };
@@ -81,9 +81,14 @@ fn windows_roaming_appdata() -> Option<PathBuf> {
     };
 
     unsafe {
-        let _ = CoInitializeEx(std::ptr::null_mut(), COINIT_APARTMENTTHREADED);
+        let _ = CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32);
         let mut path_ptr: PWSTR = std::ptr::null_mut();
-        let hr = SHGetKnownFolderPath(&FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, 0, &mut path_ptr);
+        let hr = SHGetKnownFolderPath(
+            &FOLDERID_RoamingAppData,
+            KF_FLAG_DEFAULT as u32,
+            std::ptr::null_mut(),
+            &mut path_ptr,
+        );
         if hr < 0 || path_ptr.is_null() {
             return None;
         }
@@ -93,7 +98,7 @@ fn windows_roaming_appdata() -> Option<PathBuf> {
         }
         let slice = std::slice::from_raw_parts(path_ptr, len);
         let os = OsString::from_wide(slice);
-        CoTaskMemFree(path_ptr as *mut _);
+        CoTaskMemFree(path_ptr.cast());
         Some(PathBuf::from(os))
     }
 }

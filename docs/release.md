@@ -64,6 +64,7 @@ ikuai-bypass-lxc-alpine-musl-amd64.tar.gz
 当前策略：
 
 - 能使用 `musl` 的 Linux CLI 目标，统一优先使用 `musl`
+- `linux-ppc64le` 当前使用 `gnu` 目标构建（`powerpc64le-unknown-linux-gnu`）
 - `lxc-alpine-musl-amd64` 复用 `linux-amd64` 的同一份 `musl` 二进制
 
 压缩包内容：

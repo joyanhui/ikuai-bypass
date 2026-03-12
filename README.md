@@ -84,7 +84,8 @@
 
 说明：
 
-- Linux `amd64 / 386 / arm / arm64 / ppc64le / riscv64` CLI 现统一优先使用 `musl` 构建
+- Linux `amd64 / 386 / arm / arm64 / riscv64` CLI 现统一优先使用 `musl` 构建
+- `linux-ppc64le` 当前使用 `gnu` 目标构建（`powerpc64le-unknown-linux-gnu`）
 - `lxc-alpine-musl-amd64` 与 `linux-amd64` 复用同一份二进制，只是额外提供了更适合 LXC / Alpine 场景的打包格式
 
 ### 2. 配置

@@ -156,7 +156,7 @@ jobs:
             package_format: zip
           - runner: ubuntu-latest
             label: linux-ppc64le
-            target: powerpc64le-unknown-linux-musl
+            target: powerpc64le-unknown-linux-gnu
             package_suffix: linux-ppc64le
             use_cross: true
             package_format: zip
@@ -552,7 +552,8 @@ jobs:
         run: cargo install tauri-cli --locked
 
       - name: Build GUI bundle
-        run: cargo tauri build ${{ matrix.bundle_args }} -- --manifest-path app/src-tauri/Cargo.toml
+        working-directory: app/src-tauri
+        run: cargo tauri build ${{ matrix.bundle_args }}
 
       - name: Collect GUI artifacts
         shell: bash

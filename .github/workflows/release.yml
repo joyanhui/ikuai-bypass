@@ -112,7 +112,10 @@ jobs:
 
   build-cli-linux:
     name: CLI Linux ${{ matrix.label }}
-    needs: meta
+    needs:
+      - meta
+      - build-frontend
+      - build-tauri-icons
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -279,7 +282,10 @@ jobs:
 
   build-cli-others:
     name: CLI ${{ matrix.label }}
-    needs: meta
+    needs:
+      - meta
+      - build-frontend
+      - build-tauri-icons
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -309,7 +315,7 @@ jobs:
             package_suffix: windows-amd64
             use_cross: false
             package_format: zip
-          - runner: macos-15-intel
+          - runner: macos-15
             label: darwin-amd64
             target: x86_64-apple-darwin
             package_suffix: darwin-amd64
@@ -570,7 +576,13 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
+          for bin in cargo-tauri tauri; do
+            if command -v "${bin}" >/dev/null 2>&1; then
+              rm -f "$(command -v "${bin}")" || true
+            fi
+          done
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" \
+            "$HOME/.install-action/bin/cargo-tauri" "$HOME/.install-action/bin/tauri" || true
 
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
@@ -611,7 +623,7 @@ jobs:
             tauri_cli_target: x86_64-unknown-linux-gnu
             tauri_target: x86_64-unknown-linux-gnu
             bundle_active: true
-          - runner: macos-15-intel
+          - runner: macos-15
             label: macos-x86_64
             bundle_args: --bundles dmg
             collect_pattern: target/release/bundle/**/*.dmg
@@ -634,6 +646,8 @@ jobs:
           python-version: "3.11"
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.tauri_target }}
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -677,7 +691,13 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
+          for bin in cargo-tauri tauri; do
+            if command -v "${bin}" >/dev/null 2>&1; then
+              rm -f "$(command -v "${bin}")" || true
+            fi
+          done
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" \
+            "$HOME/.install-action/bin/cargo-tauri" "$HOME/.install-action/bin/tauri" || true
 
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
@@ -699,10 +719,10 @@ jobs:
           path = pathlib.Path("tauri.conf.json")
           cfg = json.loads(path.read_text())
           build = cfg.setdefault("build", {})
+          build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
             frontend_dist = f"{workspace}/app/frontend/dist"
-            build["beforeBuildCommand"] = "echo ci-skip"
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle_active = os.environ.get("BUNDLE_ACTIVE", "true").lower() != "false"
@@ -823,15 +843,21 @@ jobs:
       - name: Setup Android SDK/NDK
         uses: android-actions/setup-android@v3
 
+      - name: Cleanup stale cargo-tauri
+        shell: bash
+        run: |
+          for bin in cargo-tauri tauri; do
+            if command -v "${bin}" >/dev/null 2>&1; then
+              rm -f "$(command -v "${bin}")" || true
+            fi
+          done
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" \
+            "$HOME/.install-action/bin/cargo-tauri" "$HOME/.install-action/bin/tauri" || true
+
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-
-      - name: Cleanup stale cargo-tauri
-        shell: bash
-        run: |
-          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
 
       - name: Prepare Tauri Android config
         working-directory: app/src-tauri
@@ -845,10 +871,10 @@ jobs:
           path = pathlib.Path("tauri.conf.json")
           cfg = json.loads(path.read_text())
           build = cfg.setdefault("build", {})
+          build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
             frontend_dist = f"{workspace}/app/frontend/dist"
-            build["beforeBuildCommand"] = "echo ci-skip"
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [
@@ -886,7 +912,13 @@ jobs:
           import shutil
 
           root = pathlib.Path("app/src-tauri")
-          candidates = list(root.rglob("*.apk"))
+          candidates = [
+              p
+              for p in root.rglob("*.apk")
+              if ("release" in p.name.lower()) or ("unsigned" in p.name.lower())
+          ]
+          if not candidates:
+              candidates = list(root.rglob("*.apk"))
           if not candidates:
             raise SystemExit("No APK artifact found")
           apk = candidates[0]
@@ -936,15 +968,21 @@ jobs:
             . -> target
           cache-on-failure: true
 
+      - name: Cleanup stale cargo-tauri
+        shell: bash
+        run: |
+          for bin in cargo-tauri tauri; do
+            if command -v "${bin}" >/dev/null 2>&1; then
+              rm -f "$(command -v "${bin}")" || true
+            fi
+          done
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" \
+            "$HOME/.install-action/bin/cargo-tauri" "$HOME/.install-action/bin/tauri" || true
+
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-
-      - name: Cleanup stale cargo-tauri
-        shell: bash
-        run: |
-          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
 
       - name: Prepare Tauri iOS config
         working-directory: app/src-tauri
@@ -958,10 +996,10 @@ jobs:
           path = pathlib.Path("tauri.conf.json")
           cfg = json.loads(path.read_text())
           build = cfg.setdefault("build", {})
+          build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
             frontend_dist = f"{workspace}/app/frontend/dist"
-            build["beforeBuildCommand"] = "echo ci-skip"
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [
@@ -1007,11 +1045,13 @@ jobs:
           TOOLCHAINS = com.apple.dt.toolchain.XcodeDefault
           XCCONFIG
 
-          project_pbxproj="gen/apple/ikuai-bypass.xcodeproj/project.pbxproj"
-          if [ -f "${project_pbxproj}" ]; then
+          project_pbxproj="$(find gen/apple -type f -path '*.xcodeproj/project.pbxproj' | head -1 || true)"
+          if [ -n "${project_pbxproj}" ] && [ -f "${project_pbxproj}" ]; then
             escaped_toolchain="$(printf '%s\n' "${default_toolchain}" | sed 's/[\\/&]/\\&/g')"
-            perl -0777 -i -pe 's/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = "";/g; s/CODE_SIGN_STYLE = [^;]*;/CODE_SIGN_STYLE = Manual;/g; s/CODE_SIGN_IDENTITY = [^;]*;/CODE_SIGN_IDENTITY = "";/g; s/PROVISIONING_PROFILE_SPECIFIER = [^;]*;/PROVISIONING_PROFILE_SPECIFIER = "";/g; s/PROVISIONING_PROFILE = [^;]*;/PROVISIONING_PROFILE = "";/g;' "${project_pbxproj}"
+            perl -0777 -i -pe 's/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = "";/g; s/CODE_SIGN_STYLE = [^;]*;/CODE_SIGN_STYLE = Manual;/g; s/CODE_SIGN_IDENTITY = [^;]*;/CODE_SIGN_IDENTITY = "";/g; s/CODE_SIGNING_ALLOWED = [^;]*;/CODE_SIGNING_ALLOWED = NO;/g; s/CODE_SIGNING_REQUIRED = [^;]*;/CODE_SIGNING_REQUIRED = NO;/g; s/PROVISIONING_PROFILE_SPECIFIER = [^;]*;/PROVISIONING_PROFILE_SPECIFIER = "";/g; s/PROVISIONING_PROFILE = [^;]*;/PROVISIONING_PROFILE = "";/g;' "${project_pbxproj}"
             perl -0777 -i -pe "s/\\$\\(TOOLCHAIN_DIR\\)\\/usr\\/lib\\/swift\\//${escaped_toolchain}\\/usr\\/lib\\/swift\\//g; s/\\$\\(TOOLCHAIN_DIR\\)\\/usr\\/lib\\/swift-5\\.0\\//${escaped_toolchain}\\/usr\\/lib\\/swift-5.0\\//g;" "${project_pbxproj}"
+          else
+            echo "::warning::project.pbxproj not found, skip signing patch"
           fi
 
           set +e
@@ -1019,6 +1059,7 @@ jobs:
             APPLE_CERTIFICATE="" \
             APPLE_CERTIFICATE_PASSWORD="" \
             APPLE_SIGNING_IDENTITY="" \
+            APPLE_DEVELOPMENT_TEAM="" \
             APPLE_TEAM_ID="" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -1036,6 +1077,7 @@ jobs:
             APPLE_CERTIFICATE="" \
             APPLE_CERTIFICATE_PASSWORD="" \
             APPLE_SIGNING_IDENTITY="" \
+            APPLE_DEVELOPMENT_TEAM="" \
             APPLE_TEAM_ID="" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \

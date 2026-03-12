@@ -1546,18 +1546,28 @@ const init = async () => {
   initCmdModal();
   initModalEscape();
   
-  // 加载后端数据
-  await loadBackend();
+  // 启动状态更新（不依赖后端数据加载，保证 UI 始终可交互）
+  // Status polling is independent — ensures UI stays interactive even if IPC fails
+  updateStatus();
+  setInterval(updateStatus, 1500);
   
-  // 加载初始日志
-  await loadInitialLogs();
+  // 后端数据和日志流的加载允许失败，不阻塞 UI
+  // Backend data + log stream: non-blocking, UI must remain interactive on failure
+  try {
+    await loadBackend();
+  } catch (err) {
+    console.warn('[IKB] loadBackend failed, UI remains usable', err);
+    showToast('配置加载失败，请检查连接');
+  }
+  
+  try {
+    await loadInitialLogs();
+  } catch (err) {
+    console.warn('[IKB] loadInitialLogs failed', err);
+  }
   
   // 启动日志流
   startLogStream();
-  
-  // 启动状态更新
-  updateStatus();
-  setInterval(updateStatus, 1500);
   
   // Cron 输入同步
   const cronInput = document.getElementById('cronInput') as HTMLInputElement;

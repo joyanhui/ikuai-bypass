@@ -26,7 +26,15 @@ fn platform_config_dir_no_env() -> Option<PathBuf> {
         return unix_home_dir_no_env().map(|h| h.join("Library").join("Application Support"));
     }
 
-    #[cfg(all(unix, not(target_os = "macos")))]
+    // Android 沙箱环境中 getpwuid_r 不可靠，且应用应使用 Tauri 提供的路径 API。
+    // 返回 None 让调用方 fallback 到 ./config.yml 或由 Tauri 层覆写。
+    // Android sandbox: getpwuid_r is unreliable; caller should use Tauri's path API instead.
+    #[cfg(target_os = "android")]
+    {
+        return None;
+    }
+
+    #[cfg(all(unix, not(target_os = "macos"), not(target_os = "android")))]
     {
         return unix_home_dir_no_env().map(|h| h.join(".config"));
     }

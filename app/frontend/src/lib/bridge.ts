@@ -23,7 +23,7 @@ function isLikelyTauriContext(): boolean {
 
 let tauriReadyPromise: Promise<TauriGlobal | null> | null = null;
 
-async function waitForTauriGlobal(timeoutMs = 4000, intervalMs = 50): Promise<TauriGlobal | null> {
+async function waitForTauriGlobal(timeoutMs = 6000, intervalMs = 50): Promise<TauriGlobal | null> {
   const current = readTauriGlobal();
   if (current?.core?.invoke) return current;
   if (!isLikelyTauriContext()) return null;
@@ -36,6 +36,7 @@ async function waitForTauriGlobal(timeoutMs = 4000, intervalMs = 50): Promise<Ta
       if (tauri?.core?.invoke) return tauri;
       await new Promise((resolve) => globalThis.setTimeout(resolve, intervalMs));
     }
+    console.warn('[IKB] waitForTauriGlobal: timed out after', timeoutMs, 'ms');
     return null;
   })();
 
@@ -85,7 +86,7 @@ function isTauri(): boolean {
 
 async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const t = await waitForTauriGlobal();
-  if (!t?.core?.invoke) throw new Error('Tauri bridge is not available');
+  if (!t?.core?.invoke) throw new Error(`Tauri IPC not available (cmd: ${cmd})`);
   return await t.core.invoke(cmd, args || {});
 }
 

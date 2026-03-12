@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use ikb_core::config::Config;
 use ikb_core::runtime::RuntimeService;
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 #[tauri::command]
 async fn get_config(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
@@ -28,10 +28,11 @@ async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta
     let cfg_guard = state.config.lock().await;
     let config = serde_json::to_value(&*cfg_guard)
         .map_err(|e| format!("Failed to encode config: {}", e))?;
-    let raw_yaml = std::fs::read_to_string(&state.config_path).unwrap_or_default();
+    let path = state.config_path.lock().await;
+    let raw_yaml = std::fs::read_to_string(&*path).unwrap_or_default();
     Ok(ConfigMeta {
         config,
-        conf_path: state.config_path.to_string_lossy().to_string(),
+        conf_path: path.to_string_lossy().to_string(),
         raw_yaml,
         top_level_comments: ikb_core::config::top_level_comments(),
         item_comments: ikb_core::config::item_comments(),
@@ -42,7 +43,8 @@ async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta
 
 #[tauri::command]
 async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), String> {
-    if let Err(e) = config.save_to_path(&state.config_path) {
+    let path = state.config_path.lock().await;
+    if let Err(e) = config.save_to_path(&*path) {
         return Err(format!("Failed to save config: {}", e));
     }
 
@@ -58,7 +60,8 @@ async fn save_config_with_comments(
     config: Config,
     with_comments: bool,
 ) -> Result<(), String> {
-    if let Err(e) = config.save_to_path_with_comments(&state.config_path, with_comments) {
+    let path = state.config_path.lock().await;
+    if let Err(e) = config.save_to_path_with_comments(&*path, with_comments) {
         return Err(format!("Failed to save config: {}", e));
     }
     let new_cron = config.cron.to_string();
@@ -73,7 +76,8 @@ async fn save_raw_yaml(
     yaml_text: String,
     with_comments: bool,
 ) -> Result<(), String> {
-    let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &state.config_path, with_comments)
+    let path = state.config_path.lock().await;
+    let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &*path, with_comments)
         .map_err(|e| format!("Failed to save config: {}", e))?;
     let new_cron = cfg.cron.to_string();
     *state.config.lock().await = cfg;
@@ -204,32 +208,30 @@ async fn fetch_remote_config(url: String, github_proxy: String) -> Result<String
 pub struct AppState {
     config: Arc<tokio::sync::Mutex<Config>>,
     runtime: Arc<RuntimeService>,
-    config_path: PathBuf,
+    config_path: Arc<tokio::sync::Mutex<PathBuf>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let config_path = ikb_core::paths::default_config_path();
-    let cfg = ikb_core::config::Config::load_from_path(&config_path).unwrap_or_else(|_| {
-        Config {
-            ikuai_url: String::new(),
-            username: String::new(),
-            password: String::new(),
-            cron: String::new(),
-            add_err_retry_wait: std::time::Duration::from_secs(0),
-            add_wait: std::time::Duration::from_secs(0),
-            github_proxy: String::new(),
-            custom_isp: Vec::new(),
-            stream_domain: Vec::new(),
-            ip_group: Vec::new(),
-            ipv6_group: Vec::new(),
-            stream_ipport: Vec::new(),
-            webui: Default::default(),
-            max_number_of_one_records: Default::default(),
-        }
-    });
+    let fallback_config_path = ikb_core::paths::default_config_path();
 
-    let config = Arc::new(tokio::sync::Mutex::new(cfg));
+    let config = Arc::new(tokio::sync::Mutex::new(Config {
+        ikuai_url: String::new(),
+        username: String::new(),
+        password: String::new(),
+        cron: String::new(),
+        add_err_retry_wait: std::time::Duration::from_secs(0),
+        add_wait: std::time::Duration::from_secs(0),
+        github_proxy: String::new(),
+        custom_isp: Vec::new(),
+        stream_domain: Vec::new(),
+        ip_group: Vec::new(),
+        ipv6_group: Vec::new(),
+        stream_ipport: Vec::new(),
+        webui: Default::default(),
+        max_number_of_one_records: Default::default(),
+    }));
+
     let runtime = Arc::new(RuntimeService::new(
         Arc::clone(&config),
         String::new(),
@@ -238,15 +240,40 @@ pub fn run() {
     ));
 
     let runtime_for_logs = Arc::clone(&runtime);
+    let config_for_setup = Arc::clone(&config);
 
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::new().build())
         .manage(AppState {
-            config,
-            runtime,
-            config_path,
+            config: Arc::clone(&config),
+            runtime: Arc::clone(&runtime),
+            config_path: Arc::new(tokio::sync::Mutex::new(fallback_config_path)),
         })
         .setup(move |app| {
+            // 移动端使用 Tauri 提供的 app_config_dir；桌面端沿用 ikb_core 路径逻辑
+            // Mobile: use Tauri's app_config_dir; Desktop: use ikb_core's platform path
+            let config_path = if cfg!(target_os = "android") || cfg!(target_os = "ios") {
+                let dir = app.path().app_config_dir().unwrap_or_else(|_| PathBuf::from("."));
+                if !dir.exists() {
+                    let _ = std::fs::create_dir_all(&dir);
+                }
+                dir.join("config.yml")
+            } else {
+                ikb_core::paths::default_config_path()
+            };
+
+            let state = app.state::<AppState>();
+            {
+                let path_lock = state.config_path.clone();
+                let cfg_clone = Arc::clone(&config_for_setup);
+                tauri::async_runtime::block_on(async move {
+                    *path_lock.lock().await = config_path.clone();
+                    if let Ok(cfg) = Config::load_from_path(&config_path) {
+                        *cfg_clone.lock().await = cfg;
+                    }
+                });
+            }
+
             let handle = app.handle().to_owned();
             let runtime = Arc::clone(&runtime_for_logs);
             tauri::async_runtime::spawn(async move {

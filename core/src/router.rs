@@ -32,14 +32,26 @@ fn parse_proc_net_route_gateway(content: &str) -> Option<Ipv4Addr> {
         if cols.len() < 4 {
             continue;
         }
-        if cols[1] != "00000000" {
+        let dest = match cols.get(1) {
+            Some(v) => *v,
+            None => continue,
+        };
+        if dest != "00000000" {
             continue;
         }
-        let flags = u16::from_str_radix(cols[3], 16).ok()?;
+        let flags_hex = match cols.get(3) {
+            Some(v) => *v,
+            None => continue,
+        };
+        let flags = u16::from_str_radix(flags_hex, 16).ok()?;
         if flags & 0x2 == 0 {
             continue;
         }
-        let gw = u32::from_str_radix(cols[2], 16).ok()?;
+        let gw_hex = match cols.get(2) {
+            Some(v) => *v,
+            None => continue,
+        };
+        let gw = u32::from_str_radix(gw_hex, 16).ok()?;
         let b1 = (gw & 0xFF) as u8;
         let b2 = ((gw >> 8) & 0xFF) as u8;
         let b3 = ((gw >> 16) & 0xFF) as u8;

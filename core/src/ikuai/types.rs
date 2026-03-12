@@ -198,7 +198,15 @@ fn trim_body(text: &str) -> String {
     if trimmed.len() <= LIMIT {
         return trimmed.to_string();
     }
-    let mut out = trimmed[..LIMIT].to_string();
+    let mut end = 0usize;
+    for (i, ch) in trimmed.char_indices() {
+        let next = i + ch.len_utf8();
+        if next > LIMIT {
+            break;
+        }
+        end = next;
+    }
+    let mut out = trimmed[..end].to_string();
     out.push_str("...");
     out
 }

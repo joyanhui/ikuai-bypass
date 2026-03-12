@@ -42,7 +42,7 @@ stream-domain:
     assert_eq!(cfg.max_number_of_one_records.ipv6, 1000);
     assert_eq!(cfg.max_number_of_one_records.domain, 5000);
     assert_eq!(
-        cfg.stream_domain.get(0).map(|v| v.tag.as_str()),
+        cfg.stream_domain.first().map(|v| v.tag.as_str()),
         Some("wan1")
     );
     assert_eq!(cfg.add_wait, Duration::from_secs(0));

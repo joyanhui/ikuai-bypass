@@ -18,7 +18,7 @@ fn rewrite_single_dash_long_known_flags() {
 fn normalize_keeps_argv0() {
     let args = vec!["ikuai-bypass".to_string(), "-exportPath=/tmp".to_string()];
     let out = normalize_go_style_args(&args);
-    assert_eq!(out.get(0).map(String::as_str), Some("ikuai-bypass"));
+    assert_eq!(out.first().map(String::as_str), Some("ikuai-bypass"));
     assert_eq!(out.get(1).map(String::as_str), Some("--exportPath=/tmp"));
 }
 

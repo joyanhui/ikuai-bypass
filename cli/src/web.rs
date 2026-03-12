@@ -136,33 +136,28 @@ fn find_frontend_dist_dir() -> Option<std::path::PathBuf> {
         candidates.push(cwd.join("./app/frontend/dist"));
     }
 
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(exe_dir) = exe.parent() {
-            candidates.push(exe_dir.join("../app/frontend/dist"));
-            candidates.push(exe_dir.join("../../app/frontend/dist"));
+    if let Ok(exe) = std::env::current_exe()
+        && let Some(exe_dir) = exe.parent()
+    {
+        candidates.push(exe_dir.join("../app/frontend/dist"));
+        candidates.push(exe_dir.join("../../app/frontend/dist"));
 
-            for ancestor in exe_dir.ancestors().take(8) {
-                candidates.push(ancestor.join("app/frontend/dist"));
-            }
+        for ancestor in exe_dir.ancestors().take(8) {
+            candidates.push(ancestor.join("app/frontend/dist"));
         }
     }
 
     candidates.push(std::path::PathBuf::from("app/frontend/dist"));
     candidates.push(std::path::PathBuf::from("./app/frontend/dist"));
 
-    for p in candidates {
-        if valid(&p) {
-            return Some(p);
-        }
-    }
-    None
+    candidates.into_iter().find(|p| valid(p))
 }
 
 async fn index() -> Html<&'static str> {
     Html("<html><body><h1>iKuai Bypass WebUI (Rust)</h1></body></html>")
 }
 
-async fn api_config(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+async fn api_config(State(state): State<Arc<AppState>>) -> Response {
     let exe_path = std::env::current_exe()
         .ok()
         .and_then(|p| p.to_str().map(|s| s.to_string()))
@@ -199,7 +194,7 @@ async fn api_config(State(state): State<Arc<AppState>>) -> impl IntoResponse {
         webui_comments: ikb_core::config::webui_comments(),
         max_number_of_one_records_comments: ikb_core::config::max_number_of_one_records_comments(),
     };
-    (StatusCode::OK, Json(resp))
+    (StatusCode::OK, Json(resp)).into_response()
 }
 
 async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
@@ -410,12 +405,8 @@ fn parse_tail_query(query: &str) -> Option<usize> {
         let mut kv = part.splitn(2, '=');
         let k = kv.next().unwrap_or("");
         let v = kv.next().unwrap_or("");
-        if k == "tail" {
-            if let Ok(n) = v.parse::<usize>() {
-                if n > 0 {
-                    return Some(n);
-                }
-            }
+        if k == "tail" && let Ok(n) = v.parse::<usize>() && n > 0 {
+            return Some(n);
         }
     }
     None

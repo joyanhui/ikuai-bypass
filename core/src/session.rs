@@ -31,14 +31,21 @@ pub fn resolve_login_params(
 ) -> Result<LoginParams, LoginParamsError> {
     let cli_login = cli_login.trim();
     if !cli_login.is_empty() {
-        let parts: Vec<&str> = cli_login.split(',').collect();
-        if parts.len() != 3 {
+        let mut parts = cli_login.split(',').map(str::trim);
+        let base_url = parts.next().unwrap_or("");
+        let username = parts.next().unwrap_or("");
+        let password = parts.next().unwrap_or("");
+        if base_url.is_empty()
+            || username.is_empty()
+            || password.is_empty()
+            || parts.next().is_some()
+        {
             return Err(LoginParamsError::CliFormat);
         }
         return Ok(LoginParams {
-            base_url: parts[0].trim().to_string(),
-            username: parts[1].trim().to_string(),
-            password: parts[2].trim().to_string(),
+            base_url: base_url.to_string(),
+            username: username.to_string(),
+            password: password.to_string(),
             source: LoginSource::Cli,
         });
     }
@@ -46,8 +53,8 @@ pub fn resolve_login_params(
     if !cfg.ikuai_url.trim().is_empty() {
         return Ok(LoginParams {
             base_url: cfg.ikuai_url.trim().to_string(),
-            username: cfg.username.clone(),
-            password: cfg.password.clone(),
+            username: cfg.username.to_string(),
+            password: cfg.password.to_string(),
             source: LoginSource::Config,
         });
     }
@@ -55,8 +62,8 @@ pub fn resolve_login_params(
     let gw = crate::router::get_gateway_v4().map_err(|_| LoginParamsError::GatewayNotFound)?;
     Ok(LoginParams {
         base_url: format!("http://{}", gw),
-        username: cfg.username.clone(),
-        password: cfg.password.clone(),
+        username: cfg.username.to_string(),
+        password: cfg.password.to_string(),
         source: LoginSource::Gateway,
     })
 }

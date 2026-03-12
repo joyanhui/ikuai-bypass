@@ -40,7 +40,14 @@ impl LogBroker {
     }
 
     fn append(&mut self, rec: LogRecord) {
-        self.lines.push_back(rec.clone());
+        let stored = LogRecord {
+            ts: rec.ts.as_str().to_string(),
+            module: rec.module.as_str().to_string(),
+            tag: rec.tag.as_str().to_string(),
+            level: rec.level,
+            detail: rec.detail.as_str().to_string(),
+        };
+        self.lines.push_back(stored);
         while self.lines.len() > self.max_lines {
             self.lines.pop_front();
         }
@@ -49,7 +56,17 @@ impl LogBroker {
 
     fn tail(&self, n: usize) -> Vec<LogRecord> {
         let n = n.max(1).min(self.lines.len());
-        self.lines.iter().skip(self.lines.len() - n).cloned().collect()
+        self.lines
+            .iter()
+            .skip(self.lines.len() - n)
+            .map(|rec| LogRecord {
+                ts: rec.ts.as_str().to_string(),
+                module: rec.module.as_str().to_string(),
+                tag: rec.tag.as_str().to_string(),
+                level: rec.level,
+                detail: rec.detail.as_str().to_string(),
+            })
+            .collect()
     }
 
     fn subscribe(&self) -> broadcast::Receiver<LogRecord> {
@@ -125,10 +142,18 @@ impl RuntimeService {
             return RuntimeStatus {
                 running: self.running.load(Ordering::SeqCst),
                 cron_running: i.cron_task.is_some(),
-                cron_expr: i.cron_expr.clone(),
-                module: i.module.clone(),
-                last_run_at: i.last_run_at.clone().unwrap_or_default(),
-                next_run_at: i.next_run_at.clone().unwrap_or_default(),
+                cron_expr: i.cron_expr.as_str().to_string(),
+                module: i.module.as_str().to_string(),
+                last_run_at: i
+                    .last_run_at
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_string(),
+                next_run_at: i
+                    .next_run_at
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_string(),
             };
         }
         RuntimeStatus {
@@ -143,7 +168,7 @@ impl RuntimeService {
 
     pub async fn start_run_once(self: Arc<Self>, module: String) -> Result<bool, String> {
         let module = if module.trim().is_empty() {
-            self.inner.lock().await.module.clone()
+            self.inner.lock().await.module.to_string()
         } else {
             module
         };
@@ -161,7 +186,7 @@ impl RuntimeService {
 
         let this = Arc::clone(&self);
         let handle = tokio::spawn(async move {
-            let cfg = this.config.lock().await.clone();
+            let cfg = this.config.lock().await;
             this.append_sys(LogLevel::Info, "TASK:任务执行", format!("module={}", module))
                 .await;
 
@@ -209,7 +234,7 @@ impl RuntimeService {
         let schedule_expr = normalize_cron_expr_for_parser(&expr)?;
         let schedule = Schedule::from_str(&schedule_expr).map_err(|e| e.to_string())?;
         let module = if module.trim().is_empty() {
-            self.inner.lock().await.module.clone()
+            self.inner.lock().await.module.to_string()
         } else {
             module
         };
@@ -239,7 +264,7 @@ impl RuntimeService {
                     tokio::time::sleep(wait.min(Duration::from_secs(1))).await;
                 }
 
-                let _ = Arc::clone(&this).start_run_once(module.clone()).await;
+                let _ = Arc::clone(&this).start_run_once(module.to_string()).await;
             }
         });
 

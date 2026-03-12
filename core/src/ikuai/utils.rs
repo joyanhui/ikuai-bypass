@@ -11,11 +11,11 @@ pub fn to_string_list(v: &Value) -> Vec<String> {
         Value::Array(arr) => arr
             .iter()
             .map(|x| match x {
-                Value::String(s) => s.clone(),
+                Value::String(s) => s.to_string(),
                 _ => x.to_string().trim_matches('"').to_string(),
             })
             .collect(),
-        Value::String(s) => vec![s.clone()],
+        Value::String(s) => vec![s.to_string()],
         other => vec![other.to_string()],
     }
 }

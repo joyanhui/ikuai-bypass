@@ -6,13 +6,13 @@ pub fn normalize_go_style_args(args: &[String]) -> Vec<String> {
     }
 
     let mut out = Vec::with_capacity(args.len());
-    out.push(args[0].clone());
+    out.push(args[0].to_string());
 
     for a in &args[1..] {
         if let Some(rewritten) = rewrite_single_dash_long(a) {
             out.push(rewritten);
         } else {
-            out.push(a.clone());
+            out.push(a.to_string());
         }
     }
 

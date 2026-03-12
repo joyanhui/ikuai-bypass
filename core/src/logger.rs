@@ -58,7 +58,7 @@ impl Logger {
         let ts = Local::now().format("%Y/%m/%d %H:%M:%S").to_string();
         (self.sink)(LogRecord {
             ts,
-            module: self.module.clone(),
+            module: self.module.as_str().to_string(),
             tag,
             level,
             detail,
@@ -102,43 +102,50 @@ fn style(color: u8, bold: bool, s: &str) -> String {
     }
 }
 
-static RE_QUOTED: Lazy<Regex> = Lazy::new(|| Regex::new(r"'([^']+)'").expect("regex"));
-static RE_KV: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?i)(Prefix|Tag|IDs?|found|error|status|interface):\s*([^\s,)]+)").expect("regex")
-});
-static RE_SAFE_NUM: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]|\b\d+\b").expect("regex"));
+static RE_QUOTED: Lazy<Result<Regex, regex::Error>> = Lazy::new(|| Regex::new(r"'([^']+)'"));
+static RE_KV: Lazy<Result<Regex, regex::Error>> =
+    Lazy::new(|| Regex::new(r"(?i)(Prefix|Tag|IDs?|found|error|status|interface):\s*([^\s,)]+)"));
+static RE_SAFE_NUM: Lazy<Result<Regex, regex::Error>> =
+    Lazy::new(|| Regex::new(r"\x1b\[[0-9;]*[a-zA-Z]|\b\d+\b"));
 
 fn highlight(s: &str) -> String {
     let mut out = s.to_string();
-    out = RE_QUOTED
-        .replace_all(&out, |caps: &regex::Captures| {
-            style(93, true, caps.get(0).unwrap().as_str())
-        })
-        .to_string();
 
-    out = RE_KV
-        .replace_all(&out, |caps: &regex::Captures| {
-            let key = caps.get(1).unwrap().as_str();
-            let val = caps.get(2).unwrap().as_str();
-            if val.contains("\x1b[") {
-                format!("{}: {}", key, val)
-            } else {
-                format!("{}: {}", key, style(93, true, val))
-            }
-        })
-        .to_string();
+    if let Ok(re) = RE_QUOTED.as_ref() {
+        out = re
+            .replace_all(&out, |caps: &regex::Captures| {
+                let matched = caps.get(0).map(|m| m.as_str()).unwrap_or("");
+                style(93, true, matched)
+            })
+            .to_string();
+    }
 
-    out = RE_SAFE_NUM
-        .replace_all(&out, |caps: &regex::Captures| {
-            let m = caps.get(0).unwrap().as_str();
-            if m.starts_with("\x1b") {
-                m.to_string()
-            } else {
-                style(95, false, m)
-            }
-        })
-        .to_string();
+    if let Ok(re) = RE_KV.as_ref() {
+        out = re
+            .replace_all(&out, |caps: &regex::Captures| {
+                let key = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+                let val = caps.get(2).map(|m| m.as_str()).unwrap_or("");
+                if val.contains("\x1b[") {
+                    format!("{}: {}", key, val)
+                } else {
+                    format!("{}: {}", key, style(93, true, val))
+                }
+            })
+            .to_string();
+    }
+
+    if let Ok(re) = RE_SAFE_NUM.as_ref() {
+        out = re
+            .replace_all(&out, |caps: &regex::Captures| {
+                let m = caps.get(0).map(|m| m.as_str()).unwrap_or("");
+                if m.starts_with("\x1b") {
+                    m.to_string()
+                } else {
+                    style(95, false, m)
+                }
+            })
+            .to_string();
+    }
 
     out
 }

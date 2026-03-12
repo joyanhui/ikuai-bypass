@@ -166,7 +166,7 @@ impl IKuaiClient {
         let text = self.post_json_text(&url, &req).await?;
         let resp: CallResp<TData> = parse_call_response(&text)?;
         if resp.code != 0 {
-            return Err(IKuaiError::Api(resp.message.clone()));
+            return Err(IKuaiError::Api(resp.message.to_string()));
         }
         Ok(resp)
     }

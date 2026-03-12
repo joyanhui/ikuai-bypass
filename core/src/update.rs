@@ -25,7 +25,7 @@ pub async fn run_update_by_module(
     sink: LogSink,
 ) -> Result<(), UpdateError> {
     let params = resolve_login_params(cfg, cli_login)?;
-    let api = ikuai::IKuaiClient::new(params.base_url.clone())?;
+    let api = ikuai::IKuaiClient::new(params.base_url.to_string())?;
     api.login(&params.username, &params.password).await?;
 
     let sys = Logger::new("SYS:系统组件", Arc::clone(&sink));
@@ -146,7 +146,7 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
 
     for item in &cfg.stream_ipport {
         let tag = if !item.opt_tagname.trim().is_empty() {
-            item.opt_tagname.clone()
+            item.opt_tagname.to_string()
         } else {
             format!("{}{}", item.interface, item.nexthop)
         };

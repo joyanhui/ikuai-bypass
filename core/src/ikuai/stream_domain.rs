@@ -88,7 +88,7 @@ pub async fn show_stream_domain_by_tag_name(api: &IKuaiClient, tag_name: &str) -
             time: String::new(),
         };
         if let Some(t) = d.time.custom.first() {
-            item.week = t.weekdays.clone();
+            item.week = t.weekdays.to_string();
             item.time = format!("{}-{}", t.start_time, t.end_time);
         }
         out.push(item);
@@ -240,7 +240,7 @@ async fn resolve_ip_group_objects(api: &IKuaiClient, names: &[String]) -> Result
     let groups = ip_group::show_ip_group_by_tag_name(api, "").await?;
     let mut map = std::collections::HashMap::new();
     for g in groups {
-        map.insert(g.group_name.clone(), g.id);
+        map.insert(g.group_name.to_string(), g.id);
     }
     let mut out = Vec::new();
     for name in names {

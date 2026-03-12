@@ -52,7 +52,7 @@ pub async fn show_ip_group_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Res
         let mut ips = Vec::new();
         for v in &d.group_value {
             if let Some(ip) = v.get("ip") {
-                ips.push(ip.clone());
+                ips.push(ip.to_string());
             }
         }
         out.push(IpGroupData {

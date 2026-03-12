@@ -260,7 +260,7 @@ impl Config {
 
         for item in &mut self.stream_domain {
             if item.tag.is_empty() {
-                item.tag = item.interface.clone();
+                item.tag = item.interface.to_string();
             }
         }
     }

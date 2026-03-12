@@ -3,8 +3,8 @@ use regex::Regex;
 
 use super::types::{COMMENT_IKUAI_BYPASS, NAME_PREFIX_IKB};
 
-static TAG_SANITIZER: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"[^\p{Han}A-Za-z0-9]+").expect("regex"));
+static TAG_SANITIZER: Lazy<Result<Regex, regex::Error>> =
+    Lazy::new(|| Regex::new(r"[^\p{Han}A-Za-z0-9]+"));
 
 const MAX_TAG_NAME_LENGTH: usize = 15;
 
@@ -21,9 +21,11 @@ fn strip_known_prefix(raw: &str) -> String {
 }
 
 pub fn sanitize_tag_name(raw: &str) -> String {
-    TAG_SANITIZER
-        .replace_all(&strip_known_prefix(raw), "")
-        .to_string()
+    let base = strip_known_prefix(raw);
+    match TAG_SANITIZER.as_ref() {
+        Ok(re) => re.replace_all(&base, "").to_string(),
+        Err(_) => base,
+    }
 }
 
 pub fn build_tag_name(raw: &str) -> String {

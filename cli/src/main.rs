@@ -59,6 +59,7 @@ fn main() {
             std::process::exit(1);
         }
     };
+    let config = Arc::new(tokio::sync::Mutex::new(cfg));
 
     if let Err(e) = ikb_core::runner::validate_module(&args.module) {
         eprintln!("[ERR:参数错误] {}", e);
@@ -68,18 +69,20 @@ fn main() {
     let stop = Arc::new(AtomicBool::new(false));
     {
         let stop = Arc::clone(&stop);
-        ctrlc::set_handler(move || {
+        if let Err(e) = ctrlc::set_handler(move || {
             stop.store(true, Ordering::SeqCst);
-        })
-        .expect("set ctrlc handler");
+        }) {
+            eprintln!("[ERR:启动失败] Failed to set ctrlc handler: {}", e);
+            std::process::exit(1);
+        }
     }
 
     match args.run_mode.as_str() {
         "web" => {
             println!("[MODE:运行模式] WebUI mode - starting web service");
-            let port = cfg.webui.port.trim();
+            let port = config.blocking_lock().webui.port.trim().to_string();
             let port = if port.is_empty() { "8080" } else { port };
-            let server = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string());
+            let server = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port.to_string());
             if let Err(e) = server {
                 eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                 std::process::exit(1);
@@ -88,7 +91,8 @@ fn main() {
         }
         "cron" => {
             println!("[MODE:运行模式] Cron mode - executing once then entering scheduled mode");
-            match ikb_core::session::resolve_login_params(&cfg, &args.ikuai_login_info) {
+            let cfg_guard = config.blocking_lock();
+            match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
                 Ok(p) => {
                     if p.source == ikb_core::session::LoginSource::Cli {
                         println!("[AUTH:登录认证] Logging in using command line parameters");
@@ -104,25 +108,28 @@ fn main() {
                     std::process::exit(2);
                 }
             }
-            if cfg.webui.enable {
-                let port = cfg.webui.port.trim();
+            if cfg_guard.webui.enable {
+                let port = cfg_guard.webui.port.trim().to_string();
                 let port = if port.is_empty() { "8080" } else { port };
-                if let Err(e) = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string()) {
+                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port.to_string()) {
                     eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                     std::process::exit(1);
                 }
             }
-            if cfg.cron.trim().is_empty() {
+            if cfg_guard.cron.trim().is_empty() {
                 println!("[CRON:定时任务] Cron configuration is empty, exiting...");
                 return;
             }
 
-            run_update_once(&cfg, &args.ikuai_login_info, &args.module);
-            run_cron_loop(&cfg, &args.ikuai_login_info, &cfg.cron, &args.module, &stop);
+            let cron_expr = cfg_guard.cron.to_string();
+            drop(cfg_guard);
+            run_update_once(&config, &args.ikuai_login_info, &args.module);
+            run_cron_loop(&config, &args.ikuai_login_info, &cron_expr, &args.module, &stop);
         }
         "cronAft" => {
             println!("[MODE:运行模式] CronAft mode - scheduled execution only");
-            match ikb_core::session::resolve_login_params(&cfg, &args.ikuai_login_info) {
+            let cfg_guard = config.blocking_lock();
+            match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
                 Ok(p) => {
                     if p.source == ikb_core::session::LoginSource::Cli {
                         println!("[AUTH:登录认证] Logging in using command line parameters");
@@ -138,23 +145,25 @@ fn main() {
                     std::process::exit(2);
                 }
             }
-            if cfg.webui.enable {
-                let port = cfg.webui.port.trim();
+            if cfg_guard.webui.enable {
+                let port = cfg_guard.webui.port.trim().to_string();
                 let port = if port.is_empty() { "8080" } else { port };
-                if let Err(e) = web::start_web_server(config_path.clone(), cfg.clone(), port.to_string()) {
+                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port.to_string()) {
                     eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                     std::process::exit(1);
                 }
             }
-            if cfg.cron.trim().is_empty() {
+            if cfg_guard.cron.trim().is_empty() {
                 println!("[CRON:定时任务] Cron configuration is empty, exiting...");
                 return;
             }
 
-            run_cron_loop(&cfg, &args.ikuai_login_info, &cfg.cron, &args.module, &stop);
+            let cron_expr = cfg_guard.cron.to_string();
+            drop(cfg_guard);
+            run_cron_loop(&config, &args.ikuai_login_info, &cron_expr, &args.module, &stop);
         }
         "nocron" | "once" | "1" => {
-            run_update_once(&cfg, &args.ikuai_login_info, &args.module);
+            run_update_once(&config, &args.ikuai_login_info, &args.module);
             println!("[END:运行完毕] Once mode execution completed, exiting...");
         }
         "clean" => {
@@ -174,7 +183,8 @@ fn main() {
                 );
             }
 
-            let params = match ikb_core::session::resolve_login_params(&cfg, &args.ikuai_login_info)
+            let cfg_guard = config.blocking_lock();
+            let params = match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info)
             {
                 Ok(p) => p,
                 Err(_) => {
@@ -182,11 +192,16 @@ fn main() {
                     std::process::exit(2);
                 }
             };
-
-            let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
-            let clean_tag = args.clean_tag.clone();
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("[ERR:启动失败] Failed to create tokio runtime: {}", e);
+                    std::process::exit(1);
+                }
+            };
+            let clean_tag = args.clean_tag.to_string();
             rt.block_on(async move {
-                let api = match ikb_core::ikuai::IKuaiClient::new(params.base_url.clone()) {
+                let api = match ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string()) {
                     Ok(v) => v,
                     Err(e) => {
                         eprintln!("[LOGIN:登录失败] Failed to build iKuai client: {}", e);
@@ -229,18 +244,22 @@ fn main() {
     }
 }
 
-fn run_update_once(cfg: &ikb_core::config::Config, cli_login: &str, module: &str) {
-    let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+fn run_update_once(cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>, cli_login: &str, module: &str) {
+    let rt = match tokio::runtime::Runtime::new() {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("[ERR:启动失败] Failed to create tokio runtime: {}", e);
+            std::process::exit(1);
+        }
+    };
     let use_color = std::io::stdout().is_terminal();
     let renderer = ikb_core::logger::Renderer::new(use_color);
     let sink: ikb_core::logger::LogSink = std::sync::Arc::new(move |rec| {
         println!("{}", renderer.render(&rec));
     });
-    let cfg = cfg.clone();
-    let cli_login = cli_login.to_string();
-    let module = module.to_string();
-    let res = rt.block_on(async move {
-        ikb_core::update::run_update_by_module(&cfg, &cli_login, &module, sink).await
+    let res = rt.block_on(async {
+        let cfg_guard = cfg.lock().await;
+        ikb_core::update::run_update_by_module(&cfg_guard, cli_login, module, sink).await
     });
     if let Err(e) = res {
         eprintln!("[UPDATE:更新失败] {}", e);
@@ -254,7 +273,7 @@ fn wait_until_stopped(stop: &Arc<AtomicBool>) {
 }
 
 fn run_cron_loop(
-    cfg: &ikb_core::config::Config,
+    cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
     cli_login: &str,
     expr: &str,
     module: &str,

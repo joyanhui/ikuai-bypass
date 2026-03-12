@@ -117,6 +117,8 @@ jobs:
       - build-frontend
       - build-tauri-icons
     runs-on: ${{ matrix.runner }}
+    env:
+      CARGO_TARGET_DIR: target-cli-linux-${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -182,8 +184,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            . -> target
+            . -> ${{ env.CARGO_TARGET_DIR }}
           cache-on-failure: true
+          shared-key: cli-linux-${{ matrix.target }}
 
       - name: Add native rust target
         if: ${{ !matrix.use_cross }}
@@ -233,7 +236,8 @@ jobs:
           suffix = os.environ["PACKAGE_SUFFIX"]
           package_format = os.environ["PACKAGE_FORMAT"]
           release_dir = pathlib.Path("release")
-          build_dir = pathlib.Path("target") / target / "release"
+          build_root = pathlib.Path(os.environ.get("CARGO_TARGET_DIR", "target"))
+          build_dir = build_root / target / "release"
           src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
           if not src.exists():
               raise SystemExit(f"missing binary: {src}")
@@ -287,6 +291,8 @@ jobs:
       - build-frontend
       - build-tauri-icons
     runs-on: ${{ matrix.runner }}
+    env:
+      CARGO_TARGET_DIR: target-cli-others-${{ matrix.target }}
     strategy:
       fail-fast: false
       matrix:
@@ -340,8 +346,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            . -> target
+            . -> ${{ env.CARGO_TARGET_DIR }}
           cache-on-failure: true
+          shared-key: cli-others-${{ matrix.target }}
 
       - name: Add native rust target
         if: ${{ !matrix.use_cross }}
@@ -391,7 +398,8 @@ jobs:
           suffix = os.environ["PACKAGE_SUFFIX"]
           package_format = os.environ["PACKAGE_FORMAT"]
           release_dir = pathlib.Path("release")
-          build_dir = pathlib.Path("target") / target / "release"
+          build_root = pathlib.Path(os.environ.get("CARGO_TARGET_DIR", "target"))
+          build_dir = build_root / target / "release"
           src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
           if not src.exists():
               raise SystemExit(f"missing binary: {src}")
@@ -559,6 +567,10 @@ jobs:
       - name: Build frontend dist
         working-directory: app/frontend
         run: bun run build
+
+      - name: Verify frontend dist
+        working-directory: app/frontend
+        run: test -f dist/index.html
 
       - uses: actions/upload-artifact@v4
         with:
@@ -1004,6 +1016,8 @@ jobs:
             frontend_dist = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
+          bundle_ios = bundle.setdefault("iOS", {})
+          bundle_ios["developmentTeam"] = "0000000000"
           bundle["icon"] = [
               "icons/icon.png",
               "icons/icon.ico",
@@ -1036,6 +1050,8 @@ jobs:
       - name: Build iOS IPA (unsigned)
         working-directory: app/src-tauri
         shell: bash
+        env:
+          APPLE_DEVELOPMENT_TEAM: "0000000000"
         run: |
           set -euo pipefail
           xcode_dev_dir="$(xcode-select -p)"

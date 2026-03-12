@@ -491,8 +491,9 @@ jobs:
 
           init_script = init_dir / "ikuai-bypass"
           init_script.write_text(
-              """#!/sbin/openrc-run\n"
+              "#!/sbin/openrc-run\n"
               "description=\"iKuai Bypass\"\n"
+              "\n"
               "command=\"/usr/local/bin/ikuai-bypass\"\n"
               "command_args=\"-r cron -c /etc/ikuai-bypass/config.yml\"\n"
               "command_background=\"yes\"\n"
@@ -565,12 +566,16 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Cleanup stale cargo-tauri
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
+
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-        env:
-          PATH: /usr/bin:/bin:${{ env.PATH }}
 
       - name: Generate Tauri icons
         working-directory: app/src-tauri
@@ -635,6 +640,7 @@ jobs:
           workspaces: |
             . -> target
           cache-on-failure: true
+          shared-key: gui-${{ matrix.label }}
 
       - uses: actions/download-artifact@v4
         with:
@@ -667,13 +673,16 @@ jobs:
             patchelf \
             wget
 
+      - name: Cleanup stale cargo-tauri
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
+
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-          target: ${{ matrix.tauri_cli_target }}
-        env:
-          PATH: /usr/bin:/bin:${{ env.PATH }}
 
       - name: Prepare Tauri CI config
         working-directory: app/src-tauri
@@ -737,6 +746,14 @@ jobs:
           release_dir = pathlib.Path("release")
           patterns = [p for p in os.environ["PATTERN"].split("|") if p]
           tauri_target = os.environ.get("TAURI_TARGET", "")
+          if tauri_target:
+              derived = []
+              for p in patterns:
+                  if p.startswith("target/release/"):
+                      derived.append(f"target/{tauri_target}/release/{p.removeprefix('target/release/')}")
+              patterns.extend(derived)
+
+          # Windows raw exe fallback
           exe_names = ["ikb-app.exe", "ikuai-bypass.exe"]
           if tauri_target:
               for name in exe_names:
@@ -761,12 +778,25 @@ jobs:
           path: release/*
 
   build-gui-android:
-    name: GUI android-aarch64
+    name: GUI android ${{ matrix.label }}
     needs:
       - meta
       - build-frontend
       - build-tauri-icons
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rust_target: aarch64-linux-android
+            tauri_target: aarch64
+            label: aarch64
+          - rust_target: armv7-linux-androideabi
+            tauri_target: armv7
+            label: armv7
+          - rust_target: x86_64-linux-android
+            tauri_target: x86_64
+            label: x86_64
     steps:
       - uses: actions/checkout@v4
 
@@ -782,7 +812,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android
+          targets: ${{ matrix.rust_target }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -797,8 +827,11 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-        env:
-          PATH: /usr/bin:/bin:${{ env.PATH }}
+
+      - name: Cleanup stale cargo-tauri
+        shell: bash
+        run: |
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
 
       - name: Prepare Tauri Android config
         working-directory: app/src-tauri
@@ -843,7 +876,7 @@ jobs:
           if cargo tauri android build --help | grep -q -- '--apk'; then
             apk_opt+=(--apk)
           fi
-          cargo tauri android build --ci --target aarch64 --config tauri.android.conf.json "${apk_opt[@]}"
+          cargo tauri android build --ci --target "${{ matrix.tauri_target }}" --config tauri.android.conf.json "${apk_opt[@]}"
 
       - name: Package Android artifact
         shell: bash
@@ -859,12 +892,13 @@ jobs:
           apk = candidates[0]
           dist = pathlib.Path("dist")
           dist.mkdir(parents=True, exist_ok=True)
-          shutil.copy2(apk, dist / "ikuai-bypass-android-aarch64.apk")
+          label = "${{ matrix.label }}"
+          shutil.copy2(apk, dist / f"ikuai-bypass-android-{label}.apk")
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: gui-android-aarch64
+          name: gui-android-${{ matrix.label }}
           path: dist/*
 
   build-gui-ios:
@@ -906,8 +940,11 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-        env:
-          PATH: /usr/bin:/bin:${{ env.PATH }}
+
+      - name: Cleanup stale cargo-tauri
+        shell: bash
+        run: |
+          rm -f "$HOME/.cargo/bin/cargo-tauri" "$HOME/.cargo/bin/tauri" || true
 
       - name: Prepare Tauri iOS config
         working-directory: app/src-tauri

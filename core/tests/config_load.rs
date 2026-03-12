@@ -1,11 +1,14 @@
+use std::path::Path;
 use std::time::Duration;
 
 use ikb_core::config::Config;
 
 #[test]
 fn load_repo_config_yml() {
-    let path = format!("{}/../../config.yml", env!("CARGO_MANIFEST_DIR"));
-    let cfg = Config::load_from_path(path).expect("load config.yml");
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("config.yml");
+    let cfg = Config::load_from_path(&path).expect("load config.yml");
     assert!(!cfg.ikuai_url.is_empty());
     assert!(cfg.max_number_of_one_records.isp > 0);
 }

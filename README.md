@@ -5,10 +5,10 @@
 **iKuai Bypass** 是一款爱快路由器专用的分流规则自动同步工具。它可以自动从网上下载 IP/域名列表并同步到你的路由器，让你的流量自动走正确的线路。比如：国内流量直连、国外流量走代理，无需手动配置每一条规则。
 
 提供两种使用方式：
-- **CLI**：适合服务器、OpenWrt、Docker、LXC、计划任务环境
-- **GUI**：图形化桌面应用和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端，新手友好，开箱即用
+- **CLI**：适合服务器、路由器、OpenWrt、Docker、LXC、计划任务环境
+- **GUI**：图形化桌面和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端，用户友好，几乎开箱即用
 
-> **提示**：旧版本代码已归档到 [golang_archive](./golang_archive)，一般用户无需关注。
+> **提示**：旧版本代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/untagged-08d99dfe501855617744),新版本使用性能更好，内存安全更好的rust语言构建。
 
 > **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
 
@@ -21,9 +21,8 @@
 
 本项目提供 WebUI 和 Tauri GUI 两种可视化界面，支持在线配置和运行状态监控。
 
-- **WebUI**：CLI 启动后通过浏览器访问，支持所有平台
-- **桌面 GUI**：Windows / macOS / Linux 桌面应用
-- **移动 GUI**：Android / iOS 移动应用
+- **WebUI**：供CLI 模式启动后通过浏览器访问，进提供可视化编辑配置文件功能。
+- **桌面或移动设备 可视化**：Windows / macOS / Linux 桌面应用 / 安卓apk / ios自签ipa 
 
 ---
 

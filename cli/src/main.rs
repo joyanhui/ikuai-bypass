@@ -81,8 +81,8 @@ fn main() {
         "web" => {
             println!("[MODE:运行模式] WebUI mode - starting web service");
             let port = config.blocking_lock().webui.port.trim().to_string();
-            let port = if port.is_empty() { "8080" } else { port };
-            let server = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port.to_string());
+            let port = if port.is_empty() { "8080".to_string() } else { port };
+            let server = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port);
             if let Err(e) = server {
                 eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                 std::process::exit(1);
@@ -110,8 +110,8 @@ fn main() {
             }
             if cfg_guard.webui.enable {
                 let port = cfg_guard.webui.port.trim().to_string();
-                let port = if port.is_empty() { "8080" } else { port };
-                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port.to_string()) {
+                let port = if port.is_empty() { "8080".to_string() } else { port };
+                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port) {
                     eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                     std::process::exit(1);
                 }
@@ -147,8 +147,8 @@ fn main() {
             }
             if cfg_guard.webui.enable {
                 let port = cfg_guard.webui.port.trim().to_string();
-                let port = if port.is_empty() { "8080" } else { port };
-                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port.to_string()) {
+                let port = if port.is_empty() { "8080".to_string() } else { port };
+                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port) {
                     eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                     std::process::exit(1);
                 }

@@ -17,7 +17,6 @@ use std::convert::Infallible;
 
 use ikb_core::runtime::RuntimeService;
 
-#[derive(Clone)]
 struct AppState {
     config_path: PathBuf,
     config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
@@ -27,7 +26,7 @@ struct AppState {
 #[derive(Debug, Serialize)]
 struct ConfigResponse {
     #[serde(flatten)]
-    config: ikb_core::config::Config,
+    config: serde_json::Value,
     exe_path: String,
     conf_path: String,
     raw_yaml: String,
@@ -52,22 +51,21 @@ struct SaveRawYamlRequest {
 
 pub fn start_web_server(
     config_path: PathBuf,
-    cfg: ikb_core::config::Config,
+    config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
     port: String,
 ) -> Result<(), String> {
-    let config = Arc::new(tokio::sync::Mutex::new(cfg));
-    let default_cron = config.blocking_lock().cron.clone();
+    let default_cron = config.blocking_lock().cron.to_string();
     let runtime = Arc::new(RuntimeService::new(
         Arc::clone(&config),
         String::new(),
         default_cron,
         "ispdomain".to_string(),
     ));
-    let state = AppState {
+    let state = Arc::new(AppState {
         config_path,
         config,
         runtime,
-    };
+    });
 
     let api = Router::new()
         .route("/api/config", get(api_config))
@@ -87,14 +85,14 @@ pub fn start_web_server(
         Router::new()
             .merge(api)
             .fallback_service(ServeDir::new(dist))
-            .layer(axum::middleware::from_fn_with_state(state.clone(), basic_auth))
-            .with_state(state)
+            .layer(axum::middleware::from_fn_with_state(Arc::clone(&state), basic_auth))
+            .with_state(Arc::clone(&state))
     } else {
         Router::new()
             .route("/", get(index))
             .merge(api)
-            .layer(axum::middleware::from_fn_with_state(state.clone(), basic_auth))
-            .with_state(state)
+            .layer(axum::middleware::from_fn_with_state(Arc::clone(&state), basic_auth))
+            .with_state(Arc::clone(&state))
     };
 
     let addr = format!("0.0.0.0:{}", port);
@@ -104,9 +102,21 @@ pub fn start_web_server(
         .map_err(|e| e.to_string())?;
 
     std::thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!("[ERR:启动失败] Failed to create tokio runtime: {}", e);
+                return;
+            }
+        };
         rt.block_on(async move {
-            let listener = tokio::net::TcpListener::from_std(listener).expect("tokio listener");
+            let listener = match tokio::net::TcpListener::from_std(listener) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("[ERR:启动失败] Failed to init tokio listener: {}", e);
+                    return;
+                }
+            };
             let _ = axum::serve(listener, app).await;
         });
     });
@@ -152,14 +162,14 @@ async fn index() -> Html<&'static str> {
     Html("<html><body><h1>iKuai Bypass WebUI (Rust)</h1></body></html>")
 }
 
-async fn api_config(State(state): State<AppState>) -> impl IntoResponse {
+async fn api_config(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let exe_path = std::env::current_exe()
         .ok()
         .and_then(|p| p.to_str().map(|s| s.to_string()))
         .unwrap_or_default();
 
     let conf_path = if state.config_path.is_absolute() {
-        state.config_path.clone()
+        state.config_path.to_path_buf()
     } else {
         std::env::current_dir()
             .unwrap_or_else(|_| std::path::PathBuf::from("."))
@@ -167,10 +177,20 @@ async fn api_config(State(state): State<AppState>) -> impl IntoResponse {
     };
     let conf_path = conf_path.to_string_lossy().to_string();
 
-    let cfg = state.config.lock().await.clone();
+    let cfg_guard = state.config.lock().await;
+    let config = match serde_json::to_value(&*cfg_guard) {
+        Ok(v) => v,
+        Err(e) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to encode config: {}", e),
+            )
+                .into_response();
+        }
+    };
     let raw_yaml = std::fs::read_to_string(&state.config_path).unwrap_or_default();
     let resp = ConfigResponse {
-        config: cfg,
+        config,
         exe_path,
         conf_path,
         raw_yaml,
@@ -182,7 +202,7 @@ async fn api_config(State(state): State<AppState>) -> impl IntoResponse {
     (StatusCode::OK, Json(resp))
 }
 
-async fn api_save(State(state): State<AppState>, Json(req): Json<SaveRequest>) -> Response {
+async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
     let allow = state.config.lock().await.webui.enable;
     if !allow {
         return (
@@ -203,7 +223,7 @@ async fn api_save(State(state): State<AppState>, Json(req): Json<SaveRequest>) -
             .into_response();
     }
 
-    let new_cron = req.config.cron.clone();
+    let new_cron = req.config.cron.to_string();
     {
         let mut current = state.config.lock().await;
         *current = req.config;
@@ -219,7 +239,7 @@ async fn api_save(State(state): State<AppState>, Json(req): Json<SaveRequest>) -
 }
 
 async fn api_save_raw_yaml(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Json(req): Json<SaveRawYamlRequest>,
 ) -> Response {
     let allow = state.config.lock().await.webui.enable;
@@ -246,7 +266,7 @@ async fn api_save_raw_yaml(
         }
     };
 
-    let new_cron = cfg.cron.clone();
+    let new_cron = cfg.cron.to_string();
     {
         let mut current = state.config.lock().await;
         *current = cfg;
@@ -261,7 +281,7 @@ async fn api_save_raw_yaml(
         .into_response()
 }
 
-async fn api_runtime_status(State(state): State<AppState>) -> impl IntoResponse {
+async fn api_runtime_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     (StatusCode::OK, Json(state.runtime.status()))
 }
 
@@ -271,7 +291,7 @@ struct RunOnceRequest {
 }
 
 async fn api_runtime_run_once(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Json(req): Json<RunOnceRequest>,
 ) -> Response {
     match Arc::clone(&state.runtime).start_run_once(req.module).await {
@@ -291,7 +311,7 @@ struct CronStartRequest {
 }
 
 async fn api_runtime_cron_start(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Json(req): Json<CronStartRequest>,
 ) -> Response {
     if let Err(e) = Arc::clone(&state.runtime)
@@ -307,7 +327,7 @@ async fn api_runtime_cron_start(
     (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
 }
 
-async fn api_runtime_cron_stop(State(state): State<AppState>) -> Response {
+async fn api_runtime_cron_stop(State(state): State<Arc<AppState>>) -> Response {
     if let Err(e) = Arc::clone(&state.runtime).stop_cron().await {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -318,7 +338,7 @@ async fn api_runtime_cron_stop(State(state): State<AppState>) -> Response {
     (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
 }
 
-async fn api_runtime_stop(State(state): State<AppState>) -> Response {
+async fn api_runtime_stop(State(state): State<Arc<AppState>>) -> Response {
     if let Err(e) = Arc::clone(&state.runtime).stop_all().await {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -334,15 +354,15 @@ struct CleanRequest {
     clean_tag: String,
 }
 
-async fn run_clean(config: ikb_core::config::Config, clean_tag: String) -> Result<(), String> {
+async fn run_clean(config: &ikb_core::config::Config, clean_tag: String) -> Result<(), String> {
     let tag = clean_tag.trim().to_string();
     if tag.is_empty() {
         return Err("Clean mode requires clean_tag".to_string());
     }
 
-    let params = ikb_core::session::resolve_login_params(&config, "")
+    let params = ikb_core::session::resolve_login_params(config, "")
         .map_err(|_| "Invalid login parameters".to_string())?;
-    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.clone())
+    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string())
         .map_err(|e| e.to_string())?;
     api.login(&params.username, &params.password)
         .await
@@ -368,17 +388,17 @@ async fn run_clean(config: ikb_core::config::Config, clean_tag: String) -> Resul
 }
 
 async fn api_runtime_clean(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     Json(req): Json<CleanRequest>,
 ) -> Response {
-    let cfg = state.config.lock().await.clone();
-    match run_clean(cfg, req.clean_tag).await {
+    let cfg_guard = state.config.lock().await;
+    match run_clean(&cfg_guard, req.clean_tag).await {
         Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
         Err(e) => (StatusCode::BAD_REQUEST, e).into_response(),
     }
 }
 
-async fn api_runtime_logs(State(state): State<AppState>, req: axum::http::Request<axum::body::Body>) -> Response {
+async fn api_runtime_logs(State(state): State<Arc<AppState>>, req: axum::http::Request<axum::body::Body>) -> Response {
     let query = req.uri().query().unwrap_or("");
     let tail = parse_tail_query(query).unwrap_or(200);
     let logs = state.runtime.tail_logs(tail).await;
@@ -401,7 +421,7 @@ fn parse_tail_query(query: &str) -> Option<usize> {
     None
 }
 
-async fn api_runtime_logs_stream(State(state): State<AppState>) -> impl IntoResponse {
+async fn api_runtime_logs_stream(State(state): State<Arc<AppState>>) -> impl IntoResponse {
     let runtime = Arc::clone(&state.runtime);
     let out = stream! {
         let mut rx = runtime.subscribe_logs().await;
@@ -417,13 +437,13 @@ async fn api_runtime_logs_stream(State(state): State<AppState>) -> impl IntoResp
 }
 
 async fn basic_auth(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     req: axum::http::Request<axum::body::Body>,
     next: Next,
 ) -> Response {
     let (user, pass) = {
         let cfg = state.config.lock().await;
-        (cfg.webui.user.clone(), cfg.webui.pass.clone())
+        (cfg.webui.user.to_string(), cfg.webui.pass.to_string())
     };
     if user.is_empty() {
         return next.run(req).await;

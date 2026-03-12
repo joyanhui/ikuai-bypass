@@ -247,7 +247,7 @@ pub fn run() {
             config_path,
         })
         .setup(move |app| {
-            let handle = app.handle();
+            let handle = app.handle().to_owned();
             let runtime = Arc::clone(&runtime_for_logs);
             tauri::async_runtime::spawn(async move {
                 let mut rx = runtime.subscribe_logs().await;

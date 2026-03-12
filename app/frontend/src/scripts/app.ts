@@ -23,7 +23,7 @@ const state = {
   unlistenLogs: null as (() => void) | null,
   streamReconnectTimer: null as ReturnType<typeof setTimeout> | null,
   ruleEditor: null as null | {
-    listKey: 'customIsp' | 'ipGroup' | 'ipv6Group' | 'streamDomain' | 'streamIpPort';
+    listKey: RuleListKey;
     index: number;
   },
   rawEditor: null as monaco.editor.IStandaloneCodeEditor | null,
@@ -226,7 +226,9 @@ const appendLog = (line: string) => {
   
   // 限制日志数量
   while (container.children.length > 200) {
-    container.removeChild(container.firstChild!);
+    const first = container.firstChild;
+    if (!first) break;
+    container.removeChild(first);
   }
   
   // 自动滚动
@@ -1155,58 +1157,62 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
     form.appendChild(fieldWrap);
   });
 
-  saveBtn!.onclick = () => {
-    const pathMap: Record<RuleListKey, string> = {
-      customIsp: 'custom-isp',
-      ipGroup: 'ip-group',
-      ipv6Group: 'ipv6-group',
-      streamDomain: 'stream-domain',
-      streamIpPort: 'stream-ipport',
+  if (saveBtn) {
+    saveBtn.onclick = () => {
+      const pathMap: Record<RuleListKey, string> = {
+        customIsp: 'custom-isp',
+        ipGroup: 'ip-group',
+        ipv6Group: 'ipv6-group',
+        streamDomain: 'stream-domain',
+        streamIpPort: 'stream-ipport',
+      };
+      const payloadMap: Record<RuleListKey, Record<string, string | number>> = {
+        customIsp: draft,
+        ipGroup: draft,
+        ipv6Group: draft,
+        streamDomain: {
+          interface: draft.interface,
+          'src-addr': draft.srcAddr,
+          'src-addr-opt-ipgroup': draft.srcAddrOptIpGroup,
+          url: draft.url,
+          tag: draft.tag,
+        },
+        streamIpPort: {
+          'opt-tagname': draft.optTagName,
+          type: draft.type,
+          interface: draft.interface,
+          nexthop: draft.nexthop,
+          'src-addr': draft.srcAddr,
+          'src-addr-opt-ipgroup': draft.srcAddrOptIpGroup,
+          'ip-group': draft.ipGroup,
+          mode: Number(draft.mode || 0),
+          ifaceband: Number(draft.ifaceband || 0),
+        },
+      };
+      state.rawYaml = upsertYamlSeqItem(state.rawYaml, [pathMap[listKey]], index, payloadMap[listKey]);
+      applyStateFromRawYaml();
+      bindConfigFields();
+      closeModal('ruleEditorModal');
+      showToast('规则已更新');
     };
-    const payloadMap: Record<RuleListKey, Record<string, string | number>> = {
-      customIsp: draft,
-      ipGroup: draft,
-      ipv6Group: draft,
-      streamDomain: {
-        interface: draft.interface,
-        'src-addr': draft.srcAddr,
-        'src-addr-opt-ipgroup': draft.srcAddrOptIpGroup,
-        url: draft.url,
-        tag: draft.tag,
-      },
-      streamIpPort: {
-        'opt-tagname': draft.optTagName,
-        type: draft.type,
-        interface: draft.interface,
-        nexthop: draft.nexthop,
-        'src-addr': draft.srcAddr,
-        'src-addr-opt-ipgroup': draft.srcAddrOptIpGroup,
-        'ip-group': draft.ipGroup,
-        mode: Number(draft.mode || 0),
-        ifaceband: Number(draft.ifaceband || 0),
-      },
-    };
-    state.rawYaml = upsertYamlSeqItem(state.rawYaml, [pathMap[listKey]], index, payloadMap[listKey]);
-    applyStateFromRawYaml();
-    bindConfigFields();
-    closeModal('ruleEditorModal');
-    showToast('规则已更新');
-  };
+  }
 
-  delBtn!.onclick = () => {
-    const pathMap: Record<RuleListKey, string> = {
-      customIsp: 'custom-isp',
-      ipGroup: 'ip-group',
-      ipv6Group: 'ipv6-group',
-      streamDomain: 'stream-domain',
-      streamIpPort: 'stream-ipport',
+  if (delBtn) {
+    delBtn.onclick = () => {
+      const pathMap: Record<RuleListKey, string> = {
+        customIsp: 'custom-isp',
+        ipGroup: 'ip-group',
+        ipv6Group: 'ipv6-group',
+        streamDomain: 'stream-domain',
+        streamIpPort: 'stream-ipport',
+      };
+      state.rawYaml = removeYamlSeqItem(state.rawYaml, [pathMap[listKey]], index);
+      applyStateFromRawYaml();
+      bindConfigFields();
+      closeModal('ruleEditorModal');
+      showToast('规则已删除');
     };
-    state.rawYaml = removeYamlSeqItem(state.rawYaml, [pathMap[listKey]], index);
-    applyStateFromRawYaml();
-    bindConfigFields();
-    closeModal('ruleEditorModal');
-    showToast('规则已删除');
-  };
+  }
 
   openModal('ruleEditorModal');
 };
@@ -1317,7 +1323,8 @@ const initCmdModal = () => {
     try {
       await navigator.clipboard.writeText(cmd);
       showToast('命令已复制');
-    } catch (_) {
+    } catch (err) {
+      console.warn('[IKB] Failed to copy command', err);
       showToast('复制失败');
     }
   });

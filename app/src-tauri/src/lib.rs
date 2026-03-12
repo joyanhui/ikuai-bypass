@@ -6,14 +6,15 @@ use ikb_core::runtime::RuntimeService;
 use tauri::Emitter;
 
 #[tauri::command]
-async fn get_config(state: tauri::State<'_, AppState>) -> Result<Config, String> {
-    Ok(state.config.lock().await.clone())
+async fn get_config(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
+    let cfg = state.config.lock().await;
+    serde_json::to_value(&*cfg).map_err(|e| format!("Failed to encode config: {}", e))
 }
 
 #[derive(serde::Serialize)]
 struct ConfigMeta {
     #[serde(flatten)]
-    config: Config,
+    config: serde_json::Value,
     conf_path: String,
     raw_yaml: String,
     top_level_comments: std::collections::BTreeMap<String, String>,
@@ -24,10 +25,12 @@ struct ConfigMeta {
 
 #[tauri::command]
 async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
-    let cfg = state.config.lock().await.clone();
+    let cfg_guard = state.config.lock().await;
+    let config = serde_json::to_value(&*cfg_guard)
+        .map_err(|e| format!("Failed to encode config: {}", e))?;
     let raw_yaml = std::fs::read_to_string(&state.config_path).unwrap_or_default();
     Ok(ConfigMeta {
-        config: cfg,
+        config,
         conf_path: state.config_path.to_string_lossy().to_string(),
         raw_yaml,
         top_level_comments: ikb_core::config::top_level_comments(),
@@ -43,7 +46,7 @@ async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Resul
         return Err(format!("Failed to save config: {}", e));
     }
 
-    let new_cron = config.cron.clone();
+    let new_cron = config.cron.to_string();
     *state.config.lock().await = config;
     state.runtime.set_defaults(None, Some(new_cron)).await;
     Ok(())
@@ -58,7 +61,7 @@ async fn save_config_with_comments(
     if let Err(e) = config.save_to_path_with_comments(&state.config_path, with_comments) {
         return Err(format!("Failed to save config: {}", e));
     }
-    let new_cron = config.cron.clone();
+    let new_cron = config.cron.to_string();
     *state.config.lock().await = config;
     state.runtime.set_defaults(None, Some(new_cron)).await;
     Ok(())
@@ -72,7 +75,7 @@ async fn save_raw_yaml(
 ) -> Result<(), String> {
     let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &state.config_path, with_comments)
         .map_err(|e| format!("Failed to save config: {}", e))?;
-    let new_cron = cfg.cron.clone();
+    let new_cron = cfg.cron.to_string();
     *state.config.lock().await = cfg;
     state.runtime.set_defaults(None, Some(new_cron)).await;
     Ok(())
@@ -120,15 +123,15 @@ async fn runtime_stop(state: tauri::State<'_, AppState>) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
-async fn run_clean(config: Config, clean_tag: String) -> Result<(), String> {
+async fn run_clean(config: &Config, clean_tag: String) -> Result<(), String> {
     let tag = clean_tag.trim().to_string();
     if tag.is_empty() {
         return Err("Clean mode requires clean_tag".to_string());
     }
 
-    let params = ikb_core::session::resolve_login_params(&config, "")
+    let params = ikb_core::session::resolve_login_params(config, "")
         .map_err(|_| "Invalid login parameters".to_string())?;
-    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.clone())
+    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string())
         .map_err(|e| e.to_string())?;
     api.login(&params.username, &params.password)
         .await
@@ -158,8 +161,8 @@ async fn runtime_clean(
     state: tauri::State<'_, AppState>,
     clean_tag: String,
 ) -> Result<(), String> {
-    let cfg = state.config.lock().await.clone();
-    run_clean(cfg, clean_tag).await
+    let cfg_guard = state.config.lock().await;
+    run_clean(&cfg_guard, clean_tag).await
 }
 
 #[tauri::command]
@@ -244,7 +247,7 @@ pub fn run() {
             config_path,
         })
         .setup(move |app| {
-            let handle = app.handle().clone();
+            let handle = app.handle();
             let runtime = Arc::clone(&runtime_for_logs);
             tauri::async_runtime::spawn(async move {
                 let mut rx = runtime.subscribe_logs().await;
@@ -277,5 +280,7 @@ pub fn run() {
             fetch_remote_config,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .unwrap_or_else(|e| {
+            eprintln!("[ERR:启动失败] Failed to run tauri application: {}", e);
+        });
 }

@@ -1,0 +1,255 @@
+# iKuai Bypass
+
+![iKuai](https://img.shields.io/badge/Router-iKuai-brightgreen) ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg) ![Go](https://img.shields.io/badge/Language-Go-blue)
+
+**iKuai Bypass** 是专为爱快路由器打造的自动化分流规则同步工具。通过模拟 Web 管理界面，自动将远程订阅的 IP/域名列表同步到路由器，实现精准流量调度。支持自定义运营商、IP/IPv6分组、域名分流、端口分流等多种模式，具备高并发处理、平滑更新、定时任务、可视化配置界面等特性，兼容全平台多架构。。[旧版本说明](README_bakcup.md)
+
+
+> **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
+
+
+> 关于dns分流解析，建议用 ADGuard home自建，这里有一个本人利用githubaction自动维护相关规则文件的adguardhome规则.[[joyanhui/adguardhome-rules]](https://github.com/joyanhui/adguardhome-rules)（规则文件在release_file分支48小时更新一次）。并提供的教程，可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
+
+---
+
+## 可视化 界面展示
+
+v4.1.0 版本新增了基于 Web 的可视化配置界面，支持在线配置和命令参数生成。当然你可以继续使用纯cli和手动修改配置文件的方式使用。
+
+![webui-screenshot.gif](assets/webui-screenshot.gif)
+
+
+---
+## 爱快喜闻乐见分流模式解析
+
+本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。
+
+### 1. 自定义运营商分流模式 (推荐)
+**适用场景：** 追求极致稳定性、网络自愈、终端无感分流。
+
+*   **实现逻辑：**
+    这种模式下，iKuai 将 OpenWrt（或其他网关）视为一个“虚拟的上级运营商”。
+    1.  **链路设计**：OpenWrt 作为 iKuai 的下级设备接收流量，处理后再将出口流量“绕回”给 iKuai 的物理 WAN 口。
+    2.  **规则同步**：本工具将目标 IP 列表导入 iKuai 的“自定义运营商”。iKuai 会认为这些 IP 属于该“虚拟运营商”，从而将流量转发给 OpenWrt。
+*   **核心优势：**
+    *   **极高可靠性**：OpenWrt 宕机只会导致被分流的流量中断，普通流量依然通过主线直连，不会全家断网。
+    *   **配置无感**：终端设备无需更改网关配置，完全由 iKuai 在内核层级完成调度。
+    *   **性能优异**：直连速度最快，旁路仅处理特定流量。
+*   **参考文档**：[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。
+
+<details>
+<summary>点击这里展开查看详细图文说明</summary>
+<img src="assets/img.png"  alt="自定义运营商分流模式拓扑图">
+</details>
+
+### 2. IP 分组与端口分流模式 (传统模式)
+**适用场景：** 简单的旁路由方案，逻辑直接。
+
+*   **实现逻辑：**
+    1.  **IP 分组**：本工具将订阅的 IP 列表同步到 iKuai 的“IP 分组”中。
+    2.  **策略路由**：利用 iKuai 的“端口分流”功能，匹配目标地址为该分组的流量，将其“下一跳网关”指向 OpenWrt 的 IP。
+*   **特点**：配置简单直接，但在 OpenWrt 宕机时，匹配到该分组的规则将无法上网（当然也无伤大雅）。
+*   **参考文档**：[实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7) 或 [恩山y2kji的教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)。
+
+---
+
+## 主要功能特性
+
+-   🚀 **高并发处理**：采用协程并发同步运营商/域名规则，同步速度提升。
+-   🛡️ **安全平滑更新**：默认采用“先增后删”策略，确保在规则更新期间路由器分流功能不中断。
+-   🌐 **多维度支持**：涵盖运营商分流 (IPv4/IPv6分流)、ip分组、域名分流、端口分流 (Next-hop)。
+-   📅 **全自动运营**：内置 Cron 计划任务，兼容系统计划任务，支持多配置文件并发运行。
+-   🛠️ **工具链完备**：支持一键清理、单次运行、规则导出（导出为爱快可导入的 TXT 格式）。
+-   💻 **广泛兼容**：提供全平台（win,linux,macos,freebsd）多架构支持（arm, mips, amd64, 386 等）。
+
+---
+
+## 快速上手
+
+### 版本选择
+- [v4.4.10](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.10) 初步适配爱快v4公测版本，此版本不兼容爱快3.x版本。并且进行了很大的调整，并需要修改配置项 详情请看更新日志。
+- v4.2.0 增加了 按IP分组名字搜索来源IP功能 [#99](https://github.com/joyanhui/ikuai-bypass/issues/99)以及 修复了stream-ipport配置为空的时候依旧添加分流规则的bug [#101](https://github.com/joyanhui/ikuai-bypass/issues/101)。此版本未经过全面测试，请谨慎使用。
+- v4.1.0 增加了启用的基于web的可视化配置界面和命令参数生成界面。稳定版本只存在不影响使用的小问题。
+- v4.0.1 重构了项目结构，修复了端口分流只保留一条的bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)；优化了IP和IPv6分组更新流程[#97](https://github.com/joyanhui/ikuai-bypass/pull/97)。
+- v3.0.0 版本 增加了ipv6分组 此功能由 [[dscao]](https://github.com/dscao) 提供。本版功能完备但是存在一处bug[#96](https://github.com/joyanhui/ikuai-bypass/issues/96)
+- v2.1.2-alpha1 虽然是alpha版，但功能稳定 存在少量不影响使用的bug
+
+### 1. 下载与配置
+
+1.  从 [Releases](https://github.com/joyanhui/ikuai-bypass/releases) 下载对应系统的二进制文件。
+2.  编辑 `config.yml`，填写爱快登录信息及订阅 URL：
+    ```yaml
+    ikuai-url: http://192.168.9.1
+    username: admin
+    password: your_password
+    cron: "0 7 * * *" # 每天早上 7 点更新
+    custom-isp:
+      - tag: "演示ip分组"
+        url: "https://example.com/same.txt"
+    ```
+
+### 2. 运行模式
+```bash
+# 标准模式（先执行一次，后进入定时任务）
+./ikuai-bypass -r cron
+
+# WebUI 模式（启动可视化配置界面）
+./ikuai-bypass -r web
+
+# 调试/单次模式（立即执行并退出）
+./ikuai-bypass -r once
+
+# 清理模式（删除所有名字包含 IKB 前缀的规则）
+./ikuai-bypass -r clean
+```
+
+---
+
+## 桌面 GUI 版本（Fyne）
+
+本项目新增 **Fyne GUI 版本**（与 CLI 并存）。GUI 版会在本机启动内置 WebUI 服务，并提供 **运行一次 / 定时任务控制 / 日志查看**。
+
+### 目录结构
+
+- `apps/cli/`：CLI 入口（Go）
+- `apps/gui/`：Fyne GUI（Go）
+
+### 本地开发
+
+```bash
+go run ./apps/gui
+```
+
+### 说明
+
+- GUI 版**不支持** CLI 参数，所有配置与功能控制请在 GUI/WebUI 中完成。
+- GUI 默认配置路径：
+  - Linux: `~/.config/ikuai-bypass/config.yml`
+  - macOS: `~/Library/Application Support/ikuai-bypass/config.yml`
+  - Windows: `%AppData%\\ikuai-bypass\\config.yml`
+- 若配置文件不存在，GUI 会从在线模板下载并创建：
+  - https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config.yml
+
+### 3. WebUI 配置与使用
+在 `config.yml` 的 `webui` 配置项中设置端口、用户名和密码。运行 `./ikuai-bypass -r web` 启动后，浏览器访问 `http://IP:19001` 即可在线修改配置和生成命令参数。
+
+---
+
+
+## 参数说明 (CLI Flags)
+
+| 参数 | 说明 | 示例/取值 |
+| :--- | :--- | :--- |
+| `-c` | 配置文件路径 | `-c ./config.yml` |
+| `-m` | **分流模块选择** | `ispdomain` (默认), `ipgroup`, `ipv6group`, `ii` (混合), `ip` (ipv4和ipv6分组) ，`iip` (ii+ip混合) |
+| `-r` | 运行模式 | 见下表 |
+| `-tag` | 清理模式下的标签关键词 | **必填项**。用于匹配 TagName 或名字，兼容旧备注匹配 (使用 `cleanAll` 清理全部) |
+| `-login` | 覆盖配置文件登录信息 | `http://IP,username,password` |
+| `-delOldRule`| 删除旧规则时机 | `after` (默认-更新后删), `before` (更新前删)。**注意：在 ikuaiV4 中此参数被移除，强制使用 before** |
+| `-exportPath` | 域名分流规则导出文件路径 | 默认为 `/tmp` |
+| `-isIpGroupNameAddRandomSuff` | IP分组名称是否增加随机数后缀 | `1` (添加), `0` (不添加)。仅 ipgroup 模式有效 |
+
+### 运行模式 (`-r`) 详细说明
+
+| 模式 | 名称 | 说明 |
+| :--- | :--- | :--- |
+| `cron` | 计划任务模式 | **默认模式**。立即执行一次更新，随后进入定时任务等待模式。若启用了 WebUI 则同步启动。 |
+| `cronAft` | 延迟计划任务 | 不立即执行更新，直接进入定时任务等待模式。若启用了 WebUI 则同步启动。 |
+| `once` / `nocron` / `1` | 单次模式 | 立即执行一次规则更新，完成后立即退出程序。 |
+| `clean` | 清理模式 | 删除所有带有 `IKB` 前缀（或 `-tag` 指定）的规则和分组。 |
+| `web`v4.1版本才有的功能 | WebUI 模式 | 启动可视化 Web 管理界面，用于在线修改配置。不做其他操作 |
+| `exportDomainSteamToTxt` | 导出模式 | 将域名分流规则导出为爱快兼容的 TXT 格式，方便手动导入。已经禁用 |
+
+---
+
+## 部署方案
+
+<details>
+<summary><b>Linux / OpenWrt (推荐)</b></summary>
+建议通过服务脚本安装为开机自启。(或者使用系统自带的crontab 配合参数 `-r once` 实现自动运行)
+<a href="https://github.com/joyanhui/ikuai-bypass/blob/main/example/script/AddOpenwrtService.sh">参考安装openwrt脚本</a>
+</details>
+
+<details>
+<summary><b>Windows</b></summary>
+从 Releases 下载 Windows 版本的压缩包，解压后通过命令提示符 (CMD) 或 PowerShell 运行即可。（或者使用系统自带的 计划任务管理器 配合参数 `-r once` 实现自动运行）<br> 
+注意：由于使用了 UPX 压缩且未加壳，部分杀软可能会误报。如果不信任，建议自行克隆代码并编译。作者没有 Windows 环境，不负责处理此类误报问题。详见 <a href="https://github.com/joyanhui/ikuai-bypass/issues/6">#6</a>。
+</details>
+
+<details>
+<summary><b>macOS</b></summary>
+根据您的芯片架构（Apple Silicon 下载 <code>darwin-arm64</code>，Intel 下载 <code>darwin-amd64</code>）下载对应的压缩包，解压后在终端运行。(或者使用系统自带的crontab 配合参数 `-r once` 实现自动运行)
+</details>
+
+<details>
+<summary><b>Docker 部署</b></summary>
+<a href="https://hub.docker.com/repository/docker/joyanhui/ikuai-bypass/general">joyanhui/ikuai-bypass</a>
+<br><br>
+> ⚠️ **重要提示**：`joyanhui/ikuai-bypass:latest` 镜像仅支持 **爱快 v4** 版本，不兼容爱快 3.x 旧版。如果您使用的是爱快 3.x，请参考 旧版 Docker 部署文档: https://github.com/joyanhui/ikuai-bypass/blob/d367e399c80357867e3c0e1258e98e7dbb439d4e/README_bakcup.md
+<br><br>
+说明：<code>mips/mipsle/mips64*</code> 由于 Alpine 官方基础镜像平台限制，建议使用 Releases 中对应架构二进制直接运行。
+<br><br>
+拉取镜像：
+<code>docker pull joyanhui/ikuai-bypass:latest</code>
+<br><br>
+运行示例（挂载配置文件目录）：
+<code>
+docker run -itd --name ikuai-bypass --privileged=true --restart=always \
+    -p 19001:19001 \
+    -e IKB_CONFIG_PATH=/etc/ikuai-bypass/config.yml \
+    -v ~/ikuai-bypass/:/etc/ikuai-bypass/ \
+    joyanhui/ikuai-bypass:latest -r cron
+</code>
+说明：容器启动时会检查 <code>IKB_CONFIG_PATH</code> 指向的配置文件；如果不存在，会自动将镜像内置模板复制到该路径（默认模板路径：<code>/opt/ikuai-bypass/config.yml</code>）。
+<br>
+注意：<code>-p 19001:19001</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此参数。默认端口为 19001，可在配置文件中修改。
+</details>
+
+
+<details>
+<summary><b>群晖环境docker</b></summary>
+使用 <code>compose.yaml</code> 内容为：
+
+```
+version: '3.8'
+services:
+  ikuai-bypass:
+    image: joyanhui/ikuai-bypass:latest
+    container_name: ikuai-bypass
+    privileged: true
+    environment:
+      TZ: "Asia/Shanghai"
+      IKB_CONFIG_PATH: "/etc/ikuai-bypass/config.yml"
+    volumes:
+      - /volume1/docker/ikuai-bypass/data/:/etc/ikuai-bypass
+    ports:
+      - "19001:19001"
+    command: ["-r", "cron"]
+    tty: true
+```
+说明：如果 <code>IKB_CONFIG_PATH</code> 指向的文件不存在，容器会先自动创建该配置文件再启动程序。
+<br>
+注意：<code>ports: - "19001:19001"</code> 是 WebUI 管理界面的端口映射，如果不需要使用 WebUI 可以移除此配置。默认端口为 19001，可在配置文件中修改。
+</details>
+---
+
+## 更新日志
+
+详细更新日志请查看 [docs/UpdateList.md](docs/UpdateList.md)
+
+---
+
+## 赞助支持
+
+虽世道艰难也一直在坚持维护这个项目，您的一份心意能让我更有动力继续完善这个工具，非常感谢您的支持！
+
+- **TRX (Tron TRC20) 钱包地址**：`TLiv9F6i38uZEGdp8VoB5qLxJx43aV9XSZ`
+
+当然，您也可以通过在 GitHub 上给项目点一个 ⭐️ Star 来支持我，这对我也是莫大的支持！
+
+---
+
+## 交流与反馈
+
+-   **交流讨论**：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛。 [Bug Issues](https://github.com/joyanhui/ikuai-bypass/issues)
+-   **致谢**：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的初始版本思路，以及所有提供 PR 的开发者。

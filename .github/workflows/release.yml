@@ -1,0 +1,297 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-cli:
+    name: CLI ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            label: linux-amd64
+            target: x86_64-unknown-linux-gnu
+            package_suffix: linux-amd64
+            use_cross: false
+          - runner: ubuntu-latest
+            label: linux-386
+            target: i686-unknown-linux-gnu
+            package_suffix: linux-386
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-arm5
+            target: armv5te-unknown-linux-gnueabi
+            package_suffix: linux-arm5
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-arm6
+            target: arm-unknown-linux-gnueabi
+            package_suffix: linux-arm6
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-arm7
+            target: armv7-unknown-linux-gnueabihf
+            package_suffix: linux-arm7
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-arm64
+            target: aarch64-unknown-linux-gnu
+            package_suffix: linux-arm64
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-mips
+            target: mips-unknown-linux-gnu
+            package_suffix: linux-mips
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-mipsle
+            target: mipsel-unknown-linux-gnu
+            package_suffix: linux-mipsle
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-mips64
+            target: mips64-unknown-linux-gnuabi64
+            package_suffix: linux-mips64
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-mips64le
+            target: mips64el-unknown-linux-gnuabi64
+            package_suffix: linux-mips64le
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-ppc64le
+            target: powerpc64le-unknown-linux-gnu
+            package_suffix: linux-ppc64le
+            use_cross: true
+          - runner: ubuntu-latest
+            label: linux-riscv64
+            target: riscv64gc-unknown-linux-gnu
+            package_suffix: linux-riscv64
+            use_cross: true
+          - runner: ubuntu-latest
+            label: freebsd-386
+            target: i686-unknown-freebsd
+            package_suffix: freebsd-386
+            use_cross: true
+          - runner: ubuntu-latest
+            label: freebsd-amd64
+            target: x86_64-unknown-freebsd
+            package_suffix: freebsd-amd64
+            use_cross: true
+          - runner: windows-latest
+            label: windows-386
+            target: i686-pc-windows-msvc
+            package_suffix: windows-386
+            use_cross: false
+          - runner: windows-latest
+            label: windows-amd64
+            target: x86_64-pc-windows-msvc
+            package_suffix: windows-amd64
+            use_cross: false
+          - runner: macos-13
+            label: darwin-amd64
+            target: x86_64-apple-darwin
+            package_suffix: darwin-amd64
+            use_cross: false
+          - runner: macos-14
+            label: darwin-arm64
+            target: aarch64-apple-darwin
+            package_suffix: darwin-arm64
+            use_cross: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        if: runner.os == 'Linux' && matrix.use_cross
+        run: cargo install cross --locked
+
+      - name: Build CLI with cargo
+        if: ${{ !matrix.use_cross }}
+        run: cargo build --locked --release --target ${{ matrix.target }} -p ikb-cli
+
+      - name: Build CLI with cross
+        if: matrix.use_cross
+        run: cross build --locked --release --target ${{ matrix.target }} -p ikb-cli
+
+      - name: Package CLI artifact
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+          PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
+        run: |
+          mkdir -p release
+          python <<'PY'
+          import os
+          import pathlib
+          import shutil
+          import zipfile
+
+          target = os.environ["TARGET"]
+          suffix = os.environ["PACKAGE_SUFFIX"]
+          release_dir = pathlib.Path("release")
+          build_dir = pathlib.Path("target") / target / "release"
+          src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
+          if not src.exists():
+              raise SystemExit(f"missing binary: {src}")
+
+          stage = release_dir / f"ikuai-bypass-{suffix}"
+          if stage.exists():
+              shutil.rmtree(stage)
+          stage.mkdir(parents=True)
+
+          dst = stage / ("ikuai-bypass.exe" if "windows" in target else "ikuai-bypass")
+          shutil.copy2(src, dst)
+          shutil.copy2("README.md", stage / "README.md")
+          shutil.copy2("config.yml", stage / "config.yml")
+
+          zip_path = release_dir / f"ikuai-bypass-{suffix}.zip"
+          if zip_path.exists():
+              zip_path.unlink()
+
+          with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+              for path in stage.rglob("*"):
+                  zf.write(path, path.relative_to(stage))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.package_suffix }}
+          path: release/*.zip
+
+  build-gui:
+    name: GUI ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            label: windows-x86_64
+            bundle_args: --bundles nsis,msi
+            collect_pattern: target/release/bundle/**/*.msi|target/release/bundle/**/*.exe
+          - runner: ubuntu-22.04
+            label: linux-x86_64-appimage
+            bundle_args: --bundles appimage
+            collect_pattern: target/release/bundle/**/*.AppImage
+          - runner: macos-13
+            label: macos-x86_64
+            bundle_args: --bundles dmg
+            collect_pattern: target/release/bundle/**/*.dmg
+          - runner: macos-14
+            label: macos-aarch64
+            bundle_args: --bundles dmg
+            collect_pattern: target/release/bundle/**/*.dmg
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install Linux GUI dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            curl \
+            file \
+            libayatana-appindicator3-dev \
+            libgtk-3-dev \
+            librsvg2-dev \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            patchelf \
+            wget
+
+      - name: Install frontend dependencies
+        working-directory: app/frontend
+        run: bun install --frozen-lockfile
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked
+
+      - name: Build GUI bundle
+        run: cargo tauri build --manifest-path app/src-tauri/Cargo.toml ${{ matrix.bundle_args }}
+
+      - name: Collect GUI artifacts
+        shell: bash
+        env:
+          LABEL: ${{ matrix.label }}
+          PATTERN: ${{ matrix.collect_pattern }}
+        run: |
+          mkdir -p release
+          python <<'PY'
+          import glob
+          import os
+          import pathlib
+          import shutil
+
+          release_dir = pathlib.Path("release")
+          patterns = [p for p in os.environ["PATTERN"].split("|") if p]
+          found = []
+          for pattern in patterns:
+              found.extend(glob.glob(pattern, recursive=True))
+          if not found:
+              raise SystemExit(f"no bundle matched: {patterns}")
+
+          for item in found:
+              src = pathlib.Path(item)
+              dst = release_dir / f"{os.environ['LABEL']}-{src.name}"
+              shutil.copy2(src, dst)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gui-${{ matrix.label }}
+          path: release/*
+
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs:
+      - build-cli
+      - build-gui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          pattern: "*"
+          merge-multiple: true
+
+      - name: Show release files
+        run: find release -maxdepth 2 -type f | sort
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true

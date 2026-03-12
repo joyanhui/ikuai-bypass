@@ -1,7 +1,0 @@
-[workspace]
-resolver = "2"
-members = [
-  "core",
-  "cli",
-  "app/src-tauri",
-]

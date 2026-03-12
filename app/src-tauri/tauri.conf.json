@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ikuai-bypass",
+  "version": "0.0.0",
+  "identifier": "com.joyanhui.ikuai-bypass",
+  "build": {
+    "beforeDevCommand": "cd ../frontend && bun run dev",
+    "beforeBuildCommand": "cd ../frontend && bun run build",
+    "devUrl": "http://localhost:4321",
+    "frontendDist": "../frontend/dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "iKuai Bypass",
+        "width": 430,
+        "height": 880,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": ["default"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["appimage", "nsis", "msi", "dmg"],
+    "icon": []
+  },
+  "plugins": {}
+}

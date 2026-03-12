@@ -18,12 +18,15 @@ fn rewrite_single_dash_long_known_flags() {
 fn normalize_keeps_argv0() {
     let args = vec!["ikuai-bypass".to_string(), "-exportPath=/tmp".to_string()];
     let out = normalize_go_style_args(&args);
-    assert_eq!(out[0], "ikuai-bypass");
-    assert_eq!(out[1], "--exportPath=/tmp");
+    assert_eq!(out.get(0).map(String::as_str), Some("ikuai-bypass"));
+    assert_eq!(out.get(1).map(String::as_str), Some("--exportPath=/tmp"));
 }
 
 #[test]
 fn normalize_cron_accepts_5_fields_from_go_config() {
-    let expr = normalize_cron_expr("0 7 * * *").expect("normalize");
+    let expr = match normalize_cron_expr("0 7 * * *") {
+        Ok(v) => v,
+        Err(e) => panic!("normalize failed: {}", e),
+    };
     assert!(!expr.is_empty());
 }

@@ -8,7 +8,10 @@ fn load_repo_config_yml() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("config.yml");
-    let cfg = Config::load_from_path(&path).expect("load config.yml");
+    let cfg = match Config::load_from_path(&path) {
+        Ok(v) => v,
+        Err(e) => panic!("load config.yml failed: {}", e),
+    };
     assert!(!cfg.ikuai_url.is_empty());
     assert!(cfg.max_number_of_one_records.isp > 0);
 }
@@ -27,7 +30,10 @@ stream-domain:
     url: https://example.com
 "#;
 
-    let mut cfg: Config = serde_yaml::from_str(yaml).expect("parse");
+    let mut cfg: Config = match serde_yaml::from_str(yaml) {
+        Ok(v) => v,
+        Err(e) => panic!("parse failed: {}", e),
+    };
     cfg.apply_defaults();
 
     assert_eq!(cfg.webui.cdn_prefix, "https://cdn.jsdelivr.net/npm");
@@ -35,6 +41,9 @@ stream-domain:
     assert_eq!(cfg.max_number_of_one_records.ipv4, 1000);
     assert_eq!(cfg.max_number_of_one_records.ipv6, 1000);
     assert_eq!(cfg.max_number_of_one_records.domain, 5000);
-    assert_eq!(cfg.stream_domain[0].tag, "wan1");
+    assert_eq!(
+        cfg.stream_domain.get(0).map(|v| v.tag.as_str()),
+        Some("wan1")
+    );
     assert_eq!(cfg.add_wait, Duration::from_secs(0));
 }

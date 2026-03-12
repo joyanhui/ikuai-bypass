@@ -1,100 +1,222 @@
 # iKuai Bypass
 
-iKuai Bypass 现已以 **Rust 版本**作为仓库主线，提供两条产品形态：
+![iKuai](https://img.shields.io/badge/Router-iKuai-brightgreen) ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg) ![Rust](https://img.shields.io/badge/Language-Rust-orange)
 
-- `CLI`：完整功能本体，支持 `once / cron / cronAft / clean / web`
-- `GUI`：基于 **Tauri v2 + Astro + Bun** 的桌面应用，共享同一套配置助手与运行面板
+**iKuai Bypass** 是专为爱快路由器打造的自动化分流规则同步工具。它会模拟爱快 Web 管理界面的行为，把远程订阅的 IP / 域名列表同步到路由器的分流设置里，实现自动化分流更新。
 
-旧的 Go/Fyne 版本、历史文档、旧发布脚本与旧 CI 已统一归档到 [golang_archive](/home/y/myworkspace/ikuai-bypass/golang_archive)。
+当前仓库主线已经切换为 **Rust 版本**，提供两种使用方式：
 
-## 项目结构
+- `CLI`：适合服务器、OpenWrt、Docker、计划任务环境
+- `GUI`：基于 Tauri 的桌面应用，适合直接在本机可视化操作
 
-- [core](/home/y/myworkspace/ikuai-bypass/core)：核心业务库，负责配置、iKuai API、更新流程、运行时与日志
-- [cli](/home/y/myworkspace/ikuai-bypass/cli)：CLI 与 Web 模式
-- [app/frontend](/home/y/myworkspace/ikuai-bypass/app/frontend)：Astro 单页前端，供 WebUI 与 Tauri 共用
-- [app/src-tauri](/home/y/myworkspace/ikuai-bypass/app/src-tauri)：Tauri v2 后端
-- [config.yml](/home/y/myworkspace/ikuai-bypass/config.yml)：示例配置
-- [golang_archive](/home/y/myworkspace/ikuai-bypass/golang_archive)：Go 版本归档
+旧的 Go/Fyne 版本代码、历史文档和旧 CI 已归档到 [golang_archive](/home/y/myworkspace/ikuai-bypass/golang_archive)。
 
-## 开发
+> 如果这个项目对你有帮助，请点个 Star。
 
-安装前端依赖：
+---
 
-```bash
-cd app/frontend
-bun install
+## 分流模式说明
+
+本项目主要支持两类常见用法。
+
+### 1. 自定义运营商分流模式
+
+适用场景：追求稳定性、希望终端无感分流。
+
+实现方式：
+
+- 把 OpenWrt 或其他旁路设备视为爱快里的一个“虚拟运营商”
+- 将订阅的目标 IP 列表同步到爱快“自定义运营商”
+- 由爱快把这些目标流量转发到旁路设备
+
+特点：
+
+- 普通流量仍可走主线路
+- 终端设备不需要改网关
+- 适合长期自动维护
+
+参考：
+
+- [查看实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/)
+- [恩山教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)
+
+### 2. IP 分组 / 端口分流模式
+
+适用场景：简单旁路由方案，逻辑直接。
+
+实现方式：
+
+- 先把订阅 IP 列表同步到爱快的 IP 分组
+- 再使用端口分流，把命中的目标流量转到指定外网线路或下一跳网关
+
+参考：
+
+- [实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7)
+- [恩山教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)
+
+---
+
+## 主要功能
+
+- 自动同步自定义运营商、IP 分组、IPv6 分组、域名分流、端口分流
+- 支持 `once / cron / cronAft / clean / web`
+- 支持 WebUI 可视化配置
+- 支持桌面 GUI
+- 支持 Docker
+- 支持 LXC / Alpine / musl CLI 包
+- 支持多平台多架构发布
+
+---
+
+## 快速上手
+
+### 1. 下载
+
+从 [Releases](https://github.com/joyanhui/ikuai-bypass/releases) 下载适合你系统的版本。
+
+常见文件类型：
+
+- CLI：`ikuai-bypass-<platform-arch>.zip`
+- LXC / Alpine / musl：`ikuai-bypass-lxc-alpine-musl-amd64.tar.gz`
+- GUI：Windows / AppImage / macOS 安装包
+
+### 2. 配置
+
+编辑 `config.yml`，至少填写这些内容：
+
+```yaml
+ikuai-url: http://192.168.9.1
+username: admin
+password: your_password
+cron: 0 7 * * *
+custom-isp:
+  - tag: 国内IP列表
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
+webui:
+  port: "19001"
+  user: admin
+  pass: admin888
+  enable: true
 ```
 
-运行 CLI：
+完整示例请直接参考 [config.yml](/home/y/myworkspace/ikuai-bypass/config.yml)。
+
+### 3. 运行
+
+标准模式：
 
 ```bash
-cargo run --bin ikb-cli -- -r once -c ./config.yml
+./ikuai-bypass -r cron -c ./config.yml
 ```
 
-运行 GUI：
+单次执行：
 
 ```bash
-bash script/dev.sh gui:dev
+./ikuai-bypass -r once -c ./config.yml
 ```
 
-仅调试前端：
+仅启动 WebUI：
 
 ```bash
-bash script/dev.sh webui:dev
+./ikuai-bypass -r web -c ./config.yml
 ```
 
-## 构建
-
-构建前端静态资源：
+清理模式：
 
 ```bash
-bash script/dev.sh webui:build
+./ikuai-bypass -r clean -tag cleanAll -c ./config.yml
 ```
 
-构建 CLI：
+---
+
+## WebUI 与 GUI
+
+### WebUI
+
+在配置文件里启用 `webui.enable: true` 后，可以启动 WebUI：
 
 ```bash
-cargo build --release -p ikb-cli
+./ikuai-bypass -r web -c ./config.yml
 ```
 
-构建 GUI：
+然后在浏览器访问：
 
-```bash
-cd app/frontend && bun install && bun run build
-cd ../src-tauri && cargo tauri build
+```text
+http://你的IP:19001
 ```
 
-## 发布
+默认端口是 `19001`，用户名和密码由 `config.yml` 的 `webui.user` 与 `webui.pass` 控制。
 
-GitHub Actions 已切换为 Rust 主线发布：
+### GUI
 
-- CLI：覆盖旧 `release.py` 对齐的主要平台/架构矩阵
-- GUI：支持
-  - Windows x86_64
-  - Linux x86_64 AppImage
-  - macOS x86_64
-  - macOS aarch64
+GUI 是桌面版入口，适合不想手动敲命令的用户。
 
-发布工作流位于 [.github/workflows/release.yml](/home/y/myworkspace/ikuai-bypass/.github/workflows/release.yml)。
+GUI 里可以完成这些事：
 
-构建矩阵与产物命名说明见 [docs/release.md](/home/y/myworkspace/ikuai-bypass/docs/release.md)。
+- 运行一次
+- 启动 / 停止定时任务
+- 修改配置
+- 文本编辑 YAML
+- 查看实时日志
 
-Docker 镜像也由同一个 workflow 构建与发布，支持：
+如果你使用 GUI，一般不需要自己手动拼 CLI 参数。
 
-- tag push 自动发布
-- `workflow_dispatch` 手动触发
-- tag 名包含 `alpha / beta / rc / pre / preview / dev / nightly / test / manually` 时自动标记为预发布
-- 手动触发未填写版本号时，会自动生成 `manually_年月日时分秒`
+---
 
-## Docker 使用
+## CLI 参数说明
 
-镜像默认行为：
+常用参数如下：
+
+| 参数 | 说明 |
+| :--- | :--- |
+| `-c` | 配置文件路径 |
+| `-m` | 分流模块选择 |
+| `-r` | 运行模式 |
+| `-tag` | 清理模式使用的标签关键词 |
+| `-login` | 临时覆盖爱快登录信息 |
+| `-exportPath` | 导出路径 |
+| `-isIpGroupNameAddRandomSuff` | IP 分组名称是否增加随机后缀 |
+
+### 运行模式
+
+| 模式 | 说明 |
+| :--- | :--- |
+| `cron` | 立即执行一次，然后进入定时任务等待 |
+| `cronAft` | 不立即执行，直接进入定时任务等待 |
+| `once` / `nocron` / `1` | 立即执行一次并退出 |
+| `clean` | 清理本工具创建的规则 |
+| `web` | 启动 WebUI |
+
+### 分流模块
+
+| 模块 | 说明 |
+| :--- | :--- |
+| `ispdomain` | 默认模式，偏向自定义运营商 / 域名分流 |
+| `ipgroup` | IP 分组 |
+| `ipv6group` | IPv6 分组 |
+| `ii` | 混合模式 |
+| `ip` | IPv4 + IPv6 分组 |
+| `iip` | 更完整的混合模式 |
+
+---
+
+## Docker
+
+Docker 镜像同样适合长期运行。
+
+默认行为：
 
 - 配置目录：`/etc/ikuai-bypass`
 - 配置文件：`/etc/ikuai-bypass/config.yml`
-- 首次启动会从 `/opt/ikuai-bypass/config.yml` 自动复制模板
-- 默认启动参数：`-r cron`
-- 如果配置里启用了 WebUI，默认对外端口通常为 `19001`
+- 首次启动会自动复制默认模板
+- 默认命令：`-r cron`
+- 如果启用了 WebUI，默认端口通常为 `19001`
+
+拉取镜像：
+
+```bash
+docker pull joyanhui/ikuai-bypass:latest
+```
 
 常规运行：
 
@@ -125,6 +247,83 @@ docker run -d \
   joyanhui/ikuai-bypass:latest -r web
 ```
 
-另外会额外发布 Alpine / musl 的 LXC 友好 CLI 包：
+Compose 示例：
 
-- `ikuai-bypass-lxc-alpine-musl-amd64.tar.gz`
+```yaml
+version: "3.8"
+services:
+  ikuai-bypass:
+    image: joyanhui/ikuai-bypass:latest
+    container_name: ikuai-bypass
+    restart: always
+    volumes:
+      - ./data:/etc/ikuai-bypass
+    ports:
+      - "19001:19001"
+    command: ["-r", "cron"]
+```
+
+---
+
+## LXC / Alpine / musl
+
+如果你运行在 LXC、Alpine 或更偏向 musl 的轻量环境，优先使用：
+
+```text
+ikuai-bypass-lxc-alpine-musl-amd64.tar.gz
+```
+
+这个包是为轻量 Linux 环境单独提供的 CLI 版本。
+
+---
+
+## 部署建议
+
+### Linux / OpenWrt
+
+建议配合系统计划任务，或直接使用 `-r cron` 长期运行。
+
+### Windows
+
+下载对应压缩包后解压，使用 CMD 或 PowerShell 运行即可。也可以配合任务计划程序使用 `-r once`。
+
+### macOS
+
+根据芯片选择：
+
+- Apple Silicon：`darwin-arm64`
+- Intel：`darwin-amd64`
+
+### Docker
+
+适合 NAS、服务器、群晖、长期后台运行场景。
+
+---
+
+## 注意事项
+
+- `clean` 模式务必显式指定 `-tag`
+- `tag` 不宜过长，爱快对规则名长度有限制
+- WebUI 端口默认是 `19001`
+- 如果远程订阅下载失败，程序会优先保留旧规则，避免误清空
+
+---
+
+## 更新与发布
+
+发布包、GUI 安装包、Docker 镜像都在：
+
+- [Releases](https://github.com/joyanhui/ikuai-bypass/releases)
+
+如果你关心构建矩阵、Docker 发布和预发布规则，可查看：
+
+- [docs/release.md](/home/y/myworkspace/ikuai-bypass/docs/release.md)
+
+---
+
+## 交流与反馈
+
+- [GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions)
+- [Issues](https://github.com/joyanhui/ikuai-bypass/issues)
+
+感谢所有参与反馈、测试和贡献的用户与开发者。

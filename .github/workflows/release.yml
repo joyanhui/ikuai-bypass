@@ -241,14 +241,16 @@ jobs:
           python-version: "3.11"
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
 
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
             . -> target
           cache-on-failure: true
+
+      - name: Add native rust target
+        if: ${{ !matrix.use_cross }}
+        run: rustup target add ${{ matrix.target }}
 
       - name: Install cross
         if: runner.os == 'Linux' && matrix.use_cross

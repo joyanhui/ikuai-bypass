@@ -1077,7 +1077,6 @@ jobs:
             APPLE_CERTIFICATE="" \
             APPLE_CERTIFICATE_PASSWORD="" \
             APPLE_SIGNING_IDENTITY="" \
-            APPLE_DEVELOPMENT_TEAM="" \
             APPLE_TEAM_ID="" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
@@ -1095,7 +1094,6 @@ jobs:
             APPLE_CERTIFICATE="" \
             APPLE_CERTIFICATE_PASSWORD="" \
             APPLE_SIGNING_IDENTITY="" \
-            APPLE_DEVELOPMENT_TEAM="" \
             APPLE_TEAM_ID="" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \

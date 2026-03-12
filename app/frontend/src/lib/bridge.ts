@@ -1,4 +1,15 @@
 type JsonValue = null | boolean | number | string | JsonValue[] | { [k: string]: JsonValue };
+type TauriInvoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
+type TauriEvent = {
+  listen?: (event: string, cb: (ev: { payload?: unknown }) => void) => Promise<() => void>;
+};
+type TauriCore = {
+  invoke?: TauriInvoke;
+};
+type TauriGlobal = {
+  core?: TauriCore;
+  event?: TauriEvent;
+};
 
 export type RuntimeStatus = {
   running: boolean;
@@ -30,12 +41,13 @@ export type ConfigMeta = {
 type UnlistenFn = () => void;
 
 function isTauri(): boolean {
-  const t = (globalThis as any).__TAURI__;
+  const t = (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
   return !!t?.core?.invoke;
 }
 
 async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const t = (globalThis as any).__TAURI__;
+  const t = (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
+  if (!t?.core?.invoke) throw new Error('Tauri bridge is not available');
   return await t.core.invoke(cmd, args || {});
 }
 
@@ -146,15 +158,18 @@ export const bridge = {
 
   async listenLogs(onRecord: (rec: LogRecord) => void, onError?: (err?: unknown) => void): Promise<UnlistenFn> {
     if (isTauri()) {
-      const t = (globalThis as any).__TAURI__;
-      const unlisten = await t.event.listen('ikb://log', (ev: any) => {
-        const rec = ev?.payload as LogRecord;
-        if (rec) onRecord(rec);
+      const t = (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
+      if (!t?.event?.listen) throw new Error('Tauri event bridge is not available');
+      const unlisten = await t.event.listen('ikb://log', (ev) => {
+        const rec = ev?.payload;
+        if (rec && typeof rec === 'object') onRecord(rec as LogRecord);
       });
       return () => {
         try {
           unlisten();
-        } catch (_) {}
+        } catch (err) {
+          console.warn('[IKB] Failed to unlisten Tauri logs', err);
+        }
       };
     }
 
@@ -163,7 +178,9 @@ export const bridge = {
       try {
         const rec = JSON.parse(ev.data) as LogRecord;
         onRecord(rec);
-      } catch (_) {}
+      } catch (err) {
+        console.warn('[IKB] Failed to parse log event', err);
+      }
     };
     es.onerror = (err) => {
       if (onError) onError(err);
@@ -172,7 +189,9 @@ export const bridge = {
     return () => {
       try {
         es.close();
-      } catch (_) {}
+      } catch (err) {
+        console.warn('[IKB] Failed to close EventSource', err);
+      }
     };
   },
 

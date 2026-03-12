@@ -1,8 +1,13 @@
 import yaml from 'js-yaml';
 
+type JsonPrimitive = null | boolean | number | string;
+type JsonValue = JsonPrimitive | JsonValue[] | { [k: string]: JsonValue };
+type JsonRecord = Record<string, JsonValue>;
+type UnknownRecord = Record<string, unknown>;
+
 export type CmdPreset = {
   name: string;
-  data: any;
+  data: JsonRecord;
 };
 
 export type UiConfig = {
@@ -95,75 +100,126 @@ export function defaultCommentMaps(): CommentMaps {
   };
 }
 
-function asStr(v: any, fallback = ''): string {
+function isRecord(v: unknown): v is UnknownRecord {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+function asRecord(v: unknown): UnknownRecord {
+  return isRecord(v) ? v : {};
+}
+
+function asArray(v: unknown): unknown[] {
+  return Array.isArray(v) ? v : [];
+}
+
+function asNum(v: unknown, fallback: number): number {
+  if (typeof v === 'number' && !Number.isNaN(v)) return v;
+  if (typeof v === 'string') {
+    const trimmed = v.trim();
+    if (trimmed) {
+      const parsed = Number(trimmed);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+  }
+  return fallback;
+}
+
+function asStr(v: unknown, fallback = ''): string {
   if (typeof v === 'string') return v;
   if (typeof v === 'number') return String(v);
   if (v == null) return fallback;
   return String(v);
 }
 
-export function fromBackendMeta(meta: any): { cfg: UiConfig; comments: CommentMaps; confPath: string } {
+function asStringMap(v: unknown): Record<string, string> {
+  const obj = asRecord(v);
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(obj)) {
+    out[k] = asStr(val);
+  }
+  return out;
+}
+
+export function fromBackendMeta(meta: unknown): { cfg: UiConfig; comments: CommentMaps; confPath: string } {
   const cfg = defaultUiConfig();
   const comments = defaultCommentMaps();
 
-  const confPath = asStr(meta?.conf_path, '');
-  if (meta?.top_level_comments) comments.top = meta.top_level_comments;
-  if (meta?.item_comments) comments.item = meta.item_comments;
-  if (meta?.webui_comments) comments.webui = meta.webui_comments;
-  if (meta?.max_number_of_one_records_comments) comments.maxNumberOfOneRecords = meta.max_number_of_one_records_comments;
+  const metaObj = asRecord(meta);
+  const confPath = asStr(metaObj.conf_path, '');
+  comments.top = asStringMap(metaObj.top_level_comments);
+  comments.item = asStringMap(metaObj.item_comments);
+  comments.webui = asStringMap(metaObj.webui_comments);
+  comments.maxNumberOfOneRecords = asStringMap(metaObj.max_number_of_one_records_comments);
 
-  cfg.ikuaiUrl = asStr(meta?.['ikuai-url'], '');
-  cfg.username = asStr(meta?.username, '');
-  cfg.password = asStr(meta?.password, '');
-  cfg.cron = asStr(meta?.cron, '');
-  cfg.githubProxy = asStr(meta?.['github-proxy'], '');
+  cfg.ikuaiUrl = asStr(metaObj['ikuai-url'], '');
+  cfg.username = asStr(metaObj.username, '');
+  cfg.password = asStr(metaObj.password, '');
+  cfg.cron = asStr(metaObj.cron, '');
+  cfg.githubProxy = asStr(metaObj['github-proxy'], '');
 
-  cfg.addErrRetryWait = asStr(meta?.AddErrRetryWait, cfg.addErrRetryWait);
-  cfg.addWait = asStr(meta?.AddWait, cfg.addWait);
+  cfg.addErrRetryWait = asStr(metaObj.AddErrRetryWait, cfg.addErrRetryWait);
+  cfg.addWait = asStr(metaObj.AddWait, cfg.addWait);
 
-  if (meta?.MaxNumberOfOneRecords) {
+  if (metaObj.MaxNumberOfOneRecords) {
+    const max = asRecord(metaObj.MaxNumberOfOneRecords);
     cfg.maxNumberOfOneRecords = {
-      Isp: Number(meta.MaxNumberOfOneRecords.Isp || 5000),
-      Ipv4: Number(meta.MaxNumberOfOneRecords.Ipv4 || 1000),
-      Ipv6: Number(meta.MaxNumberOfOneRecords.Ipv6 || 1000),
-      Domain: Number(meta.MaxNumberOfOneRecords.Domain || 5000),
+      Isp: asNum(max.Isp, 5000),
+      Ipv4: asNum(max.Ipv4, 1000),
+      Ipv6: asNum(max.Ipv6, 1000),
+      Domain: asNum(max.Domain, 5000),
     };
   }
 
-  if (meta?.webui) {
-    cfg.webui.enable = !!meta.webui.enable;
-    cfg.webui.port = asStr(meta.webui.port, cfg.webui.port);
-    cfg.webui.user = asStr(meta.webui.user, '');
-    cfg.webui.pass = asStr(meta.webui.pass, '');
-    cfg.webui.cdnPrefix = asStr(meta.webui['cdn-prefix'], cfg.webui.cdnPrefix);
+  if (metaObj.webui) {
+    const webui = asRecord(metaObj.webui);
+    cfg.webui.enable = !!webui.enable;
+    cfg.webui.port = asStr(webui.port, cfg.webui.port);
+    cfg.webui.user = asStr(webui.user, '');
+    cfg.webui.pass = asStr(webui.pass, '');
+    cfg.webui.cdnPrefix = asStr(webui['cdn-prefix'], cfg.webui.cdnPrefix);
   }
 
-  cfg.customIsp = (meta?.['custom-isp'] || []).map((i: any) => ({ tag: asStr(i.tag), url: asStr(i.url) }));
-  cfg.ipGroup = (meta?.['ip-group'] || []).map((i: any) => ({ tag: asStr(i.tag), url: asStr(i.url) }));
-  cfg.ipv6Group = (meta?.['ipv6-group'] || []).map((i: any) => ({ tag: asStr(i.tag), url: asStr(i.url) }));
-  cfg.streamDomain = (meta?.['stream-domain'] || []).map((i: any) => ({
-    interface: asStr(i.interface),
-    srcAddr: asStr(i['src-addr']),
-    srcAddrOptIpGroup: asStr(i['src-addr-opt-ipgroup']),
-    url: asStr(i.url),
-    tag: asStr(i.tag),
-  }));
-  cfg.streamIpPort = (meta?.['stream-ipport'] || []).map((i: any) => ({
-    optTagName: asStr(i['opt-tagname']),
-    type: asStr(i.type),
-    interface: asStr(i.interface),
-    nexthop: asStr(i.nexthop),
-    srcAddr: asStr(i['src-addr']),
-    srcAddrOptIpGroup: asStr(i['src-addr-opt-ipgroup']),
-    ipGroup: asStr(i['ip-group']),
-    mode: asStr(i.mode ?? '0'),
-    ifaceband: asStr(i.ifaceband ?? '0'),
-  }));
+  cfg.customIsp = asArray(metaObj['custom-isp']).map((i) => {
+    const item = asRecord(i);
+    return { tag: asStr(item.tag), url: asStr(item.url) };
+  });
+  cfg.ipGroup = asArray(metaObj['ip-group']).map((i) => {
+    const item = asRecord(i);
+    return { tag: asStr(item.tag), url: asStr(item.url) };
+  });
+  cfg.ipv6Group = asArray(metaObj['ipv6-group']).map((i) => {
+    const item = asRecord(i);
+    return { tag: asStr(item.tag), url: asStr(item.url) };
+  });
+  cfg.streamDomain = asArray(metaObj['stream-domain']).map((i) => {
+    const item = asRecord(i);
+    return {
+      interface: asStr(item.interface),
+      srcAddr: asStr(item['src-addr']),
+      srcAddrOptIpGroup: asStr(item['src-addr-opt-ipgroup']),
+      url: asStr(item.url),
+      tag: asStr(item.tag),
+    };
+  });
+  cfg.streamIpPort = asArray(metaObj['stream-ipport']).map((i) => {
+    const item = asRecord(i);
+    return {
+      optTagName: asStr(item['opt-tagname']),
+      type: asStr(item.type),
+      interface: asStr(item.interface),
+      nexthop: asStr(item.nexthop),
+      srcAddr: asStr(item['src-addr']),
+      srcAddrOptIpGroup: asStr(item['src-addr-opt-ipgroup']),
+      ipGroup: asStr(item['ip-group']),
+      mode: asStr(item.mode ?? '0'),
+      ifaceband: asStr(item.ifaceband ?? '0'),
+    };
+  });
 
   return { cfg, comments, confPath };
 }
 
-export function toBackendPayload(ui: UiConfig): Record<string, unknown> {
+export function toBackendPayload(ui: UiConfig): JsonRecord {
   return {
     'ikuai-url': ui.ikuaiUrl,
     username: ui.username,
@@ -209,11 +265,11 @@ export function toBackendPayload(ui: UiConfig): Record<string, unknown> {
   };
 }
 
-export function yamlDump(payload: any): string {
+export function yamlDump(payload: JsonRecord): string {
   return yaml.dump(payload, { lineWidth: 120, noCompatMode: true });
 }
 
-function q(s: any): string {
+function q(s: unknown): string {
   const v = typeof s === 'string' ? s : (s == null ? '' : String(s));
   if (v === '') return '""';
   const need = /[:#\n\r\t]/.test(v) || /^\s/.test(v) || /\s$/.test(v);
@@ -221,7 +277,7 @@ function q(s: any): string {
   return '"' + v.replaceAll('\\', '\\\\').replaceAll('"', '\\"') + '"';
 }
 
-export function yamlDumpWithComments(payload: any, comments: CommentMaps): string {
+export function yamlDumpWithComments(payload: JsonRecord, comments: CommentMaps): string {
   const top = comments?.top || {};
   const item = comments?.item || {};
   const webui = comments?.webui || {};
@@ -242,7 +298,7 @@ export function yamlDumpWithComments(payload: any, comments: CommentMaps): strin
     out.push('# ' + s);
   }
 
-  function kv(key: string, value: any, c?: string) {
+  function kv(key: string, value: unknown, c?: string) {
     cmt(c);
     out.push(key + ': ' + q(value));
   }
@@ -331,6 +387,6 @@ export function yamlDumpWithComments(payload: any, comments: CommentMaps): strin
   return out.join('\n') + '\n';
 }
 
-export function yamlParse(text: string): any {
+export function yamlParse(text: string): unknown {
   return yaml.load(text);
 }

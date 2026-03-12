@@ -1,5 +1,6 @@
 import { bridge } from '../lib/bridge.ts';
 import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComments, yamlParse } from '../lib/config_model.ts';
+import type { UiConfig } from '../lib/config_model.ts';
 import { loadJson, saveJson } from '../lib/storage.ts';
 import { removeYamlSeqItem, updateYamlPaths, upsertYamlSeqItem } from '../lib/yaml_ast.ts';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
@@ -42,6 +43,16 @@ const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
 const MODAL_IDS = ['basicConfigModal', 'remoteConfigModal', 'ruleEditorModal'] as const;
 
+const getErrorMessage = (err: unknown): string => {
+  if (typeof err === 'string') return err;
+  if (err instanceof Error) return err.message || err.toString();
+  if (err && typeof err === 'object' && 'message' in err) {
+    const value = (err as { message?: unknown }).message;
+    if (typeof value === 'string') return value;
+  }
+  return '未知错误';
+};
+
 const refreshEditorFromRawYaml = () => {
   if (!state.rawEditor || state.selectedConfigTab !== 'raw') return;
   const current = state.rawEditor.getValue();
@@ -51,7 +62,7 @@ const refreshEditorFromRawYaml = () => {
 };
 
 const applyStateFromRawYaml = () => {
-  const doc = yamlParse(state.rawYaml) || {};
+  const doc = yamlParse(state.rawYaml);
   const parsed = fromBackendMeta(doc);
   state.cfg = parsed.cfg;
   if (Object.keys(parsed.comments.top).length > 0) {
@@ -230,7 +241,11 @@ const clearLogs = () => {
 
 const startLogStream = async () => {
   if (state.unlistenLogs) {
-    try { state.unlistenLogs(); } catch (_) {}
+    try {
+      state.unlistenLogs();
+    } catch (err) {
+      console.warn('[IKB] Failed to unlisten logs', err);
+    }
   }
   
   try {
@@ -241,7 +256,8 @@ const startLogStream = async () => {
       },
       () => scheduleReconnect()
     );
-  } catch (_) {
+  } catch (err) {
+    console.warn('[IKB] Failed to start log stream', err);
     scheduleReconnect();
   }
 };
@@ -249,7 +265,9 @@ const startLogStream = async () => {
 const scheduleReconnect = () => {
   if (state.streamReconnectTimer) clearTimeout(state.streamReconnectTimer);
   state.streamReconnectTimer = setTimeout(() => {
-    startLogStream().catch(() => {});
+    startLogStream().catch((err) => {
+      console.warn('[IKB] Failed to reconnect log stream', err);
+    });
   }, RECONNECT_DELAY);
 };
 
@@ -260,7 +278,9 @@ const loadInitialLogs = async () => {
       const line = `${rec.ts || ''} [${rec.module || ''}] [${rec.tag || ''}] ${rec.detail || ''}`;
       appendLog(line);
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn('[IKB] Failed to load initial logs', err);
+  }
 };
 
 // ============================================
@@ -402,8 +422,8 @@ const applyRawEditorToState = () => {
     bindConfigFields();
     renderCmd();
     return true;
-  } catch (e: any) {
-    if (hint) hint.textContent = `YAML 解析失败: ${e.message || '未知错误'}`;
+  } catch (err) {
+    if (hint) hint.textContent = `YAML 解析失败: ${getErrorMessage(err)}`;
     showToast('请先修正 YAML');
     return false;
   }
@@ -526,8 +546,8 @@ const initQuickActions = () => {
       state.isCronRunning = true;
       updateCronButton();
       showToast('已进入 cronAft 模式');
-    } catch (e: any) {
-      showToast('启动失败: ' + (e.message || '未知错误'));
+    } catch (err) {
+      showToast('启动失败: ' + getErrorMessage(err));
     }
   });
 
@@ -729,9 +749,8 @@ const saveConfig = async (withComments: boolean) => {
     await bridge.saveRawYaml(state.rawYaml, withComments);
     showToast(withComments ? '配置已保存(带注释)' : '配置已保存');
     await loadBackend();
-  } catch (e: any) {
-    const detail = typeof e === 'string' ? e : (e?.message || e?.toString?.() || '未知错误');
-    showToast('保存失败: ' + detail, 3200);
+  } catch (err) {
+    showToast('保存失败: ' + getErrorMessage(err), 3200);
   }
 };
 
@@ -764,8 +783,8 @@ const loadRemoteConfig = async () => {
     saveJson('ikb_remote_url', url);
     if (hint) hint.textContent = '加载成功';
     showToast('远程配置已加载');
-  } catch (e: any) {
-    if (hint) hint.textContent = '加载失败: ' + (e.message || '未知错误');
+  } catch (err) {
+    if (hint) hint.textContent = '加载失败: ' + getErrorMessage(err);
     showToast('加载失败');
   }
 };
@@ -782,7 +801,17 @@ type RuleField = {
   options?: Array<{ value: string; label: string }>;
 };
 
-type RuleListKey = 'customIsp' | 'ipGroup' | 'ipv6Group' | 'streamDomain' | 'streamIpPort';
+type RuleItemByKey = {
+  customIsp: UiConfig['customIsp'][number];
+  ipGroup: UiConfig['ipGroup'][number];
+  ipv6Group: UiConfig['ipv6Group'][number];
+  streamDomain: UiConfig['streamDomain'][number];
+  streamIpPort: UiConfig['streamIpPort'][number];
+};
+
+type RuleListKey = keyof RuleItemByKey;
+type RuleDraft = Record<string, string>;
+type RuleMetaItem = { label: string; value: string };
 
 const RULE_LIST_META: Record<RuleListKey, {
   title: string;
@@ -863,7 +892,7 @@ const createEmptyState = (text: string) => {
   return div;
 };
 
-const getRuleList = (listKey: RuleListKey) => state.cfg[listKey] as any[];
+const getRuleList = <K extends RuleListKey>(listKey: K): RuleItemByKey[K][] => state.cfg[listKey];
 
 const rerenderRuleList = (listKey: RuleListKey) => {
   const renderers: Record<RuleListKey, () => void> = {
@@ -876,7 +905,7 @@ const rerenderRuleList = (listKey: RuleListKey) => {
   renderers[listKey]();
 };
 
-const getRulePrimaryText = (listKey: RuleListKey, item: any) => {
+const getRulePrimaryText = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]) => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
@@ -889,7 +918,7 @@ const getRulePrimaryText = (listKey: RuleListKey, item: any) => {
   }
 };
 
-const getRuleSecondaryText = (listKey: RuleListKey, item: any) => {
+const getRuleSecondaryText = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]) => {
   switch (listKey) {
     case 'customIsp':
       return '自定义运营商';
@@ -904,7 +933,7 @@ const getRuleSecondaryText = (listKey: RuleListKey, item: any) => {
   }
 };
 
-const getRuleMetaItems = (listKey: RuleListKey, item: any) => {
+const getRuleMetaItems = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]): RuleMetaItem[] => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
@@ -922,7 +951,7 @@ const getRuleMetaItems = (listKey: RuleListKey, item: any) => {
   }
 };
 
-const getRuleDetailText = (listKey: RuleListKey, item: any) => {
+const getRuleDetailText = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]) => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
@@ -934,7 +963,7 @@ const getRuleDetailText = (listKey: RuleListKey, item: any) => {
   }
 };
 
-const createRuleList = (listKey: RuleListKey) => {
+const createRuleList = <K extends RuleListKey>(listKey: K) => {
   const meta = RULE_LIST_META[listKey];
   const list = getRuleList(listKey);
   if (list.length === 0) {
@@ -1034,7 +1063,7 @@ const createRuleList = (listKey: RuleListKey) => {
 
 const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) => {
   const list = getRuleList(listKey);
-  const defaults: Record<RuleListKey, any> = {
+  const defaults: RuleItemByKey = {
     customIsp: { tag: '', url: '' },
     ipGroup: { tag: '', url: '' },
     ipv6Group: { tag: '', url: '' },
@@ -1059,7 +1088,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
   if (saveBtn) saveBtn.classList.toggle('hidden', readonly);
   if (delBtn) delBtn.classList.toggle('hidden', readonly);
 
-  const draft = structuredClone(item);
+  const draft = structuredClone(item) as RuleDraft;
   form.innerHTML = '';
 
   meta.fields.forEach((field) => {
@@ -1134,7 +1163,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
       streamDomain: 'stream-domain',
       streamIpPort: 'stream-ipport',
     };
-    const payloadMap: Record<RuleListKey, any> = {
+    const payloadMap: Record<RuleListKey, Record<string, string | number>> = {
       customIsp: draft,
       ipGroup: draft,
       ipv6Group: draft,
@@ -1484,8 +1513,8 @@ const loadBackend = async () => {
     const subtitle = document.getElementById('subtitle');
     if (subtitle) subtitle.textContent = bridge.isTauri() ? 'Tauri App' : 'WebUI';
     
-  } catch (e: any) {
-    showToast('加载配置失败: ' + (e.message || '未知错误'));
+  } catch (err) {
+    showToast('加载配置失败: ' + getErrorMessage(err));
   }
 };
 

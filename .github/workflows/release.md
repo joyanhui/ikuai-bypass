@@ -203,7 +203,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 ### Mobile GUI
 
 - Android APK：`ikuai-bypass-gui-android-aarch64.apk`
-- Android APK：`ikuai-bypass-gui-android-arm7.apk`
+- Android APK：`ikuai-bypass-gui-android-armv7.apk`
 - Android APK：`ikuai-bypass-gui-android-x86_64.apk`
 - iOS IPA：`ikuai-bypass-gui-ios-aarch64.ipa`
 

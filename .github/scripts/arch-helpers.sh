@@ -61,6 +61,12 @@ ikb_release_arch() {
   local target="${1:-}"
   local arch
 
+  # Why: keep Android ABI naming explicit as armv7 / 为什么：Android ABI 需要保留 armv7 名称，避免与 Linux arm7 混淆
+  if [[ "${target}" == armv7-linux-android* ]]; then
+    printf '%s\n' "armv7"
+    return
+  fi
+
   arch="$(ikb_normalize_arch "${target%%-*}")"
   printf '%s\n' "${arch}"
 }
@@ -75,7 +81,7 @@ ikb_release_os() {
     *-apple-darwin)
       printf '%s\n' "macos"
       ;;
-    *-linux-android)
+    *-linux-android*)
       printf '%s\n' "android"
       ;;
     *-apple-ios)

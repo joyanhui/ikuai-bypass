@@ -29,8 +29,9 @@
 手动触发时的规则：
 
 - `publish_release` 默认是 `false`
-- `push_docker` 默认是 `false`
-- 如果未填写 `release_tag` 但手动勾选了发布或推送 Docker，workflow 会自动降级为仅构建，并强制改回 `publish_release=false`、`push_docker=false`
+- `publish_release` 默认是 `true`
+- `push_docker` 默认是 `true`
+- 如果未填写 `release_tag` 但手动勾选了发布或推送 Docker，workflow 会自动生成版本号 `manual-release-年月日时分秒` 并继续发布
 - 如果只是手动测试构建，可以不填 `release_tag`
 - 不填 `release_tag` 且不发布时，会生成内部版本号 `manual-build-${GITHUB_RUN_ID}`
 

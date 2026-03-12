@@ -31,12 +31,12 @@ on:
         description: "是否发布 GitHub Release"
         required: true
         type: boolean
-        default: false
+        default: true
       push_docker:
         description: "是否推送 Docker 镜像"
         required: true
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: write
@@ -82,7 +82,7 @@ jobs:
       has_gui_ios: ${{ steps.matrix.outputs.has_gui_ios }}
       has_linux_amd64_cli: ${{ steps.matrix.outputs.has_linux_amd64_cli }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - id: meta
         shell: bash
@@ -107,9 +107,8 @@ jobs:
             push_docker="${INPUT_PUSH_DOCKER}"
 
             if [[ -z "${version}" && ( "${publish_release}" == "true" || "${push_docker}" == "true" ) ]]; then
-              echo "::warning::release_tag is empty on workflow_dispatch, forcing publish_release=false and push_docker=false"
-              publish_release="false"
-              push_docker="false"
+              version="manual-release-$(date +%Y%m%d%H%M%S)"
+              echo "::warning::release_tag is empty on workflow_dispatch, auto-generated version=${version}"
             fi
 
             if [[ -z "${version}" ]]; then
@@ -221,7 +220,7 @@ jobs:
     if: needs.resolve-matrix.outputs.has_cli == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -241,7 +240,7 @@ jobs:
     if: needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: oven-sh/setup-bun@v2
 
@@ -276,7 +275,7 @@ jobs:
     if: needs.resolve-matrix.outputs.has_gui == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -314,9 +313,9 @@ jobs:
     env:
       CARGO_TARGET_DIR: target-cli-${{ matrix.label }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -418,9 +417,9 @@ jobs:
     env:
       CARGO_TARGET_DIR: target-cli-nightly-${{ matrix.label }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -510,7 +509,7 @@ jobs:
     if: needs.resolve-matrix.outputs.has_linux_amd64_cli == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
         with:
@@ -574,9 +573,9 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.resolve-matrix.outputs.gui_matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -738,7 +737,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.resolve-matrix.outputs.gui_android_matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
         with:
@@ -841,7 +840,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.resolve-matrix.outputs.gui_ios_matrix) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
         with:
@@ -1027,7 +1026,7 @@ jobs:
     env:
       CARGO_TARGET_DIR: target-bsd-${{ matrix.label }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Build in FreeBSD VM
         if: matrix.vm_os == 'freebsd'
@@ -1098,7 +1097,7 @@ jobs:
     if: needs.resolve-matrix.outputs.push_docker == 'true' && needs.resolve-matrix.outputs.docker_creds_available == 'true' && needs.resolve-matrix.outputs.docker_platforms != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
         with:
@@ -1160,7 +1159,7 @@ jobs:
     if: ${{ always() && needs.resolve-matrix.outputs.publish_release == 'true' && !contains(join(needs.*.result, ','), 'failure') && !contains(join(needs.*.result, ','), 'cancelled') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v4
         with:

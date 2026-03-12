@@ -1,13 +1,13 @@
-name: Release
+name: Release rust
 
 on:
   push:
     tags:
-      - "v*"
+      - "*"
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "发布版本号，例如 v0.1.0；留空则自动生成 manually_年月日时分秒"
+        description: "发布版本号，例如 v0.1.0 或 v0.1.0-rc1；仅构建不发布时可留空"
         required: false
         type: string
       build_mode:
@@ -110,19 +110,25 @@ jobs:
             version="${INPUT_RELEASE_TAG}"
             publish_release="${INPUT_PUBLISH_RELEASE}"
             push_docker="${INPUT_PUSH_DOCKER}"
+
+            if [[ -z "${version}" && ( "${publish_release}" == "true" || "${push_docker}" == "true" ) ]]; then
+              echo "release_tag is required when publish_release=true or push_docker=true" >&2
+              exit 1
+            fi
+
             if [[ -z "${version}" ]]; then
-              version="manually_$(date +%Y%m%d%H%M%S)"
+              version="manual-build-${GITHUB_RUN_ID}"
             fi
           fi
 
           lc_version="$(printf '%s' "${version}" | tr '[:upper:]' '[:lower:]')"
           prerelease="false"
-          if printf '%s' "${lc_version}" | grep -Eq '(alpha|beta|rc|pre|preview|dev|nightly|test|manually)'; then
+          if printf '%s' "${lc_version}" | grep -Eq '(alpha|beta|rc|pre|preview|dev|nightly|test)'; then
             prerelease="true"
           fi
 
           docker_latest="false"
-          if [[ "${prerelease}" != "true" && "${version}" =~ ^v[0-9]+(\.[0-9]+){1,2}$ ]]; then
+          if [[ "${prerelease}" != "true" ]]; then
             docker_latest="true"
           fi
 
@@ -406,7 +412,7 @@ jobs:
           path: release/*
 
   build-cli-nightly:
-    name: CLI nightly ${{ matrix.label }}
+    name: CLI Nightly Experimental
     needs:
       - resolve-matrix
       - verify-cli

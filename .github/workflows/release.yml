@@ -774,6 +774,201 @@ jobs:
           name: gui-android-aarch64
           path: dist/*
 
+  build-gui-ios:
+    name: GUI ios-aarch64
+    needs:
+      - meta
+      - build-frontend
+      - build-tauri-icons
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: app/frontend/dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tauri-icons
+          path: app/src-tauri/icons
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
+
+      - name: Install Tauri CLI
+        uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
+
+      - name: Prepare Tauri iOS config
+        working-directory: app/src-tauri
+        run: |
+          python <<'PY'
+          import json
+          import os
+          import pathlib
+
+          path = pathlib.Path("tauri.conf.json")
+          cfg = json.loads(path.read_text())
+          build = cfg.setdefault("build", {})
+          workspace = os.environ.get("GITHUB_WORKSPACE", "")
+          if workspace:
+            frontend_dist = f"{workspace}/app/frontend/dist"
+            build.pop("beforeBuildCommand", None)
+            build["frontendDist"] = frontend_dist
+          bundle = cfg.setdefault("bundle", {})
+          bundle["icon"] = [
+              "icons/icon.png",
+              "icons/icon.ico",
+              "icons/icon.icns",
+          ]
+          pathlib.Path("tauri.ios.conf.json").write_text(json.dumps(cfg))
+          PY
+
+      - name: Recreate iOS project (deterministic)
+        working-directory: app/src-tauri
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo tauri -V
+          rm -rf gen/apple
+          cargo tauri ios init --ci
+
+      - name: Ensure Xcode Tauri bridge script exists
+        working-directory: app/src-tauri
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge="gen/apple/tauri"
+          if [ ! -f "${bridge}" ]; then
+            printf '%s\n' '#!/usr/bin/env bash' 'set -euo pipefail' 'exec cargo tauri "$@"' > "${bridge}"
+            chmod +x "${bridge}"
+          fi
+
+      - name: Build iOS IPA (unsigned)
+        working-directory: app/src-tauri
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcode_dev_dir="$(xcode-select -p)"
+          default_toolchain="${xcode_dev_dir}/Toolchains/XcodeDefault.xctoolchain"
+          ci_xcconfig="/tmp/ikb-ios-ci.xcconfig"
+          swift_lib_paths="${default_toolchain}/usr/lib/swift/iphoneos ${default_toolchain}/usr/lib/swift-5.0/iphoneos"
+          swift_ldflags="-L${default_toolchain}/usr/lib/swift/iphoneos -L${default_toolchain}/usr/lib/swift-5.0/iphoneos"
+          cat > "${ci_xcconfig}" <<'XCCONFIG'
+          TOOLCHAINS = com.apple.dt.toolchain.XcodeDefault
+          XCCONFIG
+
+          project_pbxproj="gen/apple/ikuai-bypass.xcodeproj/project.pbxproj"
+          if [ -f "${project_pbxproj}" ]; then
+            escaped_toolchain="$(printf '%s\n' "${default_toolchain}" | sed 's/[\\/&]/\\&/g')"
+            perl -0777 -i -pe 's/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = "";/g; s/CODE_SIGN_STYLE = [^;]*;/CODE_SIGN_STYLE = Manual;/g; s/CODE_SIGN_IDENTITY = [^;]*;/CODE_SIGN_IDENTITY = "";/g; s/PROVISIONING_PROFILE_SPECIFIER = [^;]*;/PROVISIONING_PROFILE_SPECIFIER = "";/g; s/PROVISIONING_PROFILE = [^;]*;/PROVISIONING_PROFILE = "";/g;' "${project_pbxproj}"
+            perl -0777 -i -pe "s/\\$\\(TOOLCHAIN_DIR\\)\\/usr\\/lib\\/swift\\//${escaped_toolchain}\\/usr\\/lib\\/swift\\//g; s/\\$\\(TOOLCHAIN_DIR\\)\\/usr\\/lib\\/swift-5\\.0\\//${escaped_toolchain}\\/usr\\/lib\\/swift-5.0\\//g;" "${project_pbxproj}"
+          fi
+
+          set +e
+          if cargo tauri ios build --help | grep -q -- '--no-sign'; then
+            APPLE_CERTIFICATE="" \
+            APPLE_CERTIFICATE_PASSWORD="" \
+            APPLE_SIGNING_IDENTITY="" \
+            APPLE_TEAM_ID="" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            PROVISIONING_PROFILE="" \
+            XCODE_XCCONFIG_FILE="${ci_xcconfig}" \
+            LIBRARY_SEARCH_PATHS="${swift_lib_paths}" \
+            OTHER_LDFLAGS="${swift_ldflags}" \
+            TOOLCHAINS="com.apple.dt.toolchain.XcodeDefault" \
+            TOOLCHAIN_DIR="${default_toolchain}" \
+            cargo tauri ios build --ci --target aarch64 --config tauri.ios.conf.json --no-sign | tee /tmp/xcodebuild-ios.log
+          else
+            APPLE_CERTIFICATE="" \
+            APPLE_CERTIFICATE_PASSWORD="" \
+            APPLE_SIGNING_IDENTITY="" \
+            APPLE_TEAM_ID="" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            PROVISIONING_PROFILE="" \
+            XCODE_XCCONFIG_FILE="${ci_xcconfig}" \
+            LIBRARY_SEARCH_PATHS="${swift_lib_paths}" \
+            OTHER_LDFLAGS="${swift_ldflags}" \
+            TOOLCHAINS="com.apple.dt.toolchain.XcodeDefault" \
+            TOOLCHAIN_DIR="${default_toolchain}" \
+            cargo tauri ios build --ci --target aarch64 --config tauri.ios.conf.json | tee /tmp/xcodebuild-ios.log
+          fi
+          build_exit="${PIPESTATUS[0]}"
+          set -e
+
+          if [ "${build_exit}" -ne 0 ]; then
+            if grep -Eq 'exportArchive No Team Found in Archive|failed to export iOS app|EXPORT FAILED' /tmp/xcodebuild-ios.log; then
+              echo "::warning::Ignoring export failure for unsigned build; packaging .app manually."
+            else
+              exit "${build_exit}"
+            fi
+          fi
+
+      - name: Package iOS artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          ipa="$(find app/src-tauri -type f -name '*.ipa' | head -1 || true)"
+          if [ -z "${ipa}" ] || [ ! -f "${ipa}" ]; then
+            app="$(find app/src-tauri/gen/apple/build/Build/Products -type d -name '*.app' | head -1 || true)"
+            if [ -z "${app}" ] || [ ! -d "${app}" ]; then
+              app="$(find app/src-tauri/gen/apple/build -type d -name '*.app' | head -1 || true)"
+            fi
+            if [ -z "${app}" ] || [ ! -d "${app}" ]; then
+              app="$(find app/src-tauri -type d -name '*.app' | head -1 || true)"
+            fi
+            if [ -z "${app}" ] || [ ! -d "${app}" ]; then
+              echo "::error::No .ipa or .app artifact found"
+              exit 1
+            fi
+            rm -rf /tmp/ios-payload
+            mkdir -p /tmp/ios-payload/Payload
+            cp -R "${app}" /tmp/ios-payload/Payload/
+            (cd /tmp/ios-payload && zip -r -q unsigned.ipa Payload)
+            ipa="/tmp/ios-payload/unsigned.ipa"
+          fi
+
+          mkdir -p dist
+          cp "${ipa}" "dist/ikuai-bypass-ios-aarch64.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gui-ios-aarch64
+          path: dist/*
+
+      - name: Upload iOS build logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            /tmp/xcodebuild-ios.log
+            app/src-tauri/gen/apple/build/**/Logs/**
+          if-no-files-found: ignore
+
   docker:
     name: Docker Multi-Arch
     needs:
@@ -853,6 +1048,7 @@ jobs:
       - build-lxc
       - build-gui
       - build-gui-android
+      - build-gui-ios
     if: needs.meta.outputs.publish_release == 'true'
     runs-on: ubuntu-latest
     steps:

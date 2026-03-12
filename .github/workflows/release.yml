@@ -476,7 +476,9 @@ jobs:
 
           bin_dir = stage / "usr/local/bin"
           bin_dir.mkdir(parents=True, exist_ok=True)
-          shutil.copy2(bin_src, bin_dir / "ikuai-bypass")
+          bin_dst = bin_dir / "ikuai-bypass"
+          shutil.copy2(bin_src, bin_dst)
+          bin_dst.chmod(0o755)
 
           cfg_src = stage / "config.yml"
           etc_cfg = stage / "etc/ikuai-bypass"
@@ -722,7 +724,7 @@ jobs:
           build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-            frontend_dist = f"{workspace}/app/frontend/dist"
+            frontend_dist = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle_active = os.environ.get("BUNDLE_ACTIVE", "true").lower() != "false"
@@ -874,7 +876,7 @@ jobs:
           build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-            frontend_dist = f"{workspace}/app/frontend/dist"
+            frontend_dist = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [
@@ -999,7 +1001,7 @@ jobs:
           build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-            frontend_dist = f"{workspace}/app/frontend/dist"
+            frontend_dist = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [

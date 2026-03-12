@@ -17,7 +17,7 @@ pub fn get_gateway_v4() -> Result<Ipv4Addr, GatewayError> {
         if let Some(ip) = parse_proc_net_route_gateway(&content) {
             return Ok(ip);
         }
-        return Err(GatewayError::NotFound);
+        Err(GatewayError::NotFound)
     }
 
     #[cfg(not(target_os = "linux"))]

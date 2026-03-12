@@ -18,6 +18,26 @@ pub enum UpdateError {
     InvalidModule(String),
 }
 
+struct StreamDomainUpdate<'a> {
+    iface: &'a str,
+    tag: &'a str,
+    src_addr_ipgroup: &'a str,
+    src_addr: &'a str,
+    url: &'a str,
+}
+
+struct StreamIpPortUpdate<'a> {
+    forward_type: &'a str,
+    tag: &'a str,
+    iface: &'a str,
+    nexthop: &'a str,
+    src_addr: &'a str,
+    src_addr_opt_ipgroup: &'a str,
+    ip_group_name: &'a str,
+    mode: i64,
+    ifaceband: i64,
+}
+
 pub async fn run_update_by_module(
     cfg: &Config,
     cli_login: &str,
@@ -95,17 +115,14 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
                 item.url, item.interface, item.tag
             ),
         );
-        let res = update_stream_domain(
-            cfg,
-            api,
-            sink,
-            &item.interface,
-            &item.tag,
-            &item.src_addr_opt_ipgroup,
-            &item.src_addr,
-            &item.url,
-        )
-        .await;
+        let input = StreamDomainUpdate {
+            iface: &item.interface,
+            tag: &item.tag,
+            src_addr_ipgroup: &item.src_addr_opt_ipgroup,
+            src_addr: &item.src_addr,
+            url: &item.url,
+        };
+        let res = update_stream_domain(cfg, api, sink, input).await;
         if let Err(e) = res {
             domain.error(
                 "UPDATE:更新失败",
@@ -165,37 +182,36 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
             "UPDATE:开始更新",
             format!("Updating port streaming for tag {}...", tag),
         );
-        let res = update_stream_ipport(
-            cfg,
-            api,
-            sink,
-            &item.r#type,
-            &tag,
-            &item.interface,
-            &item.nexthop,
-            &item.src_addr,
-            &item.src_addr_opt_ipgroup,
-            &item.ip_group,
-            item.mode,
-            item.ifaceband,
-        )
-        .await;
+        let input = StreamIpPortUpdate {
+            forward_type: &item.r#type,
+            tag: &tag,
+            iface: &item.interface,
+            nexthop: &item.nexthop,
+            src_addr: &item.src_addr,
+            src_addr_opt_ipgroup: &item.src_addr_opt_ipgroup,
+            ip_group_name: &item.ip_group,
+            mode: item.mode,
+            ifaceband: item.ifaceband,
+        };
+        let res = update_stream_ipport(cfg, api, sink, input).await;
         if let Err(e) = res {
+            let route_name = format!("{}{}", item.interface, item.nexthop);
             stream_logger.error(
                 "UPDATE:更新失败",
                 format!(
                     "Failed to update port streaming '{}@{}': {}",
-                    format!("{}{}", item.interface, item.nexthop),
+                    route_name,
                     item.ip_group,
                     e
                 ),
             );
         } else {
+            let route_name = format!("{}{}", item.interface, item.nexthop);
             stream_logger.success(
                 "UPDATE:更新成功",
                 format!(
                     "Successfully updated port streaming '{}@{}'",
-                    format!("{}{}", item.interface, item.nexthop),
+                    route_name,
                     item.ip_group
                 ),
             );
@@ -428,26 +444,35 @@ async fn update_stream_domain(
     cfg: &Config,
     api: &ikuai::IKuaiClient,
     sink: &LogSink,
-    iface: &str,
-    tag: &str,
-    src_addr_ipgroup: &str,
-    src_addr: &str,
-    url: &str,
+    input: StreamDomainUpdate<'_>,
 ) -> Result<(), UpdateError> {
     let domain_logger = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
-    let body = http_get(cfg, sink, url).await?;
+    let body = http_get(cfg, sink, input.url).await?;
     let domains = filter_domains(split_lines(&body));
     domain_logger.success(
         "PARSE:解析成功",
-        format!("{} {}: obtained {} valid domains", iface, tag, domains.len()),
+        format!(
+            "{} {}: obtained {} valid domains",
+            input.iface,
+            input.tag,
+            domains.len()
+        ),
     );
 
-    let mut map = ikuai::stream_domain::get_stream_domain_map(api, tag).await?;
+    let mut map = ikuai::stream_domain::get_stream_domain_map(api, input.tag).await?;
     let groups = group(domains, cfg.max_number_of_one_records.domain as usize);
     for (i, chunk) in groups.iter().enumerate() {
         let index = (i + 1) as i64;
-        let name = ikuai::tag_name::build_indexed_tag_name(tag, i as i64);
+        let name = ikuai::tag_name::build_indexed_tag_name(input.tag, i as i64);
         let joined = chunk.join(",");
+        let spec = ikuai::stream_domain::StreamDomainSpec {
+            iface: input.iface,
+            tag: input.tag,
+            src_addr: input.src_addr,
+            src_addr_opt_ipgroup: input.src_addr_ipgroup,
+            domains: &joined,
+            index: i as i64,
+        };
         let res = if let Some(id) = map.remove(&index) {
             domain_logger.info(
                 "EDIT:正在修改",
@@ -455,23 +480,13 @@ async fn update_stream_domain(
                     "[{}/{}] {} {}: updating {} (ID: {})...",
                     i + 1,
                     groups.len(),
-                    iface,
-                    tag,
+                    input.iface,
+                    input.tag,
                     name,
                     id
                 ),
             );
-            ikuai::stream_domain::edit_stream_domain(
-                api,
-                iface,
-                tag,
-                src_addr,
-                src_addr_ipgroup,
-                &joined,
-                i as i64,
-                id,
-            )
-            .await
+            ikuai::stream_domain::edit_stream_domain(api, spec, id).await
         } else {
             domain_logger.info(
                 "ADD:正在添加",
@@ -479,21 +494,12 @@ async fn update_stream_domain(
                     "[{}/{}] {} {}: adding {}...",
                     i + 1,
                     groups.len(),
-                    iface,
-                    tag,
+                    input.iface,
+                    input.tag,
                     name
                 ),
             );
-            ikuai::stream_domain::add_stream_domain(
-                api,
-                iface,
-                tag,
-                src_addr,
-                src_addr_ipgroup,
-                &joined,
-                i as i64,
-            )
-            .await
+            ikuai::stream_domain::add_stream_domain(api, spec).await
         };
 
         if let Err(e) = res {
@@ -503,8 +509,8 @@ async fn update_stream_domain(
                     "[{}/{}] {} {}: failed: {}",
                     i + 1,
                     groups.len(),
-                    iface,
-                    tag,
+                    input.iface,
+                    input.tag,
                     e
                 ),
             );
@@ -521,7 +527,7 @@ async fn update_stream_domain(
                 "CLEAN:冗余删除",
                 format!(
                     "{}: chunk {} (ID: {}) is no longer needed, deleting...",
-                    tag, idx, id
+                    input.tag, idx, id
                 ),
             );
             extra.push(id.to_string());
@@ -530,12 +536,12 @@ async fn update_stream_domain(
         if let Err(e) = res {
             domain_logger.error(
                 "CLEAN:删除失败",
-                format!("{}: failed to delete extra domain rules: {}", tag, e),
+                format!("{}: failed to delete extra domain rules: {}", input.tag, e),
             );
         } else {
             domain_logger.success(
                 "CLEAN:清理成功",
-                format!("{}: deleted {} extra domain rules", tag, extra.len()),
+                format!("{}: deleted {} extra domain rules", input.tag, extra.len()),
             );
         }
     }
@@ -719,24 +725,16 @@ async fn update_stream_ipport(
     cfg: &Config,
     api: &ikuai::IKuaiClient,
     sink: &LogSink,
-    forward_type: &str,
-    tag: &str,
-    iface: &str,
-    nexthop: &str,
-    src_addr: &str,
-    src_addr_opt_ipgroup: &str,
-    ip_group_name: &str,
-    mode: i64,
-    ifaceband: i64,
+    input: StreamIpPortUpdate<'_>,
 ) -> Result<(), UpdateError> {
     let stream_logger = Logger::new("STREAM:端口分流", Arc::clone(sink));
 
     let mut dst_addr = String::new();
-    if ip_group_name.trim().is_empty() {
+    if input.ip_group_name.trim().is_empty() {
         stream_logger.info("CHECK:参数校验", "ip-group parameter is empty");
     } else {
         let mut dst_groups = Vec::new();
-        for item in ip_group_name.split(',') {
+        for item in input.ip_group_name.split(',') {
             let item = item.trim();
             if item.is_empty() {
                 continue;
@@ -749,7 +747,7 @@ async fn update_stream_ipport(
                 "SKIP:跳过操作",
                 format!(
                     "No matching destination IP groups found, skipping port streaming rule addition. ip-group: {}",
-                    ip_group_name
+                    input.ip_group_name
                 ),
             );
             return Ok(());
@@ -757,10 +755,10 @@ async fn update_stream_ipport(
         dst_addr = dst_groups.join(",");
     }
 
-    let mut src_addr = src_addr.to_string();
-    if !src_addr_opt_ipgroup.trim().is_empty() {
+    let mut src_addr = input.src_addr.to_string();
+    if !input.src_addr_opt_ipgroup.trim().is_empty() {
         let mut src_groups = Vec::new();
-        for item in src_addr_opt_ipgroup.split(',') {
+        for item in input.src_addr_opt_ipgroup.split(',') {
             let item = item.trim();
             if item.is_empty() {
                 continue;
@@ -775,61 +773,53 @@ async fn update_stream_ipport(
                 "SKIP:跳过操作",
                 format!(
                     "No matching source IP groups found, skipping port streaming rule addition. srcAddrOptIpGroup: {}",
-                    src_addr_opt_ipgroup
+                    input.src_addr_opt_ipgroup
                 ),
             );
             return Ok(());
         }
     }
 
-    let stream_map = ikuai::stream_ipport::get_stream_ipport_map(api, tag).await?;
-    let mut found: Option<(String, i64)> = None;
-    for (name, id) in stream_map {
-        found = Some((name, id));
-        break;
-    }
+    let stream_map = ikuai::stream_ipport::get_stream_ipport_map(api, input.tag).await?;
+    let found = stream_map.into_iter().next();
+    let spec = ikuai::stream_ipport::StreamIpPortSpec {
+        forward_type: input.forward_type,
+        iface: input.iface,
+        dst_addr: &dst_addr,
+        src_addr: &src_addr,
+        nexthop: input.nexthop,
+        tag: input.tag,
+        mode: input.mode,
+        iface_band: input.ifaceband,
+    };
 
     let res = if let Some((name, id)) = found {
         stream_logger.info(
             "EDIT:正在修改",
-            format!("[1/1] {}: updating existing rule {} (ID: {})...", tag, name, id),
+            format!(
+                "[1/1] {}: updating existing rule {} (ID: {})...",
+                input.tag, name, id
+            ),
         );
-        ikuai::stream_ipport::edit_stream_ipport(
-            api,
-            forward_type,
-            iface,
-            &dst_addr,
-            &src_addr,
-            nexthop,
-            tag,
-            mode,
-            ifaceband,
-            id,
-        )
-        .await
+        ikuai::stream_ipport::edit_stream_ipport(api, spec, id).await
     } else {
-        stream_logger.info("ADD:正在添加", format!("[1/1] {}: adding new rule...", tag));
-        ikuai::stream_ipport::add_stream_ipport(
-            api,
-            forward_type,
-            iface,
-            &dst_addr,
-            &src_addr,
-            nexthop,
-            tag,
-            mode,
-            ifaceband,
-        )
-        .await
+        stream_logger.info(
+            "ADD:正在添加",
+            format!("[1/1] {}: adding new rule...", input.tag),
+        );
+        ikuai::stream_ipport::add_stream_ipport(api, spec).await
     };
 
     if let Err(e) = res {
-        stream_logger.error("UPDATE:更新失败", format!("[1/1] {}: failed: {}", tag, e));
+        stream_logger.error(
+            "UPDATE:更新失败",
+            format!("[1/1] {}: failed: {}", input.tag, e),
+        );
         sleep(cfg.add_err_retry_wait).await;
     } else {
         stream_logger.success(
             "UPDATE:更新成功",
-            format!("[1/1] {}: updated successfully", tag),
+            format!("[1/1] {}: updated successfully", input.tag),
         );
     }
 

@@ -96,17 +96,23 @@ pub async fn show_stream_domain_by_tag_name(api: &IKuaiClient, tag_name: &str) -
     Ok(out)
 }
 
+pub struct StreamDomainSpec<'a> {
+    pub iface: &'a str,
+    pub tag: &'a str,
+    pub src_addr: &'a str,
+    pub src_addr_opt_ipgroup: &'a str,
+    pub domains: &'a str,
+    pub index: i64,
+}
+
 pub async fn add_stream_domain(
     api: &IKuaiClient,
-    iface: &str,
-    tag: &str,
-    src_addr: &str,
-    src_addr_opt_ipgroup: &str,
-    domains: &str,
-    index: i64,
+    spec: StreamDomainSpec<'_>,
 ) -> Result<(), IKuaiError> {
-    let (src_custom, src_objects) = resolve_src_addrs(api, src_addr, src_addr_opt_ipgroup).await?;
-    let domain_list: Vec<String> = domains
+    let (src_custom, src_objects) =
+        resolve_src_addrs(api, spec.src_addr, spec.src_addr_opt_ipgroup).await?;
+    let domain_list: Vec<String> = spec
+        .domains
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
@@ -114,8 +120,8 @@ pub async fn add_stream_domain(
         .collect();
     let param = serde_json::json!({
         "enabled": "yes",
-        "tagname": build_indexed_tag_name(tag, index),
-        "interface": iface,
+        "tagname": build_indexed_tag_name(spec.tag, spec.index),
+        "interface": spec.iface,
         "src_addr": {"custom": src_custom, "object": src_objects},
         "domain": {"custom": domain_list, "object": []},
         "comment": NEW_COMMENT,
@@ -130,16 +136,13 @@ pub async fn add_stream_domain(
 
 pub async fn edit_stream_domain(
     api: &IKuaiClient,
-    iface: &str,
-    tag: &str,
-    src_addr: &str,
-    src_addr_opt_ipgroup: &str,
-    domains: &str,
-    index: i64,
+    spec: StreamDomainSpec<'_>,
     id: i64,
 ) -> Result<(), IKuaiError> {
-    let (src_custom, src_objects) = resolve_src_addrs(api, src_addr, src_addr_opt_ipgroup).await?;
-    let domain_list: Vec<String> = domains
+    let (src_custom, src_objects) =
+        resolve_src_addrs(api, spec.src_addr, spec.src_addr_opt_ipgroup).await?;
+    let domain_list: Vec<String> = spec
+        .domains
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
@@ -147,8 +150,8 @@ pub async fn edit_stream_domain(
         .collect();
     let param = serde_json::json!({
         "enabled": "yes",
-        "tagname": build_indexed_tag_name(tag, index),
-        "interface": iface,
+        "tagname": build_indexed_tag_name(spec.tag, spec.index),
+        "interface": spec.iface,
         "src_addr": {"custom": src_custom, "object": src_objects},
         "domain": {"custom": domain_list, "object": []},
         "comment": NEW_COMMENT,

@@ -135,10 +135,8 @@ fn parse_custom_isp_chunk_index_from_comment(comment: &str) -> Option<i64> {
         if suffix.is_empty() {
             return Some(1);
         }
-        if let Ok(v) = suffix.parse::<i64>() {
-            if v > 0 {
-                return Some(v);
-            }
+        if let Ok(v) = suffix.parse::<i64>() && v > 0 {
+            return Some(v);
         }
     }
     None

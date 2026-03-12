@@ -119,25 +119,31 @@ pub async fn get_stream_ipport_map(api: &IKuaiClient, tag: &str) -> Result<std::
     Ok(out)
 }
 
+pub struct StreamIpPortSpec<'a> {
+    pub forward_type: &'a str,
+    pub iface: &'a str,
+    pub dst_addr: &'a str,
+    pub src_addr: &'a str,
+    pub nexthop: &'a str,
+    pub tag: &'a str,
+    pub mode: i64,
+    pub iface_band: i64,
+}
+
 pub async fn add_stream_ipport(
     api: &IKuaiClient,
-    forward_type: &str,
-    iface: &str,
-    dst_addr: &str,
-    src_addr: &str,
-    nexthop: &str,
-    tag: &str,
-    mode: i64,
-    iface_band: i64,
+    spec: StreamIpPortSpec<'_>,
 ) -> Result<(), IKuaiError> {
-    let f_type: i64 = forward_type.parse().unwrap_or(0);
-    let src_list: Vec<String> = src_addr
+    let f_type: i64 = spec.forward_type.parse().unwrap_or(0);
+    let src_list: Vec<String> = spec
+        .src_addr
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
-    let dst_list: Vec<String> = dst_addr
+    let dst_list: Vec<String> = spec
+        .dst_addr
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
@@ -149,13 +155,13 @@ pub async fn add_stream_ipport(
     let dst_objects = resolve_ip_group_objects(api, &dst_obj).await?;
     let param = serde_json::json!({
         "enabled": "yes",
-        "tagname": build_tag_name(tag),
-        "interface": iface,
-        "nexthop": nexthop,
-        "iface_band": iface_band,
+        "tagname": build_tag_name(spec.tag),
+        "interface": spec.iface,
+        "nexthop": spec.nexthop,
+        "iface_band": spec.iface_band,
         "comment": NEW_COMMENT,
         "type": f_type,
-        "mode": mode,
+        "mode": spec.mode,
         "protocol": "tcp+udp",
         "src_addr": {"custom": src_custom, "object": src_objects},
         "dst_addr": {"custom": dst_custom, "object": dst_objects},
@@ -174,24 +180,19 @@ pub async fn add_stream_ipport(
 
 pub async fn edit_stream_ipport(
     api: &IKuaiClient,
-    forward_type: &str,
-    iface: &str,
-    dst_addr: &str,
-    src_addr: &str,
-    nexthop: &str,
-    tag: &str,
-    mode: i64,
-    iface_band: i64,
+    spec: StreamIpPortSpec<'_>,
     id: i64,
 ) -> Result<(), IKuaiError> {
-    let f_type: i64 = forward_type.parse().unwrap_or(0);
-    let src_list: Vec<String> = src_addr
+    let f_type: i64 = spec.forward_type.parse().unwrap_or(0);
+    let src_list: Vec<String> = spec
+        .src_addr
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())
         .collect();
-    let dst_list: Vec<String> = dst_addr
+    let dst_list: Vec<String> = spec
+        .dst_addr
         .trim()
         .split(',')
         .map(|s| s.trim().to_string())
@@ -203,13 +204,13 @@ pub async fn edit_stream_ipport(
     let dst_objects = resolve_ip_group_objects(api, &dst_obj).await?;
     let param = serde_json::json!({
         "enabled": "yes",
-        "tagname": build_tag_name(tag),
-        "interface": iface,
-        "nexthop": nexthop,
-        "iface_band": iface_band,
+        "tagname": build_tag_name(spec.tag),
+        "interface": spec.iface,
+        "nexthop": spec.nexthop,
+        "iface_band": spec.iface_band,
         "comment": NEW_COMMENT,
         "type": f_type,
-        "mode": mode,
+        "mode": spec.mode,
         "protocol": "tcp+udp",
         "src_addr": {"custom": src_custom, "object": src_objects},
         "dst_addr": {"custom": dst_custom, "object": dst_objects},

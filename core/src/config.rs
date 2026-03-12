@@ -143,7 +143,7 @@ pub struct StreamIpPortItem {
     pub ifaceband: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct WebUiConfig {
     #[serde(rename = "port", default)]
     pub port: String,
@@ -157,7 +157,7 @@ pub struct WebUiConfig {
     pub cdn_prefix: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct MaxNumberOfOneRecordsConfig {
     #[serde(rename = "Isp", default)]
     pub isp: i64,
@@ -203,29 +203,6 @@ pub struct Config {
     pub webui: WebUiConfig,
     #[serde(rename = "MaxNumberOfOneRecords", default)]
     pub max_number_of_one_records: MaxNumberOfOneRecordsConfig,
-}
-
-impl Default for WebUiConfig {
-    fn default() -> Self {
-        Self {
-            port: String::new(),
-            user: String::new(),
-            pass: String::new(),
-            enable: false,
-            cdn_prefix: String::new(),
-        }
-    }
-}
-
-impl Default for MaxNumberOfOneRecordsConfig {
-    fn default() -> Self {
-        Self {
-            isp: 0,
-            ipv4: 0,
-            ipv6: 0,
-            domain: 0,
-        }
-    }
 }
 
 impl Config {
@@ -277,7 +254,7 @@ impl Config {
             options.create(true).truncate(true).write(true).mode(0o600);
             let mut f = options.open(path)?;
             f.write_all(data.as_bytes())?;
-            return Ok(());
+            Ok(())
         }
 
         #[cfg(not(unix))]
@@ -307,7 +284,7 @@ impl Config {
             options.create(true).truncate(true).write(true).mode(0o600);
             let mut f = options.open(path)?;
             f.write_all(data.as_bytes())?;
-            return Ok(());
+            Ok(())
         }
 
         #[cfg(not(unix))]
@@ -338,7 +315,7 @@ impl Config {
             options.create(true).truncate(true).write(true).mode(0o600);
             let mut f = options.open(path)?;
             f.write_all(data.as_bytes())?;
-            return Ok(cfg);
+            Ok(cfg)
         }
 
         #[cfg(not(unix))]

@@ -134,21 +134,21 @@
     {
       "label": "linux-mips64",
       "runner": "ubuntu-latest",
-      "target": "mipsisa64r6-unknown-linux-gnuabi64",
+      "target": "mips64-unknown-linux-gnuabi64",
       "archive": "tar.gz",
       "mode": ["full"]
     },
     {
       "label": "linux-mips64el",
       "runner": "ubuntu-latest",
-      "target": "mipsisa64r6el-unknown-linux-gnuabi64",
+      "target": "mips64el-unknown-linux-gnuabi64",
       "archive": "tar.gz",
       "mode": ["full"]
     },
     {
       "label": "linux-mips",
       "runner": "ubuntu-latest",
-      "target": "mipsisa32r6-unknown-linux-gnu",
+      "target": "mips-unknown-linux-gnu",
       "archive": "tar.gz",
       "mode": ["full"]
     }

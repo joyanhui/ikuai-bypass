@@ -33,6 +33,15 @@ ikb_normalize_arch() {
     mipsel)
       printf '%s\n' "mipsle"
       ;;
+    mips)
+      printf '%s\n' "mips"
+      ;;
+    mips64)
+      printf '%s\n' "mips64"
+      ;;
+    mips64el)
+      printf '%s\n' "mips64le"
+      ;;
     mipsisa32r6)
       printf '%s\n' "mips"
       ;;

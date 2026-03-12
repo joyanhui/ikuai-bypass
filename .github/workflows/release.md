@@ -154,6 +154,12 @@ Docker 镜像标签始终包含：
 - `android-armv7`
 - `android-x86_64`
 
+说明：
+
+- CI 会优先收集 `universal release unsigned.apk`
+- 上传前会执行 `zipalign` 和 `apksigner`
+- 最终发布的是可直接安装的已签名 APK，而不是原始 unsigned APK
+
 ### iOS GUI
 
 仅 `full`：

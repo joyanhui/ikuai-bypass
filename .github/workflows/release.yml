@@ -815,12 +815,47 @@ jobs:
 
       - name: Package Android artifact
         shell: bash
+        env:
+          LABEL: ${{ matrix.label }}
         run: |
           set -euo pipefail
           mkdir -p dist
-          apk="$(find app/src-tauri -type f -name '*.apk' | head -1 || true)"
-          test -n "${apk}"
-          cp "${apk}" "dist/ikuai-bypass-gui-${{ matrix.label }}.apk"
+
+          unsigned_apk="$(find app/src-tauri/gen/android/app/build/outputs/apk -type f -name '*universal*release*unsigned.apk' | head -1 || true)"
+          if [ -z "${unsigned_apk}" ]; then
+            unsigned_apk="$(find app/src-tauri/gen/android/app/build/outputs/apk -type f -name '*release*unsigned.apk' | head -1 || true)"
+          fi
+          test -n "${unsigned_apk}"
+
+          build_tools_dir="$(find "${ANDROID_HOME}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          zipalign_bin="${build_tools_dir}/zipalign"
+          apksigner_bin="${build_tools_dir}/apksigner"
+          test -x "${zipalign_bin}"
+          test -x "${apksigner_bin}"
+
+          keystore_path="${RUNNER_TEMP}/android-debug.keystore"
+          keytool -genkeypair \
+            -keystore "${keystore_path}" \
+            -storepass android \
+            -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+          aligned_apk="dist/ikuai-bypass-gui-${LABEL}-aligned.apk"
+          final_apk="dist/ikuai-bypass-gui-${LABEL}.apk"
+          "${zipalign_bin}" -f 4 "${unsigned_apk}" "${aligned_apk}"
+          "${apksigner_bin}" sign \
+            --ks "${keystore_path}" \
+            --ks-pass pass:android \
+            --key-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --out "${final_apk}" \
+            "${aligned_apk}"
+          "${apksigner_bin}" verify "${final_apk}"
+          rm -f "${aligned_apk}"
 
       - uses: actions/upload-artifact@v4
         with:

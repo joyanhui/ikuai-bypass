@@ -28,7 +28,6 @@
 
 手动触发时的规则：
 
-- `publish_release` 默认是 `false`
 - `publish_release` 默认是 `true`
 - `push_docker` 默认是 `true`
 - 如果未填写 `release_tag` 但手动勾选了发布或推送 Docker，workflow 会自动生成版本号 `manual-release-年月日时分秒` 并继续发布
@@ -166,13 +165,59 @@ Docker 镜像标签始终包含：
 
 - `ios-aarch64`
 
-## 7. 附加产物规则
+## 7. 最终发布文件命名
+
+GitHub Actions 内部 artifact 名仅用于 job 间传递：
+
+- `cli-*`
+- `gui-*`
+- `gui-android-*`
+- `gui-ios-*`
+
+真正上传到 GitHub Release 的最终文件名统一使用 `ikuai-bypass-*` 前缀，并显式带上系统与架构，避免 `linux/freebsd/windows/macos` 的同架构产物互相覆盖。
+
+### CLI / BSD / Nightly CLI
+
+- `ikuai-bypass-cli-linux-x86_64.zip`
+- `ikuai-bypass-cli-linux-x86_32.zip`
+- `ikuai-bypass-cli-linux-aarch64.zip`
+- `ikuai-bypass-cli-linux-riscv64gc.zip`
+- `ikuai-bypass-cli-linux-mips.zip`
+- `ikuai-bypass-cli-linux-mipsle.zip`
+- `ikuai-bypass-cli-linux-mips64.zip`
+- `ikuai-bypass-cli-linux-mips64le.zip`
+- `ikuai-bypass-cli-freebsd-x86_64.zip`
+- `ikuai-bypass-cli-freebsd-x86_32.zip`
+- `ikuai-bypass-cli-windows-x86_64.zip`
+- `ikuai-bypass-cli-macos-x86_64.zip`
+- `ikuai-bypass-cli-macos-aarch64.zip`
+
+### Desktop GUI
+
+- Windows GUI：`ikuai-bypass-gui-windows-x86_64.zip`
+- Linux AppImage：`ikuai-bypass-gui-linux-x86_64.AppImage`
+- macOS DMG：`ikuai-bypass-gui-macos-x86_64.dmg`
+- macOS DMG：`ikuai-bypass-gui-macos-aarch64.dmg`
+
+### Mobile GUI
+
+- Android APK：`ikuai-bypass-gui-android-aarch64.apk`
+- Android APK：`ikuai-bypass-gui-android-arm7.apk`
+- Android APK：`ikuai-bypass-gui-android-x86_64.apk`
+- iOS IPA：`ikuai-bypass-gui-ios-aarch64.ipa`
+
+规则说明：
+
+- `apk`、`AppImage`、`dmg`、`ipa` 直接以原生格式发布，不再额外打包为 zip
+- 文件名不包含 `.upx`
+
+## 8. 附加产物规则
 
 ### LXC / Alpine
 
 当 stable CLI 中包含 `linux-amd64` 时构建：
 
-- `ikuai-bypass-lxc-alpine-musl-amd64.tar.gz`
+- `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz`
 
 ### Docker Multi-Arch
 
@@ -195,7 +240,7 @@ Docker 镜像标签始终包含：
 
 - FreeBSD、macOS、Windows、nightly MIPS 不参与 Docker multi-arch
 
-## 8. 发布条件
+## 9. 发布条件
 
 `publish` job 仅在以下条件满足时执行：
 
@@ -210,14 +255,14 @@ Docker 镜像标签始终包含：
 - 自动生成 Release Notes
 - 根据版本名决定是否标记为 `prerelease`
 
-## 9. 关键实现文件
+## 10. 关键实现文件
 
 - [release.yml](/home/y/myworkspace/ikuai-bypass/.github/workflows/release.yml)
 - [build_matrix.jsonc](/home/y/myworkspace/ikuai-bypass/.github/build_matrix.jsonc)
 - [arch-helpers.sh](/home/y/myworkspace/ikuai-bypass/.github/scripts/arch-helpers.sh)
 - [prepare-container-binaries.sh](/home/y/myworkspace/ikuai-bypass/.github/scripts/prepare-container-binaries.sh)
 
-## 10. 维护约束
+## 11. 维护约束
 
 后续如果调整以下内容，必须同步更新本文档：
 
@@ -226,4 +271,5 @@ Docker 镜像标签始终包含：
 - Docker `latest` 规则
 - stable / nightly / BSD / GUI 构建矩阵
 - `full` 模式下的 nightly 构建逻辑
+- 最终发布文件命名规则
 - 发布门槛与产物收集逻辑

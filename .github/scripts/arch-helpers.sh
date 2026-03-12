@@ -10,7 +10,7 @@ ikb_normalize_arch() {
       printf '%s\n' "x86_64"
       ;;
     i686)
-      printf '%s\n' "x86"
+      printf '%s\n' "x86_32"
       ;;
     armv5te)
       printf '%s\n' "arm5"
@@ -28,7 +28,7 @@ ikb_normalize_arch() {
       printf '%s\n' "ppc64le"
       ;;
     riscv64gc)
-      printf '%s\n' "riscv64"
+      printf '%s\n' "riscv64gc"
       ;;
     mipsel)
       printf '%s\n' "mipsle"
@@ -57,54 +57,65 @@ ikb_normalize_arch() {
   esac
 }
 
-ikb_detect_os() {
-  local target="${1:-}"
-
-  if [[ "${target}" == *windows* ]]; then
-    printf '%s\n' "windows"
-  elif [[ "${target}" == *apple-darwin* ]]; then
-    printf '%s\n' "macos"
-  elif [[ "${target}" == *freebsd* ]]; then
-    printf '%s\n' "freebsd"
-  elif [[ "${target}" == *android* ]]; then
-    printf '%s\n' "android"
-  elif [[ "${target}" == *linux* ]]; then
-    printf '%s\n' "linux"
-  else
-    printf '%s\n' "unknown"
-  fi
-}
-
-ikb_detect_libc() {
-  local target="${1:-}"
-
-  if [[ "${target}" == *musl* ]]; then
-    printf '%s\n' "musl"
-  elif [[ "${target}" == *gnu* ]]; then
-    printf '%s\n' "gnu"
-  elif [[ "${target}" == *msvc* ]]; then
-    printf '%s\n' "msvc"
-  elif [[ "${target}" == *freebsd* ]]; then
-    printf '%s\n' "freebsd"
-  elif [[ "${target}" == *darwin* ]]; then
-    printf '%s\n' "darwin"
-  else
-    printf '%s\n' "native"
-  fi
-}
-
-ikb_cli_base() {
+ikb_release_arch() {
   local target="${1:-}"
   local arch
 
   arch="$(ikb_normalize_arch "${target%%-*}")"
-  printf '%s\n' "ikuai-bypass-cli-${arch}-$(ikb_detect_os "${target}")-$(ikb_detect_libc "${target}")"
+  printf '%s\n' "${arch}"
 }
 
-ikb_gui_base() {
+ikb_release_os() {
   local target="${1:-}"
-  local arch
 
-  arch="$(ikb_normalize_arch "${target%%-*}")"
-  printf '%s\n' "ikuai-bypass-gui-${arch}-$(ikb_detect_os "${target}")-$(ikb_detect_libc "${target}")"
+  case "${target}" in
+    *-windows-*)
+      printf '%s\n' "windows"
+      ;;
+    *-apple-darwin)
+      printf '%s\n' "macos"
+      ;;
+    *-linux-android)
+      printf '%s\n' "android"
+      ;;
+    *-apple-ios)
+      printf '%s\n' "ios"
+      ;;
+    *-freebsd)
+      printf '%s\n' "freebsd"
+      ;;
+    *-linux-*)
+      printf '%s\n' "linux"
+      ;;
+    *)
+      printf '%s\n' "unknown"
+      ;;
+  esac
+}
+
+ikb_release_suffix() {
+  local target="${1:-}"
+  printf '%s-%s\n' "$(ikb_release_os "${target}")" "$(ikb_release_arch "${target}")"
+}
+
+ikb_cli_zip_name() {
+  local target="${1:-}"
+  printf '%s\n' "ikuai-bypass-cli-$(ikb_release_suffix "${target}").zip"
+}
+
+ikb_gui_zip_name() {
+  local target="${1:-}"
+  printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}").zip"
+}
+
+ikb_cli_native_name() {
+  local target="${1:-}"
+  local ext="${2:-}"
+  printf '%s\n' "ikuai-bypass-cli-$(ikb_release_suffix "${target}")${ext}"
+}
+
+ikb_gui_native_name() {
+  local target="${1:-}"
+  local ext="${2:-}"
+  printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}")${ext}"
 }

@@ -22,17 +22,18 @@ while IFS= read -r item; do
   label="$(jq -r '.label' <<<"${item}")"
   target="$(jq -r '.target' <<<"${item}")"
   archive_kind="$(jq -r '.archive' <<<"${item}")"
-  package_base="$(ikb_cli_base "${target}")"
+  package_name="$(ikb_cli_zip_name "${target}")"
   unpack_dir="${context_dir}/unpack-${label}"
 
   mkdir -p "${context_dir}/docker/bin/${label}" "${unpack_dir}"
 
   case "${archive_kind}" in
     tar.gz)
-      tar -xzf "${release_dir}/${package_base}.tar.gz" -C "${unpack_dir}"
+      printf 'Unexpected tar.gz CLI package for docker target: %s\n' "${target}" >&2
+      exit 1
       ;;
     zip)
-      unzip -q "${release_dir}/${package_base}.zip" -d "${unpack_dir}"
+      unzip -q "${release_dir}/${package_name}" -d "${unpack_dir}"
       ;;
     *)
       printf 'Unsupported archive kind: %s\n' "${archive_kind}" >&2

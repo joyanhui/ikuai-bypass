@@ -242,9 +242,14 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: oven-sh/setup-bun@v2
+      - name: Install Bun
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://bun.sh/install | bash
+          echo "${HOME}/.bun/bin" >> "${GITHUB_PATH}"
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.bun/install/cache
@@ -264,7 +269,7 @@ jobs:
       - name: Verify frontend dist
         run: test -f app/frontend/dist/index.html
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: frontend-dist
           path: app/frontend/dist
@@ -294,7 +299,7 @@ jobs:
         working-directory: app/src-tauri
         run: cargo tauri icon icons/icon.png
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: tauri-icons
           path: app/src-tauri/icons
@@ -346,22 +351,19 @@ jobs:
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
-          ARCHIVE_KIND: ${{ matrix.archive }}
         run: |
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
           mkdir -p release
-          export package_base="$(ikb_cli_base "${TARGET}")"
+          export package_name="$(ikb_cli_zip_name "${TARGET}")"
           python <<'PY'
           import os
           import pathlib
           import shutil
-          import tarfile
           import zipfile
 
           target = os.environ["TARGET"]
-          archive_kind = os.environ["ARCHIVE_KIND"]
-          package_base = os.environ["package_base"]
+          package_name = os.environ["package_name"]
           release_dir = pathlib.Path("release")
           build_root = pathlib.Path(os.environ["CARGO_TARGET_DIR"])
           build_dir = build_root / target / "release"
@@ -369,7 +371,7 @@ jobs:
           if not src.exists():
               raise SystemExit(f"missing binary: {src}")
 
-          stage = release_dir / f"{package_base}.stage"
+          stage = release_dir / f"{package_name}.stage"
           if stage.exists():
               shutil.rmtree(stage)
           stage.mkdir(parents=True)
@@ -379,25 +381,15 @@ jobs:
           shutil.copy2("README.md", stage / "README.md")
           shutil.copy2("config.yml", stage / "config.yml")
 
-          if archive_kind == "tar.gz":
-              out = release_dir / f"{package_base}.tar.gz"
-              if out.exists():
-                  out.unlink()
-              with tarfile.open(out, "w:gz") as tf:
-                  for path in stage.rglob("*"):
-                      tf.add(path, arcname=path.relative_to(stage))
-          elif archive_kind == "zip":
-              out = release_dir / f"{package_base}.zip"
-              if out.exists():
-                  out.unlink()
-              with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
-                  for path in stage.rglob("*"):
-                      zf.write(path, path.relative_to(stage))
-          else:
-              raise SystemExit(f"unsupported archive kind: {archive_kind}")
+          out = release_dir / package_name
+          if out.exists():
+              out.unlink()
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+              for path in stage.rglob("*"):
+                  zf.write(path, path.relative_to(stage))
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cli-${{ matrix.label }}
           path: release/*
@@ -451,12 +443,23 @@ jobs:
           shared-key: cli-nightly-${{ matrix.label }}
 
       - name: Build nightly CLI
+        id: build_nightly_cli
         env:
           CARGO_UNSTABLE_BUILD_STD: "1"
           RUSTUP_TOOLCHAIN: nightly
-        run: cross build --locked -Z build-std=std,panic_abort --release --target ${{ matrix.target }} -p ikb-cli
+        shell: bash
+        run: |
+          set +e
+          cross build --locked -Z build-std=std,panic_abort --release --target ${{ matrix.target }} -p ikb-cli
+          build_exit="$?"
+          set -e
+          echo "build_exit=${build_exit}" >> "${GITHUB_OUTPUT}"
+          if [ "${build_exit}" -ne 0 ]; then
+            echo "::warning::Nightly experimental target failed: ${{ matrix.target }}"
+          fi
 
       - name: Package nightly CLI artifact
+        if: steps.build_nightly_cli.outputs.build_exit == '0'
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
@@ -464,15 +467,15 @@ jobs:
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
           mkdir -p release
-          export package_base="$(ikb_cli_base "${TARGET}")"
+          export package_name="$(ikb_cli_zip_name "${TARGET}")"
           python <<'PY'
           import os
           import pathlib
           import shutil
-          import tarfile
+          import zipfile
 
           target = os.environ["TARGET"]
-          package_base = os.environ["package_base"]
+          package_name = os.environ["package_name"]
           release_dir = pathlib.Path("release")
           build_root = pathlib.Path(os.environ["CARGO_TARGET_DIR"])
           build_dir = build_root / target / "release"
@@ -480,7 +483,7 @@ jobs:
           if not src.exists():
               raise SystemExit(f"missing binary: {src}")
 
-          stage = release_dir / f"{package_base}.stage"
+          stage = release_dir / f"{package_name}.stage"
           if stage.exists():
               shutil.rmtree(stage)
           stage.mkdir(parents=True)
@@ -488,15 +491,16 @@ jobs:
           shutil.copy2("README.md", stage / "README.md")
           shutil.copy2("config.yml", stage / "config.yml")
 
-          out = release_dir / f"{package_base}.tar.gz"
+          out = release_dir / package_name
           if out.exists():
               out.unlink()
-          with tarfile.open(out, "w:gz") as tf:
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
               for path in stage.rglob("*"):
-                  tf.add(path, arcname=path.relative_to(stage))
+                  zf.write(path, path.relative_to(stage))
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
+        if: steps.build_nightly_cli.outputs.build_exit == '0'
         with:
           name: cli-${{ matrix.label }}
           path: release/*
@@ -511,7 +515,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: cli-linux-amd64
           path: release
@@ -520,11 +524,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tarball="$(find release -maxdepth 1 -type f -name 'ikuai-bypass-cli-x86_64-linux-musl.tar.gz' | head -1)"
-          test -n "${tarball}"
+          zipball="$(find release -maxdepth 1 -type f -name 'ikuai-bypass-cli-linux-x86_64.zip' | head -1)"
+          test -n "${zipball}"
           rm -rf stage-lxc
           mkdir -p stage-lxc
-          tar -xzf "${tarball}" -C stage-lxc
+          ZIPBALL="${zipball}" python <<'PY'
+          import os
+          import pathlib
+          import zipfile
+
+          zipball = pathlib.Path(os.environ["ZIPBALL"])
+          stage = pathlib.Path("stage-lxc")
+          with zipfile.ZipFile(zipball) as zf:
+              zf.extractall(stage)
+          PY
 
           mkdir -p stage-lxc/usr/local/bin stage-lxc/etc/ikuai-bypass stage-lxc/usr/local/share/ikuai-bypass stage-lxc/etc/init.d stage-lxc/etc/runlevels/default
           mv stage-lxc/ikuai-bypass stage-lxc/usr/local/bin/ikuai-bypass
@@ -553,9 +566,9 @@ jobs:
           chmod +x stage-lxc/etc/init.d/ikuai-bypass
           ln -sf /etc/init.d/ikuai-bypass stage-lxc/etc/runlevels/default/ikuai-bypass
 
-          tar -czf release/ikuai-bypass-lxc-alpine-musl-amd64.tar.gz -C stage-lxc .
+          tar -czf release/ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz -C stage-lxc .
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cli-lxc-alpine-musl-amd64
           path: release/*.tar.gz
@@ -590,12 +603,12 @@ jobs:
           cache-on-failure: true
           shared-key: gui-${{ matrix.label }}
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: frontend-dist
           path: app/frontend/dist
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: tauri-icons
           path: app/src-tauri/icons
@@ -682,17 +695,22 @@ jobs:
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
           mkdir -p release
-          export package_base="$(ikb_gui_base "${TARGET}")"
+          export zip_name="$(ikb_gui_zip_name "${TARGET}")"
+          export dmg_name="$(ikb_gui_native_name "${TARGET}" ".dmg")"
+          export appimage_name="$(ikb_gui_native_name "${TARGET}" ".AppImage")"
           python <<'PY'
           import glob
           import os
           import pathlib
           import shutil
+          import zipfile
 
           release_dir = pathlib.Path("release")
           target = os.environ["TARGET"]
           pattern = os.environ["PATTERN"]
-          package_base = os.environ["package_base"]
+          zip_name = os.environ["zip_name"]
+          dmg_name = os.environ["dmg_name"]
+          appimage_name = os.environ["appimage_name"]
 
           patterns = [pattern]
           if pattern.startswith("target/release/"):
@@ -714,12 +732,30 @@ jobs:
               raise SystemExit(f"no bundle matched: {patterns}")
 
           for src in found:
-              suffix = src.suffix or ".bin"
-              dst = release_dir / f"{package_base}-{src.stem}{suffix}"
-              shutil.copy2(src, dst)
+              suffix = src.suffix.lower()
+              if suffix == ".appimage":
+                  shutil.copy2(src, release_dir / appimage_name)
+                  continue
+              if suffix == ".dmg":
+                  shutil.copy2(src, release_dir / dmg_name)
+                  continue
+
+              stage = release_dir / f"{zip_name}.stage"
+              if stage.exists():
+                  shutil.rmtree(stage)
+              stage.mkdir(parents=True)
+              dst_name = "ikuai-bypass.exe" if "windows" in target else src.name
+              shutil.copy2(src, stage / dst_name)
+
+              out = release_dir / zip_name
+              if out.exists():
+                  out.unlink()
+              with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+                  for path in stage.rglob("*"):
+                      zf.write(path, path.relative_to(stage))
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: gui-${{ matrix.label }}
           path: release/*
@@ -739,12 +775,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: frontend-dist
           path: app/frontend/dist
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: tauri-icons
           path: app/src-tauri/icons
@@ -816,9 +852,10 @@ jobs:
       - name: Package Android artifact
         shell: bash
         env:
-          LABEL: ${{ matrix.label }}
+          TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
+          source .github/scripts/arch-helpers.sh
           mkdir -p dist
 
           unsigned_apk="$(find app/src-tauri/gen/android/app/build/outputs/apk -type f -name '*universal*release*unsigned.apk' | head -1 || true)"
@@ -844,8 +881,9 @@ jobs:
             -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
 
-          aligned_apk="dist/ikuai-bypass-gui-${LABEL}-aligned.apk"
-          final_apk="dist/ikuai-bypass-gui-${LABEL}.apk"
+          final_name="$(ikb_gui_native_name "${TARGET}" ".apk")"
+          aligned_apk="dist/${final_name%.apk}-aligned.apk"
+          final_apk="dist/${final_name}"
           "${zipalign_bin}" -f 4 "${unsigned_apk}" "${aligned_apk}"
           "${apksigner_bin}" sign \
             --ks "${keystore_path}" \
@@ -857,7 +895,7 @@ jobs:
           "${apksigner_bin}" verify "${final_apk}"
           rm -f "${aligned_apk}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: gui-android-${{ matrix.label }}
           path: dist/*
@@ -877,12 +915,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: frontend-dist
           path: app/frontend/dist
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: tauri-icons
           path: app/src-tauri/icons
@@ -1015,12 +1053,16 @@ jobs:
 
       - name: Package iOS artifact
         shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
         run: |
           set -euo pipefail
+          source .github/scripts/arch-helpers.sh
           mkdir -p dist
+          final_name="$(ikb_gui_native_name "${TARGET}" ".ipa")"
           ipa="$(find app/src-tauri -type f -name '*.ipa' | head -1 || true)"
           if [ -n "${ipa}" ] && [ -f "${ipa}" ]; then
-            cp "${ipa}" "dist/ikuai-bypass-gui-${{ matrix.label }}.ipa"
+            cp "${ipa}" "dist/${final_name}"
             exit 0
           fi
 
@@ -1030,16 +1072,16 @@ jobs:
           mkdir -p /tmp/ios-payload/Payload
           cp -R "${app}" /tmp/ios-payload/Payload/
           (cd /tmp/ios-payload && zip -r -q unsigned.ipa Payload)
-          cp /tmp/ios-payload/unsigned.ipa "dist/ikuai-bypass-gui-${{ matrix.label }}.ipa"
+          cp /tmp/ios-payload/unsigned.ipa "dist/${final_name}"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: gui-ios-${{ matrix.label }}
           path: dist/*
 
       - name: Upload iOS build logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ios-build-logs-${{ matrix.label }}
           path: |
@@ -1086,15 +1128,15 @@ jobs:
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
           mkdir -p release
-          export package_base="$(ikb_cli_base "${TARGET}")"
+          export package_name="$(ikb_cli_zip_name "${TARGET}")"
           python <<'PY'
           import os
           import pathlib
           import shutil
-          import tarfile
+          import zipfile
 
           target = os.environ["TARGET"]
-          package_base = os.environ["package_base"]
+          package_name = os.environ["package_name"]
           release_dir = pathlib.Path("release")
           build_root = pathlib.Path(os.environ["CARGO_TARGET_DIR"])
           build_dir = build_root / target / "release"
@@ -1102,7 +1144,7 @@ jobs:
           if not src.exists():
               raise SystemExit(f"missing binary: {src}")
 
-          stage = release_dir / f"{package_base}.stage"
+          stage = release_dir / f"{package_name}.stage"
           if stage.exists():
               shutil.rmtree(stage)
           stage.mkdir(parents=True)
@@ -1110,15 +1152,15 @@ jobs:
           shutil.copy2("README.md", stage / "README.md")
           shutil.copy2("config.yml", stage / "config.yml")
 
-          out = release_dir / f"{package_base}.tar.gz"
+          out = release_dir / package_name
           if out.exists():
               out.unlink()
-          with tarfile.open(out, "w:gz") as tf:
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
               for path in stage.rglob("*"):
-                  tf.add(path, arcname=path.relative_to(stage))
+                  zf.write(path, path.relative_to(stage))
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cli-${{ matrix.label }}
           path: release/*
@@ -1134,12 +1176,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: frontend-dist
           path: app/frontend/dist
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: cli-linux-*
           path: release
@@ -1196,10 +1238,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: release
-          pattern: "*"
+          pattern: "cli-*"
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v5
+        with:
+          path: release
+          pattern: "gui-*"
           merge-multiple: true
 
       - name: Show release files

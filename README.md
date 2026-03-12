@@ -6,7 +6,7 @@
 
 当前仓库主线已经切换为 **Rust 版本**，提供两种使用方式：
 - **CLI**：适合服务器、OpenWrt、Docker、LXC、计划任务环境
-- **GUI**：基于 Tauri v2 的跨平台应用，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端
+- **GUI**：图形化桌面应用和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端，新手友好，开箱即用
 
 旧的 Go/Fyne 版本代码、历史文档和旧 CI 已归档到 [golang_archive](./golang_archive)。
 
@@ -73,7 +73,7 @@
 - 📅 **全自动运营**：内置 Cron 计划任务，兼容系统计划任务，支持多配置文件并发运行。
 - 🛠️ **工具链完备**：支持一键清理、单次运行、规则导出。
 - 💻 **广泛兼容**：提供全平台多架构支持，Linux 默认使用 musl 静态构建，便于在更多轻量环境中直接运行。
-- 🖥️ **多端支持**：CLI + WebUI 模式，以及基于 Tauri v2 的跨平台 GUI 应用，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端。
+- 🖥️ **多端支持**：CLI + WebUI 模式，以及图形化桌面应用和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端，新手友好。
 
 ---
 
@@ -151,7 +151,7 @@ custom-isp:
 
 ### GUI
 
-GUI 是基于 Tauri v2 的跨平台桌面应用和移动应用，适合不想手动敲命令的用户。
+GUI 是图形化桌面应用和手机 App，无需命令行操作，新手友好，可视化配置和运行。
 
 GUI 里可以完成这些事：
 - 运行一次

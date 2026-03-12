@@ -66,6 +66,8 @@
 - 支持 LXC / Alpine / musl CLI 包
 - 支持多平台多架构发布
 
+当前 Linux CLI 发布默认优先使用 `musl` 静态构建，便于在更多轻量环境中直接运行。
+
 ---
 
 ## 快速上手
@@ -79,6 +81,11 @@
 - CLI：`ikuai-bypass-<platform-arch>.zip`
 - LXC / Alpine / musl：`ikuai-bypass-lxc-alpine-musl-amd64.tar.gz`
 - GUI：Windows / AppImage / macOS 安装包
+
+说明：
+
+- Linux `amd64 / 386 / arm / arm64 / ppc64le / riscv64` CLI 现统一优先使用 `musl` 构建
+- `lxc-alpine-musl-amd64` 与 `linux-amd64` 复用同一份二进制，只是额外提供了更适合 LXC / Alpine 场景的打包格式
 
 ### 2. 配置
 

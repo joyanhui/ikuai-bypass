@@ -120,79 +120,51 @@ jobs:
         include:
           - runner: ubuntu-latest
             label: linux-amd64
-            target: x86_64-unknown-linux-gnu
-            package_suffix: linux-amd64
-            use_cross: false
-            package_format: zip
-          - runner: ubuntu-latest
-            label: lxc-alpine-musl-amd64
             target: x86_64-unknown-linux-musl
-            package_suffix: lxc-alpine-musl-amd64
+            package_suffix: linux-amd64
             use_cross: true
-            package_format: tar.gz
+            package_format: zip
+            extra_package_suffix: lxc-alpine-musl-amd64
+            extra_package_format: tar.gz
           - runner: ubuntu-latest
             label: linux-386
-            target: i686-unknown-linux-gnu
+            target: i686-unknown-linux-musl
             package_suffix: linux-386
             use_cross: true
             package_format: zip
           - runner: ubuntu-latest
             label: linux-arm5
-            target: armv5te-unknown-linux-gnueabi
+            target: armv5te-unknown-linux-musleabi
             package_suffix: linux-arm5
             use_cross: true
             package_format: zip
           - runner: ubuntu-latest
             label: linux-arm6
-            target: arm-unknown-linux-gnueabi
+            target: arm-unknown-linux-musleabi
             package_suffix: linux-arm6
             use_cross: true
             package_format: zip
           - runner: ubuntu-latest
             label: linux-arm7
-            target: armv7-unknown-linux-gnueabihf
+            target: armv7-unknown-linux-musleabihf
             package_suffix: linux-arm7
             use_cross: true
             package_format: zip
           - runner: ubuntu-latest
             label: linux-arm64
-            target: aarch64-unknown-linux-gnu
+            target: aarch64-unknown-linux-musl
             package_suffix: linux-arm64
             use_cross: true
             package_format: zip
           - runner: ubuntu-latest
-            label: linux-mips
-            target: mips-unknown-linux-gnu
-            package_suffix: linux-mips
-            use_cross: true
-            package_format: zip
-          - runner: ubuntu-latest
-            label: linux-mipsle
-            target: mipsel-unknown-linux-gnu
-            package_suffix: linux-mipsle
-            use_cross: true
-            package_format: zip
-          - runner: ubuntu-latest
-            label: linux-mips64
-            target: mips64-unknown-linux-gnuabi64
-            package_suffix: linux-mips64
-            use_cross: true
-            package_format: zip
-          - runner: ubuntu-latest
-            label: linux-mips64le
-            target: mips64el-unknown-linux-gnuabi64
-            package_suffix: linux-mips64le
-            use_cross: true
-            package_format: zip
-          - runner: ubuntu-latest
             label: linux-ppc64le
-            target: powerpc64le-unknown-linux-gnu
+            target: powerpc64le-unknown-linux-musl
             package_suffix: linux-ppc64le
             use_cross: true
             package_format: zip
           - runner: ubuntu-latest
             label: linux-riscv64
-            target: riscv64gc-unknown-linux-gnu
+            target: riscv64gc-unknown-linux-musl
             package_suffix: linux-riscv64
             use_cross: true
             package_format: zip
@@ -220,13 +192,13 @@ jobs:
             package_suffix: windows-amd64
             use_cross: false
             package_format: zip
-          - runner: macos-13
+          - runner: macos-15-intel
             label: darwin-amd64
             target: x86_64-apple-darwin
             package_suffix: darwin-amd64
             use_cross: false
             package_format: zip
-          - runner: macos-14
+          - runner: macos-15
             label: darwin-arm64
             target: aarch64-apple-darwin
             package_suffix: darwin-arm64
@@ -256,6 +228,14 @@ jobs:
         if: runner.os == 'Linux' && matrix.use_cross
         run: cargo install cross --locked
 
+      - name: Install UPX
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y upx-ucl
+
+      - name: Install UPX
+        if: runner.os == 'Windows'
+        run: choco install upx -y
+
       - name: Build CLI with cargo
         if: ${{ !matrix.use_cross }}
         run: cargo build --locked --release --target ${{ matrix.target }} -p ikb-cli
@@ -270,11 +250,14 @@ jobs:
           TARGET: ${{ matrix.target }}
           PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
           PACKAGE_FORMAT: ${{ matrix.package_format }}
+          EXTRA_PACKAGE_SUFFIX: ${{ matrix.extra_package_suffix || '' }}
+          EXTRA_PACKAGE_FORMAT: ${{ matrix.extra_package_format || '' }}
         run: |
           mkdir -p release
           python <<'PY'
           import os
           import pathlib
+          import subprocess
           import shutil
           import tarfile
           import zipfile
@@ -282,6 +265,8 @@ jobs:
           target = os.environ["TARGET"]
           suffix = os.environ["PACKAGE_SUFFIX"]
           package_format = os.environ["PACKAGE_FORMAT"]
+          extra_suffix = os.environ["EXTRA_PACKAGE_SUFFIX"]
+          extra_format = os.environ["EXTRA_PACKAGE_FORMAT"]
           release_dir = pathlib.Path("release")
           build_dir = pathlib.Path("target") / target / "release"
           src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
@@ -295,24 +280,41 @@ jobs:
 
           dst = stage / ("ikuai-bypass.exe" if "windows" in target else "ikuai-bypass")
           shutil.copy2(src, dst)
+
+          upx = shutil.which("upx")
+          if upx:
+              try:
+                  subprocess.run([upx, "-9", str(dst)], check=True)
+              except subprocess.CalledProcessError:
+                  print(f"UPX unsupported for {target}, keep original binary.")
+
           shutil.copy2("README.md", stage / "README.md")
           shutil.copy2("config.yml", stage / "config.yml")
 
-          if package_format == "tar.gz":
-              tar_path = release_dir / f"ikuai-bypass-{suffix}.tar.gz"
-              if tar_path.exists():
-                  tar_path.unlink()
-              with tarfile.open(tar_path, "w:gz") as tf:
-                  for path in stage.rglob("*"):
-                      tf.add(path, arcname=path.relative_to(stage))
-          else:
-              zip_path = release_dir / f"ikuai-bypass-{suffix}.zip"
-              if zip_path.exists():
-                  zip_path.unlink()
+          def pack(stage_dir: pathlib.Path, out_suffix: str, out_format: str) -> None:
+              if out_format == "tar.gz":
+                  tar_path = release_dir / f"ikuai-bypass-{out_suffix}.tar.gz"
+                  if tar_path.exists():
+                      tar_path.unlink()
+                  with tarfile.open(tar_path, "w:gz") as tf:
+                      for path in stage_dir.rglob("*"):
+                          tf.add(path, arcname=path.relative_to(stage_dir))
+              else:
+                  zip_path = release_dir / f"ikuai-bypass-{out_suffix}.zip"
+                  if zip_path.exists():
+                      zip_path.unlink()
+                  with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+                      for path in stage_dir.rglob("*"):
+                          zf.write(path, path.relative_to(stage_dir))
 
-              with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
-                  for path in stage.rglob("*"):
-                      zf.write(path, path.relative_to(stage))
+          pack(stage, suffix, package_format)
+
+          if extra_suffix and extra_format:
+              extra_stage = release_dir / f"ikuai-bypass-{extra_suffix}"
+              if extra_stage.exists():
+                  shutil.rmtree(extra_stage)
+              shutil.copytree(stage, extra_stage)
+              pack(extra_stage, extra_suffix, extra_format)
           PY
 
       - uses: actions/upload-artifact@v4
@@ -338,11 +340,11 @@ jobs:
             label: linux-x86_64-appimage
             bundle_args: --bundles appimage
             collect_pattern: target/release/bundle/**/*.AppImage
-          - runner: macos-13
+          - runner: macos-15-intel
             label: macos-x86_64
             bundle_args: --bundles dmg
             collect_pattern: target/release/bundle/**/*.dmg
-          - runner: macos-14
+          - runner: macos-15
             label: macos-aarch64
             bundle_args: --bundles dmg
             collect_pattern: target/release/bundle/**/*.dmg

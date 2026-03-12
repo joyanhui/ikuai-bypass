@@ -1,10 +1,8 @@
-FROM debian:bookworm-slim
+FROM alpine:3.20
 
 ARG TARGETPLATFORM
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates tzdata unzip \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates tzdata unzip
 
 WORKDIR /opt/ikuai-bypass
 

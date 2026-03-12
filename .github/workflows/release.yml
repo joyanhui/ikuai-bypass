@@ -549,11 +549,42 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Install Tauri CLI
-        run: cargo install tauri-cli --locked
+        uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
+
+      - name: Generate Tauri icons
+        working-directory: app/src-tauri
+        run: cargo tauri icon icons/icon.png
+
+      - name: Prepare Tauri CI config
+        working-directory: app/src-tauri
+        run: |
+          python <<'PY'
+          import json
+          import os
+          import pathlib
+
+          path = pathlib.Path("tauri.conf.json")
+          cfg = json.loads(path.read_text())
+          build = cfg.setdefault("build", {})
+          workspace = os.environ.get("GITHUB_WORKSPACE", "")
+          if workspace:
+            frontend_dir = f"{workspace}/app/frontend"
+            build["beforeBuildCommand"] = f"bun run build --cwd {frontend_dir}"
+            build["frontendDist"] = f"{frontend_dir}/dist"
+          bundle = cfg.setdefault("bundle", {})
+          bundle["icon"] = [
+              "icons/icon.png",
+              "icons/icon.ico",
+              "icons/icon.icns",
+          ]
+          pathlib.Path("tauri.ci.conf.json").write_text(json.dumps(cfg))
+          PY
 
       - name: Build GUI bundle
         working-directory: app/src-tauri
-        run: cargo tauri build ${{ matrix.bundle_args }}
+        run: cargo tauri build ${{ matrix.bundle_args }} --config tauri.ci.conf.json
 
       - name: Collect GUI artifacts
         shell: bash

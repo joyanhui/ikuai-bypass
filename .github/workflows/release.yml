@@ -7,18 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "发布版本号，例如 v0.1.0 或 v0.1.0-beta.1；留空则只构建工件不发 Release"
+        description: "发布版本号，例如 v0.1.0 或 v0.1.0-beta.1；留空则自动生成 manually_年月日时分秒"
         required: false
         type: string
-      prerelease:
-        description: "预发布判定，auto 会根据 tag 关键字自动判断"
-        required: true
-        type: choice
-        default: auto
-        options:
-          - auto
-          - true
-          - false
       publish_release:
         description: "是否发布 GitHub Release"
         required: true
@@ -55,6 +46,7 @@ jobs:
       push_docker: ${{ steps.meta.outputs.push_docker }}
       is_tag_build: ${{ steps.meta.outputs.is_tag_build }}
       docker_latest: ${{ steps.meta.outputs.docker_latest }}
+      docker_creds_available: ${{ steps.meta.outputs.docker_creds_available }}
     steps:
       - id: meta
         shell: bash
@@ -62,9 +54,10 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
-          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease || 'auto' }}
           INPUT_PUBLISH_RELEASE: ${{ github.event.inputs.publish_release || 'true' }}
           INPUT_PUSH_DOCKER: ${{ github.event.inputs.push_docker || 'true' }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -77,38 +70,33 @@ jobs:
             version="${INPUT_RELEASE_TAG}"
             publish_release="${INPUT_PUBLISH_RELEASE}"
             push_docker="${INPUT_PUSH_DOCKER}"
-            if [[ -n "${version}" ]]; then
-              is_tag_build="true"
-            else
-              version="manual-${GITHUB_RUN_NUMBER}"
-              is_tag_build="false"
+            if [[ -z "${version}" ]]; then
+              version="manually_$(date +%Y%m%d%H%M%S)"
             fi
+            is_tag_build="true"
           fi
 
-          tag_name=""
-          if [[ "${is_tag_build}" == "true" ]]; then
-            tag_name="${version}"
-          fi
+          tag_name="${version}"
 
           lc_version="$(printf '%s' "${version}" | tr '[:upper:]' '[:lower:]')"
-          auto_prerelease="false"
-          if printf '%s' "${lc_version}" | grep -Eq '(alpha|beta|rc|pre|preview|dev|nightly|test)'; then
-            auto_prerelease="true"
+          prerelease="false"
+          if printf '%s' "${lc_version}" | grep -Eq '(alpha|beta|rc|pre|preview|dev|nightly|test|manually)'; then
+            prerelease="true"
           fi
-
-          case "${INPUT_PRERELEASE}" in
-            true) prerelease="true" ;;
-            false) prerelease="false" ;;
-            *) prerelease="${auto_prerelease}" ;;
-          esac
 
           docker_latest="false"
           if [[ "${prerelease}" != "true" && "${tag_name}" =~ ^v[0-9]+(\.[0-9]+){1,2}$ ]]; then
             docker_latest="true"
           fi
 
-          if [[ "${is_tag_build}" != "true" ]]; then
-            publish_release="false"
+          docker_creds_available="false"
+          if [[ -n "${DOCKERHUB_USERNAME}" && -n "${DOCKERHUB_TOKEN}" ]]; then
+            docker_creds_available="true"
+          fi
+
+          if [[ "${push_docker}" == "true" && "${docker_creds_available}" != "true" ]]; then
+            echo "Docker credentials are required when push_docker=true" >&2
+            exit 1
           fi
 
           {
@@ -119,6 +107,7 @@ jobs:
             echo "push_docker=${push_docker}"
             echo "is_tag_build=${is_tag_build}"
             echo "docker_latest=${docker_latest}"
+            echo "docker_creds_available=${docker_creds_available}"
           } >> "${GITHUB_OUTPUT}"
 
   build-cli:
@@ -445,7 +434,7 @@ jobs:
     needs:
       - meta
       - build-cli
-    if: needs.meta.outputs.push_docker == 'true'
+    if: needs.meta.outputs.push_docker == 'true' && needs.meta.outputs.docker_creds_available == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -497,28 +486,12 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Check Docker credentials
-        id: docker_creds
-        shell: bash
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-          if [[ -n "${DOCKERHUB_USERNAME}" && -n "${DOCKERHUB_TOKEN}" ]]; then
-            echo "available=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "available=false" >> "${GITHUB_OUTPUT}"
-            echo "Docker credentials are missing; skip docker publish."
-          fi
-
       - uses: docker/login-action@v3
-        if: steps.docker_creds.outputs.available == 'true'
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract Docker metadata
-        if: steps.docker_creds.outputs.available == 'true'
         id: docker_meta
         uses: docker/metadata-action@v5
         with:
@@ -528,7 +501,6 @@ jobs:
             type=raw,value=latest,enable=${{ needs.meta.outputs.docker_latest == 'true' }}
 
       - name: Build and push single-tag multi-arch image
-        if: steps.docker_creds.outputs.available == 'true'
         uses: docker/build-push-action@v6
         with:
           context: ./.docker-release/multiarch

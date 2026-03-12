@@ -9,8 +9,7 @@
 
 手动触发支持以下输入：
 
-- `release_tag`：可留空；留空时只构建工件，不发 GitHub Release
-- `prerelease`：`auto / true / false`
+- `release_tag`：可留空；留空时自动生成 `manually_年月日时分秒`
 - `publish_release`
 - `push_docker`
 
@@ -26,6 +25,9 @@
 - `dev`
 - `nightly`
 - `test`
+- `manually`
+
+也就是说，手动触发且不填写 `release_tag` 时，仍然会发布 GitHub Release，但会强制作为预发布版本。
 
 ## CLI 构建矩阵
 
@@ -107,6 +109,10 @@ workflow 已启用：
 - `Swatinem/rust-cache`：Rust 依赖与 `target`
 - `actions/cache`：Bun 包缓存与 `app/frontend/node_modules`
 - Docker Buildx 的 `type=gha` 层缓存
+
+## Docker 凭据约束
+
+如果 `push_docker=true`，但仓库没有配置 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`，workflow 会在元信息阶段直接失败，不会继续执行后续发布步骤。
 
 ## 本地构建
 

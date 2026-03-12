@@ -83,7 +83,8 @@ Docker 镜像也由同一个 workflow 构建与发布，支持：
 
 - tag push 自动发布
 - `workflow_dispatch` 手动触发
-- tag 名包含 `alpha / beta / rc / pre / preview / dev / nightly / test` 时自动标记为预发布
+- tag 名包含 `alpha / beta / rc / pre / preview / dev / nightly / test / manually` 时自动标记为预发布
+- 手动触发未填写版本号时，会自动生成 `manually_年月日时分秒`
 
 ## Docker 使用
 

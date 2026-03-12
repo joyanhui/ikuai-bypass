@@ -1,85 +1,136 @@
 {
-  description = "iKuai-bypass Nix flake development environment";
+  description = "iKuai Bypass development shell (Rust 主线版本)";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "nixpkgs/nixos-24.11";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
-    { self, nixpkgs, ... }:
-    let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
+    { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+        };
 
-      forAllSystems =
-        f:
-        nixpkgs.lib.genAttrs systems (
-          system:
-          f (
-            import nixpkgs {
-              inherit system;
-              config.allowUnfree = true;
-            }
-          )
-        );
-    in
-    {
-      devShells = forAllSystems (
-        pkgs:
-        let
-          devPackages = with pkgs; [
-            go
-            gopls
-            golangci-lint
-            delve
-            gotools
-            gcc
-            upx
-            python3
-            nushell
+        bootstrapReleaseTools = pkgs.writeShellScriptBin "ikb-bootstrap-release-tools" ''
+          set -euo pipefail
+          cargo install cargo-binstall || true
+          cargo binstall -y tauri-cli cross cargo-release
+        '';
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            # 基础工具
             git
             curl
-          ];
-        in
-        {
-          default = pkgs.mkShell {
-            packages = devPackages;
-            shellHook = ''
-              export GOPROXY=''${GOPROXY:-https://goproxy.cn,direct}
-              export GOWORK=off
-              echo "[ikuai-bypass] dev shell ready: $(go version)"
-            '';
-          };
-        }
-      );
+            wget
+            jq
+            tree
+            unzip
+            zip
+            xz
 
-      packages = forAllSystems (pkgs: {
-        dev = pkgs.writeShellApplication {
-          name = "dev";
-          runtimeInputs = [ pkgs.nushell ];
-          text = ''
-            exec ${pkgs.nushell}/bin/nu
+            # 构建工具
+            pkg-config
+            clang
+            gcc
+            cmake
+            ninja
+            perl
+            gnumake
+
+            # 系统库 (Rust/Tauri 依赖)
+            openssl
+            sqlite
+
+            # GTK/WebKit (Tauri Linux GUI)
+            gtk3
+            glib
+            cairo
+            pango
+            gdk-pixbuf
+            atk
+            libsoup_3
+            webkitgtk_4_1
+            libayatana-appindicator
+            librsvg
+            dbus
+            xdg-utils
+            patchelf
+
+            # Rust 工具链
+            rustup
+            rustc
+            cargo
+            rust-analyzer
+            cargo-nextest
+            cargo-edit
+            cargo-zigbuild
+            bootstrapReleaseTools
+            sccache
+            mold
+
+            # Zig (cross compilation)
+            zig
+            zls
+
+            # 前端工具链 (Bun + Astro)
+            nodejs_22
+            bun
+            typescript
+            typescript-language-server
+          ];
+
+          env = {
+            # Rust 编译优化
+            RUSTC_WRAPPER = "sccache";
+            SCCACHE_CACHE_SIZE = "10G";
+            SCCACHE_DIR = "$HOME/.cache/sccache";
+            CARGO_BUILD_JOBS = "16";
+            RUSTFLAGS = "-C link-arg=-fuse-ld=mold";
+            RUSTUP_HOME = "$HOME/.rustup";
+            CARGO_HOME = "$HOME/.cargo";
+            RUSTUP_DIST_SERVER = "https://rsproxy.cn";
+            RUSTUP_UPDATE_ROOT = "https://rsproxy.cn/rustup";
+
+            # Clang
+            LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
+          };
+
+          shellHook = ''
+            export PATH="$HOME/.bun/bin:$CARGO_HOME/bin:$PATH"
+            export XDG_DATA_DIRS="${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS"
+
+            mkdir -p \
+              "$HOME/.cache/sccache" \
+              "$HOME/.cargo/bin"
+
+            cat <<'EOF'
+            iKuai Bypass dev shell ready (Rust 主线版本)
+
+            项目结构:
+              core/           - 核心业务库
+              cli/            - CLI + Web 模式
+              app/frontend/   - Bun + Astro 前端
+              app/src-tauri/  - Tauri v2 GUI
+
+            首次使用:
+              rustup default stable
+              rustup component add rustfmt clippy
+              ikb-bootstrap-release-tools  # 安装 tauri-cli, cross 等
+
+            常用命令:
+              bash script/dev.sh cli:dev              # 运行 CLI（本体，完整功能）
+              bash script/dev.sh gui:dev              # 运行 GUI (Tauri)
+              bash script/dev.sh webui:dev            # 启动 Astro dev server
+              bash script/dev.sh webui:build          # 构建前端 dist
+            EOF
           '';
         };
-
-        default = self.packages.${pkgs.stdenv.hostPlatform.system}.dev;
-      });
-
-      apps = forAllSystems (pkgs: {
-        dev = {
-          type = "app";
-          program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.dev}/bin/dev";
-          meta = {
-            description = "Launch Nushell development entrypoint";
-          };
-        };
-        default = self.apps.${pkgs.stdenv.hostPlatform.system}.dev;
-      });
-
-      formatter = forAllSystems (pkgs: pkgs.nixfmt);
-    };
+      }
+    );
 }

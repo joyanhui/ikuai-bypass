@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import appUrl from '../scripts/app.ts?url';
 ---
 
 <html lang="zh-CN">
@@ -500,6 +499,8 @@ import appUrl from '../scripts/app.ts?url';
       </div>
     </div>
 
-    <script type="module" src={appUrl}></script>
+    <script type="module">
+      import '../scripts/app.ts';
+    </script>
   </body>
 </html>

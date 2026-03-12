@@ -430,6 +430,13 @@ jobs:
       - name: Install cross
         run: cargo install cross --locked
 
+      - name: Verify cross binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v cross
+          cross --version
+
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
@@ -440,7 +447,8 @@ jobs:
       - name: Build nightly CLI
         env:
           CARGO_UNSTABLE_BUILD_STD: "1"
-        run: cargo +nightly cross build --locked -Z build-std=std,panic_abort --release --target ${{ matrix.target }} -p ikb-cli
+          RUSTUP_TOOLCHAIN: nightly
+        run: cross build --locked -Z build-std=std,panic_abort --release --target ${{ matrix.target }} -p ikb-cli
 
       - name: Package nightly CLI artifact
         shell: bash

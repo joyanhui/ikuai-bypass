@@ -11,6 +11,45 @@ type TauriGlobal = {
   event?: TauriEvent;
 };
 
+function readTauriGlobal(): TauriGlobal | undefined {
+  return (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
+}
+
+function isLikelyTauriContext(): boolean {
+  if (readTauriGlobal()?.core?.invoke) return true;
+  const { protocol, hostname } = globalThis.location;
+  return protocol === 'tauri:' || hostname === 'tauri.localhost' || hostname.endsWith('.tauri.localhost');
+}
+
+let tauriReadyPromise: Promise<TauriGlobal | null> | null = null;
+
+async function waitForTauriGlobal(timeoutMs = 4000, intervalMs = 50): Promise<TauriGlobal | null> {
+  const current = readTauriGlobal();
+  if (current?.core?.invoke) return current;
+  if (!isLikelyTauriContext()) return null;
+  if (tauriReadyPromise) return await tauriReadyPromise;
+
+  tauriReadyPromise = (async () => {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const tauri = readTauriGlobal();
+      if (tauri?.core?.invoke) return tauri;
+      await new Promise((resolve) => globalThis.setTimeout(resolve, intervalMs));
+    }
+    return null;
+  })();
+
+  try {
+    return await tauriReadyPromise;
+  } finally {
+    tauriReadyPromise = null;
+  }
+}
+
+async function isTauriReady(): Promise<boolean> {
+  return !!(await waitForTauriGlobal());
+}
+
 export type RuntimeStatus = {
   running: boolean;
   cron_running: boolean;
@@ -41,12 +80,11 @@ export type ConfigMeta = {
 type UnlistenFn = () => void;
 
 function isTauri(): boolean {
-  const t = (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
-  return !!t?.core?.invoke;
+  return !!readTauriGlobal()?.core?.invoke;
 }
 
 async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  const t = (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
+  const t = await waitForTauriGlobal();
   if (!t?.core?.invoke) throw new Error('Tauri bridge is not available');
   return await t.core.invoke(cmd, args || {});
 }
@@ -66,13 +104,17 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 export const bridge = {
   isTauri,
 
+  async isTauriReady(): Promise<boolean> {
+    return await isTauriReady();
+  },
+
   async getConfigMeta(): Promise<ConfigMeta> {
-    if (isTauri()) return await tauriInvoke<ConfigMeta>('get_config_meta');
+    if (await isTauriReady()) return await tauriInvoke<ConfigMeta>('get_config_meta');
     return await fetchJson<ConfigMeta>('/api/config');
   },
 
   async saveConfig(payload: Record<string, unknown>, withComments: boolean): Promise<void> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       await tauriInvoke<void>('save_config_with_comments', {
         config: payload,
         withComments: withComments,
@@ -86,7 +128,7 @@ export const bridge = {
   },
 
   async saveRawYaml(yamlText: string, withComments: boolean): Promise<void> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       await tauriInvoke<void>('save_raw_yaml', {
         yamlText,
         withComments,
@@ -100,12 +142,12 @@ export const bridge = {
   },
 
   async runtimeStatus(): Promise<RuntimeStatus> {
-    if (isTauri()) return await tauriInvoke<RuntimeStatus>('runtime_status');
+    if (await isTauriReady()) return await tauriInvoke<RuntimeStatus>('runtime_status');
     return await fetchJson<RuntimeStatus>('/api/runtime/status');
   },
 
   async runtimeRunOnce(module: string): Promise<boolean> {
-    if (isTauri()) return await tauriInvoke<boolean>('runtime_run_once', { module });
+    if (await isTauriReady()) return await tauriInvoke<boolean>('runtime_run_once', { module });
     const r = await fetchJson<{ started: boolean }>('/api/runtime/run-once', {
       method: 'POST',
       body: JSON.stringify({ module }),
@@ -114,7 +156,7 @@ export const bridge = {
   },
 
   async runtimeCronStart(expr: string, module: string): Promise<void> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       await tauriInvoke<void>('runtime_cron_start', { expr, module });
       return;
     }
@@ -125,7 +167,7 @@ export const bridge = {
   },
 
   async runtimeCronStop(): Promise<void> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       await tauriInvoke<void>('runtime_cron_stop');
       return;
     }
@@ -133,7 +175,7 @@ export const bridge = {
   },
 
   async runtimeStop(): Promise<void> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       await tauriInvoke<void>('runtime_stop');
       return;
     }
@@ -141,7 +183,7 @@ export const bridge = {
   },
 
   async runtimeClean(clean_tag: string): Promise<void> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       await tauriInvoke<void>('runtime_clean', { cleanTag: clean_tag });
       return;
     }
@@ -152,13 +194,13 @@ export const bridge = {
   },
 
   async runtimeTailLogs(tail: number): Promise<LogRecord[]> {
-    if (isTauri()) return await tauriInvoke<LogRecord[]>('runtime_tail_logs', { tail });
+    if (await isTauriReady()) return await tauriInvoke<LogRecord[]>('runtime_tail_logs', { tail });
     return await fetchJson<LogRecord[]>(`/api/runtime/logs?tail=${tail}`);
   },
 
   async listenLogs(onRecord: (rec: LogRecord) => void, onError?: (err?: unknown) => void): Promise<UnlistenFn> {
-    if (isTauri()) {
-      const t = (globalThis as typeof globalThis & { __TAURI__?: TauriGlobal }).__TAURI__;
+    if (await isTauriReady()) {
+      const t = await waitForTauriGlobal();
       if (!t?.event?.listen) throw new Error('Tauri event bridge is not available');
       const unlisten = await t.event.listen('ikb://log', (ev) => {
         const rec = ev?.payload;
@@ -196,7 +238,7 @@ export const bridge = {
   },
 
   async fetchRemoteConfig(url: string, githubProxy: string): Promise<string> {
-    if (isTauri()) {
+    if (await isTauriReady()) {
       return await tauriInvoke<string>('fetch_remote_config', {
         url,
         githubProxy,

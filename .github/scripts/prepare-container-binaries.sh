@@ -24,22 +24,16 @@ while IFS= read -r item; do
   archive_kind="$(jq -r '.archive' <<<"${item}")"
   package_name="$(ikb_cli_zip_name "${target}")"
   unpack_dir="${context_dir}/unpack-${label}"
+  package_path="${release_dir}/${package_name}"
 
   mkdir -p "${context_dir}/docker/bin/${label}" "${unpack_dir}"
 
-  case "${archive_kind}" in
-    tar.gz)
-      printf 'Unexpected tar.gz CLI package for docker target: %s\n' "${target}" >&2
-      exit 1
-      ;;
-    zip)
-      unzip -q "${release_dir}/${package_name}" -d "${unpack_dir}"
-      ;;
-    *)
-      printf 'Unsupported archive kind: %s\n' "${archive_kind}" >&2
-      exit 1
-      ;;
-  esac
+  if [[ -f "${package_path}" ]]; then
+    unzip -q "${package_path}" -d "${unpack_dir}"
+  else
+    printf 'Missing CLI package for docker target: %s (%s, declared archive=%s)\n' "${target}" "${package_name}" "${archive_kind}" >&2
+    exit 1
+  fi
 
   cp "${unpack_dir}/ikuai-bypass" "${context_dir}/docker/bin/${label}/ikuai-bypass"
   chmod +x "${context_dir}/docker/bin/${label}/ikuai-bypass"

@@ -49,6 +49,7 @@
 
 规则如下：
 
+- `workflow_dispatch` 手动执行：GitHub Release 一律标记为 `prerelease`
 - 命中上述关键字：GitHub Release 标记为 `prerelease`
 - 未命中上述关键字：GitHub Release 视为正式版本
 

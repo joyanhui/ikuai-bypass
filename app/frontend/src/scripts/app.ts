@@ -1518,7 +1518,7 @@ const loadBackend = async () => {
     
     // 更新副标题
     const subtitle = document.getElementById('subtitle');
-    if (subtitle) subtitle.textContent = bridge.isTauri() ? 'Tauri App' : 'WebUI';
+    if (subtitle) subtitle.textContent = (await bridge.isTauriReady()) ? 'Tauri App' : 'WebUI';
     
   } catch (err) {
     showToast('加载配置失败: ' + getErrorMessage(err));
@@ -1569,4 +1569,7 @@ const init = async () => {
 };
 
 // 启动应用
-init().catch(console.error);
+init().catch((err) => {
+  console.error(err);
+  showToast('初始化失败: ' + getErrorMessage(err));
+});

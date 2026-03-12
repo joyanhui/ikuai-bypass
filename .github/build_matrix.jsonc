@@ -6,7 +6,7 @@
       "runner": "ubuntu-latest",
       "target": "x86_64-unknown-linux-musl",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "linux/amd64",
       "mode": ["minimal", "full"]
     },
@@ -15,7 +15,7 @@
       "runner": "ubuntu-latest",
       "target": "i686-unknown-linux-musl",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "linux/386",
       "mode": ["full"]
     },
@@ -24,7 +24,7 @@
       "runner": "ubuntu-latest",
       "target": "armv5te-unknown-linux-musleabi",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "",
       "mode": ["full"]
     },
@@ -33,7 +33,7 @@
       "runner": "ubuntu-latest",
       "target": "arm-unknown-linux-musleabi",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "",
       "mode": ["full"]
     },
@@ -42,7 +42,7 @@
       "runner": "ubuntu-latest",
       "target": "armv7-unknown-linux-musleabihf",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "linux/arm/v7",
       "mode": ["full"]
     },
@@ -51,7 +51,7 @@
       "runner": "ubuntu-latest",
       "target": "aarch64-unknown-linux-musl",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "linux/arm64",
       "mode": ["full"]
     },
@@ -60,7 +60,7 @@
       "runner": "ubuntu-latest",
       "target": "powerpc64le-unknown-linux-gnu",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "linux/ppc64le",
       "mode": ["full"]
     },
@@ -69,7 +69,7 @@
       "runner": "ubuntu-latest",
       "target": "riscv64gc-unknown-linux-musl",
       "builder": "cross",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "linux/riscv64",
       "mode": ["full"]
     },
@@ -87,7 +87,7 @@
       "runner": "macos-15",
       "target": "x86_64-apple-darwin",
       "builder": "cargo",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "",
       "mode": ["full"]
     },
@@ -96,7 +96,7 @@
       "runner": "macos-15",
       "target": "aarch64-apple-darwin",
       "builder": "cargo",
-      "archive": "tar.gz",
+      "archive": "zip",
       "docker_platform": "",
       "mode": ["full"]
     }
@@ -109,7 +109,7 @@
       "runner": "ubuntu-latest",
       "vm_os": "freebsd",
       "target": "x86_64-unknown-freebsd",
-      "archive": "tar.gz",
+      "archive": "zip",
       "mode": ["full"]
     },
     {
@@ -117,7 +117,7 @@
       "runner": "ubuntu-latest",
       "vm_os": "freebsd",
       "target": "i686-unknown-freebsd",
-      "archive": "tar.gz",
+      "archive": "zip",
       "mode": ["full"]
     }
   ],
@@ -128,28 +128,28 @@
       "label": "linux-mipsel",
       "runner": "ubuntu-latest",
       "target": "mipsel-unknown-linux-musl",
-      "archive": "tar.gz",
+      "archive": "zip",
       "mode": ["full"]
     },
     {
       "label": "linux-mips64",
       "runner": "ubuntu-latest",
       "target": "mips64-unknown-linux-gnuabi64",
-      "archive": "tar.gz",
+      "archive": "zip",
       "mode": ["full"]
     },
     {
       "label": "linux-mips64el",
       "runner": "ubuntu-latest",
       "target": "mips64el-unknown-linux-gnuabi64",
-      "archive": "tar.gz",
+      "archive": "zip",
       "mode": ["full"]
     },
     {
       "label": "linux-mips",
       "runner": "ubuntu-latest",
       "target": "mips-unknown-linux-gnu",
-      "archive": "tar.gz",
+      "archive": "zip",
       "mode": ["full"]
     }
   ],

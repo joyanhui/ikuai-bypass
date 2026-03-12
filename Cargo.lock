@@ -1905,7 +1905,7 @@ dependencies = [
 
 [[package]]
 name = "ikb-app"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "ikb-core",
  "reqwest 0.12.28",

@@ -27,21 +27,16 @@ on:
           - cli+gui
           - cli
           - gui
-      enable_experimental_nightly:
-        description: "是否启用实验性 nightly 架构（mips/mips64/mips64le/mipsle）"
-        required: true
-        default: false
-        type: boolean
       publish_release:
         description: "是否发布 GitHub Release"
         required: true
         type: boolean
-        default: true
+        default: false
       push_docker:
         description: "是否推送 Docker 镜像"
         required: true
         type: boolean
-        default: true
+        default: false
 
 permissions:
   contents: write
@@ -112,8 +107,9 @@ jobs:
             push_docker="${INPUT_PUSH_DOCKER}"
 
             if [[ -z "${version}" && ( "${publish_release}" == "true" || "${push_docker}" == "true" ) ]]; then
-              echo "release_tag is required when publish_release=true or push_docker=true" >&2
-              exit 1
+              echo "::warning::release_tag is empty on workflow_dispatch, forcing publish_release=false and push_docker=false"
+              publish_release="false"
+              push_docker="false"
             fi
 
             if [[ -z "${version}" ]]; then
@@ -157,7 +153,6 @@ jobs:
         env:
           INPUT_BUILD_MODE: ${{ github.event.inputs.build_mode || 'minimal' }}
           INPUT_BUILD_TARGET: ${{ github.event.inputs.build_target || 'cli+gui' }}
-          INPUT_ENABLE_EXPERIMENTAL_NIGHTLY: ${{ github.event.inputs.enable_experimental_nightly || 'false' }}
         run: |
           set -euo pipefail
           python <<'PY'
@@ -167,7 +162,6 @@ jobs:
 
           build_mode = os.environ.get("INPUT_BUILD_MODE", "minimal")
           build_target = os.environ.get("INPUT_BUILD_TARGET", "cli+gui")
-          enable_experimental_nightly = os.environ.get("INPUT_ENABLE_EXPERIMENTAL_NIGHTLY", "false").lower() == "true"
 
           raw = pathlib.Path(".github/build_matrix.jsonc").read_text()
           lines = []
@@ -177,8 +171,6 @@ jobs:
 
           cli = [item for item in matrix["cli"] if build_mode in item["mode"]]
           cli_nightly = [item for item in matrix.get("cli_nightly", []) if build_mode in item["mode"]]
-          if not enable_experimental_nightly:
-              cli_nightly = []
           bsd = [item for item in matrix.get("bsd", []) if build_mode in item["mode"]]
           gui = [item for item in matrix["gui"] if build_mode in item["mode"]]
           gui_android = [item for item in matrix.get("gui_android", []) if build_mode in item["mode"]]

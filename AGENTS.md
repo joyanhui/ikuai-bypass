@@ -69,4 +69,4 @@
 
 ## CI 约束
 
-`.github/workflows/release.yml` 只允许 `tag push` 和 `workflow_dispatch` 触发，禁止恢复每日定时构建；手动发布或推送 Docker 时必须显式填写 `release_tag`。Tag 名包含 `test`、`rc`、`alpha`、`beta`、`pre`、`preview`、`dev`、`nightly` 时必须发布为 prerelease，否则发布为正式版并推送 Docker `latest`。
+`.github/workflows/release.yml` 只允许 `tag push` 和 `workflow_dispatch` 触发，禁止恢复每日定时构建；手动执行默认只构建不发布，未填写 `release_tag` 时即使勾选发布也必须自动降级为仅构建，且选择 `full` 时必须自动包含 nightly MIPS 架构。Tag 名包含 `test`、`rc`、`alpha`、`beta`、`pre`、`preview`、`dev`、`nightly` 时必须发布为 prerelease，否则发布为正式版并推送 Docker `latest`。

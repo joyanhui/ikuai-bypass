@@ -23,13 +23,14 @@
 - `release_tag`
 - `build_mode`
 - `build_target`
-- `enable_experimental_nightly`
 - `publish_release`
 - `push_docker`
 
 手动触发时的规则：
 
-- 如果 `publish_release=true` 或 `push_docker=true`，则必须填写 `release_tag`
+- `publish_release` 默认是 `false`
+- `push_docker` 默认是 `false`
+- 如果未填写 `release_tag` 但手动勾选了发布或推送 Docker，workflow 会自动降级为仅构建，并强制改回 `publish_release=false`、`push_docker=false`
 - 如果只是手动测试构建，可以不填 `release_tag`
 - 不填 `release_tag` 且不发布时，会生成内部版本号 `manual-build-${GITHUB_RUN_ID}`
 
@@ -116,7 +117,7 @@ Docker 镜像标签始终包含：
 
 ### Experimental Nightly CLI
 
-仅 `full` 且 `enable_experimental_nightly=true` 时启用：
+仅 `full` 时启用：
 
 - `linux-mipsel` -> `mipsel-unknown-linux-musl`
 - `linux-mips64` -> `mips64-unknown-linux-gnuabi64`
@@ -126,7 +127,7 @@ Docker 镜像标签始终包含：
 说明：
 
 - 这组目标属于实验性 nightly 架构
-- 默认关闭，避免拖累正常发布链
+- 选择 `full` 时自动包含
 - job 名称固定为 `CLI Nightly Experimental`
 - 该 job 设置了 `continue-on-error: true`
 
@@ -217,5 +218,5 @@ Docker 镜像标签始终包含：
 - prerelease 判定关键字
 - Docker `latest` 规则
 - stable / nightly / BSD / GUI 构建矩阵
-- experimental nightly 开关逻辑
+- `full` 模式下的 nightly 构建逻辑
 - 发布门槛与产物收集逻辑

@@ -464,6 +464,54 @@ jobs:
           with zipfile.ZipFile(zip_path, "r") as zf:
               zf.extractall(stage)
 
+          bin_src = stage / "ikuai-bypass"
+          if not bin_src.exists():
+              raise SystemExit(f"missing binary: {bin_src}")
+
+          bin_dir = stage / "usr/local/bin"
+          bin_dir.mkdir(parents=True, exist_ok=True)
+          shutil.copy2(bin_src, bin_dir / "ikuai-bypass")
+
+          cfg_src = stage / "config.yml"
+          etc_cfg = stage / "etc/ikuai-bypass"
+          etc_cfg.mkdir(parents=True, exist_ok=True)
+          if cfg_src.exists():
+              shutil.copy2(cfg_src, etc_cfg / "config.yml")
+
+          readme_src = stage / "README.md"
+          doc_dir = stage / "usr/local/share/ikuai-bypass"
+          doc_dir.mkdir(parents=True, exist_ok=True)
+          if readme_src.exists():
+              shutil.copy2(readme_src, doc_dir / "README.md")
+
+          init_dir = stage / "etc/init.d"
+          runlevel_dir = stage / "etc/runlevels/default"
+          init_dir.mkdir(parents=True, exist_ok=True)
+          runlevel_dir.mkdir(parents=True, exist_ok=True)
+
+          init_script = init_dir / "ikuai-bypass"
+          init_script.write_text(
+              """#!/sbin/openrc-run\n"
+              "description=\"iKuai Bypass\"\n"
+              "command=\"/usr/local/bin/ikuai-bypass\"\n"
+              "command_args=\"-r cron -c /etc/ikuai-bypass/config.yml\"\n"
+              "command_background=\"yes\"\n"
+              "pidfile=\"/run/ikuai-bypass.pid\"\n"
+              "\n"
+              "depend() {\n"
+              "  need net\n"
+              "}\n"
+          )
+          init_script.chmod(0o755)
+
+          runlevel_link = runlevel_dir / "ikuai-bypass"
+          if not runlevel_link.exists():
+              runlevel_link.symlink_to("/etc/init.d/ikuai-bypass")
+
+          for path in (bin_src, cfg_src, readme_src):
+              if path.exists():
+                  path.unlink()
+
           tar_path = release_dir / "ikuai-bypass-lxc-alpine-musl-amd64.tar.gz"
           if tar_path.exists():
               tar_path.unlink()
@@ -521,6 +569,8 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
+        env:
+          PATH: /usr/bin:/bin:${{ env.PATH }}
 
       - name: Generate Tauri icons
         working-directory: app/src-tauri
@@ -545,19 +595,31 @@ jobs:
           - runner: windows-latest
             label: windows-x86_64
             bundle_args: --bundles nsis,msi
-            collect_pattern: target/release/bundle/**/*.msi|target/release/bundle/**/*.exe
+            collect_pattern: target/release/bundle/**/*.msi|target/release/bundle/**/*.exe|target/release/*.exe
+            tauri_cli_target: x86_64-pc-windows-msvc
+            tauri_target: x86_64-pc-windows-msvc
+            bundle_active: false
           - runner: ubuntu-22.04
             label: linux-x86_64-appimage
             bundle_args: --bundles appimage
             collect_pattern: target/release/bundle/**/*.AppImage
+            tauri_cli_target: x86_64-unknown-linux-gnu
+            tauri_target: x86_64-unknown-linux-gnu
+            bundle_active: true
           - runner: macos-15-intel
             label: macos-x86_64
             bundle_args: --bundles dmg
             collect_pattern: target/release/bundle/**/*.dmg
+            tauri_cli_target: x86_64-apple-darwin
+            tauri_target: x86_64-apple-darwin
+            bundle_active: true
           - runner: macos-15
             label: macos-aarch64
             bundle_args: --bundles dmg
             collect_pattern: target/release/bundle/**/*.dmg
+            tauri_cli_target: aarch64-apple-darwin
+            tauri_target: aarch64-apple-darwin
+            bundle_active: true
 
     steps:
       - uses: actions/checkout@v4
@@ -609,9 +671,16 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
+          target: ${{ matrix.tauri_cli_target }}
+        env:
+          PATH: /usr/bin:/bin:${{ env.PATH }}
 
       - name: Prepare Tauri CI config
         working-directory: app/src-tauri
+        shell: bash
+        env:
+          TAURI_TARGET: ${{ matrix.tauri_target }}
+          BUNDLE_ACTIVE: ${{ matrix.bundle_active }}
         run: |
           python <<'PY'
           import json
@@ -624,26 +693,39 @@ jobs:
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
             frontend_dist = f"{workspace}/app/frontend/dist"
-            build.pop("beforeBuildCommand", None)
+            build["beforeBuildCommand"] = "echo ci-skip"
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
+          bundle_active = os.environ.get("BUNDLE_ACTIVE", "true").lower() != "false"
+          bundle["active"] = bundle_active
           bundle["icon"] = [
               "icons/icon.png",
               "icons/icon.ico",
               "icons/icon.icns",
           ]
+          path.write_text(json.dumps(cfg))
           pathlib.Path("tauri.ci.conf.json").write_text(json.dumps(cfg))
           PY
 
       - name: Build GUI bundle
         working-directory: app/src-tauri
-        run: cargo tauri build ${{ matrix.bundle_args }} --config tauri.ci.conf.json
+        shell: bash
+        env:
+          TAURI_TARGET: ${{ matrix.tauri_target }}
+          BUNDLE_ACTIVE: ${{ matrix.bundle_active }}
+        run: |
+          if [ "${BUNDLE_ACTIVE}" = "false" ]; then
+            cargo tauri build --target "${TAURI_TARGET}" --config tauri.ci.conf.json
+          else
+            cargo tauri build --target "${TAURI_TARGET}" ${{ matrix.bundle_args }} --config tauri.ci.conf.json
+          fi
 
       - name: Collect GUI artifacts
         shell: bash
         env:
           LABEL: ${{ matrix.label }}
           PATTERN: ${{ matrix.collect_pattern }}
+          TAURI_TARGET: ${{ matrix.tauri_target }}
         run: |
           mkdir -p release
           python <<'PY'
@@ -654,6 +736,13 @@ jobs:
 
           release_dir = pathlib.Path("release")
           patterns = [p for p in os.environ["PATTERN"].split("|") if p]
+          tauri_target = os.environ.get("TAURI_TARGET", "")
+          exe_names = ["ikb-app.exe", "ikuai-bypass.exe"]
+          if tauri_target:
+              for name in exe_names:
+                  patterns.append(f"target/{tauri_target}/release/{name}")
+          for name in exe_names:
+              patterns.append(f"target/release/{name}")
           found = []
           for pattern in patterns:
               found.extend(glob.glob(pattern, recursive=True))
@@ -708,9 +797,12 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
+        env:
+          PATH: /usr/bin:/bin:${{ env.PATH }}
 
       - name: Prepare Tauri Android config
         working-directory: app/src-tauri
+        shell: bash
         run: |
           python <<'PY'
           import json
@@ -723,7 +815,7 @@ jobs:
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
             frontend_dist = f"{workspace}/app/frontend/dist"
-            build.pop("beforeBuildCommand", None)
+            build["beforeBuildCommand"] = "echo ci-skip"
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [
@@ -731,6 +823,7 @@ jobs:
               "icons/icon.ico",
               "icons/icon.icns",
           ]
+          path.write_text(json.dumps(cfg))
           pathlib.Path("tauri.android.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -813,9 +906,12 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
+        env:
+          PATH: /usr/bin:/bin:${{ env.PATH }}
 
       - name: Prepare Tauri iOS config
         working-directory: app/src-tauri
+        shell: bash
         run: |
           python <<'PY'
           import json
@@ -828,7 +924,7 @@ jobs:
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
             frontend_dist = f"{workspace}/app/frontend/dist"
-            build.pop("beforeBuildCommand", None)
+            build["beforeBuildCommand"] = "echo ci-skip"
             build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [
@@ -836,6 +932,7 @@ jobs:
               "icons/icon.ico",
               "icons/icon.icns",
           ]
+          path.write_text(json.dumps(cfg))
           pathlib.Path("tauri.ios.conf.json").write_text(json.dumps(cfg))
           PY
 

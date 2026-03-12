@@ -8,7 +8,7 @@
 - **CLI**：适合服务器、路由器、OpenWrt、Docker、LXC、计划任务环境
 - **GUI**：图形化桌面和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端，用户友好，几乎开箱即用
 
-> **提示**：旧版本代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/untagged-08d99dfe501855617744),新版本使用性能更好，内存安全更好的rust语言构建。
+> **提示**：旧版本代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),新版本使用性能更好，内存安全更好的rust语言构建。
 
 > **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
 

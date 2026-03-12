@@ -11,12 +11,66 @@
       "mode": ["minimal", "full"]
     },
     {
+      "label": "linux-386",
+      "runner": "ubuntu-latest",
+      "target": "i686-unknown-linux-musl",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "linux/386",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-arm5",
+      "runner": "ubuntu-latest",
+      "target": "armv5te-unknown-linux-musleabi",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-arm6",
+      "runner": "ubuntu-latest",
+      "target": "arm-unknown-linux-musleabi",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-arm7",
+      "runner": "ubuntu-latest",
+      "target": "armv7-unknown-linux-musleabihf",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "linux/arm/v7",
+      "mode": ["full"]
+    },
+    {
       "label": "linux-arm64",
       "runner": "ubuntu-latest",
       "target": "aarch64-unknown-linux-musl",
       "builder": "cross",
       "archive": "tar.gz",
       "docker_platform": "linux/arm64",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-ppc64le",
+      "runner": "ubuntu-latest",
+      "target": "powerpc64le-unknown-linux-gnu",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "linux/ppc64le",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-riscv64",
+      "runner": "ubuntu-latest",
+      "target": "riscv64gc-unknown-linux-musl",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "linux/riscv64",
       "mode": ["full"]
     },
     {
@@ -27,6 +81,15 @@
       "archive": "zip",
       "docker_platform": "",
       "mode": ["minimal", "full"]
+    },
+    {
+      "label": "macos-amd64",
+      "runner": "macos-15",
+      "target": "x86_64-apple-darwin",
+      "builder": "cargo",
+      "archive": "tar.gz",
+      "docker_platform": "",
+      "mode": ["full"]
     },
     {
       "label": "macos-arm64",
@@ -59,6 +122,38 @@
     }
   ],
 
+  // Nightly-only targets / 仅 nightly 的实验目标
+  "cli_nightly": [
+    {
+      "label": "linux-mipsel",
+      "runner": "ubuntu-latest",
+      "target": "mipsel-unknown-linux-musl",
+      "archive": "tar.gz",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-mips64",
+      "runner": "ubuntu-latest",
+      "target": "mipsisa64r6-unknown-linux-gnuabi64",
+      "archive": "tar.gz",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-mips64el",
+      "runner": "ubuntu-latest",
+      "target": "mipsisa64r6el-unknown-linux-gnuabi64",
+      "archive": "tar.gz",
+      "mode": ["full"]
+    },
+    {
+      "label": "linux-mips",
+      "runner": "ubuntu-latest",
+      "target": "mipsisa32r6-unknown-linux-gnu",
+      "archive": "tar.gz",
+      "mode": ["full"]
+    }
+  ],
+
   // GUI targets / GUI 发布目标
   "gui": [
     {
@@ -83,6 +178,15 @@
       "label": "macos-aarch64",
       "runner": "macos-15",
       "target": "aarch64-apple-darwin",
+      "bundle_args": "--bundles dmg",
+      "bundle_active": true,
+      "collect_pattern": "target/release/bundle/**/*.dmg",
+      "mode": ["full"]
+    },
+    {
+      "label": "macos-x86_64",
+      "runner": "macos-15",
+      "target": "x86_64-apple-darwin",
       "bundle_args": "--bundles dmg",
       "bundle_active": true,
       "collect_pattern": "target/release/bundle/**/*.dmg",

@@ -12,8 +12,35 @@ ikb_normalize_arch() {
     i686)
       printf '%s\n' "x86"
       ;;
+    armv5te)
+      printf '%s\n' "arm5"
+      ;;
+    arm)
+      printf '%s\n' "arm6"
+      ;;
+    armv7)
+      printf '%s\n' "arm7"
+      ;;
     aarch64|arm64)
       printf '%s\n' "aarch64"
+      ;;
+    powerpc64le)
+      printf '%s\n' "ppc64le"
+      ;;
+    riscv64gc)
+      printf '%s\n' "riscv64"
+      ;;
+    mipsel)
+      printf '%s\n' "mipsle"
+      ;;
+    mipsisa32r6)
+      printf '%s\n' "mips"
+      ;;
+    mipsisa64r6)
+      printf '%s\n' "mips64"
+      ;;
+    mipsisa64r6el)
+      printf '%s\n' "mips64le"
       ;;
     *)
       printf '%s\n' "${arch_raw}"

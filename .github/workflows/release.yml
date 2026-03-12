@@ -66,6 +66,7 @@ jobs:
       build_mode: ${{ steps.matrix.outputs.build_mode }}
       build_target: ${{ steps.matrix.outputs.build_target }}
       cli_matrix: ${{ steps.matrix.outputs.cli_matrix }}
+      cli_nightly_matrix: ${{ steps.matrix.outputs.cli_nightly_matrix }}
       bsd_matrix: ${{ steps.matrix.outputs.bsd_matrix }}
       gui_matrix: ${{ steps.matrix.outputs.gui_matrix }}
       gui_android_matrix: ${{ steps.matrix.outputs.gui_android_matrix }}
@@ -73,6 +74,7 @@ jobs:
       docker_cli_matrix: ${{ steps.matrix.outputs.docker_cli_matrix }}
       docker_platforms: ${{ steps.matrix.outputs.docker_platforms }}
       has_cli: ${{ steps.matrix.outputs.has_cli }}
+      has_cli_nightly: ${{ steps.matrix.outputs.has_cli_nightly }}
       has_bsd: ${{ steps.matrix.outputs.has_bsd }}
       has_gui: ${{ steps.matrix.outputs.has_gui }}
       has_gui_desktop: ${{ steps.matrix.outputs.has_gui_desktop }}
@@ -161,6 +163,7 @@ jobs:
           matrix = json.loads("\n".join(lines))
 
           cli = [item for item in matrix["cli"] if build_mode in item["mode"]]
+          cli_nightly = [item for item in matrix.get("cli_nightly", []) if build_mode in item["mode"]]
           bsd = [item for item in matrix.get("bsd", []) if build_mode in item["mode"]]
           gui = [item for item in matrix["gui"] if build_mode in item["mode"]]
           gui_android = [item for item in matrix.get("gui_android", []) if build_mode in item["mode"]]
@@ -172,6 +175,7 @@ jobs:
               gui_ios = []
           elif build_target == "gui":
               cli = []
+              cli_nightly = []
               bsd = []
 
           docker_cli = [item for item in cli if item.get("docker_platform")]
@@ -182,13 +186,15 @@ jobs:
               "build_mode": build_mode,
               "build_target": build_target,
               "cli_matrix": json.dumps(cli, separators=(",", ":")),
+              "cli_nightly_matrix": json.dumps(cli_nightly, separators=(",", ":")),
               "bsd_matrix": json.dumps(bsd, separators=(",", ":")),
               "gui_matrix": json.dumps(gui, separators=(",", ":")),
               "gui_android_matrix": json.dumps(gui_android, separators=(",", ":")),
               "gui_ios_matrix": json.dumps(gui_ios, separators=(",", ":")),
               "docker_cli_matrix": json.dumps(docker_cli, separators=(",", ":")),
               "docker_platforms": docker_platforms,
-              "has_cli": str(bool(cli or bsd)).lower(),
+              "has_cli": str(bool(cli or cli_nightly or bsd)).lower(),
+              "has_cli_nightly": str(bool(cli_nightly)).lower(),
               "has_bsd": str(bool(bsd)).lower(),
               "has_gui": str(bool(gui or gui_android or gui_ios)).lower(),
               "has_gui_desktop": str(bool(gui)).lower(),
@@ -383,6 +389,93 @@ jobs:
                       zf.write(path, path.relative_to(stage))
           else:
               raise SystemExit(f"unsupported archive kind: {archive_kind}")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.label }}
+          path: release/*
+
+  build-cli-nightly:
+    name: CLI nightly ${{ matrix.label }}
+    needs:
+      - resolve-matrix
+      - verify-cli
+    if: needs.resolve-matrix.outputs.has_cli_nightly == 'true'
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.resolve-matrix.outputs.cli_nightly_matrix) }}
+    env:
+      CARGO_TARGET_DIR: target-cli-nightly-${{ matrix.label }}
+      CARGO_UNSTABLE_BUILD_STD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install nightly toolchain
+        run: rustup toolchain install nightly --profile minimal
+
+      - name: Add nightly target
+        run: rustup +nightly target add ${{ matrix.target }}
+        continue-on-error: true
+
+      - name: Install cross
+        run: cargo +nightly install cross --locked
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> ${{ env.CARGO_TARGET_DIR }}
+          cache-on-failure: true
+          shared-key: cli-nightly-${{ matrix.label }}
+
+      - name: Build nightly CLI
+        run: cargo +nightly cross build --locked -Z build-std=std,panic_abort --release --target ${{ matrix.target }} -p ikb-cli
+
+      - name: Package nightly CLI artifact
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          source .github/scripts/arch-helpers.sh
+          mkdir -p release
+          export package_base="$(ikb_cli_base "${TARGET}")"
+          python <<'PY'
+          import os
+          import pathlib
+          import shutil
+          import tarfile
+
+          target = os.environ["TARGET"]
+          package_base = os.environ["package_base"]
+          release_dir = pathlib.Path("release")
+          build_root = pathlib.Path(os.environ["CARGO_TARGET_DIR"])
+          build_dir = build_root / target / "release"
+          src = build_dir / "ikb-cli"
+          if not src.exists():
+              raise SystemExit(f"missing binary: {src}")
+
+          stage = release_dir / f"{package_base}.stage"
+          if stage.exists():
+              shutil.rmtree(stage)
+          stage.mkdir(parents=True)
+          shutil.copy2(src, stage / "ikuai-bypass")
+          shutil.copy2("README.md", stage / "README.md")
+          shutil.copy2("config.yml", stage / "config.yml")
+
+          out = release_dir / f"{package_base}.tar.gz"
+          if out.exists():
+              out.unlink()
+          with tarfile.open(out, "w:gz") as tf:
+              for path in stage.rglob("*"):
+                  tf.add(path, arcname=path.relative_to(stage))
           PY
 
       - uses: actions/upload-artifact@v4
@@ -815,7 +908,9 @@ jobs:
 
           project_pbxproj="$(find gen/apple -type f -path '*.xcodeproj/project.pbxproj' | head -1 || true)"
           if [ -n "${project_pbxproj}" ] && [ -f "${project_pbxproj}" ]; then
+            escaped_toolchain="$(printf '%s\n' "${default_toolchain}" | sed 's/[\\/&]/\\&/g')"
             perl -0777 -i -pe 's/DEVELOPMENT_TEAM = [^;]*;/DEVELOPMENT_TEAM = "";/g; s/CODE_SIGN_STYLE = [^;]*;/CODE_SIGN_STYLE = Manual;/g; s/CODE_SIGN_IDENTITY = [^;]*;/CODE_SIGN_IDENTITY = "";/g; s/CODE_SIGNING_ALLOWED = [^;]*;/CODE_SIGNING_ALLOWED = NO;/g; s/CODE_SIGNING_REQUIRED = [^;]*;/CODE_SIGNING_REQUIRED = NO;/g; s/PROVISIONING_PROFILE_SPECIFIER = [^;]*;/PROVISIONING_PROFILE_SPECIFIER = "";/g; s/PROVISIONING_PROFILE = [^;]*;/PROVISIONING_PROFILE = "";/g;' "${project_pbxproj}"
+            perl -0777 -i -pe "s/\\$\\(TOOLCHAIN_DIR\\)\\/usr\\/lib\\/swift\\//${escaped_toolchain}\\/usr\\/lib\\/swift\\//g; s/\\$\\(TOOLCHAIN_DIR\\)\\/usr\\/lib\\/swift-5\\.0\\//${escaped_toolchain}\\/usr\\/lib\\/swift-5.0\\//g;" "${project_pbxproj}"
           fi
 
           set +e
@@ -1037,12 +1132,13 @@ jobs:
     needs:
       - resolve-matrix
       - build-cli
+      - build-cli-nightly
       - build-lxc
       - build-gui
       - build-gui-android
       - build-gui-ios
       - build-bsd
-    if: needs.resolve-matrix.outputs.publish_release == 'true'
+    if: ${{ always() && needs.resolve-matrix.outputs.publish_release == 'true' && !contains(join(needs.*.result, ','), 'failure') && !contains(join(needs.*.result, ','), 'cancelled') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

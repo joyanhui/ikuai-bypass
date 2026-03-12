@@ -1,0 +1,128 @@
+{
+  // CLI targets / CLI 发布目标
+  "cli": [
+    {
+      "label": "linux-amd64",
+      "runner": "ubuntu-latest",
+      "target": "x86_64-unknown-linux-musl",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "linux/amd64",
+      "mode": ["minimal", "full"]
+    },
+    {
+      "label": "linux-arm64",
+      "runner": "ubuntu-latest",
+      "target": "aarch64-unknown-linux-musl",
+      "builder": "cross",
+      "archive": "tar.gz",
+      "docker_platform": "linux/arm64",
+      "mode": ["full"]
+    },
+    {
+      "label": "windows-amd64",
+      "runner": "windows-latest",
+      "target": "x86_64-pc-windows-msvc",
+      "builder": "cargo",
+      "archive": "zip",
+      "docker_platform": "",
+      "mode": ["minimal", "full"]
+    },
+    {
+      "label": "macos-arm64",
+      "runner": "macos-15",
+      "target": "aarch64-apple-darwin",
+      "builder": "cargo",
+      "archive": "tar.gz",
+      "docker_platform": "",
+      "mode": ["full"]
+    }
+  ],
+
+  // BSD targets / BSD 发布目标
+  "bsd": [
+    {
+      "label": "freebsd-amd64",
+      "runner": "ubuntu-latest",
+      "vm_os": "freebsd",
+      "target": "x86_64-unknown-freebsd",
+      "archive": "tar.gz",
+      "mode": ["full"]
+    },
+    {
+      "label": "freebsd-386",
+      "runner": "ubuntu-latest",
+      "vm_os": "freebsd",
+      "target": "i686-unknown-freebsd",
+      "archive": "tar.gz",
+      "mode": ["full"]
+    }
+  ],
+
+  // GUI targets / GUI 发布目标
+  "gui": [
+    {
+      "label": "linux-x86_64-appimage",
+      "runner": "ubuntu-22.04",
+      "target": "x86_64-unknown-linux-gnu",
+      "bundle_args": "--bundles appimage",
+      "bundle_active": true,
+      "collect_pattern": "target/release/bundle/**/*.AppImage",
+      "mode": ["minimal", "full"]
+    },
+    {
+      "label": "windows-x86_64",
+      "runner": "windows-latest",
+      "target": "x86_64-pc-windows-msvc",
+      "bundle_args": "",
+      "bundle_active": false,
+      "collect_pattern": "target/release/*.exe",
+      "mode": ["full"]
+    },
+    {
+      "label": "macos-aarch64",
+      "runner": "macos-15",
+      "target": "aarch64-apple-darwin",
+      "bundle_args": "--bundles dmg",
+      "bundle_active": true,
+      "collect_pattern": "target/release/bundle/**/*.dmg",
+      "mode": ["full"]
+    }
+  ],
+
+  // Android GUI targets / Android GUI 发布目标
+  "gui_android": [
+    {
+      "label": "android-aarch64",
+      "runner": "ubuntu-latest",
+      "target": "aarch64-linux-android",
+      "tauri_target": "aarch64",
+      "mode": ["full"]
+    },
+    {
+      "label": "android-armv7",
+      "runner": "ubuntu-latest",
+      "target": "armv7-linux-androideabi",
+      "tauri_target": "armv7",
+      "mode": ["full"]
+    },
+    {
+      "label": "android-x86_64",
+      "runner": "ubuntu-latest",
+      "target": "x86_64-linux-android",
+      "tauri_target": "x86_64",
+      "mode": ["full"]
+    }
+  ],
+
+  // iOS GUI targets / iOS GUI 发布目标
+  "gui_ios": [
+    {
+      "label": "ios-aarch64",
+      "runner": "macos-15",
+      "target": "aarch64-apple-ios",
+      "tauri_target": "aarch64",
+      "mode": ["full"]
+    }
+  ]
+}

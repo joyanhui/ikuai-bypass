@@ -477,9 +477,66 @@ jobs:
           name: cli-lxc-alpine-musl-amd64
           path: release/*.tar.gz
 
+  build-frontend:
+    name: Build Frontend Dist
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            app/frontend/node_modules
+          key: frontend-bun-${{ hashFiles('app/frontend/bun.lock', 'app/frontend/package.json') }}
+          restore-keys: |
+            frontend-bun-
+
+      - name: Install frontend dependencies
+        working-directory: app/frontend
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend dist
+        working-directory: app/frontend
+        run: bun run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: app/frontend/dist
+
+  build-tauri-icons:
+    name: Build Tauri Icons
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri CLI
+        uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
+
+      - name: Generate Tauri icons
+        working-directory: app/src-tauri
+        run: cargo tauri icon icons/icon.png
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tauri-icons
+          path: app/src-tauri/icons
+
   build-gui:
     name: GUI ${{ matrix.label }}
-    needs: meta
+    needs:
+      - meta
+      - build-frontend
+      - build-tauri-icons
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -517,16 +574,20 @@ jobs:
             . -> target
           cache-on-failure: true
 
-      - uses: oven-sh/setup-bun@v2
-
-      - uses: actions/cache@v4
+      - uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            app/frontend/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('app/frontend/bun.lock', 'app/frontend/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          name: frontend-dist
+          path: app/frontend/dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tauri-icons
+          path: app/src-tauri/icons
+
+      - name: Ensure bash on Windows
+        if: runner.os == 'Windows'
+        run: |
+          echo "C:\\Program Files\\Git\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install Linux GUI dependencies
         if: runner.os == 'Linux'
@@ -544,18 +605,10 @@ jobs:
             patchelf \
             wget
 
-      - name: Install frontend dependencies
-        working-directory: app/frontend
-        run: bun install --frozen-lockfile
-
       - name: Install Tauri CLI
         uses: taiki-e/install-action@v2
         with:
           tool: tauri-cli@2
-
-      - name: Generate Tauri icons
-        working-directory: app/src-tauri
-        run: cargo tauri icon icons/icon.png
 
       - name: Prepare Tauri CI config
         working-directory: app/src-tauri
@@ -570,9 +623,9 @@ jobs:
           build = cfg.setdefault("build", {})
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-            frontend_dir = f"{workspace}/app/frontend"
-            build["beforeBuildCommand"] = f"bun run build --cwd {frontend_dir}"
-            build["frontendDist"] = f"{frontend_dir}/dist"
+            frontend_dist = f"{workspace}/app/frontend/dist"
+            build.pop("beforeBuildCommand", None)
+            build["frontendDist"] = frontend_dist
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = [
               "icons/icon.png",
@@ -618,35 +671,125 @@ jobs:
           name: gui-${{ matrix.label }}
           path: release/*
 
+  build-gui-android:
+    name: GUI android-aarch64
+    needs:
+      - meta
+      - build-frontend
+      - build-tauri-icons
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: app/frontend/dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: tauri-icons
+          path: app/src-tauri/icons
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK/NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Tauri CLI
+        uses: taiki-e/install-action@v2
+        with:
+          tool: tauri-cli@2
+
+      - name: Prepare Tauri Android config
+        working-directory: app/src-tauri
+        run: |
+          python <<'PY'
+          import json
+          import os
+          import pathlib
+
+          path = pathlib.Path("tauri.conf.json")
+          cfg = json.loads(path.read_text())
+          build = cfg.setdefault("build", {})
+          workspace = os.environ.get("GITHUB_WORKSPACE", "")
+          if workspace:
+            frontend_dist = f"{workspace}/app/frontend/dist"
+            build.pop("beforeBuildCommand", None)
+            build["frontendDist"] = frontend_dist
+          bundle = cfg.setdefault("bundle", {})
+          bundle["icon"] = [
+              "icons/icon.png",
+              "icons/icon.ico",
+              "icons/icon.icns",
+          ]
+          pathlib.Path("tauri.android.conf.json").write_text(json.dumps(cfg))
+          PY
+
+      - name: Initialize Android project if missing
+        working-directory: app/src-tauri
+        shell: bash
+        run: |
+          if [ ! -d "gen/android" ]; then
+            cargo tauri android init --ci
+          fi
+
+      - name: Build Android APK (unsigned)
+        working-directory: app/src-tauri
+        shell: bash
+        run: |
+          apk_opt=()
+          if cargo tauri android build --help | grep -q -- '--apk'; then
+            apk_opt+=(--apk)
+          fi
+          cargo tauri android build --ci --target aarch64 --config tauri.android.conf.json "${apk_opt[@]}"
+
+      - name: Package Android artifact
+        shell: bash
+        run: |
+          python <<'PY'
+          import pathlib
+          import shutil
+
+          root = pathlib.Path("app/src-tauri")
+          candidates = list(root.rglob("*.apk"))
+          if not candidates:
+            raise SystemExit("No APK artifact found")
+          apk = candidates[0]
+          dist = pathlib.Path("dist")
+          dist.mkdir(parents=True, exist_ok=True)
+          shutil.copy2(apk, dist / "ikuai-bypass-android-aarch64.apk")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gui-android-aarch64
+          path: dist/*
+
   docker:
     name: Docker Multi-Arch
     needs:
       - meta
       - build-cli-linux
+      - build-frontend
     if: needs.meta.outputs.push_docker == 'true' && needs.meta.outputs.docker_creds_available == 'true'
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
-
-      - uses: actions/cache@v4
+      - uses: actions/download-artifact@v4
         with:
-          path: |
-            ~/.bun/install/cache
-            app/frontend/node_modules
-          key: docker-bun-${{ hashFiles('app/frontend/bun.lock', 'app/frontend/package.json') }}
-          restore-keys: |
-            docker-bun-
-
-      - name: Install frontend dependencies
-        working-directory: app/frontend
-        run: bun install --frozen-lockfile
-
-      - name: Build frontend dist
-        working-directory: app/frontend
-        run: bun run build
+          name: frontend-dist
+          path: app/frontend/dist
 
       - uses: actions/download-artifact@v4
         with:
@@ -709,6 +852,7 @@ jobs:
       - build-cli-others
       - build-lxc
       - build-gui
+      - build-gui-android
     if: needs.meta.outputs.publish_release == 'true'
     runs-on: ubuntu-latest
     steps:

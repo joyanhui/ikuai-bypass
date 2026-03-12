@@ -410,7 +410,6 @@ jobs:
         include: ${{ fromJson(needs.resolve-matrix.outputs.cli_nightly_matrix) }}
     env:
       CARGO_TARGET_DIR: target-cli-nightly-${{ matrix.label }}
-      CARGO_UNSTABLE_BUILD_STD: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -421,12 +420,15 @@ jobs:
       - name: Install nightly toolchain
         run: rustup toolchain install nightly --profile minimal
 
+      - name: Install nightly rust-src
+        run: rustup component add rust-src --toolchain nightly
+
       - name: Add nightly target
         run: rustup +nightly target add ${{ matrix.target }}
         continue-on-error: true
 
       - name: Install cross
-        run: cargo +nightly install cross --locked
+        run: cargo install cross --locked
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -436,6 +438,8 @@ jobs:
           shared-key: cli-nightly-${{ matrix.label }}
 
       - name: Build nightly CLI
+        env:
+          CARGO_UNSTABLE_BUILD_STD: "1"
         run: cargo +nightly cross build --locked -Z build-std=std,panic_abort --release --target ${{ matrix.target }} -p ikb-cli
 
       - name: Package nightly CLI artifact

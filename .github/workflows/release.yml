@@ -224,6 +224,10 @@ jobs:
         if: ${{ !matrix.use_cross }}
         run: rustup target add ${{ matrix.target }}
 
+      - name: Add cross targets
+        if: runner.os == 'Linux' && matrix.use_cross
+        run: rustup target add ${{ matrix.target }}
+
       - name: Install cross
         if: runner.os == 'Linux' && matrix.use_cross
         run: cargo install cross --locked

@@ -2,12 +2,38 @@
 
 当前仓库的发布主线为 Rust 版本，GitHub Actions 位于 [.github/workflows/release.yml](/home/y/myworkspace/ikuai-bypass/.github/workflows/release.yml)。
 
+## 触发方式
+
+- `push tags`：推送 `v*` tag 时自动构建并发布
+- `workflow_dispatch`：支持手动触发
+
+手动触发支持以下输入：
+
+- `release_tag`：可留空；留空时只构建工件，不发 GitHub Release
+- `prerelease`：`auto / true / false`
+- `publish_release`
+- `push_docker`
+
+## 预发布自动识别
+
+当 tag 或手动输入的 `release_tag` 包含以下关键字时，workflow 会自动标记为 `prerelease`：
+
+- `alpha`
+- `beta`
+- `rc`
+- `pre`
+- `preview`
+- `dev`
+- `nightly`
+- `test`
+
 ## CLI 构建矩阵
 
 CLI 发布对齐旧版 `release.py` 的平台覆盖范围，当前 workflow 会尝试构建以下目标：
 
 - `darwin-amd64`
 - `darwin-arm64`
+- `lxc-alpine-musl-amd64`
 - `linux-386`
 - `linux-amd64`
 - `linux-arm5`
@@ -31,6 +57,12 @@ CLI 压缩包统一命名为：
 ikuai-bypass-<platform-arch>.zip
 ```
 
+LXC / Alpine / musl 版本额外发布为：
+
+```text
+ikuai-bypass-lxc-alpine-musl-amd64.tar.gz
+```
+
 压缩包内容：
 
 - `ikuai-bypass` 或 `ikuai-bypass.exe`
@@ -47,6 +79,34 @@ GUI 使用 Tauri v2 原生打包，当前 workflow 覆盖：
 - macOS aarch64
 
 GUI 产物会直接上传到 GitHub Release。
+
+## Docker 发布
+
+Docker 与 GitHub Release 走同一套 workflow。
+
+当前 Docker 目标平台：
+
+- `linux/amd64`
+- `linux/386`
+- `linux/arm64`
+- `linux/arm/v7`
+- `linux/arm/v6`
+- `linux/ppc64le`
+- `linux/riscv64`
+
+Docker tag 策略：
+
+- 每个平台都会推送 `:<version>-<platform>`
+- 再聚合为多架构 `:<version>`
+- 非预发布的正式语义化版本 tag，再额外推送多架构 `:latest`
+
+## 缓存
+
+workflow 已启用：
+
+- `Swatinem/rust-cache`：Rust 依赖与 `target`
+- `actions/cache`：Bun 包缓存与 `app/frontend/node_modules`
+- Docker Buildx 的 `type=gha` 层缓存
 
 ## 本地构建
 

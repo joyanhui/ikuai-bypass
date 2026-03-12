@@ -78,3 +78,52 @@ GitHub Actions 已切换为 Rust 主线发布：
 发布工作流位于 [.github/workflows/release.yml](/home/y/myworkspace/ikuai-bypass/.github/workflows/release.yml)。
 
 构建矩阵与产物命名说明见 [docs/release.md](/home/y/myworkspace/ikuai-bypass/docs/release.md)。
+
+Docker 镜像也由同一个 workflow 构建与发布，支持：
+
+- tag push 自动发布
+- `workflow_dispatch` 手动触发
+- tag 名包含 `alpha / beta / rc / pre / preview / dev / nightly / test` 时自动标记为预发布
+
+## Docker 使用
+
+镜像默认行为：
+
+- 配置目录：`/etc/ikuai-bypass`
+- 配置文件：`/etc/ikuai-bypass/config.yml`
+- 首次启动会从 `/opt/ikuai-bypass/config.yml` 自动复制模板
+- 默认启动参数：`-r cron`
+- 如果配置里启用了 WebUI，默认对外端口通常为 `19001`
+
+常规运行：
+
+```bash
+docker run -d \
+  --name ikuai-bypass \
+  --restart=always \
+  -p 19001:19001 \
+  -v $(pwd)/data:/etc/ikuai-bypass \
+  joyanhui/ikuai-bypass:latest
+```
+
+单次执行：
+
+```bash
+docker run --rm \
+  -v $(pwd)/data:/etc/ikuai-bypass \
+  joyanhui/ikuai-bypass:latest -r once
+```
+
+仅运行 WebUI：
+
+```bash
+docker run -d \
+  --name ikuai-bypass-web \
+  -p 19001:19001 \
+  -v $(pwd)/data:/etc/ikuai-bypass \
+  joyanhui/ikuai-bypass:latest -r web
+```
+
+另外会额外发布 Alpine / musl 的 LXC 友好 CLI 包：
+
+- `ikuai-bypass-lxc-alpine-musl-amd64.tar.gz`

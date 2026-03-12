@@ -5,16 +5,125 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "发布版本号，例如 v0.1.0 或 v0.1.0-beta.1；留空则只构建工件不发 Release"
+        required: false
+        type: string
+      prerelease:
+        description: "预发布判定，auto 会根据 tag 关键字自动判断"
+        required: true
+        type: choice
+        default: auto
+        options:
+          - auto
+          - true
+          - false
+      publish_release:
+        description: "是否发布 GitHub Release"
+        required: true
+        type: boolean
+        default: true
+      push_docker:
+        description: "是否推送 Docker 镜像"
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref || github.run_id }}
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
+  APP_NAME: ikuai-bypass
+  DOCKER_IMAGE: ${{ vars.DOCKERHUB_IMAGE || 'joyanhui/ikuai-bypass' }}
 
 jobs:
+  meta:
+    name: Resolve Release Meta
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag_name: ${{ steps.meta.outputs.tag_name }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      publish_release: ${{ steps.meta.outputs.publish_release }}
+      push_docker: ${{ steps.meta.outputs.push_docker }}
+      is_tag_build: ${{ steps.meta.outputs.is_tag_build }}
+      docker_latest: ${{ steps.meta.outputs.docker_latest }}
+    steps:
+      - id: meta
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease || 'auto' }}
+          INPUT_PUBLISH_RELEASE: ${{ github.event.inputs.publish_release || 'true' }}
+          INPUT_PUSH_DOCKER: ${{ github.event.inputs.push_docker || 'true' }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            version="${REF_NAME}"
+            publish_release="true"
+            push_docker="true"
+            is_tag_build="true"
+          else
+            version="${INPUT_RELEASE_TAG}"
+            publish_release="${INPUT_PUBLISH_RELEASE}"
+            push_docker="${INPUT_PUSH_DOCKER}"
+            if [[ -n "${version}" ]]; then
+              is_tag_build="true"
+            else
+              version="manual-${GITHUB_RUN_NUMBER}"
+              is_tag_build="false"
+            fi
+          fi
+
+          tag_name=""
+          if [[ "${is_tag_build}" == "true" ]]; then
+            tag_name="${version}"
+          fi
+
+          lc_version="$(printf '%s' "${version}" | tr '[:upper:]' '[:lower:]')"
+          auto_prerelease="false"
+          if printf '%s' "${lc_version}" | grep -Eq '(alpha|beta|rc|pre|preview|dev|nightly|test)'; then
+            auto_prerelease="true"
+          fi
+
+          case "${INPUT_PRERELEASE}" in
+            true) prerelease="true" ;;
+            false) prerelease="false" ;;
+            *) prerelease="${auto_prerelease}" ;;
+          esac
+
+          docker_latest="false"
+          if [[ "${prerelease}" != "true" && "${tag_name}" =~ ^v[0-9]+(\.[0-9]+){1,2}$ ]]; then
+            docker_latest="true"
+          fi
+
+          if [[ "${is_tag_build}" != "true" ]]; then
+            publish_release="false"
+          fi
+
+          {
+            echo "version=${version}"
+            echo "tag_name=${tag_name}"
+            echo "prerelease=${prerelease}"
+            echo "publish_release=${publish_release}"
+            echo "push_docker=${push_docker}"
+            echo "is_tag_build=${is_tag_build}"
+            echo "docker_latest=${docker_latest}"
+          } >> "${GITHUB_OUTPUT}"
+
   build-cli:
     name: CLI ${{ matrix.label }}
+    needs: meta
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -25,91 +134,115 @@ jobs:
             target: x86_64-unknown-linux-gnu
             package_suffix: linux-amd64
             use_cross: false
+            package_format: zip
+          - runner: ubuntu-latest
+            label: lxc-alpine-musl-amd64
+            target: x86_64-unknown-linux-musl
+            package_suffix: lxc-alpine-musl-amd64
+            use_cross: true
+            package_format: tar.gz
           - runner: ubuntu-latest
             label: linux-386
             target: i686-unknown-linux-gnu
             package_suffix: linux-386
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-arm5
             target: armv5te-unknown-linux-gnueabi
             package_suffix: linux-arm5
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-arm6
             target: arm-unknown-linux-gnueabi
             package_suffix: linux-arm6
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-arm7
             target: armv7-unknown-linux-gnueabihf
             package_suffix: linux-arm7
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-arm64
             target: aarch64-unknown-linux-gnu
             package_suffix: linux-arm64
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-mips
             target: mips-unknown-linux-gnu
             package_suffix: linux-mips
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-mipsle
             target: mipsel-unknown-linux-gnu
             package_suffix: linux-mipsle
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-mips64
             target: mips64-unknown-linux-gnuabi64
             package_suffix: linux-mips64
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-mips64le
             target: mips64el-unknown-linux-gnuabi64
             package_suffix: linux-mips64le
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-ppc64le
             target: powerpc64le-unknown-linux-gnu
             package_suffix: linux-ppc64le
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: linux-riscv64
             target: riscv64gc-unknown-linux-gnu
             package_suffix: linux-riscv64
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: freebsd-386
             target: i686-unknown-freebsd
             package_suffix: freebsd-386
             use_cross: true
+            package_format: zip
           - runner: ubuntu-latest
             label: freebsd-amd64
             target: x86_64-unknown-freebsd
             package_suffix: freebsd-amd64
             use_cross: true
+            package_format: zip
           - runner: windows-latest
             label: windows-386
             target: i686-pc-windows-msvc
             package_suffix: windows-386
             use_cross: false
+            package_format: zip
           - runner: windows-latest
             label: windows-amd64
             target: x86_64-pc-windows-msvc
             package_suffix: windows-amd64
             use_cross: false
+            package_format: zip
           - runner: macos-13
             label: darwin-amd64
             target: x86_64-apple-darwin
             package_suffix: darwin-amd64
             use_cross: false
+            package_format: zip
           - runner: macos-14
             label: darwin-arm64
             target: aarch64-apple-darwin
             package_suffix: darwin-arm64
             use_cross: false
+            package_format: zip
 
     steps:
       - uses: actions/checkout@v4
@@ -121,6 +254,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
 
       - name: Install cross
         if: runner.os == 'Linux' && matrix.use_cross
@@ -139,16 +278,19 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
           PACKAGE_SUFFIX: ${{ matrix.package_suffix }}
+          PACKAGE_FORMAT: ${{ matrix.package_format }}
         run: |
           mkdir -p release
           python <<'PY'
           import os
           import pathlib
           import shutil
+          import tarfile
           import zipfile
 
           target = os.environ["TARGET"]
           suffix = os.environ["PACKAGE_SUFFIX"]
+          package_format = os.environ["PACKAGE_FORMAT"]
           release_dir = pathlib.Path("release")
           build_dir = pathlib.Path("target") / target / "release"
           src = build_dir / ("ikb-cli.exe" if "windows" in target else "ikb-cli")
@@ -165,22 +307,33 @@ jobs:
           shutil.copy2("README.md", stage / "README.md")
           shutil.copy2("config.yml", stage / "config.yml")
 
-          zip_path = release_dir / f"ikuai-bypass-{suffix}.zip"
-          if zip_path.exists():
-              zip_path.unlink()
+          if package_format == "tar.gz":
+              tar_path = release_dir / f"ikuai-bypass-{suffix}.tar.gz"
+              if tar_path.exists():
+                  tar_path.unlink()
+              with tarfile.open(tar_path, "w:gz") as tf:
+                  for path in stage.rglob("*"):
+                      tf.add(path, arcname=path.relative_to(stage))
+          else:
+              zip_path = release_dir / f"ikuai-bypass-{suffix}.zip"
+              if zip_path.exists():
+                  zip_path.unlink()
 
-          with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
-              for path in stage.rglob("*"):
-                  zf.write(path, path.relative_to(stage))
+              with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+                  for path in stage.rglob("*"):
+                      zf.write(path, path.relative_to(stage))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
           name: cli-${{ matrix.package_suffix }}
-          path: release/*.zip
+          path: |
+            release/*.zip
+            release/*.tar.gz
 
   build-gui:
     name: GUI ${{ matrix.label }}
+    needs: meta
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -212,7 +365,22 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
+
       - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            app/frontend/node_modules
+          key: ${{ runner.os }}-bun-${{ hashFiles('app/frontend/bun.lock', 'app/frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
       - name: Install Linux GUI dependencies
         if: runner.os == 'Linux'
@@ -272,12 +440,97 @@ jobs:
           name: gui-${{ matrix.label }}
           path: release/*
 
+  docker:
+    name: Docker Multi-Arch
+    needs:
+      - meta
+      - build-cli
+    if: needs.meta.outputs.push_docker == 'true' && secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            app/frontend/node_modules
+          key: docker-bun-${{ hashFiles('app/frontend/bun.lock', 'app/frontend/package.json') }}
+          restore-keys: |
+            docker-bun-
+
+      - name: Install frontend dependencies
+        working-directory: app/frontend
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend dist
+        working-directory: app/frontend
+        run: bun run build
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cli-linux-*
+          path: release
+          merge-multiple: true
+
+      - name: Prepare Docker build context
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .docker-release
+          ctx=".docker-release/multiarch"
+          mkdir -p "${ctx}/docker/app/frontend" "${ctx}/docker/bin"
+          cp Dockerfile docker-entrypoint.sh config.yml "${ctx}/"
+          cp -R app/frontend/dist "${ctx}/docker/app/frontend/dist"
+          for label in linux-amd64 linux-386 linux-arm64 linux-arm7 linux-arm6 linux-ppc64le linux-riscv64; do
+            mkdir -p "${ctx}/docker/bin/${label}"
+            unzip -q "release/ikuai-bypass-${label}.zip" -d "${ctx}/unpack-${label}"
+            cp "${ctx}/unpack-${label}/ikuai-bypass" "${ctx}/docker/bin/${label}/ikuai-bypass"
+            chmod +x "${ctx}/docker/bin/${label}/ikuai-bypass"
+          done
+          chmod +x "${ctx}/docker-entrypoint.sh"
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: docker_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=raw,value=${{ needs.meta.outputs.version }}
+            type=raw,value=latest,enable=${{ needs.meta.outputs.docker_latest == 'true' }}
+
+      - name: Build and push single-tag multi-arch image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./.docker-release/multiarch
+          file: ./.docker-release/multiarch/Dockerfile
+          platforms: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/riscv64
+          push: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
+          cache-from: type=gha,scope=docker-multiarch
+          cache-to: type=gha,mode=max,scope=docker-multiarch
+
   publish:
     name: Publish Release
-    runs-on: ubuntu-latest
     needs:
+      - meta
       - build-cli
       - build-gui
+    if: needs.meta.outputs.publish_release == 'true'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -293,5 +546,8 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.meta.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
           files: release/*
           generate_release_notes: true
+          prerelease: ${{ needs.meta.outputs.prerelease == 'true' }}

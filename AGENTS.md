@@ -66,3 +66,7 @@
 - 代码注释使用双语文本（中文 + English）
 - 注释优先解释为什么存在，再解释做了什么
 - UI 返回文案与 API 错误信息保持英文
+
+## CI 约束
+
+`.github/workflows/release.yml` 只允许 `tag push` 和 `workflow_dispatch` 触发，禁止恢复每日定时构建；手动发布或推送 Docker 时必须显式填写 `release_tag`。Tag 名包含 `test`、`rc`、`alpha`、`beta`、`pre`、`preview`、`dev`、`nightly` 时必须发布为 prerelease，否则发布为正式版并推送 Docker `latest`。

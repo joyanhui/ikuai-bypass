@@ -46,7 +46,14 @@ pub async fn run_update_by_module(
 ) -> Result<(), UpdateError> {
     let params = resolve_login_params(cfg, cli_login)?;
     let api = ikuai::IKuaiClient::new(params.base_url.to_string())?;
+
+    let auth = Logger::new("AUTH:登录认证", Arc::clone(&sink));
+    auth.info(
+        "LOGIN:开始登录",
+        format!("Logging in to iKuai: {}", params.base_url),
+    );
     api.login(&params.username, &params.password).await?;
+    auth.success("LOGIN:登录成功", "Login succeeded");
 
     let sys = Logger::new("SYS:系统组件", Arc::clone(&sink));
     match module {
@@ -248,7 +255,18 @@ async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Ve
             format!("http.get '{}' proxy '{}'", original_url, proxy),
         );
     }
-    let resp = reqwest::get(full)
+
+    // 避免远程资源不可达时无限期等待。
+    // Avoid hanging forever on remote resources.
+    let client = reqwest::Client::builder()
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(120))
+        .build()
+        .map_err(|e| UpdateError::Download(e.to_string()))?;
+
+    let resp = client
+        .get(full)
+        .send()
         .await
         .map_err(|e| UpdateError::Download(e.to_string()))?;
     if !resp.status().is_success() {

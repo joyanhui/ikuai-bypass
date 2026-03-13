@@ -37,7 +37,10 @@ let monacoLoading: Promise<void> | null = null;
 
 const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
-const MODAL_IDS = ['basicConfigModal', 'remoteConfigModal', 'ruleEditorModal'] as const;
+const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal'] as const;
+
+let configMissingDetected = false;
+let configMissingPrompted = false;
 
 const getErrorMessage = (err: unknown): string => {
   if (typeof err === 'string') return err;
@@ -101,6 +104,142 @@ const showToast = (message: string, duration = 2000) => {
 };
 
 // ============================================
+// GitHub Proxy (ghproxy) 快速选择
+// ============================================
+const DEFAULT_REMOTE_TEMPLATE_URL =
+  'https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config.yml';
+
+const COMMON_GITHUB_PROXIES = [
+  'https://gh-proxy.com/',
+  'https://ghproxy.net/',
+  'https://ghproxy.vip/',
+  'https://github.akams.cn/',
+  'https://gh.llkk.cc/',
+  'https://ghproxy.wujiyan.cc/',
+] as const;
+
+const ghProxyPickerRefresh = new Map<string, () => void>();
+
+const normalizeGhProxy = (proxy: string): string => {
+  const p = proxy.trim();
+  if (!p) return '';
+  return p.endsWith('/') ? p : p + '/';
+};
+
+const isGithubUrlForProxy = (url: string): boolean => {
+  const u = url.trim();
+  return u.startsWith('https://raw.githubusercontent.com/') || u.startsWith('https://github.com/');
+};
+
+const applyGhProxy = (proxy: string, url: string): string => {
+  const p = normalizeGhProxy(proxy);
+  if (!p) return url;
+  return p + url;
+};
+
+const uniqueStrings = (items: string[]): string[] => {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  let hasEmpty = false;
+  for (const it of items) {
+    if (it === '' && !hasEmpty) {
+      hasEmpty = true;
+      out.push('');
+      continue;
+    }
+    const v = it.trim();
+    if (!v) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+};
+
+const buildGhProxyCandidates = (url: string, enabled: boolean, preferredProxy: string, fallbackProxy: string): string[] => {
+  if (!enabled) return [''];
+  if (!isGithubUrlForProxy(url)) return [''];
+
+  const list: string[] = [];
+  const p1 = normalizeGhProxy(preferredProxy);
+  const p2 = normalizeGhProxy(fallbackProxy);
+  if (p1) list.push(p1);
+  if (p2) list.push(p2);
+  list.push(...COMMON_GITHUB_PROXIES.map((p) => normalizeGhProxy(p)));
+
+  const proxies = uniqueStrings(list);
+  // 最后追加一次直连尝试，避免某些环境下代理不可用。
+  // Add direct attempt as a last resort.
+  proxies.push('');
+  return proxies;
+};
+
+const mountGhProxyQuickPick = (inputId: string, containerId: string) => {
+  const input = document.getElementById(inputId) as HTMLInputElement | null;
+  const container = document.getElementById(containerId);
+  if (!input || !container) return;
+
+  const proxies = [...COMMON_GITHUB_PROXIES];
+  const normalize = (v: string) => normalizeGhProxy(v);
+
+  container.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'flex flex-wrap items-center gap-2';
+
+  const syncActive = () => {
+    const current = normalize(input.value);
+    wrap.querySelectorAll<HTMLButtonElement>('button[data-proxy]')?.forEach((btn) => {
+      const val = normalize(btn.dataset.proxy || '');
+      const active = !!val && val === current;
+      btn.classList.toggle('bg-primary-100', active);
+      btn.classList.toggle('text-primary-700', active);
+      btn.classList.toggle('dark:bg-primary-900/30', active);
+      btn.classList.toggle('dark:text-primary-300', active);
+      btn.classList.toggle('bg-white/70', !active);
+      btn.classList.toggle('text-gray-700', !active);
+      btn.classList.toggle('dark:bg-gray-800/50', !active);
+      btn.classList.toggle('dark:text-gray-300', !active);
+    });
+  };
+
+  ghProxyPickerRefresh.set(inputId, syncActive);
+
+  const mkTag = (proxy: string) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.proxy = proxy;
+    btn.className =
+      'rounded-full border border-gray-200 px-3 py-1 text-xs font-medium transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800';
+    btn.textContent = proxy.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    btn.addEventListener('click', () => {
+      input.value = proxy;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      syncActive();
+    });
+    return btn;
+  };
+
+  proxies.forEach((p) => wrap.appendChild(mkTag(p)));
+
+  const help = document.createElement('button');
+  help.type = 'button';
+  help.className =
+    'ml-1 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/70 text-xs font-bold text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800';
+  help.textContent = '?';
+  help.title = '获取更多可用 ghproxy 站点';
+  help.addEventListener('click', () => {
+    showToast('提示：可用 Bing/Google 搜索关键词 ghproxy 获取更多可用站点', 3200);
+  });
+  wrap.appendChild(help);
+
+  container.appendChild(wrap);
+  input.addEventListener('input', () => syncActive());
+  syncActive();
+};
+
+// ============================================
 // Modal 系统
 // ============================================
 const openModal = (modalId: string) => {
@@ -138,6 +277,18 @@ const initModalEscape = () => {
       closeModal(visible);
     }
   });
+};
+
+const setRemoteTemplateTip = (message: string | null) => {
+  const el = document.getElementById('remoteTemplateTip');
+  if (!el) return;
+  if (!message) {
+    el.textContent = '';
+    el.classList.add('hidden');
+    return;
+  }
+  el.textContent = message;
+  el.classList.remove('hidden');
 };
 
 const loadMonaco = async () => {
@@ -628,21 +779,94 @@ const initQuickActions = () => {
 // ============================================
 // 配置 Modal
 // ============================================
+const initGhProxyPickers = () => {
+  mountGhProxyQuickPick('cfgGhProxy', 'cfgGhProxyQuickPick');
+  mountGhProxyQuickPick('remoteGhProxy', 'remoteGhProxyQuickPick');
+
+  const use = document.getElementById('remoteUseGhProxy') as HTMLInputElement | null;
+  const section = document.getElementById('remoteGhProxySection');
+  const proxyInput = document.getElementById('remoteGhProxy') as HTMLInputElement | null;
+
+  const apply = () => {
+    if (!use || !section) return;
+    section.classList.toggle('hidden', !use.checked);
+  };
+
+  if (use) {
+    use.checked = loadJson<boolean>('ikb_remote_use_ghproxy', false);
+    use.addEventListener('change', () => {
+      saveJson('ikb_remote_use_ghproxy', use.checked);
+      apply();
+    });
+  }
+
+  if (proxyInput) {
+    const saved = loadJson<string>('ikb_remote_ghproxy', '');
+    if (!proxyInput.value.trim() && saved) proxyInput.value = saved;
+    proxyInput.addEventListener('input', () => {
+      saveJson('ikb_remote_ghproxy', proxyInput.value);
+    });
+  }
+
+  apply();
+};
+
+const initBasicConfigAccordion = () => {
+  const btn = document.getElementById('btnToggleBasicConfig') as HTMLButtonElement | null;
+  const panel = document.getElementById('basicConfigAccordionPanel');
+  const label = document.getElementById('basicConfigToggleLabel');
+  const icon = document.getElementById('basicConfigToggleIcon');
+  if (!btn || !panel) return;
+
+  let open = loadJson<boolean>('ikb_basic_config_open', false);
+
+  const setPanelDisabled = (disabled: boolean) => {
+    panel
+      .querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, textarea, select')
+      .forEach((el) => {
+        el.disabled = disabled;
+      });
+  };
+
+  const apply = (next: boolean) => {
+    open = next;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    panel.classList.toggle('grid-rows-[1fr]', open);
+    panel.classList.toggle('grid-rows-[0fr]', !open);
+    panel.classList.toggle('opacity-100', open);
+    panel.classList.toggle('opacity-0', !open);
+    panel.classList.toggle('pointer-events-none', !open);
+    if (label) label.textContent = open ? '收起' : '展开';
+    if (icon) icon.classList.toggle('rotate-180', open);
+    setPanelDisabled(!open);
+
+    if (open) {
+      bindConfigFields();
+      ghProxyPickerRefresh.get('cfgGhProxy')?.();
+    }
+  };
+
+  apply(open);
+  btn.addEventListener('click', () => {
+    apply(!open);
+    saveJson('ikb_basic_config_open', open);
+  });
+};
+
 const initConfigModal = () => {
-  document.getElementById('btnOpenBasicConfig')?.addEventListener('click', () => {
-    openModal('basicConfigModal');
-    bindConfigFields();
-  });
+  initGhProxyPickers();
 
-  document.getElementById('btnCloseBasicConfig')?.addEventListener('click', () => {
-    closeModal('basicConfigModal');
-  });
-
-  document.getElementById('basicConfigBackdrop')?.addEventListener('click', () => {
-    closeModal('basicConfigModal');
-  });
+  initBasicConfigAccordion();
 
   document.getElementById('btnOpenRemoteConfig')?.addEventListener('click', () => {
+    setRemoteTemplateTip(configMissingDetected ? '检测到当前配置缺失/为空，建议通过远程载入模板初始化，然后修改 iKuai 连接信息并保存。' : null);
+
+    const remoteProxy = document.getElementById('remoteGhProxy') as HTMLInputElement | null;
+    if (remoteProxy && !remoteProxy.value.trim() && state.cfg.githubProxy.trim()) {
+      remoteProxy.value = state.cfg.githubProxy.trim();
+      remoteProxy.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     openModal('remoteConfigModal');
   });
   document.getElementById('btnCloseRemoteConfig')?.addEventListener('click', () => {
@@ -657,8 +881,8 @@ const initConfigModal = () => {
   document.getElementById('btnCancelRuleEditor')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('ruleEditorBackdrop')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('btnResetRemote')?.addEventListener('click', () => {
-    const def = 'https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config.yml';
-    const input = document.getElementById('remoteUrl') as HTMLInputElement;
+    const def = DEFAULT_REMOTE_TEMPLATE_URL;
+    const input = document.getElementById('remoteUrl') as HTMLInputElement | null;
     if (input) input.value = def;
     saveJson('ikb_remote_url', def);
     showToast('已恢复默认地址');
@@ -725,6 +949,7 @@ const bindConfigFields = () => {
   setValue('cfgUser', state.cfg.username);
   setValue('cfgPass', state.cfg.password);
   setValue('cfgGhProxy', state.cfg.githubProxy);
+  ghProxyPickerRefresh.get('cfgGhProxy')?.();
   setValue('cfgRetryWait', state.cfg.addErrRetryWait);
   setValue('cfgAddWait', state.cfg.addWait);
   setValue('cfgCronInline', state.cfg.cron);
@@ -744,7 +969,7 @@ const bindConfigFields = () => {
   setValue('cfgMaxDomain', String(state.cfg.maxNumberOfOneRecords.Domain));
   
   // 远程 URL
-  const savedUrl = loadJson('ikb_remote_url', 'https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/config.yml');
+  const savedUrl = loadJson('ikb_remote_url', DEFAULT_REMOTE_TEMPLATE_URL);
   setValue('remoteUrl', savedUrl);
   
   // 渲染列表
@@ -823,34 +1048,69 @@ const saveConfig = async (withComments: boolean) => {
 };
 
 const loadRemoteConfig = async () => {
-  const input = document.getElementById('remoteUrl') as HTMLInputElement;
+  const input = document.getElementById('remoteUrl') as HTMLInputElement | null;
   const hint = document.getElementById('remoteHint');
-  const url = input?.value.trim();
-  
+  const url = input?.value.trim() || '';
+
   if (!url) {
     if (hint) hint.textContent = '请输入 URL';
     return;
   }
-  
+
+  const useGhProxy = (document.getElementById('remoteUseGhProxy') as HTMLInputElement | null)?.checked || false;
+  const ghProxyInput = document.getElementById('remoteGhProxy') as HTMLInputElement | null;
+  const preferredProxy = ghProxyInput?.value || '';
+
+  const candidates = buildGhProxyCandidates(url, useGhProxy, preferredProxy, state.cfg.githubProxy);
+  const isTauri = await bridge.isTauriReady();
+
   if (hint) hint.textContent = '正在加载...';
-  
+
   try {
-    let finalUrl = url;
-    const proxy = state.cfg.githubProxy.trim();
-    if (proxy && url.startsWith('https://raw.githubusercontent.com/')) {
-      finalUrl = proxy.endsWith('/') ? proxy + url : proxy + '/' + url;
+    let lastErr: unknown = null;
+    for (let i = 0; i < candidates.length; i++) {
+      const proxy = candidates[i];
+      const label = proxy ? proxy : '直连';
+      if (hint) {
+        hint.textContent = candidates.length > 1 ? `正在尝试 (${i + 1}/${candidates.length}): ${label}` : '正在加载...';
+      }
+
+      try {
+        const text = isTauri
+          ? await bridge.fetchRemoteConfig(url, proxy)
+          : await (async () => {
+              const finalUrl = proxy && isGithubUrlForProxy(url) ? applyGhProxy(proxy, url) : url;
+              const r = await fetch(finalUrl);
+              if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+              return await r.text();
+            })();
+
+        // 成功：写入 rawYaml，并在启用代理时同步覆盖 github-proxy 字段
+        state.rawYaml = text;
+        if (proxy && isGithubUrlForProxy(url)) {
+          const normalized = normalizeGhProxy(proxy);
+          state.rawYaml = updateYamlPaths(state.rawYaml, [{ path: ['github-proxy'], value: normalized }]);
+          if (ghProxyInput) {
+            ghProxyInput.value = normalized;
+            ghProxyInput.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+
+        applyStateFromRawYaml();
+        bindConfigFields();
+        renderCmd();
+        refreshEditorFromRawYaml();
+        saveJson('ikb_remote_url', url);
+        if (hint) hint.textContent = '加载成功';
+        setRemoteTemplateTip(null);
+        showToast('远程配置已加载');
+        return;
+      } catch (err) {
+        lastErr = err;
+      }
     }
-    
-    const text = bridge.isTauri() 
-      ? await bridge.fetchRemoteConfig(finalUrl, proxy)
-      : await (await fetch(finalUrl)).text();
-    
-    state.rawYaml = text;
-    applyStateFromRawYaml();
-    bindConfigFields();
-    saveJson('ikb_remote_url', url);
-    if (hint) hint.textContent = '加载成功';
-    showToast('远程配置已加载');
+
+    throw lastErr || new Error('加载失败');
   } catch (err) {
     if (hint) hint.textContent = '加载失败: ' + getErrorMessage(err);
     showToast('加载失败');
@@ -1573,12 +1833,15 @@ const renderPresets = () => {
 const loadBackend = async () => {
   try {
     const meta = await bridge.getConfigMeta();
+    const metaObj = meta as Record<string, unknown>;
+    const rawYamlFromBackend = typeof metaObj.raw_yaml === 'string' ? metaObj.raw_yaml : '';
+    configMissingDetected = !rawYamlFromBackend.trim();
     const parsed = fromBackendMeta(meta);
     
     state.cfg = parsed.cfg;
     state.comments = parsed.comments;
     state.confPath = parsed.confPath;
-    state.rawYaml = meta.raw_yaml || yamlDumpWithComments(toBackendPayload(parsed.cfg), parsed.comments);
+    state.rawYaml = rawYamlFromBackend || yamlDumpWithComments(toBackendPayload(parsed.cfg), parsed.comments);
     applyStateFromRawYaml();
     bindConfigFields();
     renderCmd();
@@ -1590,6 +1853,32 @@ const loadBackend = async () => {
     // 更新副标题
     const subtitle = document.getElementById('subtitle');
     if (subtitle) subtitle.textContent = (await bridge.isTauriReady()) ? 'Tauri App' : 'WebUI';
+
+    // 配置文件缺失/为空时，提示用户通过远程载入模板初始化。
+    // When config is missing/empty, guide user to load a template remotely.
+    if (configMissingDetected && (await bridge.isTauriReady()) && !configMissingPrompted) {
+      configMissingPrompted = true;
+      setRemoteTemplateTip('检测到配置文件不存在或为空，是否通过远程配置载入一个模板？载入后请修改 iKuai 地址/用户名/密码，并点击保存配置。');
+      const remoteUrlInput = document.getElementById('remoteUrl') as HTMLInputElement | null;
+      if (remoteUrlInput && !remoteUrlInput.value.trim()) {
+        remoteUrlInput.value = DEFAULT_REMOTE_TEMPLATE_URL;
+      }
+
+      // 首次提示时默认打开 ghproxy 开关，减少直连失败概率。
+      // Enable ghproxy by default on first prompt.
+      try {
+        if (localStorage.getItem('ikb_remote_use_ghproxy') == null) {
+          const use = document.getElementById('remoteUseGhProxy') as HTMLInputElement | null;
+          if (use) {
+            use.checked = true;
+            use.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        }
+      } catch {
+        // ignore
+      }
+      openModal('remoteConfigModal');
+    }
     
   } catch (err) {
     showToast('加载配置失败: ' + getErrorMessage(err));

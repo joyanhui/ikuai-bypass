@@ -195,7 +195,9 @@ async fn fetch_remote_config(url: String, github_proxy: String) -> Result<String
     }
     let mut final_url = url.to_string();
     let proxy = github_proxy.trim();
-    if !proxy.is_empty() && url.starts_with("https://raw.githubusercontent.com/") {
+    if !proxy.is_empty()
+        && (url.starts_with("https://raw.githubusercontent.com/") || url.starts_with("https://github.com/"))
+    {
         final_url = if proxy.ends_with('/') {
             format!("{}{}", proxy, url)
         } else {
@@ -205,6 +207,7 @@ async fn fetch_remote_config(url: String, github_proxy: String) -> Result<String
 
     let client = reqwest::Client::builder()
         .user_agent("ikb-app")
+        .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| e.to_string())?;
     let resp = client.get(final_url).send().await.map_err(|e| e.to_string())?;
@@ -272,29 +275,6 @@ pub fn run() {
             } else {
                 ikb_core::paths::default_config_path()
             };
-
-            // 首次启动时自动生成模板配置，避免空配置导致无法运行。
-            // Create a template config on first launch to avoid empty config on mobile.
-            if is_mobile && !config_path.exists() {
-                let mut tpl = Config {
-                    ikuai_url: String::new(),
-                    username: String::new(),
-                    password: String::new(),
-                    cron: "0 7 * * *".to_string(),
-                    add_err_retry_wait: std::time::Duration::from_secs(10),
-                    add_wait: std::time::Duration::from_secs(1),
-                    github_proxy: String::new(),
-                    custom_isp: Vec::new(),
-                    stream_domain: Vec::new(),
-                    ip_group: Vec::new(),
-                    ipv6_group: Vec::new(),
-                    stream_ipport: Vec::new(),
-                    webui: Default::default(),
-                    max_number_of_one_records: Default::default(),
-                };
-                tpl.apply_defaults();
-                let _ = tpl.save_to_path_with_comments(&config_path, true);
-            }
 
             let state = app.state::<AppState>();
             {

@@ -91,75 +91,101 @@ fn main() {
         }
         "cron" => {
             println!("[MODE:运行模式] Cron mode - executing once then entering scheduled mode");
-            let cfg_guard = config.blocking_lock();
-            match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
-                Ok(p) => {
-                    if p.source == ikb_core::session::LoginSource::Cli {
-                        println!("[AUTH:登录认证] Logging in using command line parameters");
-                    } else if p.source == ikb_core::session::LoginSource::Gateway {
-                        println!(
-                            "[SYS:网关检测] Using default gateway address: {}",
-                            p.base_url
-                        );
+            let (cron_expr, webui_enable, webui_port) = {
+                let cfg_guard = config.blocking_lock();
+                match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
+                    Ok(p) => {
+                        if p.source == ikb_core::session::LoginSource::Cli {
+                            println!("[AUTH:登录认证] Logging in using command line parameters");
+                        } else if p.source == ikb_core::session::LoginSource::Gateway {
+                            println!(
+                                "[SYS:网关检测] Using default gateway address: {}",
+                                p.base_url
+                            );
+                        }
+                    }
+                    Err(_) => {
+                        eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
+                        std::process::exit(2);
                     }
                 }
-                Err(_) => {
-                    eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
-                    std::process::exit(2);
-                }
-            }
-            if cfg_guard.webui.enable {
+
                 let port = cfg_guard.webui.port.trim().to_string();
                 let port = if port.is_empty() { "8080".to_string() } else { port };
-                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port) {
-                    eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                (cfg_guard.cron.to_string(), cfg_guard.webui.enable, port)
+            };
+
+            // 注意：启动 WebUI 时不能持有 config 锁，否则会死锁。
+            // NOTE: do not hold config lock while starting WebUI (avoid deadlock).
+            if webui_enable {
+                if let Err(e) = web::start_web_server(
+                    config_path.to_path_buf(),
+                    Arc::clone(&config),
+                    webui_port,
+                ) {
+                    eprintln!(
+                        "[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}",
+                        e
+                    );
                     std::process::exit(1);
                 }
             }
-            if cfg_guard.cron.trim().is_empty() {
+
+            if cron_expr.trim().is_empty() {
                 println!("[CRON:定时任务] Cron configuration is empty, exiting...");
                 return;
             }
 
-            let cron_expr = cfg_guard.cron.to_string();
-            drop(cfg_guard);
             run_update_once(&config, &args.ikuai_login_info, &args.module);
             run_cron_loop(&config, &args.ikuai_login_info, &cron_expr, &args.module, &stop);
         }
         "cronAft" => {
             println!("[MODE:运行模式] CronAft mode - scheduled execution only");
-            let cfg_guard = config.blocking_lock();
-            match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
-                Ok(p) => {
-                    if p.source == ikb_core::session::LoginSource::Cli {
-                        println!("[AUTH:登录认证] Logging in using command line parameters");
-                    } else if p.source == ikb_core::session::LoginSource::Gateway {
-                        println!(
-                            "[SYS:网关检测] Using default gateway address: {}",
-                            p.base_url
-                        );
+            let (cron_expr, webui_enable, webui_port) = {
+                let cfg_guard = config.blocking_lock();
+                match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
+                    Ok(p) => {
+                        if p.source == ikb_core::session::LoginSource::Cli {
+                            println!("[AUTH:登录认证] Logging in using command line parameters");
+                        } else if p.source == ikb_core::session::LoginSource::Gateway {
+                            println!(
+                                "[SYS:网关检测] Using default gateway address: {}",
+                                p.base_url
+                            );
+                        }
+                    }
+                    Err(_) => {
+                        eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
+                        std::process::exit(2);
                     }
                 }
-                Err(_) => {
-                    eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
-                    std::process::exit(2);
-                }
-            }
-            if cfg_guard.webui.enable {
+
                 let port = cfg_guard.webui.port.trim().to_string();
                 let port = if port.is_empty() { "8080".to_string() } else { port };
-                if let Err(e) = web::start_web_server(config_path.to_path_buf(), Arc::clone(&config), port) {
-                    eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                (cfg_guard.cron.to_string(), cfg_guard.webui.enable, port)
+            };
+
+            // 注意：启动 WebUI 时不能持有 config 锁，否则会死锁。
+            // NOTE: do not hold config lock while starting WebUI (avoid deadlock).
+            if webui_enable {
+                if let Err(e) = web::start_web_server(
+                    config_path.to_path_buf(),
+                    Arc::clone(&config),
+                    webui_port,
+                ) {
+                    eprintln!(
+                        "[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}",
+                        e
+                    );
                     std::process::exit(1);
                 }
             }
-            if cfg_guard.cron.trim().is_empty() {
+
+            if cron_expr.trim().is_empty() {
                 println!("[CRON:定时任务] Cron configuration is empty, exiting...");
                 return;
             }
 
-            let cron_expr = cfg_guard.cron.to_string();
-            drop(cfg_guard);
             run_cron_loop(&config, &args.ikuai_login_info, &cron_expr, &args.module, &stop);
         }
         "nocron" | "once" | "1" => {
@@ -258,8 +284,10 @@ fn run_update_once(cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>, cli_
         println!("{}", renderer.render(&rec));
     });
     let res = rt.block_on(async {
-        let cfg_guard = cfg.lock().await;
-        ikb_core::update::run_update_by_module(&cfg_guard, cli_login, module, sink).await
+        // 更新期间避免长时间持有配置锁：配置只读，拷贝一份用于本次任务。
+        // Avoid holding config lock across awaits: clone config for this run.
+        let cfg_snapshot = { cfg.lock().await.clone() };
+        ikb_core::update::run_update_by_module(&cfg_snapshot, cli_login, module, sink).await
     });
     if let Err(e) = res {
         eprintln!("[UPDATE:更新失败] {}", e);
@@ -303,6 +331,11 @@ fn run_cron_loop(
             Some(t) => t,
             None => return,
         };
+
+        println!(
+            "[CRON:定时任务] Next run at: {}",
+            next.format("%Y/%m/%d %H:%M:%S")
+        );
 
         while !stop.load(Ordering::SeqCst) {
             let now = chrono::Local::now();

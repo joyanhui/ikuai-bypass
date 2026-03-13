@@ -1,4 +1,5 @@
 import { bridge } from '../lib/bridge.ts';
+import type { RuntimeStatus } from '../lib/bridge.ts';
 import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComments, yamlParse } from '../lib/config_model.ts';
 import type { UiConfig } from '../lib/config_model.ts';
 import { loadJson, saveJson } from '../lib/storage.ts';
@@ -21,6 +22,7 @@ const state = {
   selectedConfigTab: 'visual' as 'visual' | 'raw',
   isRunning: false,
   isCronRunning: false,
+  lastRuntimeStatus: null as RuntimeStatus | null,
   unlistenLogs: null as (() => void) | null,
   streamReconnectTimer: null as ReturnType<typeof setTimeout> | null,
   ruleEditor: null as null | {
@@ -37,7 +39,7 @@ let monacoLoading: Promise<void> | null = null;
 
 const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
-const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal'] as const;
+const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal'] as const;
 
 let configMissingDetected = false;
 let configMissingPrompted = false;
@@ -310,6 +312,74 @@ const initModalEscape = () => {
   });
 };
 
+// ============================================
+// 停止定时任务 Modal
+// ============================================
+const syncStopCronModalFromStatus = (st: RuntimeStatus | null) => {
+  const moduleEl = document.getElementById('stopCronModule');
+  const exprEl = document.getElementById('stopCronExpr');
+  const nextEl = document.getElementById('stopCronNext');
+  const hintEl = document.getElementById('stopCronHint');
+
+  const safeText = (v: string | null | undefined) => {
+    const s = (v || '').trim();
+    return s ? s : '--';
+  };
+
+  if (moduleEl) moduleEl.textContent = safeText(st?.module);
+  if (exprEl) exprEl.textContent = safeText(st?.cron_expr);
+  if (nextEl) nextEl.textContent = safeText(st?.next_run_at);
+
+  if (hintEl) {
+    if (st?.running) {
+      hintEl.textContent =
+        '当前任务正在执行中。本操作仅停止定时任务，不会中断当前执行；停止后计划任务将不会再按 Cron 自动执行。若要立刻切换到 once / clean，请先在主界面点击“停止执行”中断当前任务。';
+    } else {
+      hintEl.textContent =
+        '停止后可能会导致计划任务不会再执行。停止后你可以切换到 once / clean 模式执行；如需再次启动定时任务，请选择 cron 或 cronAft 模式并点击启动。';
+    }
+  }
+};
+
+const openStopCronModal = async () => {
+  try {
+    const st = await bridge.runtimeStatus();
+    state.lastRuntimeStatus = st;
+    syncStopCronModalFromStatus(st);
+    openModal('stopCronModal');
+  } catch (err) {
+    showToast('无法获取运行状态: ' + getErrorMessage(err), 3200);
+  }
+};
+
+const initStopCronModal = () => {
+  const close = () => closeModal('stopCronModal');
+
+  document.getElementById('stopCronBackdrop')?.addEventListener('click', close);
+  document.getElementById('btnStopCronCancelTop')?.addEventListener('click', close);
+  document.getElementById('btnStopCronCancel')?.addEventListener('click', close);
+
+  const confirmBtn = document.getElementById('btnStopCronConfirm') as HTMLButtonElement | null;
+  confirmBtn?.addEventListener('click', async () => {
+    if (!confirmBtn) return;
+    const old = confirmBtn.textContent;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '停止中...';
+    try {
+      await bridge.runtimeCronStop();
+      state.isCronRunning = false;
+      showToast('定时任务已停止');
+      close();
+      void updateStatus();
+    } catch (err) {
+      showToast('停止失败: ' + getErrorMessage(err), 3200);
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = old || '停止定时任务';
+    }
+  });
+};
+
 const setRemoteTemplateTip = (message: string | null) => {
   const el = document.getElementById('remoteTemplateTip');
   if (!el) return;
@@ -541,6 +611,7 @@ const updateStatus = async () => {
     const st = await bridge.runtimeStatus();
     state.isRunning = st.running;
     state.isCronRunning = st.cron_running;
+    state.lastRuntimeStatus = st;
     
     const badge = document.getElementById('statusBadge');
     const mainStatus = document.getElementById('mainStatus');
@@ -567,7 +638,7 @@ const updateStatus = async () => {
     if (st.running) {
       subStatus.textContent = `正在执行模块: ${st.module || state.selectedModule}`;
     } else if (st.cron_running && st.next_run_at) {
-      subStatus.textContent = `下次执行: ${st.next_run_at}`;
+      subStatus.textContent = `定时模块: ${st.module || state.selectedModule} / 下次执行: ${st.next_run_at}`;
     } else if (st.last_run_at) {
       subStatus.textContent = `上次执行: ${st.last_run_at}`;
     } else {
@@ -576,8 +647,9 @@ const updateStatus = async () => {
     
     // 更新 Cron 按钮状态
     updateCronButton();
-    
+     
   } catch (e) {
+    state.lastRuntimeStatus = null;
     const badge = document.getElementById('statusBadge');
     const mainStatus = document.getElementById('mainStatus');
     const subStatus = document.getElementById('subStatus');
@@ -600,7 +672,7 @@ const updateCronButton = () => {
   if (!runBtn) return;
 
   if (state.isRunning || state.isCronRunning) {
-    runBtn.textContent = state.isCronRunning ? '停止任务' : '停止执行';
+    runBtn.textContent = state.isCronRunning ? '停止定时任务' : '停止执行';
     runBtn.dataset.action = 'stop';
     runBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700', 'shadow-primary-600/30');
     runBtn.classList.add('bg-red-500', 'hover:bg-red-600', 'shadow-red-500/30');
@@ -749,6 +821,10 @@ const initQuickActions = () => {
     try {
       const action = (document.getElementById('btnRunAction') as HTMLButtonElement | null)?.dataset.action || 'run';
       if (action === 'stop') {
+        if (state.isCronRunning) {
+          await openStopCronModal();
+          return;
+        }
         await bridge.runtimeStop();
         showToast('任务已停止');
         return;
@@ -1974,6 +2050,7 @@ const init = async () => {
   
   // 初始化 Modal
   initConfigModal();
+  initStopCronModal();
   initCmdModal();
   initModalEscape();
   

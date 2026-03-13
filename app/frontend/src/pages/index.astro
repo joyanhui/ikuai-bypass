@@ -521,6 +521,41 @@ import '../styles/global.css';
       </div>
     </div>
 
+    <div id="stopCronModal" class="fixed inset-0 z-50 hidden">
+      <div id="stopCronBackdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity"></div>
+      <div id="stopCronContent" class="absolute inset-x-4 top-28 mx-auto max-w-xl translate-y-6 overflow-hidden rounded-3xl bg-gray-50 shadow-2xl transition-transform dark:bg-gray-950">
+        <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">停止定时任务</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">停止后，计划任务将不会再按 Cron 自动执行。</p>
+          </div>
+          <button id="btnStopCronCancelTop" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="关闭">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <div class="font-semibold">注意</div>
+            <div class="mt-2 leading-relaxed" id="stopCronHint">停止后可能会导致计划任务不会再执行。停止后你可以切换到 once / clean 模式执行；如需再次启动定时任务，请选择 cron 或 cronAft 模式并点击启动。</div>
+          </div>
+          <div class="mt-5 rounded-2xl bg-gray-100/60 p-4 text-sm text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
+            <div class="font-medium text-gray-900 dark:text-white">当前状态</div>
+            <div class="mt-2 grid gap-2 sm:grid-cols-2">
+              <div>模块: <span class="font-mono" id="stopCronModule">--</span></div>
+              <div>Cron: <span class="font-mono" id="stopCronExpr">--</span></div>
+              <div class="sm:col-span-2">下次执行: <span class="font-mono" id="stopCronNext">--</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
+          <button id="btnStopCronCancel" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">取消</button>
+          <button id="btnStopCronConfirm" class="rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition hover:bg-red-600">停止定时任务</button>
+        </div>
+      </div>
+    </div>
+
     <div id="toast" class="pointer-events-none fixed bottom-24 left-1/2 z-50 -translate-x-1/2 translate-y-4 opacity-0 transition-all duration-300">
       <div class="rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white shadow-xl dark:bg-white dark:text-gray-900">
         <span id="toastText">操作成功</span>

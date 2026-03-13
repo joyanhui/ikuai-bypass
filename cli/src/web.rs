@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::net::TcpListener;
 
 use axum::extract::State;
 use axum::http::{header, StatusCode};
@@ -21,6 +20,8 @@ struct AppState {
     config_path: PathBuf,
     config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
     runtime: Arc<RuntimeService>,
+    cli_login: String,
+    allow_save_override: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,22 +70,20 @@ struct TestGithubProxyRequest {
     github_proxy: String,
 }
 
-pub fn start_web_server(
+pub async fn start_web_server(
     config_path: PathBuf,
     config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    runtime: Arc<RuntimeService>,
+    cli_login: String,
     port: String,
+    allow_save_override: bool,
 ) -> Result<(), String> {
-    let default_cron = config.blocking_lock().cron.to_string();
-    let runtime = Arc::new(RuntimeService::new(
-        Arc::clone(&config),
-        String::new(),
-        default_cron,
-        "ispdomain".to_string(),
-    ));
     let state = Arc::new(AppState {
         config_path,
         config,
         runtime,
+        cli_login,
+        allow_save_override,
     });
 
     let api = Router::new()
@@ -118,29 +117,9 @@ pub fn start_web_server(
     };
 
     let addr = format!("0.0.0.0:{}", port);
-    let listener = TcpListener::bind(&addr).map_err(|e| e.to_string())?;
-    listener
-        .set_nonblocking(true)
-        .map_err(|e| e.to_string())?;
-
-    std::thread::spawn(move || {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("[ERR:启动失败] Failed to create tokio runtime: {}", e);
-                return;
-            }
-        };
-        rt.block_on(async move {
-            let listener = match tokio::net::TcpListener::from_std(listener) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("[ERR:启动失败] Failed to init tokio listener: {}", e);
-                    return;
-                }
-            };
-            let _ = axum::serve(listener, app).await;
-        });
+    let listener = tokio::net::TcpListener::bind(&addr).await.map_err(|e| e.to_string())?;
+    tokio::spawn(async move {
+        let _ = axum::serve(listener, app).await;
     });
 
     println!("[WEB:服务启动] WebUI is available at http://0.0.0.0:{}", port);
@@ -220,7 +199,7 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
 }
 
 async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
-    let allow = state.config.lock().await.webui.enable;
+    let allow = state.allow_save_override || state.config.lock().await.webui.enable;
     if !allow {
         return (
             StatusCode::FORBIDDEN,
@@ -259,7 +238,7 @@ async fn api_save_raw_yaml(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SaveRawYamlRequest>,
 ) -> Response {
-    let allow = state.config.lock().await.webui.enable;
+    let allow = state.allow_save_override || state.config.lock().await.webui.enable;
     if !allow {
         return (
             StatusCode::FORBIDDEN,
@@ -498,13 +477,31 @@ struct CleanRequest {
     clean_tag: String,
 }
 
-async fn run_clean(config: &ikb_core::config::Config, clean_tag: String) -> Result<(), String> {
+async fn api_runtime_clean(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CleanRequest>,
+) -> Response {
+    // 避免在网络请求期间持有配置锁。
+    // Avoid holding config lock while doing network requests.
+    let cfg_snapshot = { state.config.lock().await.clone() };
+    let cli_login = state.cli_login.to_string();
+    match run_clean_with_cli_login(&cfg_snapshot, &cli_login, req.clean_tag).await {
+        Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, e).into_response(),
+    }
+}
+
+async fn run_clean_with_cli_login(
+    config: &ikb_core::config::Config,
+    cli_login: &str,
+    clean_tag: String,
+) -> Result<(), String> {
     let tag = clean_tag.trim().to_string();
     if tag.is_empty() {
         return Err("Clean mode requires clean_tag".to_string());
     }
 
-    let params = ikb_core::session::resolve_login_params(config, "")
+    let params = ikb_core::session::resolve_login_params(config, cli_login)
         .map_err(|_| "Invalid login parameters".to_string())?;
     let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string())
         .map_err(|e| e.to_string())?;
@@ -529,17 +526,6 @@ async fn run_clean(config: &ikb_core::config::Config, clean_tag: String) -> Resu
         .map_err(|e| e.to_string())?;
 
     Ok(())
-}
-
-async fn api_runtime_clean(
-    State(state): State<Arc<AppState>>,
-    Json(req): Json<CleanRequest>,
-) -> Response {
-    let cfg_guard = state.config.lock().await;
-    match run_clean(&cfg_guard, req.clean_tag).await {
-        Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, e).into_response(),
-    }
 }
 
 async fn api_runtime_logs(State(state): State<Arc<AppState>>, req: axum::http::Request<axum::body::Body>) -> Response {

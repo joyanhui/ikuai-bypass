@@ -167,10 +167,11 @@ impl RuntimeService {
     }
 
     pub async fn start_run_once(self: Arc<Self>, module: String) -> Result<bool, String> {
-        let module = if module.trim().is_empty() {
+        let input_module = module.trim().to_string();
+        let module = if input_module.is_empty() {
             self.inner.lock().await.module.to_string()
         } else {
-            module
+            input_module
         };
 
         let started = self
@@ -179,6 +180,13 @@ impl RuntimeService {
             .is_ok();
         if !started {
             return Ok(false);
+        }
+
+        // 将本次成功启动的 module 写回默认值，便于状态展示与后续“继续/重复执行”。
+        // Persist module as default only when we actually started.
+        {
+            let mut inner = self.inner.lock().await;
+            inner.module = module.to_string();
         }
 
         self.append_sys(LogLevel::Info, "TASK:任务启动", format!("module={}", module))
@@ -267,28 +275,33 @@ impl RuntimeService {
     }
 
     pub async fn start_cron(self: Arc<Self>, expr: String, module: String) -> Result<(), String> {
-        if expr.trim().is_empty() {
+        let expr = expr.trim().to_string();
+        let module = module.trim().to_string();
+        if expr.is_empty() {
             return Err("Cron expression is empty in config file".to_string());
         }
-        {
-            let inner = self.inner.lock().await;
-            if !inner.cron_expr.trim().is_empty() && expr != inner.cron_expr {
-                return Err("Cron expression must match config file".to_string());
-            }
-            if inner.cron_task.is_some() {
-                return Err("cron is already running".to_string());
-            }
-        }
-
         let schedule_expr = normalize_cron_expr_for_parser(&expr)?;
         let schedule = Schedule::from_str(&schedule_expr).map_err(|e| e.to_string())?;
-        let module = if module.trim().is_empty() {
+
+        let module = if module.is_empty() {
             self.inner.lock().await.module.to_string()
         } else {
             module
         };
 
+        {
+            // 启动成功前不修改状态，避免无效表达式污染 status()。
+            // Do not mutate state before we know the schedule is valid.
+            let mut inner = self.inner.lock().await;
+            if inner.cron_task.is_some() {
+                return Err("cron is already running".to_string());
+            }
+            inner.cron_expr = expr.to_string();
+            inner.module = module.to_string();
+        }
+
         let this = Arc::clone(&self);
+        let module_for_cron = module.to_string();
         let handle = tokio::spawn(async move {
             let mut upcoming = schedule.upcoming(Local);
             loop {
@@ -313,7 +326,9 @@ impl RuntimeService {
                     tokio::time::sleep(wait.min(Duration::from_secs(1))).await;
                 }
 
-                let _ = Arc::clone(&this).start_run_once(module.to_string()).await;
+                let _ = Arc::clone(&this)
+                    .start_run_once(module_for_cron.to_string())
+                    .await;
             }
         });
 
@@ -321,17 +336,31 @@ impl RuntimeService {
             let mut inner = self.inner.lock().await;
             inner.cron_task = Some(handle);
         }
+
+        self.append_sys(
+            LogLevel::Info,
+            "CRON:定时任务启动",
+            format!("cron={} module={}", expr, module),
+        )
+        .await;
         Ok(())
     }
 
     pub async fn stop_cron(self: Arc<Self>) -> Result<(), String> {
-        let handle = {
+        let (handle, expr, module) = {
             let mut inner = self.inner.lock().await;
             inner.next_run_at = None;
-            inner.cron_task.take()
+            (inner.cron_task.take(), inner.cron_expr.to_string(), inner.module.to_string())
         };
         if let Some(h) = handle {
             h.abort();
+
+            self.append_sys(
+                LogLevel::Warn,
+                "CRON:定时任务停止",
+                format!("cron={} module={}", expr, module),
+            )
+            .await;
         }
         Ok(())
     }
@@ -373,10 +402,24 @@ fn normalize_cron_expr_for_parser(expr: &str) -> Result<String, String> {
     if raw.is_empty() {
         return Err("cron expression is empty".to_string());
     }
+
+    // 兼容 Go 版常见 5 段 crontab（分/时/日/月/周），并尽量适配 cron crate 的解析规则。
+    // Compatibility: accept common 5-field crontab and normalize for the `cron` parser.
     let parts: Vec<&str> = raw.split_whitespace().collect();
-    match parts.len() {
-        5 => Ok(format!("0 {}", raw)),
-        6 => Ok(raw.to_string()),
-        _ => Err("Invalid cron expression".to_string()),
+    let mut candidates = Vec::new();
+    candidates.push(raw.to_string());
+    if parts.len() == 5 {
+        candidates.push(format!("0 {}", raw));
+        candidates.push(format!("0 {} *", raw));
     }
+    if parts.len() == 6 {
+        candidates.push(format!("{} *", raw));
+    }
+
+    for c in candidates {
+        if Schedule::from_str(&c).is_ok() {
+            return Ok(c);
+        }
+    }
+    Err("Invalid cron expression".to_string())
 }

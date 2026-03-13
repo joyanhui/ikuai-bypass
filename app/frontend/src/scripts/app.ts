@@ -3,9 +3,10 @@ import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComment
 import type { UiConfig } from '../lib/config_model.ts';
 import { loadJson, saveJson } from '../lib/storage.ts';
 import { removeYamlSeqItem, updateYamlPaths, upsertYamlSeqItem } from '../lib/yaml_ast.ts';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import { conf as yamlConf, language as yamlLanguage } from 'monaco-editor/esm/vs/basic-languages/yaml/yaml.js';
+
+type MonacoModule = typeof import('monaco-editor/esm/vs/editor/editor.api');
+type MonacoEditor = import('monaco-editor/esm/vs/editor/editor.api').editor.IStandaloneCodeEditor;
+type YamlLanguageModule = typeof import('monaco-editor/esm/vs/basic-languages/yaml/yaml.js');
 
 // ============================================
 // 全局状态
@@ -26,18 +27,13 @@ const state = {
     listKey: RuleListKey;
     index: number;
   },
-  rawEditor: null as monaco.editor.IStandaloneCodeEditor | null,
+  rawEditor: null as MonacoEditor | null,
+  rawEditorTextarea: null as HTMLTextAreaElement | null,
 };
 
-(globalThis as typeof globalThis & {
-  MonacoEnvironment?: {
-    getWorker: (_workerId: string, _label: string) => Worker;
-  };
-}).MonacoEnvironment = {
-  getWorker() {
-    return new EditorWorker();
-  },
-};
+let monaco: MonacoModule | null = null;
+let yamlLanguageModule: YamlLanguageModule | null = null;
+let monacoLoading: Promise<void> | null = null;
 
 const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
@@ -53,11 +49,27 @@ const getErrorMessage = (err: unknown): string => {
   return '未知错误';
 };
 
+const getRawEditorValue = () => {
+  if (state.rawEditor) return state.rawEditor.getValue();
+  if (state.rawEditorTextarea) return state.rawEditorTextarea.value;
+  return '';
+};
+
+const setRawEditorValue = (value: string) => {
+  if (state.rawEditor) {
+    state.rawEditor.setValue(value);
+    return;
+  }
+  if (state.rawEditorTextarea) {
+    state.rawEditorTextarea.value = value;
+  }
+};
+
 const refreshEditorFromRawYaml = () => {
-  if (!state.rawEditor || state.selectedConfigTab !== 'raw') return;
-  const current = state.rawEditor.getValue();
+  if (state.selectedConfigTab !== 'raw') return;
+  const current = getRawEditorValue();
   if (current !== state.rawYaml) {
-    state.rawEditor.setValue(state.rawYaml);
+    setRawEditorValue(state.rawYaml);
   }
 };
 
@@ -128,17 +140,71 @@ const initModalEscape = () => {
   });
 };
 
-const ensureRawEditor = () => {
-  if (!yamlLanguageRegistered) {
-    monaco.languages.register({ id: 'yaml', extensions: ['.yaml', '.yml'], aliases: ['YAML', 'yaml'] });
-    monaco.languages.setMonarchTokensProvider('yaml', yamlLanguage as monaco.languages.IMonarchLanguage);
-    monaco.languages.setLanguageConfiguration('yaml', yamlConf);
-    yamlLanguageRegistered = true;
+const loadMonaco = async () => {
+  if (monaco) return;
+  if (monacoLoading) {
+    await monacoLoading;
+    return;
+  }
+  monacoLoading = (async () => {
+    const [monacoModule, yamlModule, workerModule] = await Promise.all([
+      import('monaco-editor/esm/vs/editor/editor.api'),
+      import('monaco-editor/esm/vs/basic-languages/yaml/yaml.js'),
+      import('monaco-editor/esm/vs/editor/editor.worker?worker'),
+    ]);
+
+    monaco = monacoModule;
+    yamlLanguageModule = yamlModule;
+    const EditorWorker = workerModule.default;
+
+    (globalThis as typeof globalThis & {
+      MonacoEnvironment?: {
+        getWorker: (_workerId: string, _label: string) => Worker;
+      };
+    }).MonacoEnvironment = {
+      getWorker() {
+        return new EditorWorker();
+      },
+    };
+  })();
+
+  try {
+    await monacoLoading;
+  } finally {
+    monacoLoading = null;
+  }
+};
+
+const shouldUseLightweightEditor = () => {
+  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return true;
+  if (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4) return true;
+  return false;
+};
+
+const ensureRawEditor = async () => {
+  if (state.rawEditor || state.rawEditorTextarea) return;
+  const container = document.getElementById('rawEditorContainer');
+  if (!container) return;
+
+  if (shouldUseLightweightEditor()) {
+    const textarea = document.createElement('textarea');
+    textarea.className = 'h-[32rem] w-full resize-none bg-transparent p-4 text-sm text-gray-800 outline-none dark:text-gray-100';
+    textarea.spellcheck = false;
+    container.innerHTML = '';
+    container.appendChild(textarea);
+    state.rawEditorTextarea = textarea;
+    return;
   }
 
-  if (state.rawEditor) return state.rawEditor;
-  const container = document.getElementById('rawEditorContainer');
-  if (!container) return null;
+  await loadMonaco();
+  if (!monaco || !yamlLanguageModule) return;
+
+  if (!yamlLanguageRegistered) {
+    monaco.languages.register({ id: 'yaml', extensions: ['.yaml', '.yml'], aliases: ['YAML', 'yaml'] });
+    monaco.languages.setMonarchTokensProvider('yaml', yamlLanguageModule.language as monaco.languages.IMonarchLanguage);
+    monaco.languages.setLanguageConfiguration('yaml', yamlLanguageModule.conf);
+    yamlLanguageRegistered = true;
+  }
 
   state.rawEditor = monaco.editor.create(container, {
     value: '',
@@ -162,8 +228,6 @@ const ensureRawEditor = () => {
   if (model) {
     monaco.editor.setModelLanguage(model, 'yaml');
   }
-
-  return state.rawEditor;
 };
 
 // ============================================
@@ -191,7 +255,9 @@ const applyTheme = (mode: 'auto' | 'dark' | 'light') => {
   
   root.classList.toggle('dark', useDark);
   root.classList.toggle('light', mode === 'light');
-  monaco.editor.setTheme(useDark ? 'vs-dark' : 'vs');
+  if (monaco) {
+    monaco.editor.setTheme(useDark ? 'vs-dark' : 'vs');
+  }
 };
 
 // ============================================
@@ -415,10 +481,10 @@ const initMainTabs = () => {
 const applyRawEditorToState = () => {
   const editor = state.rawEditor;
   const hint = document.getElementById('rawEditorHint');
-  if (!editor) return true;
+  if (!editor && !state.rawEditorTextarea) return true;
 
   try {
-    state.rawYaml = editor.getValue();
+    state.rawYaml = getRawEditorValue();
     applyStateFromRawYaml();
     if (hint) hint.textContent = 'YAML 已同步到表单。';
     bindConfigFields();
@@ -431,7 +497,7 @@ const applyRawEditorToState = () => {
   }
 };
 
-const updateConfigSubTabUI = () => {
+const updateConfigSubTabUI = async () => {
   document.querySelectorAll<HTMLElement>('.config-sub-tab').forEach((tab) => {
     tab.classList.toggle('active', tab.dataset.configTab === state.selectedConfigTab);
   });
@@ -439,7 +505,7 @@ const updateConfigSubTabUI = () => {
     panel.classList.toggle('hidden', panel.dataset.configPanel !== state.selectedConfigTab);
   });
   if (state.selectedConfigTab === 'raw') {
-    openRawEditor();
+    await openRawEditor();
     requestAnimationFrame(() => state.rawEditor?.layout());
   }
 };
@@ -453,10 +519,10 @@ const initConfigSubTabs = () => {
         return;
       }
       state.selectedConfigTab = nextTab;
-      updateConfigSubTabUI();
+      void updateConfigSubTabUI();
     });
   });
-  updateConfigSubTabUI();
+  void updateConfigSubTabUI();
 };
 
 const initRunModeSelection = () => {
@@ -1217,14 +1283,19 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
   openModal('ruleEditorModal');
 };
 
-const openRawEditor = () => {
-  const editor = ensureRawEditor();
-  if (editor) {
-    editor.setValue(state.rawYaml || yamlDumpWithComments(toBackendPayload(state.cfg), state.comments));
-    requestAnimationFrame(() => editor.layout());
+const openRawEditor = async () => {
+  await ensureRawEditor();
+  const value = state.rawYaml || yamlDumpWithComments(toBackendPayload(state.cfg), state.comments);
+  setRawEditorValue(value);
+  if (state.rawEditor) {
+    requestAnimationFrame(() => state.rawEditor?.layout());
   }
   const hint = document.getElementById('rawEditorHint');
-  if (hint) hint.textContent = '保存时会校验 YAML 结构。';
+  if (hint) {
+    hint.textContent = state.rawEditorTextarea
+      ? '轻量模式已启用（移动端/低内存）。保存时会校验 YAML。'
+      : '保存时会校验 YAML 结构。';
+  }
 };
 
 const renderCustomIspList = () => {

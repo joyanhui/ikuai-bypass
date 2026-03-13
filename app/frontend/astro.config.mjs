@@ -5,13 +5,6 @@ export default defineConfig({
   output: 'static',
   vite: {
     plugins: [tailwindcss()],
-    build: {
-      rollupOptions: {
-        input: {
-          app: new URL('./src/scripts/app.ts', import.meta.url),
-        },
-      },
-    },
   },
   server: {
     host: '0.0.0.0',

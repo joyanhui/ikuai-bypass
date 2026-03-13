@@ -3,7 +3,8 @@ name: Release rust
 on:
   push:
     tags:
-      - "*"
+      # Why/为什么: `cargo release`(workspace) 通常会创建多个 crate tag；只监听一个 tag 避免重复发布。
+      - "ikb-cli-v*"
   workflow_dispatch:
     inputs:
       release_tag:
@@ -98,21 +99,35 @@ jobs:
           set -euo pipefail
 
           if [[ "${EVENT_NAME}" == "push" ]]; then
-            version="${REF_NAME}"
+            tag_name="${REF_NAME}"
+            version="${tag_name}"
             publish_release="true"
             push_docker="true"
+
+            # Normalize version for Docker tags and prerelease checks.
+            # Examples:
+            # - ikb-cli-v4.4.100-alpha1 -> 4.4.100-alpha1
+            # - v4.4.100-alpha1        -> 4.4.100-alpha1
+            if [[ "${version}" =~ ^ikb-(core|cli|app)-v(.+)$ ]]; then
+              version="${BASH_REMATCH[2]}"
+            elif [[ "${version}" =~ ^v(.+)$ ]]; then
+              version="${BASH_REMATCH[1]}"
+            fi
           else
-            version="${INPUT_RELEASE_TAG}"
+            tag_name="${INPUT_RELEASE_TAG}"
+            version="${tag_name}"
             publish_release="${INPUT_PUBLISH_RELEASE}"
             push_docker="${INPUT_PUSH_DOCKER}"
 
             if [[ -z "${version}" && ( "${publish_release}" == "true" || "${push_docker}" == "true" ) ]]; then
               version="manual-release-$(date +%Y%m%d%H%M%S)"
+              tag_name="${version}"
               echo "::warning::release_tag is empty on workflow_dispatch, auto-generated version=${version}"
             fi
 
             if [[ -z "${version}" ]]; then
               version="manual-build-${GITHUB_RUN_ID}"
+              tag_name="${version}"
             fi
           fi
 
@@ -141,7 +156,7 @@ jobs:
 
           {
             echo "version=${version}"
-            echo "tag_name=${version}"
+            echo "tag_name=${tag_name}"
             echo "prerelease=${prerelease}"
             echo "publish_release=${publish_release}"
             echo "push_docker=${push_docker}"
@@ -152,8 +167,9 @@ jobs:
       - id: matrix
         shell: bash
         env:
-          INPUT_BUILD_MODE: ${{ github.event.inputs.build_mode || 'minimal' }}
-          INPUT_BUILD_TARGET: ${{ github.event.inputs.build_target || 'cli+gui' }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_BUILD_MODE: ${{ github.event.inputs.build_mode || '' }}
+          INPUT_BUILD_TARGET: ${{ github.event.inputs.build_target || '' }}
         run: |
           set -euo pipefail
           python <<'PY'
@@ -161,8 +177,14 @@ jobs:
           import os
           import pathlib
 
-          build_mode = os.environ.get("INPUT_BUILD_MODE", "minimal")
-          build_target = os.environ.get("INPUT_BUILD_TARGET", "cli+gui")
+          event_name = os.environ.get("EVENT_NAME", "")
+          if event_name == "push":
+              # Why/为什么: tag push 视为正式发布，默认跑 full matrix。
+              build_mode = "full"
+              build_target = "cli+gui"
+          else:
+              build_mode = os.environ.get("INPUT_BUILD_MODE") or "minimal"
+              build_target = os.environ.get("INPUT_BUILD_TARGET") or "cli+gui"
 
           raw = pathlib.Path(".github/build_matrix.jsonc").read_text()
           lines = []

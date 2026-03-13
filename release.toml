@@ -1,0 +1,12 @@
+# cargo-release configuration
+# Why/为什么: 统一本地 release 流程，并避免误发布到 crates.io。
+
+# Prefer a single commit for the whole workspace release / workspace 只产出一个提交。
+consolidate-commits = true
+
+# This project publishes binaries via GitHub Actions, not crates.io / 本项目只走 GitHub Actions 发二进制，不走 crates.io。
+publish = false
+
+# Keep messages stable and grep-friendly / 文案稳定，便于 grep。
+pre-release-commit-message = "chore: Release"
+tag-message = "chore: Release"

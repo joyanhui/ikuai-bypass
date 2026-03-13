@@ -40,6 +40,21 @@ fn print_once_done_banner(mode: &str, module: &str, conf_path: &str, elapsed: Du
     println!();
 }
 
+fn print_clean_done_banner(tag: &str, is_all: bool, conf_path: &str, elapsed: Duration) {
+    let secs = elapsed.as_secs_f64();
+    println!();
+    println!("===========================================================");
+    println!("[END:清理完毕] 清理完成");
+    println!("-----------------------------------------------------------");
+    println!("模式: clean");
+    println!("清理目标: {}", if is_all { "全部 IKB 规则" } else { tag });
+    println!("配置: {}", conf_path);
+    println!("耗时: {:.3}s", secs);
+    println!("提示: 如需重新同步规则，请使用 -r once / cron / cronAft");
+    println!("===========================================================");
+    println!();
+}
+
 fn print_cron_started_banner(mode: &str, st: &ikb_core::runtime::RuntimeStatus, normalized: Option<&str>) {
     let running_text = if st.running { "执行中" } else { "待机" };
     println!();
@@ -362,6 +377,7 @@ async fn run(
         }
 
         "clean" => {
+            let started_at = Instant::now();
             if args.clean_tag.trim().is_empty() {
                 eprintln!("[ERR:参数错误] Clean mode requires -tag (or cleanAll)");
                 return 2;
@@ -421,7 +437,8 @@ async fn run(
                 return 1;
             }
 
-            println!("[CLEAN:操作成功] Cleared rules with tag: {}", clean_tag);
+            let conf_path = display_conf_path(&config_path);
+            print_clean_done_banner(&clean_tag, args.clean_tag.trim() == ikb_core::ikuai::CLEAN_MODE_ALL, &conf_path, started_at.elapsed());
             0
         }
 

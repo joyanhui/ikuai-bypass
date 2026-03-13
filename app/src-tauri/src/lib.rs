@@ -25,14 +25,22 @@ struct ConfigMeta {
 
 #[tauri::command]
 async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
-    let cfg_guard = state.config.lock().await;
-    let config = serde_json::to_value(&*cfg_guard)
-        .map_err(|e| format!("Failed to encode config: {}", e))?;
-    let path = state.config_path.lock().await;
-    let raw_yaml = std::fs::read_to_string(&*path).unwrap_or_default();
+    // 避免在 await 中持有锁，防止移动端偶现卡死/死锁。
+    // Avoid holding locks across await to prevent deadlocks on mobile.
+    let config = {
+        let cfg_guard = state.config.lock().await;
+        serde_json::to_value(&*cfg_guard)
+            .map_err(|e| format!("Failed to encode config: {}", e))?
+    };
+
+    let (conf_path, raw_yaml) = {
+        let path = state.config_path.lock().await;
+        let raw_yaml = std::fs::read_to_string(&*path).unwrap_or_default();
+        (path.to_string_lossy().to_string(), raw_yaml)
+    };
     Ok(ConfigMeta {
         config,
-        conf_path: path.to_string_lossy().to_string(),
+        conf_path,
         raw_yaml,
         top_level_comments: ikb_core::config::top_level_comments(),
         item_comments: ikb_core::config::item_comments(),
@@ -43,8 +51,8 @@ async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta
 
 #[tauri::command]
 async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), String> {
-    let path = state.config_path.lock().await;
-    if let Err(e) = config.save_to_path(&*path) {
+    let path = { state.config_path.lock().await.clone() };
+    if let Err(e) = config.save_to_path(&path) {
         return Err(format!("Failed to save config: {}", e));
     }
 
@@ -60,8 +68,8 @@ async fn save_config_with_comments(
     config: Config,
     with_comments: bool,
 ) -> Result<(), String> {
-    let path = state.config_path.lock().await;
-    if let Err(e) = config.save_to_path_with_comments(&*path, with_comments) {
+    let path = { state.config_path.lock().await.clone() };
+    if let Err(e) = config.save_to_path_with_comments(&path, with_comments) {
         return Err(format!("Failed to save config: {}", e));
     }
     let new_cron = config.cron.to_string();
@@ -76,8 +84,8 @@ async fn save_raw_yaml(
     yaml_text: String,
     with_comments: bool,
 ) -> Result<(), String> {
-    let path = state.config_path.lock().await;
-    let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &*path, with_comments)
+    let path = { state.config_path.lock().await.clone() };
+    let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &path, with_comments)
         .map_err(|e| format!("Failed to save config: {}", e))?;
     let new_cron = cfg.cron.to_string();
     *state.config.lock().await = cfg;
@@ -165,8 +173,10 @@ async fn runtime_clean(
     state: tauri::State<'_, AppState>,
     clean_tag: String,
 ) -> Result<(), String> {
-    let cfg_guard = state.config.lock().await;
-    run_clean(&cfg_guard, clean_tag).await
+    // 避免在网络请求期间持有配置锁。
+    // Avoid holding config lock while doing network requests.
+    let cfg = { state.config.lock().await.clone() };
+    run_clean(&cfg, clean_tag).await
 }
 
 #[tauri::command]

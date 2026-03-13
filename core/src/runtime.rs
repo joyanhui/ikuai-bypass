@@ -186,9 +186,44 @@ impl RuntimeService {
 
         let this = Arc::clone(&self);
         let handle = tokio::spawn(async move {
-            let cfg = this.config.lock().await;
+            // 任务执行期间避免长时间持有配置锁：配置只读，拷贝一份用于本次任务。
+            // Avoid holding config lock across awaits: clone config for this run.
+            let cfg = { this.config.lock().await.clone() };
+
             this.append_sys(LogLevel::Info, "TASK:任务执行", format!("module={}", module))
                 .await;
+
+            let plan = match module.as_str() {
+                "ispdomain" => format!(
+                    "custom_isp={} stream_domain={}",
+                    cfg.custom_isp.len(),
+                    cfg.stream_domain.len()
+                ),
+                "ipgroup" => format!(
+                    "ip_group={} stream_ipport={}",
+                    cfg.ip_group.len(),
+                    cfg.stream_ipport.len()
+                ),
+                "ipv6group" => format!("ipv6_group={}", cfg.ipv6_group.len()),
+                "ii" => format!(
+                    "custom_isp={} stream_domain={} ip_group={} stream_ipport={}",
+                    cfg.custom_isp.len(),
+                    cfg.stream_domain.len(),
+                    cfg.ip_group.len(),
+                    cfg.stream_ipport.len()
+                ),
+                "ip" => format!("ip_group={} ipv6_group={}", cfg.ip_group.len(), cfg.ipv6_group.len()),
+                "iip" => format!(
+                    "custom_isp={} stream_domain={} ip_group={} ipv6_group={} stream_ipport={}",
+                    cfg.custom_isp.len(),
+                    cfg.stream_domain.len(),
+                    cfg.ip_group.len(),
+                    cfg.ipv6_group.len(),
+                    cfg.stream_ipport.len()
+                ),
+                other => format!("module={}", other),
+            };
+            this.append_sys(LogLevel::Info, "TASK:任务计划", plan).await;
 
             let sink: LogSink = {
                 let svc = Arc::clone(&this);
@@ -200,7 +235,21 @@ impl RuntimeService {
                 })
             };
 
-            let _ = crate::update::run_update_by_module(&cfg, &this.cli_login, &module, sink).await;
+            let res = crate::update::run_update_by_module(&cfg, &this.cli_login, &module, sink).await;
+            match res {
+                Ok(()) => {
+                    this.append_sys(LogLevel::Success, "DONE:任务完成", format!("module={}", module))
+                        .await;
+                }
+                Err(e) => {
+                    this.append_sys(
+                        LogLevel::Error,
+                        "TASK:任务失败",
+                        format!("module={} error={}", module, e),
+                    )
+                    .await;
+                }
+            }
             {
                 let mut inner = this.inner.lock().await;
                 inner.last_run_at = Some(Local::now().to_rfc3339());

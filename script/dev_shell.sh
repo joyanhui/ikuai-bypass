@@ -45,8 +45,14 @@ qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm 
 
 lsof -ti:19000,19001,19021,19222 | xargs kill -9 2>/dev/null
 
-go run *.go  -r 1 -c  /home/yh/workspace/ikuai-bypass/config_example.yml -login http://10.1.1.1,admin,123
 
 
 
-git tag -a v4.4.11 -F  docs/update/v4.4.11.md
+cargo release 4.4.100-alpha1 --execute --no-publish --no-push
+
+
+git push origin main
+git push origin fileuni-v0.0.1-alpha5
+git push --tags
+
+cargo release 4.4.100-alpha3 --execute

@@ -3,8 +3,8 @@ name: Release rust
 on:
   push:
     tags:
-      # Why/为什么: `cargo release`(workspace) 通常会创建多个 crate tag；只监听一个 tag 避免重复发布。
-      - "ikb-cli-v*"
+      # Why/为什么: `cargo release`(workspace) 通常会创建多个 crate tag；只监听一个 canonical tag 避免重复发布。
+      - "ikuai-bypass-v*"
   workflow_dispatch:
     inputs:
       release_tag:
@@ -98,38 +98,72 @@ jobs:
         run: |
           set -euo pipefail
 
+          canonicalize_tag_name() {
+            local raw="${1:-}"
+            if [[ -z "${raw}" ]]; then
+              printf '%s' ""
+              return
+            fi
+            if [[ "${raw}" =~ ^manual-(release|build)- ]]; then
+              printf '%s' "${raw}"
+              return
+            fi
+            if [[ "${raw}" =~ ^ikuai-bypass-v(.+)$ ]]; then
+              printf '%s' "${raw}"
+              return
+            fi
+            if [[ "${raw}" =~ ^ikb-(core|cli|app)-v(.+)$ ]]; then
+              printf '%s' "ikuai-bypass-v${BASH_REMATCH[2]}"
+              return
+            fi
+            if [[ "${raw}" =~ ^v(.+)$ ]]; then
+              printf '%s' "ikuai-bypass-v${BASH_REMATCH[1]}"
+              return
+            fi
+            printf '%s' "ikuai-bypass-v${raw}"
+          }
+
+          normalize_version_from_tag() {
+            local raw="${1:-}"
+            if [[ -z "${raw}" ]]; then
+              printf '%s' ""
+              return
+            fi
+            if [[ "${raw}" =~ ^ikuai-bypass-v(.+)$ ]]; then
+              printf '%s' "${BASH_REMATCH[1]}"
+              return
+            fi
+            if [[ "${raw}" =~ ^ikb-(core|cli|app)-v(.+)$ ]]; then
+              printf '%s' "${BASH_REMATCH[2]}"
+              return
+            fi
+            if [[ "${raw}" =~ ^v(.+)$ ]]; then
+              printf '%s' "${BASH_REMATCH[1]}"
+              return
+            fi
+            printf '%s' "${raw}"
+          }
+
           if [[ "${EVENT_NAME}" == "push" ]]; then
             tag_name="${REF_NAME}"
-            version="${tag_name}"
             publish_release="true"
             push_docker="true"
-
-            # Normalize version for Docker tags and prerelease checks.
-            # Examples:
-            # - ikb-cli-v4.4.100-alpha1 -> 4.4.100-alpha1
-            # - v4.4.100-alpha1        -> 4.4.100-alpha1
-            if [[ "${version}" =~ ^ikb-(core|cli|app)-v(.+)$ ]]; then
-              version="${BASH_REMATCH[2]}"
-            elif [[ "${version}" =~ ^v(.+)$ ]]; then
-              version="${BASH_REMATCH[1]}"
-            fi
           else
-            tag_name="${INPUT_RELEASE_TAG}"
-            version="${tag_name}"
+            tag_name="$(canonicalize_tag_name "${INPUT_RELEASE_TAG}")"
             publish_release="${INPUT_PUBLISH_RELEASE}"
             push_docker="${INPUT_PUSH_DOCKER}"
 
-            if [[ -z "${version}" && ( "${publish_release}" == "true" || "${push_docker}" == "true" ) ]]; then
-              version="manual-release-$(date +%Y%m%d%H%M%S)"
-              tag_name="${version}"
-              echo "::warning::release_tag is empty on workflow_dispatch, auto-generated version=${version}"
+            if [[ -z "${tag_name}" && ( "${publish_release}" == "true" || "${push_docker}" == "true" ) ]]; then
+              tag_name="manual-release-$(date +%Y%m%d%H%M%S)"
+              echo "::warning::release_tag is empty on workflow_dispatch, auto-generated tag_name=${tag_name}"
             fi
 
-            if [[ -z "${version}" ]]; then
-              version="manual-build-${GITHUB_RUN_ID}"
-              tag_name="${version}"
+            if [[ -z "${tag_name}" ]]; then
+              tag_name="manual-build-${GITHUB_RUN_ID}"
             fi
           fi
+
+          version="$(normalize_version_from_tag "${tag_name}")"
 
           lc_version="$(printf '%s' "${version}" | tr '[:upper:]' '[:lower:]')"
           prerelease="false"

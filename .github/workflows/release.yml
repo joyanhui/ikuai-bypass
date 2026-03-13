@@ -855,10 +855,17 @@ jobs:
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
+          ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+          ANDROID_SIGNING_PASSWORD: ${{ secrets.ANDROID_SIGNING_PASSWORD }}
         run: |
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
           mkdir -p dist
+
+          if [ -z "${ANDROID_SIGNING_KEYSTORE_BASE64:-}" ] || [ -z "${ANDROID_SIGNING_PASSWORD:-}" ]; then
+            echo "Missing Android signing materials. Please set secrets ANDROID_SIGNING_KEYSTORE_BASE64 and ANDROID_SIGNING_PASSWORD." >&2
+            exit 1
+          fi
 
           unsigned_apk="$(find app/src-tauri/gen/android/app/build/outputs/apk -type f -name '*universal*release*unsigned.apk' | head -1 || true)"
           if [ -z "${unsigned_apk}" ]; then
@@ -872,16 +879,80 @@ jobs:
           test -x "${zipalign_bin}"
           test -x "${apksigner_bin}"
 
-          keystore_path="${RUNNER_TEMP}/android-debug.keystore"
-          keytool -genkeypair \
-            -keystore "${keystore_path}" \
-            -storepass android \
-            -keypass android \
-            -alias androiddebugkey \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          keystore_path="${RUNNER_TEMP}/android-release.keystore"
+          KEYSTORE_PATH="${keystore_path}" python <<'PY'
+          import base64
+          import os
+          import pathlib
+
+          b64 = os.environ.get("ANDROID_SIGNING_KEYSTORE_BASE64", "")
+          b64 = "".join(b64.split())
+          if not b64:
+              raise SystemExit("ANDROID_SIGNING_KEYSTORE_BASE64 is empty")
+          raw = base64.b64decode(b64)
+          path = pathlib.Path(os.environ["KEYSTORE_PATH"])
+          path.write_bytes(raw)
+          PY
+          chmod 600 "${keystore_path}"
+
+          ks_meta="$(KEYSTORE_PATH="${keystore_path}" ANDROID_SIGNING_PASSWORD="${ANDROID_SIGNING_PASSWORD}" python <<'PY'
+          import os
+          import subprocess
+          import sys
+
+          ks = os.environ["KEYSTORE_PATH"]
+          pw = os.environ["ANDROID_SIGNING_PASSWORD"]
+
+          def try_list(storetype: str):
+              proc = subprocess.run(
+                  [
+                      "keytool",
+                      "-list",
+                      "-v",
+                      "-keystore",
+                      ks,
+                      "-storepass",
+                      pw,
+                      "-storetype",
+                      storetype,
+                  ],
+                  capture_output=True,
+                  text=True,
+              )
+              if proc.returncode != 0:
+                  return None
+
+              aliases = []
+              for line in proc.stdout.splitlines():
+                  line = line.strip()
+                  if line.lower().startswith("alias name:"):
+                      aliases.append(line.split(":", 1)[1].strip())
+              # de-duplicate while keeping order
+              uniq = []
+              for a in aliases:
+                  if a and a not in uniq:
+                      uniq.append(a)
+              return uniq
+
+          for st in ("JKS", "PKCS12"):
+              aliases = try_list(st)
+              if aliases is None:
+                  continue
+              if not aliases:
+                  raise SystemExit(f"No key alias found in keystore (storetype={st})")
+              if len(aliases) != 1:
+                  raise SystemExit(
+                      "Keystore must contain exactly one key alias for CI signing; "
+                      + f"found {len(aliases)}: {aliases}"
+                  )
+              print(f"{st}::{aliases[0]}")
+              sys.exit(0)
+
+          raise SystemExit("Failed to open keystore as JKS or PKCS12. Check password and keystore format.")
+          PY
+          )"
+          ks_type="${ks_meta%%::*}"
+          ks_alias="${ks_meta#*::}"
 
           final_name="$(ikb_gui_native_name "${TARGET}" ".apk")"
           aligned_apk="dist/${final_name%.apk}-aligned.apk"
@@ -889,12 +960,13 @@ jobs:
           "${zipalign_bin}" -f 4 "${unsigned_apk}" "${aligned_apk}"
           "${apksigner_bin}" sign \
             --ks "${keystore_path}" \
-            --ks-pass pass:android \
-            --key-pass pass:android \
-            --ks-key-alias androiddebugkey \
+            --ks-type "${ks_type}" \
+            --ks-pass env:ANDROID_SIGNING_PASSWORD \
+            --key-pass env:ANDROID_SIGNING_PASSWORD \
+            --ks-key-alias "${ks_alias}" \
             --out "${final_apk}" \
             "${aligned_apk}"
-          "${apksigner_bin}" verify "${final_apk}"
+          "${apksigner_bin}" verify --verbose "${final_apk}"
           rm -f "${aligned_apk}"
 
       - uses: actions/upload-artifact@v6

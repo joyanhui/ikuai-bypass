@@ -1369,6 +1369,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/download-artifact@v6
         with:
@@ -1385,11 +1388,79 @@ jobs:
       - name: Show release files
         run: find release -maxdepth 2 -type f | sort
 
+      - name: Generate release notes from commit history
+        shell: bash
+        env:
+          TAG_NAME: ${{ needs.resolve-matrix.outputs.tag_name }}
+          CURRENT_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # Ensure tags are available for history range detection.
+          git fetch --tags --force >/dev/null 2>&1 || true
+
+          current_ref="${TAG_NAME}"
+          current_sha="${CURRENT_SHA}"
+
+          stable_regex='^(ikuai-bypass-)?v[0-9]+\.[0-9]+\.[0-9]+$'
+          stable_tags="$(git for-each-ref refs/tags --sort=-creatordate --format '%(refname:strip=2)' | grep -E "${stable_regex}" || true)"
+
+          base_tag=""
+          if [ -n "${stable_tags}" ]; then
+            while IFS= read -r t; do
+              [ -n "${t}" ] || continue
+              if [ "${t}" = "${current_ref}" ]; then
+                continue
+              fi
+              if git merge-base --is-ancestor "${t}" "${current_sha}" 2>/dev/null; then
+                base_tag="${t}"
+                break
+              fi
+            done <<< "${stable_tags}"
+          fi
+
+          notes_file="/tmp/release-notes.md"
+          {
+            echo "## 变更"
+            echo
+
+            commits=""
+            if [ -n "${base_tag}" ]; then
+              echo "范围: \`${base_tag}\` -> \`${current_ref}\`"
+              echo
+              commits="$(git log --reverse --pretty=format:'- %s' "${base_tag}..${current_sha}" || true)"
+            else
+              echo "范围: 初始历史 -> \`${current_ref}\`"
+              echo
+              commits="$(git log --reverse --pretty=format:'- %s' "${current_sha}" || true)"
+            fi
+
+            if [ -z "${commits}" ]; then
+              echo "- (无提交)"
+            else
+              printf '%s\n' "${commits}"
+            fi
+
+            echo
+            echo "## Full Changelog"
+            if [ -n "${base_tag}" ]; then
+              echo "https://github.com/${REPO}/compare/${base_tag}...${current_ref}"
+            else
+              echo "https://github.com/${REPO}/commits/${current_sha}"
+            fi
+          } > "${notes_file}"
+
+          echo "Generated release notes preview:"
+          sed -n '1,120p' "${notes_file}"
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2.3.3
         with:
           tag_name: ${{ needs.resolve-matrix.outputs.tag_name }}
+          name: ${{ needs.resolve-matrix.outputs.tag_name }}
           target_commitish: ${{ github.sha }}
           files: release/*
-          generate_release_notes: true
+          generate_release_notes: false
+          body_path: /tmp/release-notes.md
           prerelease: ${{ needs.resolve-matrix.outputs.prerelease == 'true' }}

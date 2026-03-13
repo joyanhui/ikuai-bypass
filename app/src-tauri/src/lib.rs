@@ -54,6 +54,17 @@ fn normalize_base_url(input: &str) -> String {
     format!("http://{}", raw)
 }
 
+fn normalize_url_prefix(input: &str) -> String {
+    let raw = input.trim();
+    if raw.is_empty() {
+        return String::new();
+    }
+    if raw.contains("://") {
+        return raw.to_string();
+    }
+    format!("https://{}", raw)
+}
+
 #[tauri::command]
 async fn test_ikuai_login(req: TestIkuaiLoginReq) -> Result<TestResult, String> {
     let base_url = normalize_base_url(&req.base_url);
@@ -97,7 +108,7 @@ async fn test_ikuai_login(req: TestIkuaiLoginReq) -> Result<TestResult, String> 
 async fn test_github_proxy(req: TestGithubProxyReq) -> Result<TestResult, String> {
     const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
 
-    let proxy = req.github_proxy.trim();
+    let proxy = normalize_url_prefix(&req.github_proxy);
     if proxy.is_empty() {
         return Ok(TestResult {
             ok: false,
@@ -105,30 +116,60 @@ async fn test_github_proxy(req: TestGithubProxyReq) -> Result<TestResult, String
         });
     }
 
-    let final_url = if proxy.ends_with('/') {
-        format!("{}{}", proxy, URL)
-    } else {
-        format!("{}/{}", proxy, URL)
-    };
+    let final_url = if proxy.ends_with('/') { format!("{}{}", proxy, URL) } else { format!("{}/{}", proxy, URL) };
 
     let client = reqwest::Client::builder()
-        .user_agent("ikb-app")
+        // 部分 ghproxy 站点会对非常规 UA 做限制。
+        // Some ghproxy sites may restrict uncommon user agents.
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| e.to_string())?;
-    let resp = client.get(final_url).send().await.map_err(|e| e.to_string())?;
+    let resp = client.get(&final_url).send().await.map_err(|e| e.to_string())?;
     let status = resp.status();
     if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        let trimmed = body.trim();
+        let hint = if trimmed.is_empty() {
+            String::new()
+        } else {
+            let mut out = trimmed.chars().take(200).collect::<String>();
+            if trimmed.chars().count() > 200 {
+                out.push_str("...");
+            }
+            format!(" body='{}'", out.replace('\n', " "))
+        };
         return Ok(TestResult {
             ok: false,
-            message: format!("HTTP {}", status),
+            message: format!("HTTP {} url='{}'{}", status, final_url, hint),
         });
     }
     let text = resp.text().await.map_err(|e| e.to_string())?;
-    let ok = text.contains("/target/") && text.contains("node_modules");
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return Ok(TestResult {
+            ok: false,
+            message: format!("Empty response url='{}'", final_url),
+        });
+    }
+    let lower = trimmed.to_ascii_lowercase();
+    if lower.contains("<html") || lower.contains("<!doctype") {
+        let mut out = trimmed.chars().take(200).collect::<String>();
+        if trimmed.chars().count() > 200 {
+            out.push_str("...");
+        }
+        return Ok(TestResult {
+            ok: false,
+            message: format!(
+                "Unexpected HTML url='{}' body='{}'",
+                final_url,
+                out.replace('\n', " ")
+            ),
+        });
+    }
     Ok(TestResult {
-        ok,
-        message: if ok { "OK".to_string() } else { "Unexpected response".to_string() },
+        ok: true,
+        message: format!("OK url='{}'", final_url),
     })
 }
 

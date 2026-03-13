@@ -309,6 +309,17 @@ fn normalize_base_url(input: &str) -> String {
     format!("http://{}", raw)
 }
 
+fn normalize_url_prefix(input: &str) -> String {
+    let raw = input.trim();
+    if raw.is_empty() {
+        return String::new();
+    }
+    if raw.contains("://") {
+        return raw.to_string();
+    }
+    format!("https://{}", raw)
+}
+
 async fn api_test_ikuai_login(
     State(_state): State<Arc<AppState>>,
     Json(req): Json<TestIkuaiLoginRequest>,
@@ -341,7 +352,7 @@ async fn api_test_github_proxy(
 ) -> impl IntoResponse {
     const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
 
-    let proxy = req.github_proxy.trim();
+    let proxy = normalize_url_prefix(&req.github_proxy);
     if proxy.is_empty() {
         return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty github proxy".to_string() }));
     }
@@ -353,7 +364,7 @@ async fn api_test_github_proxy(
     };
 
     let client = match reqwest::Client::builder()
-        .user_agent("ikb-web")
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .timeout(std::time::Duration::from_secs(15))
         .build()
     {
@@ -363,7 +374,7 @@ async fn api_test_github_proxy(
         }
     };
 
-    let resp = match client.get(final_url).send().await {
+    let resp = match client.get(&final_url).send().await {
         Ok(v) => v,
         Err(e) => {
             return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
@@ -371,7 +382,18 @@ async fn api_test_github_proxy(
     };
     let status = resp.status();
     if !status.is_success() {
-        return (StatusCode::OK, Json(TestResult { ok: false, message: format!("HTTP {}", status) }));
+        let body = resp.text().await.unwrap_or_default();
+        let trimmed = body.trim();
+        let hint = if trimmed.is_empty() {
+            String::new()
+        } else {
+            let mut out = trimmed.chars().take(200).collect::<String>();
+            if trimmed.chars().count() > 200 {
+                out.push_str("...");
+            }
+            format!(" body='{}'", out.replace('\n', " "))
+        };
+        return (StatusCode::OK, Json(TestResult { ok: false, message: format!("HTTP {} url='{}'{}", status, final_url, hint) }));
     }
     let text = match resp.text().await {
         Ok(v) => v,
@@ -379,9 +401,28 @@ async fn api_test_github_proxy(
             return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
         }
     };
-    let ok = text.contains("/target/") && text.contains("node_modules");
-    let message = if ok { "OK".to_string() } else { "Unexpected response".to_string() };
-    (StatusCode::OK, Json(TestResult { ok, message }))
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return (
+            StatusCode::OK,
+            Json(TestResult { ok: false, message: format!("Empty response url='{}'", final_url) }),
+        );
+    }
+    let lower = trimmed.to_ascii_lowercase();
+    if lower.contains("<html") || lower.contains("<!doctype") {
+        let mut out = trimmed.chars().take(200).collect::<String>();
+        if trimmed.chars().count() > 200 {
+            out.push_str("...");
+        }
+        return (
+            StatusCode::OK,
+            Json(TestResult {
+                ok: false,
+                message: format!("Unexpected HTML url='{}' body='{}'", final_url, out.replace('\n', " ")),
+            }),
+        );
+    }
+    (StatusCode::OK, Json(TestResult { ok: true, message: format!("OK url='{}'", final_url) }))
 }
 
 async fn api_runtime_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {

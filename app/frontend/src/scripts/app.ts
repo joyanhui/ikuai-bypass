@@ -849,7 +849,9 @@ const initBasicConfigAccordion = () => {
   const icon = document.getElementById('basicConfigToggleIcon');
   if (!btn || !panel) return;
 
-  let open = loadJson<boolean>('ikb_basic_config_open', false);
+  // 默认折叠，不持久化展开状态。
+  // Default collapsed; do not persist expanded state.
+  let open = false;
 
   const setPanelDisabled = (disabled: boolean) => {
     panel
@@ -881,7 +883,6 @@ const initBasicConfigAccordion = () => {
   apply(open);
   btn.addEventListener('click', () => {
     apply(!open);
-    saveJson('ikb_basic_config_open', open);
   });
 };
 

@@ -207,9 +207,11 @@ export const bridge = {
   async testIkuaiLogin(baseUrl: string, username: string, password: string): Promise<TestResult> {
     if (await isTauriReady()) {
       return await tauriInvoke<TestResult>('test_ikuai_login', {
-        baseUrl,
-        username,
-        password,
+        req: {
+          baseUrl,
+          username,
+          password,
+        },
       });
     }
     return await fetchJson<TestResult>('/api/test/ikuai-login', {
@@ -221,7 +223,9 @@ export const bridge = {
   async testGithubProxy(githubProxy: string): Promise<TestResult> {
     if (await isTauriReady()) {
       return await tauriInvoke<TestResult>('test_github_proxy', {
-        githubProxy,
+        req: {
+          githubProxy,
+        },
       });
     }
     return await fetchJson<TestResult>('/api/test/github-proxy', {
@@ -273,7 +277,7 @@ export const bridge = {
     if (await isTauriReady()) {
       return await tauriInvoke<string>('fetch_remote_config', {
         url,
-        githubProxy,
+        github_proxy: githubProxy,
       });
     }
     const r = await fetch(url);

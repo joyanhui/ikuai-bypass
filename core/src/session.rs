@@ -21,6 +21,8 @@ pub enum LoginSource {
 pub enum LoginParamsError {
     #[error("command line parameter format error")]
     CliFormat,
+    #[error("ikuai-url is empty in config file")]
+    MissingIkuaiUrl,
     #[error("default gateway not found")]
     GatewayNotFound,
 }
@@ -57,6 +59,13 @@ pub fn resolve_login_params(
             password: cfg.password.to_string(),
             source: LoginSource::Config,
         });
+    }
+
+    // 移动端不尝试通过默认网关猜测爱快地址，避免误判/不可用。
+    // Mobile: do not guess iKuai URL via default gateway.
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    {
+        return Err(LoginParamsError::MissingIkuaiUrl);
     }
 
     let gw = crate::router::get_gateway_v4().map_err(|_| LoginParamsError::GatewayNotFound)?;

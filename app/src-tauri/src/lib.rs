@@ -229,9 +229,9 @@ pub fn run() {
         ikuai_url: String::new(),
         username: String::new(),
         password: String::new(),
-        cron: String::new(),
-        add_err_retry_wait: std::time::Duration::from_secs(0),
-        add_wait: std::time::Duration::from_secs(0),
+        cron: "0 7 * * *".to_string(),
+        add_err_retry_wait: std::time::Duration::from_secs(10),
+        add_wait: std::time::Duration::from_secs(1),
         github_proxy: String::new(),
         custom_isp: Vec::new(),
         stream_domain: Vec::new(),
@@ -262,7 +262,8 @@ pub fn run() {
         .setup(move |app| {
             // 移动端使用 Tauri 提供的 app_config_dir；桌面端沿用 ikb_core 路径逻辑
             // Mobile: use Tauri's app_config_dir; Desktop: use ikb_core's platform path
-            let config_path = if cfg!(target_os = "android") || cfg!(target_os = "ios") {
+            let is_mobile = cfg!(target_os = "android") || cfg!(target_os = "ios");
+            let config_path = if is_mobile {
                 let dir = app.path().app_config_dir().unwrap_or_else(|_| PathBuf::from("."));
                 if !dir.exists() {
                     let _ = std::fs::create_dir_all(&dir);
@@ -271,6 +272,29 @@ pub fn run() {
             } else {
                 ikb_core::paths::default_config_path()
             };
+
+            // 首次启动时自动生成模板配置，避免空配置导致无法运行。
+            // Create a template config on first launch to avoid empty config on mobile.
+            if is_mobile && !config_path.exists() {
+                let mut tpl = Config {
+                    ikuai_url: String::new(),
+                    username: String::new(),
+                    password: String::new(),
+                    cron: "0 7 * * *".to_string(),
+                    add_err_retry_wait: std::time::Duration::from_secs(10),
+                    add_wait: std::time::Duration::from_secs(1),
+                    github_proxy: String::new(),
+                    custom_isp: Vec::new(),
+                    stream_domain: Vec::new(),
+                    ip_group: Vec::new(),
+                    ipv6_group: Vec::new(),
+                    stream_ipport: Vec::new(),
+                    webui: Default::default(),
+                    max_number_of_one_records: Default::default(),
+                };
+                tpl.apply_defaults();
+                let _ = tpl.save_to_path_with_comments(&config_path, true);
+            }
 
             let state = app.state::<AppState>();
             {

@@ -363,6 +363,7 @@ import '../styles/global.css';
                   <div>
                     <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">GitHub 代理</label>
                     <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                    <div id="cfgGhProxyQuickPick" class="mt-2"></div>
                   </div>
                   <div>
                     <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">错误重试等待</label>
@@ -456,8 +457,26 @@ import '../styles/global.css';
         </div>
         <div class="p-6">
           <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+            <div id="remoteTemplateTip" class="mb-3 hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"></div>
             <input id="remoteUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://raw.githubusercontent.com/.../config.yml" />
             <p class="mt-3 text-sm text-amber-600 dark:text-amber-400">使用远程配置覆盖本地配置。</p>
+
+            <div class="mt-4 rounded-2xl bg-white/60 p-4 dark:bg-gray-800/30">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">使用 ghproxy 代理</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="remoteUseGhProxy" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div id="remoteGhProxySection" class="mt-3 hidden">
+                <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">GitHub Proxy 地址</label>
+                <input id="remoteGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                <div id="remoteGhProxyQuickPick" class="mt-2"></div>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">仅对 raw.githubusercontent.com / github.com 生效。</p>
+              </div>
+            </div>
+
             <div class="mt-3 flex gap-2">
               <button id="btnLoadRemote" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">加载</button>
               <button id="btnResetRemote" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">默认</button>

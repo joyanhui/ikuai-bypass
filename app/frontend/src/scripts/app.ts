@@ -3,6 +3,8 @@ import type { RuntimeStatus } from '../lib/bridge.ts';
 import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComments, yamlParse } from '../lib/config_model.ts';
 import type { UiConfig } from '../lib/config_model.ts';
 import { loadJson, saveJson } from '../lib/storage.ts';
+import { getLanguage, initLanguage, t, toggleLanguage } from '../lib/i18n.ts';
+import { BRAND } from '../lib/branding.ts';
 import { removeYamlSeqItem, updateYamlPaths, upsertYamlSeqItem } from '../lib/yaml_ast.ts';
 
 type MonacoModule = typeof import('monaco-editor/esm/vs/editor/editor.api');
@@ -51,7 +53,7 @@ const getErrorMessage = (err: unknown): string => {
     const value = (err as { message?: unknown }).message;
     if (typeof value === 'string') return value;
   }
-  return '未知错误';
+  return getLanguage() === 'en' ? 'Unknown error' : '未知错误';
 };
 
 const getRawEditorValue = () => {
@@ -364,11 +366,11 @@ const initStopCronModal = () => {
     if (!confirmBtn) return;
     const old = confirmBtn.textContent;
     confirmBtn.disabled = true;
-    confirmBtn.textContent = '停止中...';
+    confirmBtn.textContent = getLanguage() === 'en' ? 'Stopping...' : '停止中...';
     try {
       await bridge.runtimeCronStop();
       state.isCronRunning = false;
-      showToast('定时任务已停止');
+      showToast(t('toast.cron_stopped'));
       close();
       void updateStatus();
     } catch (err) {
@@ -493,8 +495,24 @@ const initTheme = () => {
     const current = document.documentElement.dataset.theme as 'auto' | 'dark' | 'light' || 'auto';
     const next = current === 'dark' ? 'light' : current === 'light' ? 'auto' : 'dark';
     applyTheme(next);
-    showToast(next === 'auto' ? '已切换到自动主题' : next === 'dark' ? '已切换到深色模式' : '已切换到浅色模式');
+    showToast(next === 'auto' ? t('toast.switch_theme_auto') : next === 'dark' ? t('toast.switch_theme_dark') : t('toast.switch_theme_light'));
   });
+
+  // 自动模式下跟随系统主题变化。
+  // Follow system theme changes when mode=auto.
+  if (window.matchMedia) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      const mode = (document.documentElement.dataset.theme as 'auto' | 'dark' | 'light') || 'auto';
+      if (mode === 'auto') applyTheme('auto');
+    };
+    // Safari < 14
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', onChange);
+    } else if ('addListener' in mq) {
+      (mq as MediaQueryList & { addListener: (listener: () => void) => void }).addListener(onChange);
+    }
+  }
 };
 
 const applyTheme = (mode: 'auto' | 'dark' | 'light') => {
@@ -507,6 +525,18 @@ const applyTheme = (mode: 'auto' | 'dark' | 'light') => {
   
   root.classList.toggle('dark', useDark);
   root.classList.toggle('light', mode === 'light');
+  const btn = document.getElementById('themeToggle') as HTMLButtonElement | null;
+  if (btn) {
+    const label =
+      mode === 'auto'
+        ? (useDark ? t('theme.auto_applied_dark') : t('theme.auto_applied_light'))
+        : mode === 'dark'
+          ? t('theme.dark')
+          : t('theme.light');
+    const hint = t('theme.toggle_hint');
+    btn.setAttribute('aria-label', `${label} - ${hint}`);
+    btn.title = `${label} - ${hint}`;
+  }
   if (monaco) {
     monaco.editor.setTheme(useDark ? 'vs-dark' : 'vs');
   }
@@ -535,8 +565,11 @@ const appendLog = (line: string) => {
   entry.className = className;
   entry.textContent = line;
   
-  // 移除"等待日志输出..."
-  if (container.children.length === 1 && container.children[0].textContent?.includes('等待')) {
+  // 移除占位提示 / Remove placeholder
+  if (
+    container.children.length === 1 &&
+    (container.children[0] as HTMLElement | null)?.dataset?.i18n === 'logs.waiting'
+  ) {
     container.innerHTML = '';
   }
   
@@ -556,7 +589,7 @@ const appendLog = (line: string) => {
 const clearLogs = () => {
   const container = document.getElementById('logContainer');
   if (!container) return;
-  container.innerHTML = '<div class="text-gray-400 dark:text-gray-500 italic">等待日志输出...</div>';
+  container.innerHTML = `<div class="text-gray-400 dark:text-gray-500 italic" data-i18n="logs.waiting">${t('logs.waiting')}</div>`;
 };
 
 const startLogStream = async () => {
@@ -622,27 +655,30 @@ const updateStatus = async () => {
     // 更新徽章
     if (st.running) {
       badge.className = 'px-3 py-1 rounded-full text-xs font-semibold status-running flex items-center gap-1.5';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>运行中';
-      mainStatus.textContent = '执行中';
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>${t('status.badge.running')}`;
+      mainStatus.textContent = t('status.running');
     } else if (st.cron_running) {
       badge.className = 'px-3 py-1 rounded-full text-xs font-semibold status-running flex items-center gap-1.5';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>定时运行';
-      mainStatus.textContent = '待机';
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>${t('status.cron_running')}`;
+      mainStatus.textContent = t('status.standby');
     } else {
       badge.className = 'px-3 py-1 rounded-full text-xs font-semibold status-stopped flex items-center gap-1.5';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span>已停止';
-      mainStatus.textContent = '已停止';
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span>${t('status.stopped')}`;
+      mainStatus.textContent = t('status.stopped');
     }
     
     // 更新副状态
     if (st.running) {
-      subStatus.textContent = `正在执行模块: ${st.module || state.selectedModule}`;
+      subStatus.textContent = t('status.sub.running_module', { module: st.module || state.selectedModule });
     } else if (st.cron_running && st.next_run_at) {
-      subStatus.textContent = `定时模块: ${st.module || state.selectedModule} / 下次执行: ${st.next_run_at}`;
+      subStatus.textContent = t('status.sub.scheduled_next', {
+        module: st.module || state.selectedModule,
+        next: st.next_run_at,
+      });
     } else if (st.last_run_at) {
-      subStatus.textContent = `上次执行: ${st.last_run_at}`;
+      subStatus.textContent = t('status.sub.last_run', { last: st.last_run_at });
     } else {
-      subStatus.textContent = '等待启动...';
+      subStatus.textContent = t('status.sub.waiting');
     }
     
     // 更新 Cron 按钮状态
@@ -656,10 +692,10 @@ const updateStatus = async () => {
     
     if (badge) {
       badge.className = 'px-3 py-1 rounded-full text-xs font-semibold status-pending flex items-center gap-1.5';
-      badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>连接中';
+      badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>${t('status.badge.connecting')}`;
     }
     if (mainStatus) mainStatus.textContent = '--';
-    if (subStatus) subStatus.textContent = '无法连接到服务';
+    if (subStatus) subStatus.textContent = t('status.sub.disconnected');
   }
 };
 
@@ -672,7 +708,7 @@ const updateCronButton = () => {
   if (!runBtn) return;
 
   if (state.isRunning || state.isCronRunning) {
-    runBtn.textContent = state.isCronRunning ? '停止定时任务' : '停止执行';
+    runBtn.textContent = state.isCronRunning ? t('runtime.action.stop_cron') : t('runtime.action.stop');
     runBtn.dataset.action = 'stop';
     runBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700', 'shadow-primary-600/30');
     runBtn.classList.add('bg-red-500', 'hover:bg-red-600', 'shadow-red-500/30');
@@ -684,10 +720,10 @@ const updateCronButton = () => {
   runBtn.classList.add('bg-primary-600', 'hover:bg-primary-700', 'shadow-primary-600/30');
 
   const labels: Record<typeof state.selectedRunMode, string> = {
-    once: '执行一次',
-    cron: '启动 cron',
-    cronAft: '启动 cronAft',
-    clean: '执行清理',
+    once: t('runtime.action.run_once'),
+    cron: t('runtime.action.start_cron'),
+    cronAft: t('runtime.action.start_cronaft'),
+    clean: t('runtime.action.clean'),
   };
   runBtn.textContent = labels[state.selectedRunMode];
 };
@@ -699,9 +735,9 @@ const setRunningPreview = (text: string) => {
 
   if (badge) {
     badge.className = 'px-3 py-1 rounded-full text-xs font-semibold status-running flex items-center gap-1.5';
-    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>运行中';
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>${t('status.badge.running')}`;
   }
-  if (mainStatus) mainStatus.textContent = '执行中';
+  if (mainStatus) mainStatus.textContent = t('status.running');
   if (subStatus) subStatus.textContent = text;
 };
 
@@ -723,11 +759,27 @@ const initMainTabs = () => {
   const tabs = document.querySelectorAll<HTMLElement>('.main-tab');
   const panels = document.querySelectorAll<HTMLElement>('.tab-panel');
 
+  const apply = (tabName: string, activeTab?: HTMLElement) => {
+    tabs.forEach((item) => {
+      const isActive = activeTab ? item === activeTab : item.dataset.tab === tabName;
+      item.classList.toggle('active', isActive);
+    });
+    panels.forEach((panel) => {
+      const isHidden = panel.dataset.tabPanel !== tabName;
+      panel.classList.toggle('hidden', isHidden);
+      panel.toggleAttribute('hidden', isHidden);
+      panel.setAttribute('aria-hidden', isHidden ? 'true' : 'false');
+    });
+  };
+
+  const initialTab = (document.querySelector('.main-tab.active') as HTMLElement | null) || tabs[0] || undefined;
+  const initialName = initialTab?.dataset.tab || 'runtime';
+  apply(initialName, initialTab);
+
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const tabName = tab.dataset.tab || 'runtime';
-      tabs.forEach((item) => item.classList.toggle('active', item === tab));
-      panels.forEach((panel) => panel.classList.toggle('hidden', panel.dataset.tabPanel !== tabName));
+      apply(tabName, tab);
     });
   });
 };
@@ -783,7 +835,7 @@ const initRunModeSelection = () => {
   document.querySelectorAll('.run-mode-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
       if (state.isRunning || state.isCronRunning) {
-        showToast('请先停止任务');
+        showToast(t('toast.need_stop_first'));
         return;
       }
       state.selectedRunMode = (chip.getAttribute('data-run-mode') as typeof state.selectedRunMode) || 'once';
@@ -803,7 +855,7 @@ const initModuleSelection = () => {
   grid.querySelectorAll('.module-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       if (state.isRunning || state.isCronRunning) {
-        showToast('请先停止任务');
+        showToast(t('toast.need_stop_first'));
         return;
       }
       grid.querySelectorAll('.module-chip').forEach(c => c.classList.remove('active'));
@@ -826,17 +878,17 @@ const initQuickActions = () => {
           return;
         }
         await bridge.runtimeStop();
-        showToast('任务已停止');
+        showToast(t('toast.task_stopped'));
         return;
       }
 
       if (state.selectedRunMode === 'clean') {
         const cleanTag = (document.getElementById('cleanTagInput') as HTMLInputElement | null)?.value.trim() || '';
         if (!cleanTag) {
-          showToast('clean 模式必须填写清理标签');
+          showToast(t('toast.clean_requires_tag'));
           return;
         }
-        showToast('正在执行清理...');
+        showToast(t('toast.clean_running'));
         await bridge.runtimeClean(cleanTag);
         showToast('清理完成');
         return;
@@ -879,7 +931,7 @@ const initQuickActions = () => {
 
   document.getElementById('btnClearLogs')?.addEventListener('click', () => {
     clearLogs();
-    showToast('日志已清空');
+    showToast(t('toast.logs_cleared'));
   });
 };
 
@@ -946,7 +998,7 @@ const initBasicConfigAccordion = () => {
     panel.classList.toggle('opacity-100', open);
     panel.classList.toggle('opacity-0', !open);
     panel.classList.toggle('pointer-events-none', !open);
-    if (label) label.textContent = open ? '收起' : '展开';
+    if (label) label.textContent = open ? t('common.collapse') : t('common.expand');
     if (icon) icon.classList.toggle('rotate-180', open);
     setPanelDisabled(!open);
 
@@ -2035,7 +2087,43 @@ const loadBackend = async () => {
 // ============================================
 // 初始化
 // ============================================
+const initLanguageToggle = () => {
+  const btn = document.getElementById('langToggle') as HTMLButtonElement | null;
+  if (!btn) return;
+
+  const refresh = () => {
+    const lang = getLanguage();
+    btn.textContent = lang === 'en' ? 'EN' : '中';
+    const hint = t('lang.toggle_hint');
+    const title = lang === 'en' ? `${t('lang.en')} - ${hint}` : `${t('lang.zh')} - ${hint}`;
+    btn.title = title;
+    btn.setAttribute('aria-label', title);
+  };
+
+  refresh();
+  btn.addEventListener('click', () => {
+    const next = toggleLanguage();
+    refresh();
+    showToast(next === 'en' ? t('toast.switch_lang_en') : t('toast.switch_lang_zh'));
+    // 语言切换后，刷新动态区域文案
+    void updateStatus();
+    updateRunModeUI();
+    updateCronButton();
+
+    const accBtn = document.getElementById('btnToggleBasicConfig');
+    const accLabel = document.getElementById('basicConfigToggleLabel');
+    if (accBtn && accLabel) {
+      const open = accBtn.getAttribute('aria-expanded') === 'true';
+      accLabel.textContent = open ? t('common.collapse') : t('common.expand');
+    }
+  });
+};
+
 const init = async () => {
+  // 初始化语言（需早于主题/DOM 文案更新）
+  initLanguage();
+  initLanguageToggle();
+
   // 初始化主题
   initTheme();
   initMainTabs();
@@ -2066,6 +2154,26 @@ const init = async () => {
   } catch (err) {
     console.warn('[IKB] loadBackend failed, UI remains usable', err);
     showToast('配置加载失败，请检查连接');
+  }
+
+  // Tauri App branding
+  // 主标题保持 iKuai Bypass，副标题显示 dev.leiyanhui.com
+  // Keep main title as iKuai Bypass; show dev.leiyanhui.com as subtitle.
+  try {
+    if (await bridge.isTauriReady()) {
+      document.title = BRAND.appTitle;
+      const h1 = document.getElementById('appTitle');
+      if (h1) h1.textContent = BRAND.appTitle;
+      const subtitle = document.getElementById('subtitle');
+      if (subtitle) {
+        subtitle.textContent = BRAND.tauriSubtitle;
+        // 锁定品牌文案，避免语言切换覆盖。
+        // Lock branding so language switch won't overwrite it.
+        (subtitle as HTMLElement).dataset.brandLock = '1';
+      }
+    }
+  } catch {
+    // ignore
   }
   
   try {

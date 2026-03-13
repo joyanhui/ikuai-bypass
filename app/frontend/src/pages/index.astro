@@ -25,18 +25,40 @@ import '../styles/global.css';
               </svg>
             </div>
             <div>
-              <h1 class="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-lg font-bold text-transparent dark:from-white dark:to-gray-400">iKuai Bypass</h1>
-              <p class="text-xs text-gray-500 dark:text-gray-400" id="subtitle">智能分流管理</p>
+              <h1 id="appTitle" class="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-lg font-bold text-transparent dark:from-white dark:to-gray-400">iKuai Bypass</h1>
+              <p class="text-xs text-gray-500 dark:text-gray-400" id="subtitle" data-i18n="app.subtitle">智能分流管理</p>
             </div>
           </div>
-          <button id="themeToggle" class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100/80 text-gray-600 transition-all duration-200 active:scale-95 hover:bg-gray-200 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:bg-gray-700">
-            <svg class="hidden h-5 w-5 dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <svg class="block h-5 w-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              id="langToggle"
+              type="button"
+              class="flex h-10 items-center justify-center rounded-2xl bg-white/70 px-3 text-sm font-semibold text-gray-700 ring-1 ring-black/5 backdrop-blur transition-all duration-200 active:scale-95 hover:bg-white dark:bg-gray-900/60 dark:text-gray-200 dark:ring-white/10 dark:hover:bg-gray-900"
+              aria-label="切换语言"
+              title="切换语言"
+            >
+              中
+            </button>
+
+            <button
+              id="themeToggle"
+              type="button"
+              class="group relative flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 text-gray-700 ring-1 ring-black/5 backdrop-blur transition-all duration-200 active:scale-95 hover:bg-white dark:bg-gray-900/60 dark:text-gray-200 dark:ring-white/10 dark:hover:bg-gray-900"
+              aria-label="切换主题"
+              title="切换主题"
+            >
+              <svg class="theme-icon theme-icon-auto h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2m0 14v2m9-9h-2M5 12H3m14.364 6.364l-1.414-1.414M7.05 7.05L5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
+              </svg>
+              <svg class="theme-icon theme-icon-light h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <svg class="theme-icon theme-icon-dark h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -45,9 +67,9 @@ import '../styles/global.css';
       <div class="mb-6">
         <div class="glass-card rounded-2xl p-2">
           <div class="grid grid-cols-3 gap-2" id="mainTabGrid">
-            <button class="main-tab active" data-tab="runtime">运行模式</button>
-            <button class="main-tab" data-tab="config">配置助手</button>
-            <button class="main-tab" data-tab="cmd">命令生成器</button>
+            <button class="main-tab active" data-tab="runtime" data-i18n="tabs.runtime">运行模式</button>
+            <button class="main-tab" data-tab="config" data-i18n="tabs.config">配置助手</button>
+            <button class="main-tab" data-tab="cmd" data-i18n="tabs.cmd">命令生成器</button>
           </div>
         </div>
       </div>
@@ -59,9 +81,9 @@ import '../styles/global.css';
             <div class="relative space-y-6">
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div class="text-sm font-medium text-gray-500 dark:text-gray-400">运行状态</div>
+                  <div class="text-sm font-medium text-gray-500 dark:text-gray-400" data-i18n="status.title">运行状态</div>
                   <div id="mainStatus" class="mt-1 text-3xl font-bold text-gray-900 dark:text-white">--</div>
-                  <p id="subStatus" class="mt-1 text-sm text-gray-500 dark:text-gray-400">正在连接服务...</p>
+                  <p id="subStatus" class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="status.connecting">正在连接服务...</p>
                 </div>
                 <div class="flex flex-col items-end gap-3">
                   <span id="statusBadge" class="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
@@ -74,70 +96,70 @@ import '../styles/global.css';
 
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">运行模式</h2>
+                  <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.title">运行模式</h2>
                 </div>
                 <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4" id="runModeGrid">
                   <button class="run-mode-chip active" data-run-mode="once">
-                    <span class="block text-sm font-semibold">once</span>
-                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">执行一次</span>
+                    <span class="block text-base font-semibold">once</span>
+                    <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.once_desc">执行一次</span>
                   </button>
                   <button class="run-mode-chip" data-run-mode="cron">
-                    <span class="block text-sm font-semibold">cron</span>
-                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">先执行后定时</span>
+                    <span class="block text-base font-semibold">cron</span>
+                    <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.cron_desc">先执行后定时</span>
                   </button>
                   <button class="run-mode-chip" data-run-mode="cronAft">
-                    <span class="block text-sm font-semibold">cronAft</span>
-                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">直接定时</span>
+                    <span class="block text-base font-semibold">cronAft</span>
+                    <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.cronaft_desc">直接定时</span>
                   </button>
                   <button class="run-mode-chip" data-run-mode="clean">
-                    <span class="block text-sm font-semibold">clean</span>
-                    <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">清理模式</span>
+                    <span class="block text-base font-semibold">clean</span>
+                    <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.clean_desc">清理模式</span>
                   </button>
                 </div>
               </div>
 
               <div class="space-y-3">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">分流模块</h2>
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="runtime.module.title">分流模块</h2>
                 <div class="rounded-2xl border border-white/20 bg-white/20 p-2 dark:border-gray-800/60 dark:bg-gray-900/10">
                   <div class="grid grid-cols-3 gap-1" id="moduleGrid">
-                    <button class="module-chip active" data-module="ispdomain"><span class="text-xs font-medium">运营商</span></button>
-                    <button class="module-chip" data-module="ipgroup"><span class="text-xs font-medium">IP分组</span></button>
-                    <button class="module-chip" data-module="ipv6group"><span class="text-xs font-medium">IPv6</span></button>
-                    <button class="module-chip" data-module="ii"><span class="text-xs font-medium">混合</span></button>
-                    <button class="module-chip" data-module="ip"><span class="text-xs font-medium">IP混合</span></button>
-                    <button class="module-chip" data-module="iip"><span class="text-xs font-medium">全能</span></button>
+                    <button class="module-chip active" data-module="ispdomain"><span class="text-sm font-medium" data-i18n="module.ispdomain">运营商分流</span></button>
+                    <button class="module-chip" data-module="ipgroup"><span class="text-sm font-medium" data-i18n="module.ipgroup">IPv4分组</span></button>
+                    <button class="module-chip" data-module="ipv6group"><span class="text-sm font-medium" data-i18n="module.ipv6group">IPv6分组</span></button>
+                    <button class="module-chip" data-module="ii"><span class="text-sm font-medium" data-i18n="module.ii">运营商+IPv4</span></button>
+                    <button class="module-chip" data-module="ip"><span class="text-sm font-medium" data-i18n="module.ip">IPv4+IPv6</span></button>
+                    <button class="module-chip" data-module="iip"><span class="text-sm font-medium" data-i18n="module.iip">全模式</span></button>
                   </div>
                 </div>
               </div>
 
               <div id="cronSection" class="hidden rounded-2xl border border-primary-500/15 bg-primary-500/5 p-4">
                 <div class="flex items-center gap-3">
-                  <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Cron</span>
+                  <span class="shrink-0 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="cron.label">Cron</span>
                   <input id="cronInput" type="text" value="0 7 * * *" class="w-full bg-transparent py-1 text-sm text-gray-900 outline-none dark:text-white" placeholder="0 7 * * *" />
                 </div>
               </div>
 
               <div id="cleanSection" class="hidden rounded-2xl border border-red-500/15 bg-red-500/5 p-4">
-                <label class="mb-1 block text-xs text-gray-500 dark:text-gray-400">清理标签</label>
-                <input id="cleanTagInput" type="text" class="w-full border-b border-gray-200 bg-transparent py-2 text-sm text-gray-900 outline-none transition-colors focus:border-red-500 dark:border-gray-700 dark:text-white" placeholder="请输入 tag 或 cleanAll" />
-                <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">安全要求：必须显式填写 tag 或 `cleanAll`。</p>
+                <label class="mb-1 block text-xs text-gray-500 dark:text-gray-400" data-i18n="clean.tag">清理标签</label>
+                <input id="cleanTagInput" type="text" class="w-full border-b border-gray-200 bg-transparent py-2 text-sm text-gray-900 outline-none transition-colors focus:border-red-500 dark:border-gray-700 dark:text-white" placeholder="请输入 tag 或 cleanAll" data-i18n-placeholder="clean.placeholder" />
+                <p class="mt-2 text-xs text-gray-400 dark:text-gray-500" data-i18n="clean.hint">安全要求：必须显式填写 tag 或 `cleanAll`。</p>
               </div>
 
             </div>
           </div>
 
           <div class="glass-card rounded-3xl p-5">
-            <div class="mb-3 flex items-center justify-between px-1">
-              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">实时日志</h2>
-              <button id="btnClearLogs" class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200" title="清空日志" aria-label="清空日志">
+            <div class="mb-3 flex items-center gap-2 px-1">
+              <button id="btnClearLogs" class="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200" title="清空日志" aria-label="清空日志" data-i18n-title="logs.clear" data-i18n-aria-label="logs.clear">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16" />
                 </svg>
               </button>
+              <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="logs.title">实时日志</h2>
             </div>
             <div class="relative overflow-hidden rounded-2xl bg-gray-950/90 p-4">
-              <div id="logContainer" class="scrollbar-thin h-[28rem] space-y-1.5 overflow-y-auto font-mono text-xs text-gray-300">
-                <div class="italic text-gray-500">等待日志输出...</div>
+              <div id="logContainer" class="scrollbar-thin h-[28rem] space-y-1.5 overflow-y-auto font-mono text-sm text-gray-300">
+                <div class="italic text-gray-500" data-i18n="logs.waiting">等待日志输出...</div>
               </div>
               <div class="pointer-events-none absolute right-0 bottom-0 left-0 h-8 bg-gradient-to-t from-gray-950 to-transparent"></div>
             </div>
@@ -145,26 +167,26 @@ import '../styles/global.css';
         </div>
       </section>
 
-      <section class="tab-panel hidden" data-tab-panel="config">
+      <section class="tab-panel hidden" data-tab-panel="config" hidden>
         <div class="space-y-6">
           <div class="glass-card rounded-3xl p-6">
             <div class="mb-6 flex items-center justify-between gap-3">
               <div>
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white">配置助手</h2>
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="config.title">配置助手</h2>
               </div>
               <div class="text-sm text-gray-500 dark:text-gray-400" id="saveHint"></div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div class="glass-card rounded-2xl p-1">
                 <div class="grid grid-cols-2 gap-1" id="configSubTabGrid">
-                  <button class="config-sub-tab active" data-config-tab="visual">可视化编辑</button>
-                  <button class="config-sub-tab" data-config-tab="raw">文本编辑</button>
+                  <button class="config-sub-tab active" data-config-tab="visual" data-i18n="config.tab.visual">可视化编辑</button>
+                  <button class="config-sub-tab" data-config-tab="raw" data-i18n="config.tab.raw">文本编辑</button>
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <button id="btnOpenRemoteConfig" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">远程载入</button>
-                <button id="btnSaveWithComments" class="rounded-2xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">保存配置 (保留注释)</button>
-                <button id="btnSaveNoComments" class="rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-all active:scale-95 hover:bg-primary-700">保存配置</button>
+                <button id="btnOpenRemoteConfig" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="config.remote_load">远程载入</button>
+                <button id="btnSaveWithComments" class="rounded-2xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800" data-i18n="config.save_keep_comments">保存配置 (保留注释)</button>
+                <button id="btnSaveNoComments" class="rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-all active:scale-95 hover:bg-primary-700" data-i18n="config.save">保存配置</button>
               </div>
             </div>
           </div>
@@ -180,8 +202,8 @@ import '../styles/global.css';
                   type="button"
                 >
                   <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">基本配置</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">爱快连接、代理、WebUI、分页参数</p>
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white" data-i18n="config.basic.title">基本配置</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="config.basic.desc">爱快连接、代理、WebUI、分页参数</p>
                   </div>
                   <div class="mt-0.5 flex items-center gap-2">
                     <span id="basicConfigToggleLabel" class="text-sm font-medium text-gray-600 dark:text-gray-300">展开</span>
@@ -199,20 +221,20 @@ import '../styles/global.css';
                     <div class="grid gap-6 xl:grid-cols-2">
                       <div class="space-y-6">
                         <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">iKuai 连接</h3>
+                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.ikuai">iKuai 连接</h3>
                           <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">路由器地址</label>
-                              <input id="cfgIkuaiUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://192.168.9.1" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">路由器地址</label>
+                              <input id="cfgIkuaiUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://192.168.9.1" />
                             </div>
                             <div class="mt-3 grid grid-cols-2 gap-3">
                               <div>
-                                <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">用户名</label>
-                                <input id="cfgUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                                <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">用户名</label>
+                                <input id="cfgUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                               </div>
                               <div>
-                                <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">密码</label>
-                                <input id="cfgPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                                <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">密码</label>
+                                <input id="cfgPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                               </div>
                             </div>
 
@@ -224,24 +246,24 @@ import '../styles/global.css';
                         </section>
 
                         <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">调度与代理</h3>
-                          <div class="grid gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40 md:grid-cols-2">
+                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.schedule">调度与代理</h3>
+                            <div class="grid gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40 md:grid-cols-2">
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">GitHub 代理</label>
-                              <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">GitHub 代理</label>
+                              <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
                               <div id="cfgGhProxyQuickPick" class="mt-2"></div>
                             </div>
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">错误重试等待</label>
-                              <input id="cfgRetryWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="10s" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">错误重试等待</label>
+                              <input id="cfgRetryWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="10s" />
                             </div>
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">添加等待</label>
-                              <input id="cfgAddWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="1s" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">添加等待</label>
+                              <input id="cfgAddWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="1s" />
                             </div>
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Cron</label>
-                              <input id="cfgCronInline" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="0 7 * * *" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">Cron</label>
+                              <input id="cfgCronInline" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="0 7 * * *" />
                             </div>
                           </div>
                         </section>
@@ -249,7 +271,7 @@ import '../styles/global.css';
 
                       <div class="space-y-6">
                         <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">WebUI 设置</h3>
+                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.webui">WebUI 设置</h3>
                           <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                             <div class="space-y-4">
                               <div class="flex items-center justify-between">
@@ -261,44 +283,45 @@ import '../styles/global.css';
                               </div>
                               <div class="grid grid-cols-2 gap-3">
                                 <div>
-                                  <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">端口</label>
-                                  <input id="cfgWebPort" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="19001" />
+                                  <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">端口</label>
+                                  <input id="cfgWebPort" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="19001" />
                                 </div>
                                 <div>
-                                  <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">CDN 前缀</label>
-                                  <input id="cfgWebCdn" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://cdn.jsdelivr.net/npm" />
+                                  <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">CDN 前缀</label>
+                                  <input id="cfgWebCdn" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://cdn.jsdelivr.net/npm" />
                                 </div>
                                 <div>
-                                  <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">用户名</label>
-                                  <input id="cfgWebUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                                  <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">用户名</label>
+                                  <input id="cfgWebUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                                 </div>
                                 <div>
-                                  <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">密码</label>
-                                  <input id="cfgWebPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                                  <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">密码</label>
+                                  <input id="cfgWebPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                                 </div>
                               </div>
+                              <p class="text-sm text-gray-500 dark:text-gray-400">在线保存已固定开启；建议配置用户名/密码启用 BasicAuth。</p>
                             </div>
                           </div>
                         </section>
 
                         <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">数据分页</h3>
+                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.pagination">数据分页</h3>
                           <div class="grid grid-cols-2 gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">ISP 限制</label>
-                              <input id="cfgMaxIsp" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">ISP 限制</label>
+                              <input id="cfgMaxIsp" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                             </div>
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">IPv4 限制</label>
-                              <input id="cfgMaxIpv4" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">IPv4 限制</label>
+                              <input id="cfgMaxIpv4" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                             </div>
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">IPv6 限制</label>
-                              <input id="cfgMaxIpv6" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">IPv6 限制</label>
+                              <input id="cfgMaxIpv6" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                             </div>
                             <div>
-                              <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">Domain 限制</label>
-                              <input id="cfgMaxDomain" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">Domain 限制</label>
+                              <input id="cfgMaxDomain" type="number" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                             </div>
                           </div>
                         </section>
@@ -374,48 +397,48 @@ import '../styles/global.css';
         </div>
       </section>
 
-      <section class="tab-panel hidden" data-tab-panel="cmd">
+      <section class="tab-panel hidden" data-tab-panel="cmd" hidden>
         <div class="glass-card rounded-3xl p-6">
           <div class="mb-6">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">命令生成器</h2>
-            <p class="text-sm text-gray-500 dark:text-gray-400">保留 Go 版 WebUI 的核心命令构造能力，并适配当前风格。</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="cmd.title">命令生成器</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.subtitle">保留 Go 版 WebUI 的核心命令构造能力，并适配当前风格。</p>
           </div>
 
           <div class="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
             <div class="space-y-4">
-              <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
-                <div class="space-y-4">
-                  <div>
-                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">运行模式</label>
-                    <select id="cmdRunMode" class="w-full appearance-none rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
-                      <option value="cron">cron (执行一次+定时)</option>
-                      <option value="cronAft">cronAft (仅定时)</option>
-                      <option value="once">once (执行一次退出)</option>
-                      <option value="clean">clean (清理)</option>
-                      <option value="web">web (仅WebUI)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">模块</label>
-                    <select id="cmdModule" class="w-full appearance-none rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
-                      <option value="ispdomain">ispdomain</option>
-                      <option value="ipgroup">ipgroup</option>
-                      <option value="ipv6group">ipv6group</option>
-                      <option value="ii">ii</option>
-                      <option value="ip">ip</option>
-                      <option value="iip">iip</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">配置路径</label>
-                    <input id="cmdConfigPath" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="./config.yml" />
-                  </div>
-                  <div>
-                    <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">清理标签</label>
-                    <input id="cmdCleanTag" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="cleanAll" />
-                  </div>
+                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                    <div class="space-y-4">
+                      <div>
+                        <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.run_mode">运行模式</label>
+                        <select id="cmdRunMode" class="w-full appearance-none rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
+                          <option value="cron">cron (执行一次+定时)</option>
+                          <option value="cronAft">cronAft (仅定时)</option>
+                          <option value="once">once (执行一次退出)</option>
+                          <option value="clean">clean (清理)</option>
+                          <option value="web">web (仅WebUI)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.module">模块</label>
+                        <select id="cmdModule" class="w-full appearance-none rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
+                          <option value="ispdomain" data-i18n="module.ispdomain">运营商分流</option>
+                          <option value="ipgroup" data-i18n="module.ipgroup">IPv4分组</option>
+                          <option value="ipv6group" data-i18n="module.ipv6group">IPv6分组</option>
+                          <option value="ii" data-i18n="module.ii">运营商+IPv4</option>
+                          <option value="ip" data-i18n="module.ip">IPv4+IPv6</option>
+                          <option value="iip" data-i18n="module.iip">全模式</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.config_path">配置路径</label>
+                        <input id="cmdConfigPath" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="./config.yml" />
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.clean_tag">清理标签</label>
+                        <input id="cmdCleanTag" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="cleanAll" />
+                      </div>
                   <div class="flex items-center justify-between">
-                    <span class="text-sm text-gray-700 dark:text-gray-300">随机后缀</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-300" data-i18n="cmd.random_suffix">随机后缀</span>
                     <div class="flex rounded-xl bg-white p-1 dark:bg-gray-800">
                       <button class="cmd-toggle rounded-lg px-4 py-1.5 text-sm font-medium transition-all" data-value="0">关闭</button>
                       <button class="cmd-toggle active rounded-lg px-4 py-1.5 text-sm font-medium transition-all" data-value="1">开启</button>
@@ -436,8 +459,8 @@ import '../styles/global.css';
             <div class="space-y-4">
               <div class="rounded-3xl bg-gray-950 p-5 shadow-2xl shadow-black/20">
                 <div class="mb-3 flex items-center justify-between">
-                  <span class="text-sm font-medium text-gray-300">生成的命令</span>
-                  <button id="btnCopyCmd" class="text-xs font-medium text-primary-400">复制</button>
+                  <span class="text-sm font-medium text-gray-300" data-i18n="cmd.generated">生成的命令</span>
+                  <button id="btnCopyCmd" class="text-xs font-medium text-primary-400" data-i18n="cmd.copy">复制</button>
                 </div>
                 <code id="cmdOut" class="block min-h-32 whitespace-pre-wrap break-all font-mono text-xs text-gray-300"></code>
               </div>
@@ -456,7 +479,7 @@ import '../styles/global.css';
       <div id="remoteConfigContent" class="absolute inset-x-4 top-28 mx-auto max-w-2xl translate-y-6 overflow-hidden rounded-3xl bg-gray-50 shadow-2xl transition-transform dark:bg-gray-950">
         <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">远程载入</h2>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="remote.title">远程载入</h2>
           </div>
           <button id="btnCloseRemoteConfig" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -467,28 +490,28 @@ import '../styles/global.css';
         <div class="p-6">
           <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
             <div id="remoteTemplateTip" class="mb-3 hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"></div>
-            <input id="remoteUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://raw.githubusercontent.com/.../config.yml" />
-            <p class="mt-3 text-sm text-amber-600 dark:text-amber-400">使用远程配置覆盖本地配置。</p>
+            <input id="remoteUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://raw.githubusercontent.com/.../config.yml" />
+            <p class="mt-3 text-sm text-amber-600 dark:text-amber-400" data-i18n="remote.cover_notice">使用远程配置覆盖本地配置。</p>
 
             <div class="mt-4 rounded-2xl bg-white/60 p-4 dark:bg-gray-800/30">
               <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">使用 ghproxy 代理</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="remote.use_proxy">使用 ghproxy 代理</span>
                 <label class="toggle-switch">
                   <input type="checkbox" id="remoteUseGhProxy" />
                   <span class="toggle-slider"></span>
                 </label>
               </div>
               <div id="remoteGhProxySection" class="mt-3 hidden">
-                <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">GitHub Proxy 地址</label>
-                <input id="remoteGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="remote.proxy_label">GitHub Proxy 地址</label>
+                <input id="remoteGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
                 <div id="remoteGhProxyQuickPick" class="mt-2"></div>
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">仅对 raw.githubusercontent.com / github.com 生效。</p>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-i18n="remote.proxy_hint">仅对 raw.githubusercontent.com / github.com 生效。</p>
               </div>
             </div>
 
             <div class="mt-3 flex gap-2">
-              <button id="btnLoadRemote" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700">加载</button>
-              <button id="btnResetRemote" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">默认</button>
+              <button id="btnLoadRemote" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700" data-i18n="remote.btn_load">加载</button>
+              <button id="btnResetRemote" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="remote.btn_default">默认</button>
             </div>
             <p id="remoteHint" class="mt-2 text-xs text-gray-500"></p>
           </div>
@@ -526,10 +549,10 @@ import '../styles/global.css';
       <div id="stopCronContent" class="absolute inset-x-4 top-28 mx-auto max-w-xl translate-y-6 overflow-hidden rounded-3xl bg-gray-50 shadow-2xl transition-transform dark:bg-gray-950">
         <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white">停止定时任务</h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">停止后，计划任务将不会再按 Cron 自动执行。</p>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="cron_stop.title">停止定时任务</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="cron_stop.subtitle">停止后，计划任务将不会再按 Cron 自动执行。</p>
           </div>
-          <button id="btnStopCronCancelTop" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="关闭">
+          <button id="btnStopCronCancelTop" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="关闭" data-i18n-aria-label="common.close" data-i18n-title="common.close">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -537,21 +560,21 @@ import '../styles/global.css';
         </div>
         <div class="p-6">
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-            <div class="font-semibold">注意</div>
+            <div class="font-semibold" data-i18n="cron_stop.notice_title">注意</div>
             <div class="mt-2 leading-relaxed" id="stopCronHint">停止后可能会导致计划任务不会再执行。停止后你可以切换到 once / clean 模式执行；如需再次启动定时任务，请选择 cron 或 cronAft 模式并点击启动。</div>
           </div>
           <div class="mt-5 rounded-2xl bg-gray-100/60 p-4 text-sm text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
-            <div class="font-medium text-gray-900 dark:text-white">当前状态</div>
+            <div class="font-medium text-gray-900 dark:text-white" data-i18n="cron_stop.status_title">当前状态</div>
             <div class="mt-2 grid gap-2 sm:grid-cols-2">
-              <div>模块: <span class="font-mono" id="stopCronModule">--</span></div>
-              <div>Cron: <span class="font-mono" id="stopCronExpr">--</span></div>
-              <div class="sm:col-span-2">下次执行: <span class="font-mono" id="stopCronNext">--</span></div>
+              <div><span data-i18n="cron_stop.field.module">模块</span>: <span class="font-mono" id="stopCronModule">--</span></div>
+              <div><span data-i18n="cron_stop.field.cron">Cron</span>: <span class="font-mono" id="stopCronExpr">--</span></div>
+              <div class="sm:col-span-2"><span data-i18n="cron_stop.field.next">下次执行</span>: <span class="font-mono" id="stopCronNext">--</span></div>
             </div>
           </div>
         </div>
         <div class="flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
-          <button id="btnStopCronCancel" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">取消</button>
-          <button id="btnStopCronConfirm" class="rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition hover:bg-red-600">停止定时任务</button>
+          <button id="btnStopCronCancel" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="common.cancel">取消</button>
+          <button id="btnStopCronConfirm" class="rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition hover:bg-red-600" data-i18n="cron_stop.confirm">停止定时任务</button>
         </div>
       </div>
     </div>

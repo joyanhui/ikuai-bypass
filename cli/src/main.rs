@@ -2,14 +2,74 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
+use std::time::Instant;
+use std::str::FromStr;
 use std::io::IsTerminal;
 
 use clap::Parser;
 
 use ikb_cli::normalize_go_style_args;
+use ikb_cli::normalize_cron_expr;
 use ikb_core::runtime::RuntimeService;
 
+use chrono::Local;
+use cron::Schedule;
+
 mod web;
+
+fn display_conf_path(p: &PathBuf) -> String {
+    if p.is_absolute() {
+        return p.to_string_lossy().to_string();
+    }
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    cwd.join(p).to_string_lossy().to_string()
+}
+
+fn print_once_done_banner(mode: &str, module: &str, conf_path: &str, elapsed: Duration) {
+    let secs = elapsed.as_secs_f64();
+    println!();
+    println!("===========================================================");
+    println!("[END:运行完毕] 任务完成");
+    println!("-----------------------------------------------------------");
+    println!("模式: {}", mode);
+    println!("模块: {}", module);
+    println!("配置: {}", conf_path);
+    println!("耗时: {:.3}s", secs);
+    println!("提示: 如需定时运行，请使用 -r cron 或 -r cronAft");
+    println!("===========================================================");
+    println!();
+}
+
+fn print_cron_started_banner(mode: &str, st: &ikb_core::runtime::RuntimeStatus, normalized: Option<&str>) {
+    let running_text = if st.running { "执行中" } else { "待机" };
+    println!();
+    println!("===========================================================");
+    println!("[CRON:定时任务] 已启动");
+    println!("-----------------------------------------------------------");
+    println!("模式: {}", mode);
+    println!("模块: {}", st.module);
+    println!("表达式: {}", st.cron_expr);
+    if let Some(norm) = normalized {
+        if norm != st.cron_expr {
+            println!("解析: {}", norm);
+        }
+    }
+    let mut next_run = st.next_run_at.trim().to_string();
+    if next_run.is_empty() {
+        if let Some(norm) = normalized {
+            if let Ok(schedule) = Schedule::from_str(norm) {
+                if let Some(next) = schedule.upcoming(Local).next() {
+                    next_run = next.to_rfc3339();
+                }
+            }
+        }
+    }
+    println!("下次执行: {}", if next_run.is_empty() { "-" } else { next_run.as_str() });
+    println!("运行状态: {} (cron_running={})", running_text, st.cron_running);
+    println!("提示: 可在 WebUI 中停止定时任务；或 Ctrl+C 退出");
+    println!("===========================================================");
+    println!();
+}
 
 #[derive(Debug, Parser)]
 #[command(name = "ikuai-bypass")]
@@ -120,7 +180,6 @@ async fn run(
                 Arc::clone(&runtime),
                 args.ikuai_login_info.to_string(),
                 port,
-                true,
             )
             .await
             {
@@ -171,7 +230,6 @@ async fn run(
                     Arc::clone(&runtime),
                     args.ikuai_login_info.to_string(),
                     webui_port,
-                    false,
                 )
                 .await
                 {
@@ -209,6 +267,10 @@ async fn run(
                 eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
                 return 1;
             }
+
+            let norm = normalize_cron_expr(&cron_expr).ok();
+            let st = runtime.status();
+            print_cron_started_banner("cron", &st, norm.as_deref());
 
             wait_until_stopped(&stop).await;
             let _ = runtime.stop_all().await;
@@ -253,7 +315,6 @@ async fn run(
                     Arc::clone(&runtime),
                     args.ikuai_login_info.to_string(),
                     webui_port,
-                    false,
                 )
                 .await
                 {
@@ -275,17 +336,28 @@ async fn run(
                 return 1;
             }
 
+            let norm = normalize_cron_expr(&cron_expr).ok();
+            let st = runtime.status();
+            print_cron_started_banner("cronAft", &st, norm.as_deref());
+
             wait_until_stopped(&stop).await;
             let _ = runtime.stop_all().await;
             0
         }
 
         "nocron" | "once" | "1" => {
+            let started_at = Instant::now();
             if let Err(e) = run_update_once(&config, &args.ikuai_login_info, &args.module).await {
                 eprintln!("[UPDATE:更新失败] {}", e);
                 return 1;
             }
-            println!("[END:运行完毕] Once mode execution completed, exiting...");
+
+            let mode = match args.run_mode.as_str() {
+                "nocron" | "1" => "once",
+                other => other,
+            };
+            let conf_path = display_conf_path(&config_path);
+            print_once_done_banner(mode, &args.module, &conf_path, started_at.elapsed());
             0
         }
 

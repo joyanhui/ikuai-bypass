@@ -16,12 +16,56 @@ use std::convert::Infallible;
 
 use ikb_core::runtime::RuntimeService;
 
+fn display_conf_path(p: &PathBuf) -> String {
+    if p.is_absolute() {
+        return p.to_string_lossy().to_string();
+    }
+    let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    cwd.join(p).to_string_lossy().to_string()
+}
+
+fn print_webui_banner(
+    port: &str,
+    conf_path: &str,
+    auth_user: &str,
+) {
+    let listen_addr = format!("0.0.0.0:{}", port);
+    let open_url = format!("http://127.0.0.1:{}", port);
+    let auth_user = auth_user.trim();
+    let auth_enabled = !auth_user.is_empty();
+
+    println!();
+    println!("===========================================================");
+    println!("[WEB:服务启动] iKuai Bypass WebUI");
+    println!("-----------------------------------------------------------");
+    println!("访问地址: {}", open_url);
+    println!("监听地址: {}", listen_addr);
+    println!("配置路径: {}", conf_path);
+    if auth_enabled {
+        println!("认证模式: BasicAuth 已开启 (user: {})", auth_user);
+    } else {
+        println!("认证模式: BasicAuth 未开启 (webui.user 为空)");
+    }
+    // 在线保存为强制开启（不再支持 enable_update 之类的开关）。
+    // Online save is forced on (no enable_update switch).
+    println!("在线保存: 已开启 (固定)");
+    println!("-----------------------------------------------------------");
+    if !auth_enabled {
+        println!("警告: 当前未启用 BasicAuth，WebUI 将对局域网完全开放");
+        println!("警告: /api/config 会返回包含密码的配置内容；/api/save 可写入配置；/api/runtime/clean 可清理规则");
+        println!("提示: 建议在配置文件中设置 webui.user/webui.pass 启用 BasicAuth");
+    }
+    println!("提示: 停止定时任务后，计划任务将不会再按 Cron 自动执行");
+    println!("退出方式: Ctrl+C");
+    println!("===========================================================");
+    println!();
+}
+
 struct AppState {
     config_path: PathBuf,
     config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
     runtime: Arc<RuntimeService>,
     cli_login: String,
-    allow_save_override: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -76,14 +120,12 @@ pub async fn start_web_server(
     runtime: Arc<RuntimeService>,
     cli_login: String,
     port: String,
-    allow_save_override: bool,
 ) -> Result<(), String> {
     let state = Arc::new(AppState {
         config_path,
         config,
         runtime,
         cli_login,
-        allow_save_override,
     });
 
     let api = Router::new()
@@ -122,7 +164,12 @@ pub async fn start_web_server(
         let _ = axum::serve(listener, app).await;
     });
 
-    println!("[WEB:服务启动] WebUI is available at http://0.0.0.0:{}", port);
+    let auth_user = {
+        let cfg = state.config.lock().await;
+        cfg.webui.user.to_string()
+    };
+    let conf_path = display_conf_path(&state.config_path);
+    print_webui_banner(&port, &conf_path, &auth_user);
     Ok(())
 }
 
@@ -199,15 +246,6 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
 }
 
 async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
-    let allow = state.allow_save_override || state.config.lock().await.webui.enable;
-    if !allow {
-        return (
-            StatusCode::FORBIDDEN,
-            "Forbidden: WebUI is disabled in configuration",
-        )
-            .into_response();
-    }
-
     if let Err(e) = req
         .config
         .save_to_path_with_comments(&state.config_path, req.with_comments)
@@ -238,15 +276,6 @@ async fn api_save_raw_yaml(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SaveRawYamlRequest>,
 ) -> Response {
-    let allow = state.allow_save_override || state.config.lock().await.webui.enable;
-    if !allow {
-        return (
-            StatusCode::FORBIDDEN,
-            "Forbidden: WebUI is disabled in configuration",
-        )
-            .into_response();
-    }
-
     let cfg = match ikb_core::config::Config::validate_and_save_raw_yaml(
         &req.yaml_text,
         &state.config_path,

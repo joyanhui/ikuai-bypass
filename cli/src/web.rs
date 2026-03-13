@@ -242,7 +242,14 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
         webui_comments: ikb_core::config::webui_comments(),
         max_number_of_one_records_comments: ikb_core::config::max_number_of_one_records_comments(),
     };
-    (StatusCode::OK, Json(resp)).into_response()
+    // 返回内容包含密码等敏感信息，避免被浏览器/代理缓存。
+    // Response contains secrets; disable caching.
+    (
+        StatusCode::OK,
+        [(header::CACHE_CONTROL, "no-store")],
+        Json(resp),
+    )
+        .into_response()
 }
 
 async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
@@ -638,11 +645,13 @@ async fn basic_auth(
 
 fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
     let max = a.len().max(b.len());
-    let mut diff: u8 = (a.len() ^ b.len()) as u8;
+    // 注意：不能把长度差异截断到 u8，否则在极端情况下可能出现错误的相等判断。
+    // Note: do not truncate length diff into u8.
+    let mut diff: usize = a.len() ^ b.len();
     for i in 0..max {
         let aa = a.get(i).copied().unwrap_or(0);
         let bb = b.get(i).copied().unwrap_or(0);
-        diff |= aa ^ bb;
+        diff |= (aa ^ bb) as usize;
     }
     diff == 0
 }

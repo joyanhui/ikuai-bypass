@@ -68,6 +68,11 @@ export type LogRecord = {
   detail: string;
 };
 
+export type TestResult = {
+  ok: boolean;
+  message: string;
+};
+
 export type ConfigMeta = {
   conf_path: string;
   raw_yaml?: string;
@@ -197,6 +202,32 @@ export const bridge = {
   async runtimeTailLogs(tail: number): Promise<LogRecord[]> {
     if (await isTauriReady()) return await tauriInvoke<LogRecord[]>('runtime_tail_logs', { tail });
     return await fetchJson<LogRecord[]>(`/api/runtime/logs?tail=${tail}`);
+  },
+
+  async testIkuaiLogin(baseUrl: string, username: string, password: string): Promise<TestResult> {
+    if (await isTauriReady()) {
+      return await tauriInvoke<TestResult>('test_ikuai_login', {
+        baseUrl,
+        username,
+        password,
+      });
+    }
+    return await fetchJson<TestResult>('/api/test/ikuai-login', {
+      method: 'POST',
+      body: JSON.stringify({ baseUrl, username, password }),
+    });
+  },
+
+  async testGithubProxy(githubProxy: string): Promise<TestResult> {
+    if (await isTauriReady()) {
+      return await tauriInvoke<TestResult>('test_github_proxy', {
+        githubProxy,
+      });
+    }
+    return await fetchJson<TestResult>('/api/test/github-proxy', {
+      method: 'POST',
+      body: JSON.stringify({ githubProxy }),
+    });
   },
 
   async listenLogs(onRecord: (rec: LogRecord) => void, onError?: (err?: unknown) => void): Promise<UnlistenFn> {

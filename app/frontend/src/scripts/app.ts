@@ -234,6 +234,37 @@ const mountGhProxyQuickPick = (inputId: string, containerId: string) => {
   });
   wrap.appendChild(help);
 
+  const testBtn = document.createElement('button');
+  testBtn.type = 'button';
+  testBtn.className =
+    'flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white/70 px-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800';
+  testBtn.textContent = '测试';
+  testBtn.title = '测试该 GitHub Proxy 是否可用';
+  testBtn.addEventListener('click', async () => {
+    const proxy = input.value.trim();
+    if (!proxy) {
+      showToast('请先填写 GitHub Proxy 地址', 2600);
+      return;
+    }
+    const old = testBtn.textContent;
+    testBtn.disabled = true;
+    testBtn.textContent = '测试中...';
+    try {
+      const r = await bridge.testGithubProxy(proxy);
+      if (r.ok) {
+        showToast('GitHub Proxy 可用');
+      } else {
+        showToast('GitHub Proxy 不可用: ' + (r.message || 'unknown error'), 3600);
+      }
+    } catch (err) {
+      showToast('测试失败: ' + getErrorMessage(err), 3600);
+    } finally {
+      testBtn.disabled = false;
+      testBtn.textContent = old || '测试';
+    }
+  });
+  wrap.appendChild(testBtn);
+
   container.appendChild(wrap);
   input.addEventListener('input', () => syncActive());
   syncActive();
@@ -858,6 +889,45 @@ const initConfigModal = () => {
   initGhProxyPickers();
 
   initBasicConfigAccordion();
+
+  document.getElementById('btnTestIkuaiLogin')?.addEventListener('click', async () => {
+    const url = (document.getElementById('cfgIkuaiUrl') as HTMLInputElement | null)?.value.trim() || '';
+    const user = (document.getElementById('cfgUser') as HTMLInputElement | null)?.value.trim() || '';
+    const pass = (document.getElementById('cfgPass') as HTMLInputElement | null)?.value || '';
+    const hint = document.getElementById('ikuaiTestHint');
+    const btn = document.getElementById('btnTestIkuaiLogin') as HTMLButtonElement | null;
+
+    if (!url || !user || !pass) {
+      showToast('请填写路由器地址/用户名/密码', 2600);
+      if (hint) hint.textContent = '请先补全连接信息';
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '测试中...';
+    }
+    if (hint) hint.textContent = '正在测试...';
+
+    try {
+      const r = await bridge.testIkuaiLogin(url, user, pass);
+      if (r.ok) {
+        showToast('连接成功');
+        if (hint) hint.textContent = '连接成功';
+      } else {
+        showToast('连接失败: ' + (r.message || 'unknown error'), 3600);
+        if (hint) hint.textContent = '连接失败';
+      }
+    } catch (err) {
+      showToast('测试失败: ' + getErrorMessage(err), 3600);
+      if (hint) hint.textContent = '测试失败';
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '测试连接';
+      }
+    }
+  });
 
   document.getElementById('btnOpenRemoteConfig')?.addEventListener('click', () => {
     setRemoteTemplateTip(configMissingDetected ? '检测到当前配置缺失/为空，建议通过远程载入模板初始化，然后修改 iKuai 连接信息并保存。' : null);

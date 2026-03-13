@@ -18,6 +18,19 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --ikb-safe-top: env(safe-area-inset-top, 0px);
+}
+
+.ikb-header-pad {
+  padding-top: calc(var(--ikb-safe-top) + 0.75rem);
+  padding-bottom: 0.75rem;
+}
+
+.ikb-main-pad {
+  padding-top: calc(var(--ikb-safe-top) + 5rem);
+}
+
 [x-cloak] {
   display: none !important;
 }

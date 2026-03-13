@@ -49,6 +49,26 @@ struct SaveRawYamlRequest {
     with_comments: bool,
 }
 
+#[derive(Debug, Serialize)]
+struct TestResult {
+    ok: bool,
+    message: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct TestIkuaiLoginRequest {
+    #[serde(alias = "baseUrl")]
+    base_url: String,
+    username: String,
+    password: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct TestGithubProxyRequest {
+    #[serde(alias = "githubProxy")]
+    github_proxy: String,
+}
+
 pub fn start_web_server(
     config_path: PathBuf,
     config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
@@ -71,6 +91,8 @@ pub fn start_web_server(
         .route("/api/config", get(api_config))
         .route("/api/save", post(api_save))
         .route("/api/save-raw", post(api_save_raw_yaml))
+        .route("/api/test/ikuai-login", post(api_test_ikuai_login))
+        .route("/api/test/github-proxy", post(api_test_github_proxy))
         .route("/api/runtime/status", get(api_runtime_status))
         .route("/api/runtime/run-once", post(api_runtime_run_once))
         .route("/api/runtime/cron/start", post(api_runtime_cron_start))
@@ -274,6 +296,92 @@ async fn api_save_raw_yaml(
         r#"{"status":"success","message":"Raw YAML saved successfully"}"#,
     )
         .into_response()
+}
+
+fn normalize_base_url(input: &str) -> String {
+    let raw = input.trim();
+    if raw.is_empty() {
+        return String::new();
+    }
+    if raw.contains("://") {
+        return raw.to_string();
+    }
+    format!("http://{}", raw)
+}
+
+async fn api_test_ikuai_login(
+    State(_state): State<Arc<AppState>>,
+    Json(req): Json<TestIkuaiLoginRequest>,
+) -> impl IntoResponse {
+    let base_url = normalize_base_url(&req.base_url);
+    let username = req.username.trim().to_string();
+    if base_url.is_empty() {
+        return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty iKuai URL".to_string() }));
+    }
+    if username.is_empty() {
+        return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty username".to_string() }));
+    }
+
+    let api = match ikb_core::ikuai::IKuaiClient::new(base_url) {
+        Ok(v) => v,
+        Err(e) => {
+            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
+        }
+    };
+
+    match api.login(&username, &req.password).await {
+        Ok(()) => (StatusCode::OK, Json(TestResult { ok: true, message: "OK".to_string() })),
+        Err(e) => (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() })),
+    }
+}
+
+async fn api_test_github_proxy(
+    State(_state): State<Arc<AppState>>,
+    Json(req): Json<TestGithubProxyRequest>,
+) -> impl IntoResponse {
+    const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
+
+    let proxy = req.github_proxy.trim();
+    if proxy.is_empty() {
+        return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty github proxy".to_string() }));
+    }
+
+    let final_url = if proxy.ends_with('/') {
+        format!("{}{}", proxy, URL)
+    } else {
+        format!("{}/{}", proxy, URL)
+    };
+
+    let client = match reqwest::Client::builder()
+        .user_agent("ikb-web")
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+    {
+        Ok(v) => v,
+        Err(e) => {
+            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
+        }
+    };
+
+    let resp = match client.get(final_url).send().await {
+        Ok(v) => v,
+        Err(e) => {
+            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
+        }
+    };
+    let status = resp.status();
+    if !status.is_success() {
+        return (StatusCode::OK, Json(TestResult { ok: false, message: format!("HTTP {}", status) }));
+    }
+    let text = match resp.text().await {
+        Ok(v) => v,
+        Err(e) => {
+            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
+        }
+    };
+    let ok = text.contains("/target/") && text.contains("node_modules");
+    let message = if ok { "OK".to_string() } else { "Unexpected response".to_string() };
+    (StatusCode::OK, Json(TestResult { ok, message }))
 }
 
 async fn api_runtime_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {

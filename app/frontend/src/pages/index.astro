@@ -5,7 +5,7 @@ import '../styles/global.css';
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>iKuai Bypass</title>
   </head>
   <body class="bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900 transition-colors duration-500 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 dark:text-gray-100">
@@ -16,7 +16,7 @@ import '../styles/global.css';
     </div>
 
     <header class="fixed top-0 left-0 right-0 z-40 border-b border-white/20 bg-white/70 backdrop-blur-xl transition-all duration-300 dark:border-gray-800/50 dark:bg-gray-950/70">
-      <div class="mx-auto max-w-6xl px-4 py-3">
+      <div class="mx-auto max-w-6xl px-4 ikb-header-pad">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-cyan shadow-lg shadow-primary-500/25">
@@ -41,7 +41,7 @@ import '../styles/global.css';
       </div>
     </header>
 
-    <main class="relative z-10 mx-auto max-w-6xl px-4 pt-20 pb-24">
+    <main class="relative z-10 mx-auto max-w-6xl px-4 ikb-main-pad pb-24">
       <div class="mb-6">
         <div class="glass-card rounded-2xl p-2">
           <div class="grid grid-cols-3 gap-2" id="mainTabGrid">
@@ -214,6 +214,11 @@ import '../styles/global.css';
                                 <label class="mb-1.5 block text-xs text-gray-500 dark:text-gray-400">密码</label>
                                 <input id="cfgPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-sm text-gray-900 outline-none dark:bg-gray-800 dark:text-white" />
                               </div>
+                            </div>
+
+                            <div class="mt-4 flex items-center justify-between gap-3">
+                              <button id="btnTestIkuaiLogin" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-50 disabled:opacity-60 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">测试连接</button>
+                              <div id="ikuaiTestHint" class="text-xs text-gray-500 dark:text-gray-400"></div>
                             </div>
                           </div>
                         </section>

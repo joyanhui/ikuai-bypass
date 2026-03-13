@@ -23,6 +23,115 @@ struct ConfigMeta {
     max_number_of_one_records_comments: std::collections::BTreeMap<String, String>,
 }
 
+#[derive(serde::Serialize)]
+struct TestResult {
+    ok: bool,
+    message: String,
+}
+
+#[derive(serde::Deserialize)]
+struct TestIkuaiLoginReq {
+    #[serde(alias = "baseUrl")]
+    base_url: String,
+    username: String,
+    password: String,
+}
+
+#[derive(serde::Deserialize)]
+struct TestGithubProxyReq {
+    #[serde(alias = "githubProxy")]
+    github_proxy: String,
+}
+
+fn normalize_base_url(input: &str) -> String {
+    let raw = input.trim();
+    if raw.is_empty() {
+        return String::new();
+    }
+    if raw.contains("://") {
+        return raw.to_string();
+    }
+    format!("http://{}", raw)
+}
+
+#[tauri::command]
+async fn test_ikuai_login(req: TestIkuaiLoginReq) -> Result<TestResult, String> {
+    let base_url = normalize_base_url(&req.base_url);
+    let username = req.username.trim().to_string();
+    if base_url.is_empty() {
+        return Ok(TestResult {
+            ok: false,
+            message: "Empty iKuai URL".to_string(),
+        });
+    }
+    if username.is_empty() {
+        return Ok(TestResult {
+            ok: false,
+            message: "Empty username".to_string(),
+        });
+    }
+
+    let api = match ikb_core::ikuai::IKuaiClient::new(base_url) {
+        Ok(v) => v,
+        Err(e) => {
+            return Ok(TestResult {
+                ok: false,
+                message: e.to_string(),
+            })
+        }
+    };
+
+    match api.login(&username, &req.password).await {
+        Ok(()) => Ok(TestResult {
+            ok: true,
+            message: "OK".to_string(),
+        }),
+        Err(e) => Ok(TestResult {
+            ok: false,
+            message: e.to_string(),
+        }),
+    }
+}
+
+#[tauri::command]
+async fn test_github_proxy(req: TestGithubProxyReq) -> Result<TestResult, String> {
+    const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
+
+    let proxy = req.github_proxy.trim();
+    if proxy.is_empty() {
+        return Ok(TestResult {
+            ok: false,
+            message: "Empty github proxy".to_string(),
+        });
+    }
+
+    let final_url = if proxy.ends_with('/') {
+        format!("{}{}", proxy, URL)
+    } else {
+        format!("{}/{}", proxy, URL)
+    };
+
+    let client = reqwest::Client::builder()
+        .user_agent("ikb-app")
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let resp = client.get(final_url).send().await.map_err(|e| e.to_string())?;
+    let status = resp.status();
+    if !status.is_success() {
+        return Ok(TestResult {
+            ok: false,
+            message: format!("HTTP {}", status),
+        });
+    }
+    let text = resp.text().await.map_err(|e| e.to_string())?;
+    let ok = text.contains("/target/") && text.contains("node_modules");
+    Ok(TestResult {
+        ok,
+        message: if ok { "OK".to_string() } else { "Unexpected response".to_string() },
+    })
+}
+
 #[tauri::command]
 async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
     // 避免在 await 中持有锁，防止移动端偶现卡死/死锁。
@@ -311,6 +420,8 @@ pub fn run() {
             save_config,
             save_config_with_comments,
             save_raw_yaml,
+            test_ikuai_login,
+            test_github_proxy,
             runtime_status,
             runtime_run_once,
             runtime_cron_start,

@@ -2,6 +2,7 @@ pub mod config;
 pub mod app;
 pub mod ikuai;
 pub mod logger;
+pub mod net;
 pub mod paths;
 pub mod router;
 pub mod runner;

@@ -15,6 +15,10 @@ export type UiConfig = {
   username: string;
   password: string;
   cron: string;
+  proxy: {
+    mode: 'custom' | 'system' | 'disabled' | 'onlyGithubApi';
+    url: string;
+  };
   githubProxy: string;
   addErrRetryWait: string;
   addWait: string;
@@ -67,6 +71,10 @@ export function defaultUiConfig(): UiConfig {
     username: '',
     password: '',
     cron: '',
+    proxy: {
+      mode: 'system',
+      url: 'http://127.0.0.1:7890',
+    },
     githubProxy: '',
     addErrRetryWait: '10s',
     addWait: '1s',
@@ -155,6 +163,20 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; comments: Comme
   cfg.username = asStr(metaObj.username, '');
   cfg.password = asStr(metaObj.password, '');
   cfg.cron = asStr(metaObj.cron, '');
+
+  if (metaObj.proxy) {
+    const p = asRecord(metaObj.proxy);
+    const modeRaw = asStr(p.mode, cfg.proxy.mode);
+    cfg.proxy.mode =
+      modeRaw === 'system'
+        ? 'system'
+        : modeRaw === 'disabled'
+          ? 'disabled'
+          : modeRaw === 'onlyGithubApi' || modeRaw === 'only-github-api' || modeRaw === 'only_github_api'
+            ? 'onlyGithubApi'
+            : 'custom';
+    cfg.proxy.url = asStr(p.url, cfg.proxy.url);
+  }
   cfg.githubProxy = asStr(metaObj['github-proxy'], '');
 
   cfg.addErrRetryWait = asStr(metaObj.AddErrRetryWait, cfg.addErrRetryWait);
@@ -225,6 +247,10 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
     username: ui.username,
     password: ui.password,
     cron: ui.cron,
+    proxy: {
+      mode: ui.proxy.mode,
+      url: ui.proxy.url,
+    },
     'github-proxy': ui.githubProxy,
     AddErrRetryWait: ui.addErrRetryWait,
     AddWait: ui.addWait,
@@ -309,6 +335,24 @@ export function yamlDumpWithComments(payload: JsonRecord, comments: CommentMaps)
   kv('cron', payload?.cron, top.cron);
   kv('AddErrRetryWait', payload?.AddErrRetryWait, top.AddErrRetryWait);
   kv('AddWait', payload?.AddWait, top.AddWait);
+
+  // proxy
+  cmt(top.proxy);
+  const p = asRecord(payload?.proxy);
+  const modeRaw = asStr(p.mode, 'custom');
+  const mode =
+    modeRaw === 'system'
+      ? 'system'
+      : modeRaw === 'disabled'
+        ? 'disabled'
+        : modeRaw === 'onlyGithubApi' || modeRaw === 'only-github-api' || modeRaw === 'only_github_api'
+          ? 'onlyGithubApi'
+          : 'custom';
+  const url = asStr(p.url, 'http://127.0.0.1:7890');
+  out.push('proxy:');
+  out.push('  mode: ' + mode);
+  out.push('  url: ' + q(url));
+
   kv('github-proxy', payload?.['github-proxy'], top['github-proxy']);
 
   cmt(top['custom-isp']);

@@ -45,7 +45,7 @@ pub async fn run_update_by_module(
     sink: LogSink,
 ) -> Result<(), UpdateError> {
     let params = resolve_login_params(cfg, cli_login)?;
-    let api = ikuai::IKuaiClient::new(params.base_url.to_string())?;
+    let api = ikuai::IKuaiClient::new(params.base_url.to_string(), &cfg.proxy)?;
 
     let auth = Logger::new("AUTH:登录认证", Arc::clone(&sink));
     auth.info(
@@ -258,9 +258,12 @@ async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Ve
 
     // 避免远程资源不可达时无限期等待。
     // Avoid hanging forever on remote resources.
-    let client = reqwest::Client::builder()
+    let builder = reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(120))
+        ;
+    let client = crate::net::apply_proxy(builder, &cfg.proxy)
+        .map_err(|e| UpdateError::Download(e.to_string()))?
         .build()
         .map_err(|e| UpdateError::Download(e.to_string()))?;
 

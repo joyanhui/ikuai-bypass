@@ -24,7 +24,7 @@ pub async fn run_clean(cfg: &Config, cli_login: &str, clean_tag: &str) -> Result
 
     let params = resolve_login_params(cfg, cli_login)?;
 
-    let api = ikuai::IKuaiClient::new(params.base_url.to_string())
+    let api = ikuai::IKuaiClient::new(params.base_url.to_string(), &cfg.proxy)
         .map_err(|e| CleanError::Step { step: "init_client", source: e })?;
     api.login(&params.username, &params.password)
         .await

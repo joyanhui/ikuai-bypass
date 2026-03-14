@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use crate::ikuai::IKuaiClient;
+use crate::config::ProxyConfig;
 
 use super::{normalize_base_url, normalize_url_prefix};
 
@@ -24,7 +25,7 @@ pub struct TestGithubProxyRequest {
     pub github_proxy: String,
 }
 
-pub async fn test_ikuai_login(req: TestIkuaiLoginRequest) -> TestResult {
+pub async fn test_ikuai_login(req: TestIkuaiLoginRequest, proxy_cfg: &ProxyConfig) -> TestResult {
     let base_url = normalize_base_url(&req.base_url);
     let username = req.username.trim().to_string();
     if base_url.is_empty() {
@@ -40,7 +41,7 @@ pub async fn test_ikuai_login(req: TestIkuaiLoginRequest) -> TestResult {
         };
     }
 
-    let api = match IKuaiClient::new(base_url) {
+    let api = match IKuaiClient::new(base_url, proxy_cfg) {
         Ok(v) => v,
         Err(e) => {
             return TestResult {
@@ -62,29 +63,29 @@ pub async fn test_ikuai_login(req: TestIkuaiLoginRequest) -> TestResult {
     }
 }
 
-pub async fn test_github_proxy(req: TestGithubProxyRequest) -> TestResult {
+pub async fn test_github_proxy(req: TestGithubProxyRequest, proxy_cfg: &ProxyConfig) -> TestResult {
     const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
 
-    let proxy = normalize_url_prefix(&req.github_proxy);
-    if proxy.is_empty() {
+    let ghproxy = normalize_url_prefix(&req.github_proxy);
+    if ghproxy.is_empty() {
         return TestResult {
             ok: false,
             message: "Empty github proxy".to_string(),
         };
     }
 
-    let final_url = if proxy.ends_with('/') {
-        format!("{}{}", proxy, URL)
+    let final_url = if ghproxy.ends_with('/') {
+        format!("{}{}", ghproxy, URL)
     } else {
-        format!("{}/{}", proxy, URL)
+        format!("{}/{}", ghproxy, URL)
     };
 
-    let client = match reqwest::Client::builder()
+    let builder = reqwest::Client::builder()
         // Some ghproxy sites may restrict uncommon user agents.
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .timeout(Duration::from_secs(15))
-        .build()
-    {
+        ;
+    let client = match crate::net::apply_proxy(builder, proxy_cfg).and_then(|b| b.build()) {
         Ok(v) => v,
         Err(e) => {
             return TestResult {

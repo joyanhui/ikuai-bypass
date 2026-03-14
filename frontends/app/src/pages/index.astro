@@ -58,6 +58,20 @@ import '../styles/global.css';
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
             </button>
+
+            <button
+              id="aboutBtn"
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 text-gray-700 ring-1 ring-black/5 backdrop-blur transition-all duration-200 active:scale-95 hover:bg-white dark:bg-gray-900/60 dark:text-gray-200 dark:ring-white/10 dark:hover:bg-gray-900"
+              aria-label="关于"
+              title="关于"
+              data-i18n-aria-label="about.btn"
+              data-i18n-title="about.btn"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -249,7 +263,20 @@ import '../styles/global.css';
                           <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.schedule">调度与代理</h3>
                             <div class="grid gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40 md:grid-cols-2">
                             <div>
-                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">GitHub 代理</label>
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.mode">代理模式</label>
+                              <select id="cfgProxyMode" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
+                                <option value="custom" data-i18n="config.proxy.mode.custom">自定义代理</option>
+                                <option value="system" data-i18n="config.proxy.mode.system">系统代理</option>
+                                <option value="onlyGithubApi" data-i18n="config.proxy.mode.onlyGithubApi">仅 GitHub API</option>
+                                <option value="disabled" data-i18n="config.proxy.mode.disabled">禁用代理</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.url">代理地址</label>
+                              <input id="cfgProxyUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://127.0.0.1:7890" />
+                            </div>
+                            <div>
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy">GitHub Proxy (ghproxy)</label>
                               <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
                               <div id="cfgGhProxyQuickPick" class="mt-2"></div>
                             </div>
@@ -264,6 +291,9 @@ import '../styles/global.css';
                             <div>
                               <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">Cron</label>
                               <input id="cfgCronInline" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="0 7 * * *" />
+                            </div>
+                            <div class="md:col-span-2 rounded-2xl border border-gray-200 bg-white/70 p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-950/30 dark:text-gray-300" data-i18n="config.proxy.diff">
+                              说明：proxy 是全局 HTTP 代理，会影响爱快/规则下载/GitHub API；github-proxy(ghproxy) 是 URL 前缀重写，仅对 GitHub Raw 下载加速。
                             </div>
                           </div>
                         </section>
@@ -575,6 +605,76 @@ import '../styles/global.css';
         <div class="flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
           <button id="btnStopCronCancel" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="common.cancel">取消</button>
           <button id="btnStopCronConfirm" class="rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-red-500/25 transition hover:bg-red-600" data-i18n="cron_stop.confirm">停止定时任务</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="aboutModal" class="fixed inset-0 z-50 hidden">
+      <div id="aboutBackdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity"></div>
+      <div id="aboutContent" class="absolute inset-x-4 top-20 bottom-8 mx-auto max-w-2xl translate-y-6 overflow-hidden rounded-3xl bg-gray-50 shadow-2xl transition-transform dark:bg-gray-950">
+        <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="about.title">关于</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="about.subtitle">项目信息与更新检查</p>
+          </div>
+          <button id="btnCloseAbout" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="关闭" data-i18n-aria-label="common.close" data-i18n-title="common.close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="h-full overflow-y-auto p-6">
+          <div class="space-y-6">
+            <div class="rounded-2xl bg-gray-100/60 p-4 text-sm text-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+              <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="about.section.info">基本信息</div>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <div><span class="text-gray-500 dark:text-gray-400" data-i18n="about.info.project">项目</span>: <a class="font-mono text-primary-600 hover:underline dark:text-primary-400" href="https://github.com/joyanhui/ikuai-bypass" target="_blank" rel="noreferrer">joyanhui/ikuai-bypass</a></div>
+                <div><span class="text-gray-500 dark:text-gray-400" data-i18n="about.info.runtime">运行环境</span>: <span class="font-mono" id="aboutRuntime">--</span></div>
+                <div class="sm:col-span-2"><span class="text-gray-500 dark:text-gray-400" data-i18n="about.info.config_path">配置路径</span>: <span class="font-mono" id="aboutConfigPath">--</span></div>
+                <div class="sm:col-span-2"><span class="text-gray-500 dark:text-gray-400" data-i18n="about.info.http_proxy">HTTP 代理</span>: <span class="font-mono" id="aboutHttpProxy">--</span></div>
+                <div class="sm:col-span-2"><span class="text-gray-500 dark:text-gray-400" data-i18n="about.info.github_proxy">GitHub Proxy</span>: <span class="font-mono" id="aboutGithubProxy">--</span></div>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-primary-500/15 bg-primary-500/5 p-4 text-sm text-gray-700 dark:text-gray-200">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="about.section.update">新版查询</div>
+                  <div id="aboutUpdateHint" class="mt-1 text-xs text-gray-500 dark:text-gray-400"></div>
+                </div>
+                <button id="btnCheckUpdate" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700" data-i18n="about.update.check">查询新版</button>
+              </div>
+
+              <div class="space-y-3">
+                <div class="rounded-2xl bg-white/70 p-3 dark:bg-gray-950/40">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="about.update.stable">正式版</span>
+                    <a id="aboutStableLink" class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-400" href="https://github.com/joyanhui/ikuai-bypass/releases" target="_blank" rel="noreferrer" data-i18n="about.update.open">打开</a>
+                  </div>
+                  <div class="mt-2 grid gap-1 sm:grid-cols-2">
+                    <div><span class="text-gray-500 dark:text-gray-400" data-i18n="about.update.tag">标签</span>: <span class="font-mono" id="aboutStableTag">--</span></div>
+                    <div><span class="text-gray-500 dark:text-gray-400" data-i18n="about.update.time">时间</span>: <span class="font-mono" id="aboutStableTime">--</span></div>
+                  </div>
+                </div>
+
+                <div class="rounded-2xl bg-white/70 p-3 dark:bg-gray-950/40">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="about.update.prerelease">Pre-release</span>
+                    <a id="aboutPreLink" class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-400" href="https://github.com/joyanhui/ikuai-bypass/releases" target="_blank" rel="noreferrer" data-i18n="about.update.open">打开</a>
+                  </div>
+                  <div class="mt-2 grid gap-1 sm:grid-cols-2">
+                    <div><span class="text-gray-500 dark:text-gray-400" data-i18n="about.update.tag">标签</span>: <span class="font-mono" id="aboutPreTag">--</span></div>
+                    <div><span class="text-gray-500 dark:text-gray-400" data-i18n="about.update.time">时间</span>: <span class="font-mono" id="aboutPreTime">--</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
+          <button id="btnCloseAboutBottom" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="common.close">关闭</button>
         </div>
       </div>
     </div>

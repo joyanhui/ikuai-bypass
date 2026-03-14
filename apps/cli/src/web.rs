@@ -108,6 +108,7 @@ pub async fn start_web_server(
         .route("/api/save-raw", post(api_save_raw_yaml))
         .route("/api/test/ikuai-login", post(api_test_ikuai_login))
         .route("/api/test/github-proxy", post(api_test_github_proxy))
+        .route("/api/github/releases", get(api_github_releases))
         .route("/api/runtime/status", get(api_runtime_status))
         .route("/api/runtime/run-once", post(api_runtime_run_once))
         .route("/api/runtime/cron/start", post(api_runtime_cron_start))
@@ -274,19 +275,29 @@ async fn api_save_raw_yaml(
 }
 
 async fn api_test_ikuai_login(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(req): Json<ikb_core::app::TestIkuaiLoginRequest>,
 ) -> impl IntoResponse {
-    let r = ikb_core::app::test_ikuai_login(req).await;
+    let cfg = { state.config.lock().await.clone() };
+    let r = ikb_core::app::test_ikuai_login(req, &cfg.proxy).await;
     (StatusCode::OK, Json(r))
 }
 
 async fn api_test_github_proxy(
-    State(_state): State<Arc<AppState>>,
+    State(state): State<Arc<AppState>>,
     Json(req): Json<ikb_core::app::TestGithubProxyRequest>,
 ) -> impl IntoResponse {
-    let r = ikb_core::app::test_github_proxy(req).await;
+    let cfg = { state.config.lock().await.clone() };
+    let r = ikb_core::app::test_github_proxy(req, &cfg.proxy).await;
     (StatusCode::OK, Json(r))
+}
+
+async fn api_github_releases(State(state): State<Arc<AppState>>) -> Response {
+    let cfg = { state.config.lock().await.clone() };
+    match ikb_core::app::fetch_github_releases(&cfg.proxy).await {
+        Ok(v) => (StatusCode::OK, Json(v)).into_response(),
+        Err(e) => (StatusCode::BAD_GATEWAY, e).into_response(),
+    }
 }
 
 async fn api_runtime_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {

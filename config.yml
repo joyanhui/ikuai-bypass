@@ -14,7 +14,23 @@ password: admin888 # 爱快登陆密码
 cron: 0 7 * * * # 更新周期cron表达式，例如 0 7 * * *
 AddErrRetryWait: 10s # 自动重试时间间隔 (10s, 120s)
 AddWait: 1s # 规则添加后的反应等待时间
-github-proxy: "https://gh-proxy.com/" # Github代理加速地址，例如 https://gh-proxy.com/ (留空不使用)
+
+# 全局 HTTP 代理设置（影响所有出站 HTTP 请求）
+# - 会影响：访问爱快、下载远程规则、测试联通、查询 GitHub API
+# - mode 可选：custom / system / disabled
+#   - custom: 使用 url（支持 http:// 或 https:// 代理；例如 http://127.0.0.1:7890）
+#   - system: 使用系统/环境变量代理（HTTP_PROXY/HTTPS_PROXY/ALL_PROXY 等）
+#   - disabled: 禁用代理（忽略系统代理变量）
+#   - onlyGithubApi: 仅 GitHub API 查询走代理（优先使用 url；否则使用系统/环境代理），其余请求直连
+proxy:
+  mode: system
+  url: http://127.0.0.1:7890
+
+# GitHub Proxy (ghproxy) 与上面的 proxy 不是一回事：
+# - github-proxy 是 URL 前缀重写，仅对 raw.githubusercontent.com / github.com 生效，用于加速下载规则文件
+# - proxy 是全局网络代理，影响所有 HTTP 请求（包括爱快与 GitHub API）
+# 如果你已启用 proxy(custom/system)，通常不需要再设置 github-proxy。
+github-proxy: "https://gh-proxy.com/" # GitHub Proxy (ghproxy) URL 前缀，例如 https://gh-proxy.com/ (留空不使用)
 custom-isp: # 自定义运营商分流 (IP分流)
   - tag: 国内IP列表
     url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt

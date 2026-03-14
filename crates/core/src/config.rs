@@ -170,6 +170,47 @@ pub struct MaxNumberOfOneRecordsConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ProxyMode {
+    #[serde(rename = "disabled")]
+    Disabled,
+    #[serde(rename = "system")]
+    System,
+    #[serde(rename = "custom")]
+    Custom,
+    /// Only apply proxy when calling GitHub API.
+    /// 仅在访问 GitHub API 时使用代理。
+    #[serde(
+        rename = "onlyGithubApi",
+        alias = "only-github-api",
+        alias = "only_github_api"
+    )]
+    OnlyGithubApi,
+}
+
+impl Default for ProxyMode {
+    fn default() -> Self {
+        ProxyMode::System
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProxyConfig {
+    #[serde(default)]
+    pub mode: ProxyMode,
+    #[serde(default)]
+    pub url: String,
+}
+
+impl Default for ProxyConfig {
+    fn default() -> Self {
+        Self {
+            mode: ProxyMode::System,
+            url: "http://127.0.0.1:7890".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Config {
     #[serde(rename = "ikuai-url")]
     pub ikuai_url: String,
@@ -187,6 +228,11 @@ pub struct Config {
 
     #[serde(rename = "github-proxy", default)]
     pub github_proxy: String,
+
+    /// Global HTTP proxy configuration.
+    /// 全局 HTTP 代理配置。
+    #[serde(rename = "proxy", default)]
+    pub proxy: ProxyConfig,
 
     #[serde(rename = "custom-isp", default)]
     pub custom_isp: Vec<CustomIspItem>,
@@ -239,6 +285,13 @@ impl Config {
             if item.tag.is_empty() {
                 item.tag = item.interface.to_string();
             }
+        }
+
+        // Proxy defaults & normalization.
+        // 代理默认值与标准化处理。
+        self.proxy.url = self.proxy.url.trim().to_string();
+        if matches!(self.proxy.mode, ProxyMode::Custom) && self.proxy.url.is_empty() {
+            self.proxy.url = "http://127.0.0.1:7890".to_string();
         }
     }
 
@@ -392,6 +445,13 @@ impl Config {
             yaml_quote(&humantime::format_duration(self.add_err_retry_wait).to_string());
         let add_wait = yaml_quote(&humantime::format_duration(self.add_wait).to_string());
         let github_proxy = yaml_quote(self.github_proxy.trim());
+        let proxy_mode = match self.proxy.mode {
+            ProxyMode::Disabled => "disabled",
+            ProxyMode::System => "system",
+            ProxyMode::Custom => "custom",
+            ProxyMode::OnlyGithubApi => "onlyGithubApi",
+        };
+        let proxy_url = yaml_quote(self.proxy.url.trim());
 
         push_kv(
             &mut out,
@@ -424,6 +484,22 @@ impl Config {
             &add_wait,
             top.get("AddWait").map(|s| s.as_str()),
         );
+
+        if let Some(c) = top.get("proxy") {
+            out.push_str("\n# ");
+            out.push_str(c);
+            out.push('\n');
+        } else {
+            out.push('\n');
+        }
+        out.push_str("proxy:\n");
+        out.push_str("  mode: ");
+        out.push_str(proxy_mode);
+        out.push('\n');
+        out.push_str("  url: ");
+        out.push_str(&proxy_url);
+        out.push('\n');
+
         push_kv(
             &mut out,
             "github-proxy",
@@ -654,8 +730,14 @@ pub fn top_level_comments() -> BTreeMap<String, String> {
             "规则添加后的反应等待时间".to_string(),
         ),
         (
+            "proxy".to_string(),
+            "全局 HTTP 代理设置：影响访问爱快、下载远程规则、测试联通、查询 GitHub API。mode 可选 custom/system/disabled/onlyGithubApi：custom 使用 url（支持 http:// 或 https:// 代理，例如 http://127.0.0.1:7890）；system 使用系统/环境代理；disabled 禁用代理并忽略环境变量；onlyGithubApi 仅在查询 GitHub API 时使用代理（优先使用 url；否则使用系统/环境代理），其余请求直连。注意：这与 github-proxy（ghproxy URL 前缀重写，仅对 raw.githubusercontent.com / github.com 生效）不是一回事。"
+                .to_string(),
+        ),
+        (
             "github-proxy".to_string(),
-            "Github代理加速地址，例如 https://gh-proxy.com/ (留空不使用)".to_string(),
+            "GitHub Proxy (ghproxy) URL 前缀重写：仅对 raw.githubusercontent.com / github.com 生效，用于加速下载规则文件；不等同于全局代理(proxy)。如果你已启用 proxy(custom/system)，通常无需再设置 github-proxy。"
+                .to_string(),
         ),
         ("webui".to_string(), "WebUI 管理服务设置".to_string()),
         (

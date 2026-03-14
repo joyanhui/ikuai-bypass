@@ -8,7 +8,7 @@
 提供两种安装方式：
 - **GUI**：图形化桌面和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端，用户友好，几乎开箱即用
 - **CLI**：命令行，可以完全不使用图形界面完成所有功能，也有一个可选的基于浏览器的web界面。适合Nas AIO PVE Docker 等作为计划任务任务部署使用。
-> **提示**：旧版本go代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),新版本使用rust+tauri构建。
+> **提示**：旧版本go代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),新版本使用rust+tauri构建,因分支替换之前fork本仓库的可能需要重新操作。 如果你在使用 爱快3.7以及以前的版本，请使用[v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。你可能需要阅读[update‐to‐v4.4.10x](https://github.com/joyanhui/ikuai-bypass/wiki/v4.4.13%E2%80%90update%E2%80%90to%E2%80%90v4.4.10x)
 > **如果这个项目对你有帮助，请点个 ⭐️ Star！** star数是作者唯一的维护动力。
 
 > 关于dns分流解析，建议用单 ADGuard home自建，这里有一个本人利用github action自动维护相关规则文件的adguardhome规则.[[joyanhui/adguardhome-rules]](https://github.com/joyanhui/adguardhome-rules)（规则文件在release_file分支48小时更新一次）。可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
@@ -107,6 +107,23 @@ custom-isp:
 ```
 
 > **提示**：完整配置示例请参考 [config.yml](./config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。
+
+#### 关于 proxy 与 github-proxy 的区别（很重要）
+
+- `proxy`：全局 HTTP 代理，影响所有出站 HTTP 请求，包括：访问爱快、下载远程规则、测试联通、查询 GitHub API。并支持 `onlyGithubApi`（仅 GitHub API 查询走代理，其余请求直连）。
+- `github-proxy`：ghproxy URL 前缀重写，仅对 `raw.githubusercontent.com` / `github.com` 生效，主要用于“规则文件下载加速”。它不是网络层代理。
+
+常见用法：
+
+```yaml
+# 全局 HTTP 代理（推荐按需开启）
+proxy:
+  mode: system          # custom / system / onlyGithubApi / disabled
+  url: http://127.0.0.1:7890
+
+# ghproxy（可选，仅用于 GitHub Raw 下载加速）
+github-proxy: "https://gh-proxy.com/"
+```
 
 ### 3. 运行
 
@@ -256,4 +273,4 @@ docker run -itd --name ikuai-bypass --restart=always \
 - **交流讨论**：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛
 - **Bug 反馈**：[GitHub Issues](https://github.com/joyanhui/ikuai-bypass/issues)
 - **致谢**：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的初始版本思路，以及所有提供 PR 的开发者。
-- 欢迎 PR（含文档与体验优化），但 Rust/TS 代码须严格遵循零 Clone、零隐式 Panic 及零 Any、零类型错误原则。
+- 欢迎 PR（含文档与体验优化），但 Rust/TS 代码须严格遵循零 Clone、零隐式 Panic 及零 Any、零类型错误原则。不得有clippy警告.

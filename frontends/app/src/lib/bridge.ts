@@ -73,6 +73,16 @@ export type TestResult = {
   message: string;
 };
 
+export type GithubRelease = {
+  tag_name: string;
+  name?: string | null;
+  prerelease: boolean;
+  draft: boolean;
+  html_url: string;
+  published_at?: string | null;
+  created_at?: string | null;
+};
+
 export type ConfigMeta = {
   conf_path: string;
   raw_yaml?: string;
@@ -232,6 +242,13 @@ export const bridge = {
       method: 'POST',
       body: JSON.stringify({ githubProxy }),
     });
+  },
+
+  async fetchGithubReleases(): Promise<GithubRelease[]> {
+    if (await isTauriReady()) {
+      return await tauriInvoke<GithubRelease[]>('fetch_github_releases');
+    }
+    return await fetchJson<GithubRelease[]>('/api/github/releases');
   },
 
   async listenLogs(onRecord: (rec: LogRecord) => void, onError?: (err?: unknown) => void): Promise<UnlistenFn> {

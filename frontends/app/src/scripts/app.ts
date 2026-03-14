@@ -41,7 +41,7 @@ let monacoLoading: Promise<void> | null = null;
 
 const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
-const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal'] as const;
+const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal', 'aboutModal'] as const;
 
 let configMissingDetected = false;
 let configMissingPrompted = false;
@@ -312,6 +312,157 @@ const initModalEscape = () => {
       closeModal(visible);
     }
   });
+};
+
+// ============================================
+// About Modal + GitHub Release 查询
+// ============================================
+
+type GithubRelease = {
+  tag_name: string;
+  name?: string | null;
+  prerelease: boolean;
+  draft: boolean;
+  html_url: string;
+  published_at?: string | null;
+  created_at?: string | null;
+};
+
+const setTextById = (id: string, text: string) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+};
+
+const setHrefById = (id: string, href: string) => {
+  const el = document.getElementById(id) as HTMLAnchorElement | null;
+  if (!el) return;
+  el.href = href;
+};
+
+const fmtIsoTime = (iso?: string | null): string => {
+  const s = (iso || '').trim();
+  if (!s) return '--';
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return '--';
+  try {
+    const locale = getLanguage() === 'en' ? 'en-US' : 'zh-CN';
+    return d.toLocaleString(locale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return d.toLocaleString();
+  }
+};
+
+const renderAboutReleaseRow = (kind: 'stable' | 'pre', rel: GithubRelease | null) => {
+  const tagId = kind === 'stable' ? 'aboutStableTag' : 'aboutPreTag';
+  const timeId = kind === 'stable' ? 'aboutStableTime' : 'aboutPreTime';
+  const linkId = kind === 'stable' ? 'aboutStableLink' : 'aboutPreLink';
+
+  if (!rel) {
+    setTextById(tagId, '--');
+    setTextById(timeId, '--');
+    setHrefById(linkId, 'https://github.com/joyanhui/ikuai-bypass/releases');
+    return;
+  }
+
+  setTextById(tagId, (rel.tag_name || '').trim() || '--');
+  setTextById(timeId, fmtIsoTime(rel.published_at || rel.created_at || null));
+  setHrefById(linkId, rel.html_url || 'https://github.com/joyanhui/ikuai-bypass/releases');
+};
+
+const setAboutUpdateHint = (text: string) => {
+  const el = document.getElementById('aboutUpdateHint');
+  if (!el) return;
+  el.textContent = text;
+};
+
+
+const describeProxyForUpdateHint = (): string => {
+  const mode = state.cfg.proxy.mode;
+  if (mode === 'disabled') return getLanguage() === 'en' ? 'direct (proxy disabled)' : '直连(禁用代理)';
+  if (mode === 'system') return getLanguage() === 'en' ? 'system proxy' : '系统代理';
+  if (mode === 'onlyGithubApi') return getLanguage() === 'en' ? 'only GitHub API uses system proxy' : '仅 GitHub API 使用系统代理';
+  const url = (state.cfg.proxy.url || '').trim();
+  if (!url) return getLanguage() === 'en' ? 'custom proxy' : '自定义代理';
+  return getLanguage() === 'en' ? `custom proxy: ${url}` : `自定义代理: ${url}`;
+};
+
+const pickLatestRelease = (releases: GithubRelease[], prerelease: boolean): GithubRelease | null => {
+  for (const r of releases) {
+    if (!r) continue;
+    if (r.draft) continue;
+    if (!!r.prerelease !== prerelease) continue;
+    return r;
+  }
+  return null;
+};
+
+const syncAboutModalInfo = async () => {
+  const isTauri = await bridge.isTauriReady();
+  setTextById('aboutRuntime', isTauri ? t('about.runtime.tauri') : t('about.runtime.web'));
+  setTextById('aboutConfigPath', (state.confPath || './config.yml').trim() || './config.yml');
+  setTextById('aboutHttpProxy', describeProxyForUpdateHint());
+  setTextById('aboutGithubProxy', state.cfg.githubProxy.trim() ? state.cfg.githubProxy.trim() : '--');
+};
+
+const checkUpdatesFromAboutModal = async () => {
+  const btn = document.getElementById('btnCheckUpdate') as HTMLButtonElement | null;
+  if (btn) btn.disabled = true;
+  setAboutUpdateHint(t('about.update.hint.fetching'));
+
+  // 清空旧结果，避免用户误判
+  // Clear old results to avoid confusion.
+  renderAboutReleaseRow('stable', null);
+  renderAboutReleaseRow('pre', null);
+
+  try {
+    const releases = (await bridge.fetchGithubReleases()) as unknown as GithubRelease[];
+    const stable = pickLatestRelease(releases, false);
+    const pre = pickLatestRelease(releases, true);
+    renderAboutReleaseRow('stable', stable);
+    renderAboutReleaseRow('pre', pre);
+    setAboutUpdateHint(t('about.update.hint.ok', { via: describeProxyForUpdateHint() }));
+  } catch (err) {
+    console.warn('[IKB] GitHub release check failed:', err);
+    const base = t('about.update.hint.failed');
+    setAboutUpdateHint(`${base}${err ? `: ${getErrorMessage(err)}` : ''}`);
+    showToast(base, 3600);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+const initAboutModal = () => {
+  const open = async () => {
+    try {
+      await syncAboutModalInfo();
+    } catch {
+      // ignore
+    }
+
+    // 仅在未查询过时显示引导文案；避免覆盖已查询结果。
+    // Show idle hint only if no results yet.
+    const stableTag = (document.getElementById('aboutStableTag')?.textContent || '').trim();
+    const preTag = (document.getElementById('aboutPreTag')?.textContent || '').trim();
+    if ((!stableTag || stableTag === '--') && (!preTag || preTag === '--')) {
+      setAboutUpdateHint(t('about.update.hint.idle'));
+    }
+    openModal('aboutModal');
+  };
+
+  const close = () => closeModal('aboutModal');
+
+  document.getElementById('aboutBtn')?.addEventListener('click', () => void open());
+  document.getElementById('btnCloseAbout')?.addEventListener('click', close);
+  document.getElementById('btnCloseAboutBottom')?.addEventListener('click', close);
+  document.getElementById('aboutBackdrop')?.addEventListener('click', close);
+  document.getElementById('btnCheckUpdate')?.addEventListener('click', () => void checkUpdatesFromAboutModal());
 };
 
 // ============================================
@@ -1094,6 +1245,7 @@ const initConfigModal = () => {
     'cfgIkuaiUrl',
     'cfgUser',
     'cfgPass',
+    'cfgProxyUrl',
     'cfgGhProxy',
     'cfgRetryWait',
     'cfgAddWait',
@@ -1120,6 +1272,20 @@ const initConfigModal = () => {
     });
   });
 
+  // select fields
+  ['cfgProxyMode'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('change', () => {
+      commitBasicConfigToRawYaml();
+
+      const urlEl = document.getElementById('cfgProxyUrl') as HTMLInputElement | null;
+      if (urlEl) {
+        const enabled = state.cfg.proxy.mode === 'custom';
+        urlEl.disabled = !enabled;
+        urlEl.classList.toggle('opacity-60', !enabled);
+      }
+    });
+  });
+
   document.getElementById('addCustomIsp')?.addEventListener('click', () => {
     openRuleEditor('customIsp', -1, false);
   });
@@ -1140,18 +1306,30 @@ const initConfigModal = () => {
 const bindConfigFields = () => {
   // 基础字段
   const setValue = (id: string, value: string) => {
-    const el = document.getElementById(id) as HTMLInputElement;
+    const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
     if (el) el.value = value;
+  };
+
+  const refreshProxyControls = () => {
+    const urlEl = document.getElementById('cfgProxyUrl') as HTMLInputElement | null;
+    if (!urlEl) return;
+    const enabled = state.cfg.proxy.mode === 'custom';
+    urlEl.disabled = !enabled;
+    urlEl.classList.toggle('opacity-60', !enabled);
   };
   
   setValue('cfgIkuaiUrl', state.cfg.ikuaiUrl);
   setValue('cfgUser', state.cfg.username);
   setValue('cfgPass', state.cfg.password);
+  setValue('cfgProxyMode', state.cfg.proxy.mode);
+  setValue('cfgProxyUrl', state.cfg.proxy.url);
   setValue('cfgGhProxy', state.cfg.githubProxy);
   ghProxyPickerRefresh.get('cfgGhProxy')?.();
   setValue('cfgRetryWait', state.cfg.addErrRetryWait);
   setValue('cfgAddWait', state.cfg.addWait);
   setValue('cfgCronInline', state.cfg.cron);
+
+  refreshProxyControls();
   
   // WebUI
   const webEnable = document.getElementById('cfgWebEnable') as HTMLInputElement;
@@ -1181,13 +1359,23 @@ const bindConfigFields = () => {
 
 const syncConfigFromInputs = () => {
   const getValue = (id: string) => {
-    const el = document.getElementById(id) as HTMLInputElement;
+    const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
     return el?.value || '';
   };
   
   state.cfg.ikuaiUrl = getValue('cfgIkuaiUrl');
   state.cfg.username = getValue('cfgUser');
   state.cfg.password = getValue('cfgPass');
+  const modeRaw = (getValue('cfgProxyMode') || 'system').trim();
+  state.cfg.proxy.mode =
+    modeRaw === 'system'
+      ? 'system'
+      : modeRaw === 'disabled'
+        ? 'disabled'
+        : modeRaw === 'onlyGithubApi'
+          ? 'onlyGithubApi'
+          : 'custom';
+  state.cfg.proxy.url = getValue('cfgProxyUrl');
   state.cfg.githubProxy = getValue('cfgGhProxy');
   state.cfg.addErrRetryWait = getValue('cfgRetryWait');
   state.cfg.addWait = getValue('cfgAddWait');
@@ -1213,6 +1401,8 @@ const commitBasicConfigToRawYaml = () => {
     { path: ['username'], value: state.cfg.username },
     { path: ['password'], value: state.cfg.password },
     { path: ['cron'], value: state.cfg.cron },
+    { path: ['proxy', 'mode'], value: state.cfg.proxy.mode },
+    { path: ['proxy', 'url'], value: state.cfg.proxy.url },
     { path: ['github-proxy'], value: state.cfg.githubProxy },
     { path: ['AddErrRetryWait'], value: state.cfg.addErrRetryWait },
     { path: ['AddWait'], value: state.cfg.addWait },
@@ -2116,6 +2306,13 @@ const initLanguageToggle = () => {
       const open = accBtn.getAttribute('aria-expanded') === 'true';
       accLabel.textContent = open ? t('common.collapse') : t('common.expand');
     }
+
+    // About modal 动态字段刷新（运行环境/配置路径等）
+    // Refresh dynamic fields in About modal (runtime/config path).
+    const aboutModal = document.getElementById('aboutModal');
+    if (aboutModal && !aboutModal.classList.contains('hidden')) {
+      void syncAboutModalInfo();
+    }
   });
 };
 
@@ -2139,6 +2336,7 @@ const init = async () => {
   // 初始化 Modal
   initConfigModal();
   initStopCronModal();
+  initAboutModal();
   initCmdModal();
   initModalEscape();
   

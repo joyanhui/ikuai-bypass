@@ -15,15 +15,18 @@ type ConfigMeta = ikb_core::app::ConfigMeta;
 type TestResult = ikb_core::app::TestResult;
 type TestIkuaiLoginReq = ikb_core::app::TestIkuaiLoginRequest;
 type TestGithubProxyReq = ikb_core::app::TestGithubProxyRequest;
+type GithubRelease = ikb_core::app::GithubRelease;
 
 #[tauri::command]
-async fn test_ikuai_login(req: TestIkuaiLoginReq) -> Result<TestResult, String> {
-    Ok(ikb_core::app::test_ikuai_login(req).await)
+async fn test_ikuai_login(state: tauri::State<'_, AppState>, req: TestIkuaiLoginReq) -> Result<TestResult, String> {
+    let cfg = { state.config.lock().await.clone() };
+    Ok(ikb_core::app::test_ikuai_login(req, &cfg.proxy).await)
 }
 
 #[tauri::command]
-async fn test_github_proxy(req: TestGithubProxyReq) -> Result<TestResult, String> {
-    Ok(ikb_core::app::test_github_proxy(req).await)
+async fn test_github_proxy(state: tauri::State<'_, AppState>, req: TestGithubProxyReq) -> Result<TestResult, String> {
+    let cfg = { state.config.lock().await.clone() };
+    Ok(ikb_core::app::test_github_proxy(req, &cfg.proxy).await)
 }
 
 #[tauri::command]
@@ -146,8 +149,19 @@ async fn runtime_tail_logs(
 }
 
 #[tauri::command]
-async fn fetch_remote_config(url: String, github_proxy: String) -> Result<String, String> {
-    ikb_core::app::fetch_remote_config(&url, &github_proxy).await
+async fn fetch_remote_config(
+    state: tauri::State<'_, AppState>,
+    url: String,
+    github_proxy: String,
+) -> Result<String, String> {
+    let cfg = { state.config.lock().await.clone() };
+    ikb_core::app::fetch_remote_config(&url, &github_proxy, &cfg.proxy).await
+}
+
+#[tauri::command]
+async fn fetch_github_releases(state: tauri::State<'_, AppState>) -> Result<Vec<GithubRelease>, String> {
+    let cfg = { state.config.lock().await.clone() };
+    ikb_core::app::fetch_github_releases(&cfg.proxy).await
 }
 
 pub struct AppState {
@@ -160,22 +174,23 @@ pub struct AppState {
 pub fn run() {
     let fallback_config_path = ikb_core::paths::default_config_path();
 
-    let config = Arc::new(tokio::sync::Mutex::new(Config {
-        ikuai_url: String::new(),
-        username: String::new(),
-        password: String::new(),
-        cron: "0 7 * * *".to_string(),
-        add_err_retry_wait: std::time::Duration::from_secs(10),
-        add_wait: std::time::Duration::from_secs(1),
-        github_proxy: String::new(),
-        custom_isp: Vec::new(),
-        stream_domain: Vec::new(),
-        ip_group: Vec::new(),
-        ipv6_group: Vec::new(),
-        stream_ipport: Vec::new(),
-        webui: Default::default(),
-        max_number_of_one_records: Default::default(),
-    }));
+        let config = Arc::new(tokio::sync::Mutex::new(Config {
+            ikuai_url: String::new(),
+            username: String::new(),
+            password: String::new(),
+            cron: "0 7 * * *".to_string(),
+            add_err_retry_wait: std::time::Duration::from_secs(10),
+            add_wait: std::time::Duration::from_secs(1),
+            github_proxy: String::new(),
+            proxy: Default::default(),
+            custom_isp: Vec::new(),
+            stream_domain: Vec::new(),
+            ip_group: Vec::new(),
+            ipv6_group: Vec::new(),
+            stream_ipport: Vec::new(),
+            webui: Default::default(),
+            max_number_of_one_records: Default::default(),
+        }));
 
     let runtime = Arc::new(RuntimeService::new(
         Arc::clone(&config),
@@ -253,6 +268,7 @@ pub fn run() {
             runtime_clean,
             runtime_tail_logs,
             fetch_remote_config,
+            fetch_github_releases,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

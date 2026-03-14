@@ -1,27 +1,36 @@
 use std::time::Duration;
 
-pub async fn fetch_remote_config(url: &str, github_proxy: &str) -> Result<String, String> {
+use crate::config::ProxyConfig;
+
+pub async fn fetch_remote_config(
+    url: &str,
+    github_proxy: &str,
+    proxy_cfg: &ProxyConfig,
+) -> Result<String, String> {
     let url = url.trim();
     if url.is_empty() {
         return Err("Remote URL is empty".to_string());
     }
 
     let mut final_url = url.to_string();
-    let proxy = github_proxy.trim();
-    if !proxy.is_empty()
+    let ghproxy = github_proxy.trim();
+    if !ghproxy.is_empty()
         && (url.starts_with("https://raw.githubusercontent.com/")
             || url.starts_with("https://github.com/"))
     {
-        final_url = if proxy.ends_with('/') {
-            format!("{}{}", proxy, url)
+        final_url = if ghproxy.ends_with('/') {
+            format!("{}{}", ghproxy, url)
         } else {
-            format!("{}/{}", proxy, url)
+            format!("{}/{}", ghproxy, url)
         };
     }
 
-    let client = reqwest::Client::builder()
+    let builder = reqwest::Client::builder()
         .user_agent("ikb-core")
         .timeout(Duration::from_secs(15))
+        ;
+    let client = crate::net::apply_proxy(builder, proxy_cfg)
+        .map_err(|e| e.to_string())?
         .build()
         .map_err(|e| e.to_string())?;
 

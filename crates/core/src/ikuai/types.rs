@@ -128,14 +128,16 @@ pub struct StreamIpPortData {
 }
 
 impl IKuaiClient {
-    pub fn new(base_url: String) -> Result<Self, IKuaiError> {
+    pub fn new(base_url: String, proxy: &crate::config::ProxyConfig) -> Result<Self, IKuaiError> {
         // 避免网络异常时无限期卡住（比如爱快地址不可达）。
         // Avoid hanging forever when iKuai is unreachable.
-        let client = reqwest::Client::builder()
+        let builder = reqwest::Client::builder()
             .cookie_store(true)
             .connect_timeout(Duration::from_secs(5))
             .timeout(Duration::from_secs(30))
-            .build()?;
+            ;
+        let builder = crate::net::apply_proxy(builder, proxy)?;
+        let client = builder.build()?;
         Ok(Self { base_url, client })
     }
 

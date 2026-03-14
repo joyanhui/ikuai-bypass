@@ -1,6 +1,6 @@
 [package]
 name = "ikb-core"
-version = "4.4.100-alpha9.1"
+version = "4.4.100-alpha9.2"
 edition = "2024"
 license = "AGPL-3.0"
 

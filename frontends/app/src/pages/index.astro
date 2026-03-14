@@ -360,49 +360,62 @@ import '../styles/global.css';
                 </div>
               </div>
               <div class="glass-card rounded-3xl p-6">
-                <div class="mb-4 flex items-center justify-between">
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">ISP / IP 分组 / IPv6 分组</h3>
+                <div class="mb-1 flex items-center justify-between">
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">域名分流（常用）</h3>
                 </div>
+                <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">把指定域名走指定线路；需要更精细时，再配合下方“运营商列表”。</p>
                 <div class="space-y-4">
                   <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                     <div class="mb-3 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">自定义运营商</span>
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">域名规则</span>
+                      <button id="addStreamDomain" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                    </div>
+                    <div id="listStreamDomain"></div>
+                  </div>
+
+                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+                    <div class="mb-1 flex items-center justify-between">
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">运营商列表（可选）</span>
                       <button id="addCustomIsp" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
                     </div>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">只有你需要“按运营商区分线路”时，才需要配置这里。</p>
                     <div id="listCustomIsp"></div>
-                  </div>
-                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
-                    <div class="mb-3 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IPv4 分组</span>
-                      <button id="addIpGroup" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
-                    </div>
-                    <div id="listIpGroup"></div>
-                  </div>
-                  <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
-                    <div class="mb-3 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IPv6 分组</span>
-                      <button id="addIpv6Group" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
-                    </div>
-                    <div id="listIpv6Group"></div>
                   </div>
                 </div>
               </div>
 
               <div class="glass-card rounded-3xl p-6">
-                <div class="mb-4 flex items-center justify-between">
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">流量分流规则</h3>
+                <div class="mb-1 flex items-center justify-between">
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">IP / 端口分流（进阶）</h3>
                 </div>
+                <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">适合更精细的场景：按 IP 分组或端口把流量走不同线路/下一跳。</p>
                 <div class="space-y-4">
                   <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
-                    <div class="mb-3 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">域名分流</span>
-                      <button id="addStreamDomain" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                    <div class="mb-1 flex items-center justify-between">
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">地址分组</span>
                     </div>
-                    <div id="listStreamDomain"></div>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">先把常用的地址整理成分组，后面的规则会用到。</p>
+                    <div class="space-y-4">
+                      <div>
+                        <div class="mb-3 flex items-center justify-between">
+                          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IPv4 分组</span>
+                          <button id="addIpGroup" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                        </div>
+                        <div id="listIpGroup"></div>
+                      </div>
+                      <div>
+                        <div class="mb-3 flex items-center justify-between">
+                          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IPv6 分组</span>
+                          <button id="addIpv6Group" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
+                        </div>
+                        <div id="listIpv6Group"></div>
+                      </div>
+                    </div>
                   </div>
+
                   <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                     <div class="mb-3 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IP / 端口分流</span>
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IP / 端口规则</span>
                       <button id="addStreamIpPort" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
                     </div>
                     <div id="listStreamIpPort"></div>
@@ -694,7 +707,7 @@ import '../styles/global.css';
                   </select>
                 </div>
 
-                <div id="cfgHttpProxySection" class="contents">
+                <div id="cfgHttpProxySection" class="md:col-span-2 grid gap-3 md:grid-cols-2">
                   <div class="md:col-span-2">
                     <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.url">代理地址</label>
                     <input id="cfgProxyUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://127.0.0.1:7890" />
@@ -709,15 +722,13 @@ import '../styles/global.css';
                   </div>
                 </div>
 
-                <div id="cfgGhProxySection" class="contents">
-                  <div class="md:col-span-2">
-                    <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy">GitHub Proxy (ghproxy)</label>
-                    <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
-                    <div id="cfgGhProxyQuickPick" class="mt-2"></div>
-                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy.smart_hint">
-                      仅用于 GitHub Raw 下载/远程载入；GitHub API 不使用。
-                    </p>
-                  </div>
+                <div id="cfgGhProxySection" class="md:col-span-2">
+                  <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy">GitHub Proxy (ghproxy)</label>
+                  <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                  <div id="cfgGhProxyQuickPick" class="mt-2"></div>
+                  <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy.smart_hint">
+                    仅用于 GitHub Raw 下载/远程载入；GitHub API 不使用。
+                  </p>
                 </div>
               </div>
 

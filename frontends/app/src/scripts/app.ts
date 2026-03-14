@@ -337,18 +337,16 @@ const setAboutUpdateHint = (text: string) => {
 
 const describeProxyForUpdateHint = (): string => {
   const mode = state.cfg.proxy.mode;
-  if (mode === 'system') return getLanguage() === 'en' ? 'system proxy' : '系统代理';
+  if (mode === 'system') return getLanguage() === 'en' ? 'Use system' : '跟随系统';
   if (mode === 'custom') {
     const url = (state.cfg.proxy.url || '').trim();
-    if (!url) return getLanguage() === 'en' ? 'custom proxy' : '自定义代理';
-    return getLanguage() === 'en' ? `custom proxy: ${url}` : `自定义代理: ${url}`;
+    if (!url) return getLanguage() === 'en' ? 'Manual' : '手动设置';
+    return getLanguage() === 'en' ? `Manual: ${url}` : `手动设置: ${url}`;
   }
   // smart
   const url = (state.cfg.proxy.url || '').trim();
-  if (!url) return getLanguage() === 'en' ? 'smart (GitHub API via system proxy)' : '智能代理(GitHub API 走系统代理)';
-  return getLanguage() === 'en'
-    ? `smart (GitHub API via custom proxy: ${url})`
-    : `智能代理(GitHub API 走自定义代理: ${url})`;
+  if (!url) return getLanguage() === 'en' ? 'Smart (update check uses system)' : '智能推荐（检查更新跟随系统）';
+  return getLanguage() === 'en' ? `Smart (update check uses manual: ${url})` : `智能推荐（检查更新走手动设置: ${url}）`;
 };
 
 const pickLatestRelease = (releases: GithubRelease[], prerelease: boolean): GithubRelease | null => {

@@ -169,7 +169,7 @@ pub struct MaxNumberOfOneRecordsConfig {
     pub domain: i64,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum ProxyMode {
     #[serde(rename = "custom")]
     Custom,
@@ -181,13 +181,8 @@ pub enum ProxyMode {
         alias = "only-github-api",
         alias = "only_github_api"
     )]
+    #[default]
     Smart,
-}
-
-impl Default for ProxyMode {
-    fn default() -> Self {
-        ProxyMode::Smart
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

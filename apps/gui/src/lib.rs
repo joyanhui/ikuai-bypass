@@ -8,7 +8,7 @@ use tauri::{Emitter, Manager};
 #[tauri::command]
 async fn get_config(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
     let cfg = state.config.lock().await;
-    serde_json::to_value(&*cfg).map_err(|e| format!("Failed to encode config: {}", e))
+    serde_json::to_value(cfg.as_ref()).map_err(|e| format!("Failed to encode config: {}", e))
 }
 
 type ConfigMeta = ikb_core::app::ConfigMeta;
@@ -31,9 +31,9 @@ async fn test_github_proxy(_state: tauri::State<'_, AppState>, req: TestGithubPr
 #[tauri::command]
 async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
     // Avoid holding locks across await to prevent deadlocks on mobile.
-    let cfg_snapshot = { state.config.lock().await.clone() };
+    let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let path = { state.config_path.lock().await.clone() };
-    ikb_core::app::build_config_meta(&cfg_snapshot, &path)
+    ikb_core::app::build_config_meta(cfg_snapshot.as_ref(), &path)
 }
 
 #[tauri::command]
@@ -44,7 +44,7 @@ async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Resul
     }
 
     let new_cron = config.cron.to_string();
-    *state.config.lock().await = config;
+    *state.config.lock().await = Arc::new(config);
     state.runtime.set_defaults(None, Some(new_cron)).await;
     Ok(())
 }
@@ -60,7 +60,7 @@ async fn save_config_with_comments(
         return Err(format!("Failed to save config: {}", e));
     }
     let new_cron = config.cron.to_string();
-    *state.config.lock().await = config;
+    *state.config.lock().await = Arc::new(config);
     state.runtime.set_defaults(None, Some(new_cron)).await;
     Ok(())
 }
@@ -75,7 +75,7 @@ async fn save_raw_yaml(
     let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &path, with_comments)
         .map_err(|e| format!("Failed to save config: {}", e))?;
     let new_cron = cfg.cron.to_string();
-    *state.config.lock().await = cfg;
+    *state.config.lock().await = Arc::new(cfg);
     state.runtime.set_defaults(None, Some(new_cron)).await;
     Ok(())
 }
@@ -135,8 +135,8 @@ async fn runtime_clean(
 ) -> Result<(), String> {
     // 避免在网络请求期间持有配置锁。
     // Avoid holding config lock while doing network requests.
-    let cfg = { state.config.lock().await.clone() };
-    run_clean(&cfg, clean_tag).await
+    let cfg = { Arc::clone(&*state.config.lock().await) };
+    run_clean(cfg.as_ref(), clean_tag).await
 }
 
 #[tauri::command]
@@ -164,14 +164,14 @@ async fn fetch_github_releases(proxy: ikb_core::config::ProxyConfig) -> Result<V
 #[tauri::command]
 async fn diagnostics_report(state: tauri::State<'_, AppState>) -> Result<DiagnosticsReport, String> {
     // Avoid holding locks across await.
-    let cfg_snapshot = { state.config.lock().await.clone() };
+    let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let path = { state.config_path.lock().await.clone() };
     let st = state.runtime.status();
-    Ok(ikb_core::app::build_diagnostics_report(&cfg_snapshot, &path, Some(st), "").await)
+    Ok(ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path, Some(st), "").await)
 }
 
 pub struct AppState {
-    config: Arc<tokio::sync::Mutex<Config>>,
+    config: Arc<tokio::sync::Mutex<Arc<Config>>>,
     runtime: Arc<RuntimeService>,
     config_path: Arc<tokio::sync::Mutex<PathBuf>>,
 }
@@ -198,14 +198,14 @@ pub fn run() {
         max_number_of_one_records: Default::default(),
     };
     fallback_cfg.apply_defaults();
-    let config = Arc::new(tokio::sync::Mutex::new(fallback_cfg));
+    let config = Arc::new(tokio::sync::Mutex::new(Arc::new(fallback_cfg)));
 
     let runtime = Arc::new(RuntimeService::new(
         Arc::clone(&config),
         String::new(),
         String::new(),
         "ispdomain".to_string(),
-        Default::default(),
+        Arc::new(Default::default()),
     ));
 
     let runtime_for_logs = Arc::clone(&runtime);
@@ -239,7 +239,7 @@ pub fn run() {
                 tauri::async_runtime::block_on(async move {
                     *path_lock.lock().await = config_path.clone();
                     if let Ok(cfg) = Config::load_from_path(&config_path) {
-                        *cfg_clone.lock().await = cfg;
+                        *cfg_clone.lock().await = Arc::new(cfg);
                     }
                 });
             }

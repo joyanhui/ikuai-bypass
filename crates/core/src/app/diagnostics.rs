@@ -330,7 +330,7 @@ pub async fn build_diagnostics_report(
     out.push_str("IKB Diagnostics Report\n");
     out.push_str(&format!("generated_at: {}\n", now));
     out.push_str(&format!("ikb-core: {}\n", env!("CARGO_PKG_VERSION")));
-    out.push_str("\n");
+    out.push('\n');
 
     out.push_str("[config]\n");
     out.push_str(&format!("path: {}\n", config_path.to_string_lossy()));
@@ -347,7 +347,7 @@ pub async fn build_diagnostics_report(
     out.push_str(&format!("webui.port: {}\n", cfg.webui.port.trim()));
     out.push_str(&format!("webui.user: {}\n", cfg.webui.user.trim()));
     out.push_str(&format!("webui.pass: {}\n", mask_secret(&cfg.webui.pass)));
-    out.push_str("\n");
+    out.push('\n');
 
     out.push_str("[rules]\n");
     out.push_str(&format!("custom-isp: {}\n", cfg.custom_isp.len()));
@@ -355,23 +355,23 @@ pub async fn build_diagnostics_report(
     out.push_str(&format!("ip-group: {}\n", cfg.ip_group.len()));
     out.push_str(&format!("ipv6-group: {}\n", cfg.ipv6_group.len()));
     out.push_str(&format!("stream-ipport: {}\n", cfg.stream_ipport.len()));
-    out.push_str("\n");
+    out.push('\n');
 
     out.push_str("[cron]\n");
     match normalize_cron_expr_for_report(&cfg.cron) {
         Ok(norm) => {
             out.push_str(&format!("normalized: {}\n", norm));
-            if let Ok(sched) = Schedule::from_str(&norm) {
-                if let Some(next) = sched.upcoming(Local).next() {
-                    out.push_str(&format!("next: {}\n", next.to_rfc3339()));
-                }
+            if let Ok(sched) = Schedule::from_str(&norm)
+                && let Some(next) = sched.upcoming(Local).next()
+            {
+                out.push_str(&format!("next: {}\n", next.to_rfc3339()));
             }
         }
         Err(e) => {
             out.push_str(&format!("error: {}\n", e));
         }
     }
-    out.push_str("\n");
+    out.push('\n');
 
     if let Some(st) = runtime_status {
         out.push_str("[runtime]\n");
@@ -381,7 +381,7 @@ pub async fn build_diagnostics_report(
         out.push_str(&format!("cron_expr: {}\n", st.cron_expr.trim()));
         out.push_str(&format!("last_run_at: {}\n", st.last_run_at.trim()));
         out.push_str(&format!("next_run_at: {}\n", st.next_run_at.trim()));
-        out.push_str("\n");
+        out.push('\n');
     }
 
     out.push_str("[checks]\n");

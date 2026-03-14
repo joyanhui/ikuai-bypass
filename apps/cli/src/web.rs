@@ -63,7 +63,7 @@ fn print_webui_banner(
 
 struct AppState {
     config_path: PathBuf,
-    config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    config: Arc<tokio::sync::Mutex<Arc<ikb_core::config::Config>>>,
     runtime: Arc<RuntimeService>,
     cli_login: String,
 }
@@ -90,7 +90,7 @@ struct SaveRawYamlRequest {
 
 pub async fn start_web_server(
     config_path: PathBuf,
-    config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    config: Arc<tokio::sync::Mutex<Arc<ikb_core::config::Config>>>,
     runtime: Arc<RuntimeService>,
     cli_login: String,
     port: String,
@@ -143,7 +143,7 @@ pub async fn start_web_server(
 
     let auth_user = {
         let cfg = state.config.lock().await;
-        cfg.webui.user.to_string()
+        cfg.as_ref().webui.user.to_string()
     };
     let conf_path = display_conf_path(&state.config_path);
     print_webui_banner(&port, &conf_path, &auth_user);
@@ -199,8 +199,8 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
         .unwrap_or_default();
 
     // Avoid holding config lock while reading config file.
-    let cfg_snapshot = { state.config.lock().await.clone() };
-    let meta = match ikb_core::app::build_config_meta(&cfg_snapshot, &state.config_path) {
+    let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
+    let meta = match ikb_core::app::build_config_meta(cfg_snapshot.as_ref(), &state.config_path) {
         Ok(v) => v,
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e).into_response(),
     };
@@ -216,12 +216,14 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
 }
 
 async fn api_diagnostics_report(State(state): State<Arc<AppState>>) -> Response {
-    let cfg_snapshot = { state.config.lock().await.clone() };
+    let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let path = state.config_path.clone();
     let cli_login = state.cli_login.to_string();
     let st = state.runtime.status();
 
-    let report = ikb_core::app::build_diagnostics_report(&cfg_snapshot, &path, Some(st), &cli_login).await;
+    let report =
+        ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path, Some(st), &cli_login)
+            .await;
     (
         StatusCode::OK,
         [(header::CACHE_CONTROL, "no-store")],
@@ -245,7 +247,7 @@ async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveReques
     let new_cron = req.config.cron.to_string();
     {
         let mut current = state.config.lock().await;
-        *current = req.config;
+        *current = Arc::new(req.config);
     }
     state.runtime.set_defaults(None, Some(new_cron)).await;
 
@@ -279,7 +281,7 @@ async fn api_save_raw_yaml(
     let new_cron = cfg.cron.to_string();
     {
         let mut current = state.config.lock().await;
-        *current = cfg;
+        *current = Arc::new(cfg);
     }
     state.runtime.set_defaults(None, Some(new_cron)).await;
 
@@ -336,7 +338,7 @@ async fn api_remote_fetch(
 }
 
 async fn api_github_releases(State(state): State<Arc<AppState>>) -> Response {
-    let cfg = { state.config.lock().await.clone() };
+    let cfg = { Arc::clone(&*state.config.lock().await) };
     match ikb_core::app::fetch_github_releases(&cfg.proxy).await {
         Ok(v) => (StatusCode::OK, Json(v)).into_response(),
         Err(e) => (StatusCode::BAD_GATEWAY, e).into_response(),
@@ -437,9 +439,9 @@ async fn api_runtime_clean(
 ) -> Response {
     // 避免在网络请求期间持有配置锁。
     // Avoid holding config lock while doing network requests.
-    let cfg_snapshot = { state.config.lock().await.clone() };
+    let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let cli_login = state.cli_login.to_string();
-    match ikb_core::app::run_clean(&cfg_snapshot, &cli_login, &req.clean_tag).await {
+    match ikb_core::app::run_clean(cfg_snapshot.as_ref(), &cli_login, &req.clean_tag).await {
         Ok(()) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
         Err(e) => (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
     }
@@ -486,7 +488,10 @@ async fn basic_auth(
 ) -> Response {
     let (user, pass) = {
         let cfg = state.config.lock().await;
-        (cfg.webui.user.to_string(), cfg.webui.pass.to_string())
+        (
+            cfg.as_ref().webui.user.to_string(),
+            cfg.as_ref().webui.pass.to_string(),
+        )
     };
     if user.is_empty() {
         return next.run(req).await;

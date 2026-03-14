@@ -365,76 +365,81 @@ export function yamlDumpWithComments(payload: JsonRecord, comments: CommentMaps)
 
   cmt(top['custom-isp']);
   out.push('custom-isp:');
-  for (const it of payload?.['custom-isp'] || []) {
-    out.push('  - tag: ' + q(it.tag));
+  for (const itRaw of asArray(payload?.['custom-isp'])) {
+    const it = asRecord(itRaw);
+    out.push('  - tag: ' + q(asStr(it.tag)));
     if (item.tag) out.push('    # ' + item.tag);
-    out.push('    url: ' + q(it.url));
+    out.push('    url: ' + q(asStr(it.url)));
   }
 
   cmt(top['stream-domain']);
   out.push('stream-domain:');
-  for (const it of payload?.['stream-domain'] || []) {
-    out.push('  - interface: ' + q(it.interface));
+  for (const itRaw of asArray(payload?.['stream-domain'])) {
+    const it = asRecord(itRaw);
+    out.push('  - interface: ' + q(asStr(it.interface)));
     if (item.interface) out.push('    # ' + item.interface);
-    out.push('    src-addr: ' + q(it['src-addr'] || ''));
+    out.push('    src-addr: ' + q(asStr(it['src-addr'], '')));
     if (item['src-addr']) out.push('    # ' + item['src-addr']);
-    out.push('    src-addr-opt-ipgroup: ' + q(it['src-addr-opt-ipgroup'] || ''));
+    out.push('    src-addr-opt-ipgroup: ' + q(asStr(it['src-addr-opt-ipgroup'], '')));
     if (item['src-addr-opt-ipgroup']) out.push('    # ' + item['src-addr-opt-ipgroup']);
-    out.push('    url: ' + q(it.url));
-    out.push('    tag: ' + q(it.tag));
+    out.push('    url: ' + q(asStr(it.url)));
+    out.push('    tag: ' + q(asStr(it.tag)));
     if (item.tag) out.push('    # ' + item.tag);
   }
 
   cmt(top['ip-group']);
   out.push('ip-group:');
-  for (const it of payload?.['ip-group'] || []) {
-    out.push('  - tag: ' + q(it.tag));
-    out.push('    url: ' + q(it.url));
+  for (const itRaw of asArray(payload?.['ip-group'])) {
+    const it = asRecord(itRaw);
+    out.push('  - tag: ' + q(asStr(it.tag)));
+    out.push('    url: ' + q(asStr(it.url)));
   }
 
   cmt(top['ipv6-group']);
   out.push('ipv6-group:');
-  for (const it of payload?.['ipv6-group'] || []) {
-    out.push('  - tag: ' + q(it.tag));
-    out.push('    url: ' + q(it.url));
+  for (const itRaw of asArray(payload?.['ipv6-group'])) {
+    const it = asRecord(itRaw);
+    out.push('  - tag: ' + q(asStr(it.tag)));
+    out.push('    url: ' + q(asStr(it.url)));
   }
 
   cmt(top['stream-ipport']);
   out.push('stream-ipport:');
-  for (const it of payload?.['stream-ipport'] || []) {
-    out.push('  - type: ' + q(it.type));
+  for (const itRaw of asArray(payload?.['stream-ipport'])) {
+    const it = asRecord(itRaw);
+    out.push('  - type: ' + q(asStr(it.type)));
     if (item.type) out.push('    # ' + item.type);
-    out.push('    opt-tagname: ' + q(it['opt-tagname'] || ''));
+    out.push('    opt-tagname: ' + q(asStr(it['opt-tagname'], '')));
     if (item['opt-tagname']) out.push('    # ' + item['opt-tagname']);
-    out.push('    interface: ' + q(it.interface || ''));
-    out.push('    nexthop: ' + q(it.nexthop || ''));
-    out.push('    src-addr: ' + q(it['src-addr'] || ''));
-    out.push('    src-addr-opt-ipgroup: ' + q(it['src-addr-opt-ipgroup'] || ''));
-    out.push('    ip-group: ' + q(it['ip-group'] || ''));
-    out.push('    mode: ' + String(it.mode ?? 0));
+    out.push('    interface: ' + q(asStr(it.interface, '')));
+    out.push('    nexthop: ' + q(asStr(it.nexthop, '')));
+    out.push('    src-addr: ' + q(asStr(it['src-addr'], '')));
+    out.push('    src-addr-opt-ipgroup: ' + q(asStr(it['src-addr-opt-ipgroup'], '')));
+    out.push('    ip-group: ' + q(asStr(it['ip-group'], '')));
+    out.push('    mode: ' + String(asNum(it.mode, 0)));
     if (item.mode) out.push('    # ' + item.mode);
-    out.push('    ifaceband: ' + String(it.ifaceband ?? 0));
+    out.push('    ifaceband: ' + String(asNum(it.ifaceband, 0)));
     if (item.ifaceband) out.push('    # ' + item.ifaceband);
   }
 
   cmt(top.webui);
   out.push('webui:');
-  const w = payload?.webui || {};
-  out.push('  port: ' + q(w.port || ''));
+  const w = asRecord(payload?.webui);
+  out.push('  port: ' + q(asStr(w.port, '')));
   if (webui.port) out.push('  # ' + webui.port);
-  out.push('  user: ' + q(w.user || ''));
-  out.push('  pass: ' + q(w.pass || ''));
-  out.push('  enable: ' + (w.enable ? 'true' : 'false'));
-  out.push('  cdn-prefix: ' + q(w['cdn-prefix'] || ''));
+  out.push('  user: ' + q(asStr(w.user, '')));
+  out.push('  pass: ' + q(asStr(w.pass, '')));
+  out.push('  enable: ' + (!!w.enable ? 'true' : 'false'));
+  out.push('  cdn-prefix: ' + q(asStr(w['cdn-prefix'], '')));
 
   cmt(top.MaxNumberOfOneRecords);
   out.push('MaxNumberOfOneRecords:');
-  const m = payload?.MaxNumberOfOneRecords || {};
-  out.push('  Isp: ' + String(m.Isp ?? 0));
+  const m = asRecord(payload?.MaxNumberOfOneRecords);
+  out.push('  Isp: ' + String(asNum(m.Isp, 0)));
   if (maxn.Isp) out.push('  # ' + maxn.Isp);
-  out.push('  Ipv4: ' + String(m.Ipv4 ?? 0));
-  out.push('  Ipv6: ' + String(m.Ipv6 ?? 0));
-  out.push('  Domain: ' + String(m.Domain ?? 0));
+  out.push('  Ipv4: ' + String(asNum(m.Ipv4, 0)));
+  out.push('  Ipv6: ' + String(asNum(m.Ipv6, 0)));
+  out.push('  Domain: ' + String(asNum(m.Domain, 0)));
 
   return out.join('\n') + '\n';
 }

@@ -102,7 +102,9 @@ export type ConfigMeta = {
   item_comments?: Record<string, string>;
   webui_comments?: Record<string, string>;
   max_number_of_one_records_comments?: Record<string, string>;
-  [k: string]: JsonValue;
+  // Backend may include extra keys; allow missing values.
+  // 后端可能包含额外字段；这里允许缺省值。
+  [k: string]: JsonValue | undefined;
 };
 
 type UnlistenFn = () => void;

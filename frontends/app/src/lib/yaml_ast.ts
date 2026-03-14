@@ -6,7 +6,7 @@ function ensureDoc(rawYaml: string) {
   const source = rawYaml.trim() ? rawYaml : '{}\n';
   const doc = parseDocument(source);
   if (!(doc.contents instanceof YAMLMap)) {
-    doc.contents = new YAMLMap();
+    doc.contents = new YAMLMap() as unknown as typeof doc.contents;
   }
   return doc;
 }

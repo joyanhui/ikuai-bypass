@@ -89,18 +89,18 @@ pub struct RuntimeService {
     inner: Mutex<Inner>,
     running: AtomicBool,
     logs: Mutex<LogBroker>,
-    config: Arc<tokio::sync::Mutex<Config>>,
+    config: Arc<tokio::sync::Mutex<Arc<Config>>>,
     cli_login: String,
-    update_opts: crate::update::UpdateOptions,
+    update_opts: Arc<crate::update::UpdateOptions>,
 }
 
 impl RuntimeService {
     pub fn new(
-        config: Arc<tokio::sync::Mutex<Config>>,
+        config: Arc<tokio::sync::Mutex<Arc<Config>>>,
         cli_login: String,
         default_cron: String,
         default_module: String,
-        update_opts: crate::update::UpdateOptions,
+        update_opts: Arc<crate::update::UpdateOptions>,
     ) -> Self {
         Self {
             inner: Mutex::new(Inner {
@@ -199,7 +199,7 @@ impl RuntimeService {
         let handle = tokio::spawn(async move {
             // 任务执行期间避免长时间持有配置锁：配置只读，拷贝一份用于本次任务。
             // Avoid holding config lock across awaits: clone config for this run.
-            let cfg = { this.config.lock().await.clone() };
+            let cfg = { Arc::clone(&*this.config.lock().await) };
 
             this.append_sys(LogLevel::Info, "TASK:任务执行", format!("module={}", module))
                 .await;
@@ -246,8 +246,15 @@ impl RuntimeService {
                 })
             };
 
-            let opts = this.update_opts.clone();
-            let res = crate::update::run_update_by_module(&cfg, &this.cli_login, &module, &opts, sink).await;
+            let opts = Arc::clone(&this.update_opts);
+            let res = crate::update::run_update_by_module(
+                cfg.as_ref(),
+                &this.cli_login,
+                &module,
+                opts.as_ref(),
+                sink,
+            )
+            .await;
             match res {
                 Ok(()) => {
                     this.append_sys(LogLevel::Success, "DONE:任务完成", format!("module={}", module))

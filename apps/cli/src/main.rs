@@ -78,20 +78,18 @@ fn print_cron_started_banner(mode: &str, st: &ikb_core::runtime::RuntimeStatus, 
     println!("模式: {}", mode);
     println!("模块: {}", st.module);
     println!("表达式: {}", st.cron_expr);
-    if let Some(norm) = normalized {
-        if norm != st.cron_expr {
-            println!("解析: {}", norm);
-        }
+    if let Some(norm) = normalized
+        && norm != st.cron_expr
+    {
+        println!("解析: {}", norm);
     }
     let mut next_run = st.next_run_at.trim().to_string();
-    if next_run.is_empty() {
-        if let Some(norm) = normalized {
-            if let Ok(schedule) = Schedule::from_str(norm) {
-                if let Some(next) = schedule.upcoming(Local).next() {
-                    next_run = next.to_rfc3339();
-                }
-            }
-        }
+    if next_run.is_empty()
+        && let Some(norm) = normalized
+        && let Ok(schedule) = Schedule::from_str(norm)
+        && let Some(next) = schedule.upcoming(Local).next()
+    {
+        next_run = next.to_rfc3339();
     }
     println!("下次执行: {}", if next_run.is_empty() { "-" } else { next_run.as_str() });
     println!("运行状态: {} (cron_running={})", running_text, st.cron_running);
@@ -128,11 +126,11 @@ struct Args {
 fn main() {
     let raw_args: Vec<String> = std::env::args().collect();
     let normalized = normalize_go_style_args(&raw_args);
-    let args = Args::parse_from(normalized);
+    let mut args = Args::parse_from(normalized);
 
     let config_path = args
         .config_path
-        .clone()
+        .take()
         .unwrap_or_else(ikb_core::paths::default_config_path);
 
     println!(
@@ -148,7 +146,7 @@ fn main() {
             std::process::exit(1);
         }
     };
-    let config = Arc::new(tokio::sync::Mutex::new(cfg));
+    let config = Arc::new(tokio::sync::Mutex::new(Arc::new(cfg)));
 
     if let Err(e) = ikb_core::runner::validate_module(&args.module) {
         if args.module.trim() == "exportDomainSteamToTxt" {
@@ -187,13 +185,13 @@ fn main() {
 async fn run(
     args: Args,
     config_path: PathBuf,
-    config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    config: Arc<tokio::sync::Mutex<Arc<ikb_core::config::Config>>>,
     stop: Arc<AtomicBool>,
 ) -> i32 {
-    let update_opts = ikb_core::update::UpdateOptions {
+    let update_opts = Arc::new(ikb_core::update::UpdateOptions {
         export_path: args.export_path.to_string(),
         ip_group_name_add_random_suffix: parse_bool_flag(&args.is_ip_group_name_add_random_suff),
-    };
+    });
 
     match args.run_mode.as_str() {
         "exportDomainSteamToTxt" | "exportDomainStreamToTxt" => {
@@ -223,7 +221,8 @@ async fn run(
 
             let (cron_expr, webui_enable, webui_port) = {
                 let cfg_guard = config.lock().await;
-                match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
+                let cfg = cfg_guard.as_ref();
+                match ikb_core::session::resolve_login_params(cfg, &args.ikuai_login_info) {
                     Ok(p) => {
                         if p.source == ikb_core::session::LoginSource::Cli {
                             println!("[AUTH:登录认证] Logging in using command line parameters");
@@ -236,12 +235,12 @@ async fn run(
                         return 2;
                     }
                 }
-                let port = cfg_guard.webui.port.trim().to_string();
-                if cfg_guard.webui.enable && port.is_empty() {
+                let port = cfg.webui.port.trim().to_string();
+                if cfg.webui.enable && port.is_empty() {
                     eprintln!("[CONF:配置错误] webui.port 为空，无法启动 WebUI");
                     return 2;
                 }
-                (cfg_guard.cron.to_string(), cfg_guard.webui.enable, port)
+                (cfg.cron.to_string(), cfg.webui.enable, port)
             };
 
             let runtime = Arc::new(RuntimeService::new(
@@ -249,12 +248,12 @@ async fn run(
                 args.ikuai_login_info.to_string(),
                 cron_expr.to_string(),
                 args.module.to_string(),
-                update_opts.clone(),
+                Arc::clone(&update_opts),
             ));
             spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
 
-            if webui_enable {
-                if let Err(e) = web::start_web_server(
+            if webui_enable
+                && let Err(e) = web::start_web_server(
                     config_path,
                     Arc::clone(&config),
                     Arc::clone(&runtime),
@@ -262,10 +261,9 @@ async fn run(
                     webui_port,
                 )
                 .await
-                {
-                    eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
-                    return 1;
-                }
+            {
+                eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                return 1;
             }
 
             match Arc::clone(&runtime).start_run_once(args.module.to_string()).await {
@@ -317,7 +315,8 @@ async fn run(
 
             let (cron_expr, webui_enable, webui_port) = {
                 let cfg_guard = config.lock().await;
-                match ikb_core::session::resolve_login_params(&cfg_guard, &args.ikuai_login_info) {
+                let cfg = cfg_guard.as_ref();
+                match ikb_core::session::resolve_login_params(cfg, &args.ikuai_login_info) {
                     Ok(p) => {
                         if p.source == ikb_core::session::LoginSource::Cli {
                             println!("[AUTH:登录认证] Logging in using command line parameters");
@@ -330,12 +329,12 @@ async fn run(
                         return 2;
                     }
                 }
-                let port = cfg_guard.webui.port.trim().to_string();
-                if cfg_guard.webui.enable && port.is_empty() {
+                let port = cfg.webui.port.trim().to_string();
+                if cfg.webui.enable && port.is_empty() {
                     eprintln!("[CONF:配置错误] webui.port 为空，无法启动 WebUI");
                     return 2;
                 }
-                (cfg_guard.cron.to_string(), cfg_guard.webui.enable, port)
+                (cfg.cron.to_string(), cfg.webui.enable, port)
             };
 
             let runtime = Arc::new(RuntimeService::new(
@@ -343,12 +342,12 @@ async fn run(
                 args.ikuai_login_info.to_string(),
                 cron_expr.to_string(),
                 args.module.to_string(),
-                update_opts.clone(),
+                Arc::clone(&update_opts),
             ));
             spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
 
-            if webui_enable {
-                if let Err(e) = web::start_web_server(
+            if webui_enable
+                && let Err(e) = web::start_web_server(
                     config_path,
                     Arc::clone(&config),
                     Arc::clone(&runtime),
@@ -356,10 +355,9 @@ async fn run(
                     webui_port,
                 )
                 .await
-                {
-                    eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
-                    return 1;
-                }
+            {
+                eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                return 1;
             }
 
             if cron_expr.trim().is_empty() {
@@ -389,7 +387,14 @@ async fn run(
 
         "nocron" | "once" | "1" => {
             let started_at = Instant::now();
-            if let Err(e) = run_update_once(&config, &args.ikuai_login_info, &args.module, &update_opts).await {
+            if let Err(e) = run_update_once(
+                &config,
+                &args.ikuai_login_info,
+                &args.module,
+                update_opts.as_ref(),
+            )
+            .await
+            {
                 eprintln!("[UPDATE:更新失败] {}", e);
                 return 1;
             }
@@ -421,10 +426,10 @@ async fn run(
 
             // 避免在网络请求期间持有配置锁。
             // Avoid holding config lock while doing network requests.
-            let cfg_snapshot = { config.lock().await.clone() };
+            let cfg_snapshot = { Arc::clone(&*config.lock().await) };
             let clean_tag = args.clean_tag.to_string();
 
-            if let Err(e) = ikb_core::app::run_clean(&cfg_snapshot, &args.ikuai_login_info, &clean_tag).await {
+            if let Err(e) = ikb_core::app::run_clean(cfg_snapshot.as_ref(), &args.ikuai_login_info, &clean_tag).await {
                 use ikb_core::app::CleanError;
                 use ikb_core::session::LoginParamsError;
 
@@ -524,7 +529,7 @@ fn spawn_runtime_stdout_forwarder(runtime: Arc<RuntimeService>) {
 }
 
 async fn run_update_once(
-    cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    cfg: &Arc<tokio::sync::Mutex<Arc<ikb_core::config::Config>>>,
     cli_login: &str,
     module: &str,
     update_opts: &ikb_core::update::UpdateOptions,
@@ -537,14 +542,14 @@ async fn run_update_once(
 
     // 更新期间避免长时间持有配置锁：配置只读，拷贝一份用于本次任务。
     // Avoid holding config lock across awaits: clone config for this run.
-    let cfg_snapshot = { cfg.lock().await.clone() };
-    ikb_core::update::run_update_by_module(&cfg_snapshot, cli_login, module, update_opts, sink)
+    let cfg_snapshot = { Arc::clone(&*cfg.lock().await) };
+    ikb_core::update::run_update_by_module(cfg_snapshot.as_ref(), cli_login, module, update_opts, sink)
         .await
         .map_err(|e| e.to_string())
 }
 
 async fn run_export_stream_domain_to_txt(
-    cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    cfg: &Arc<tokio::sync::Mutex<Arc<ikb_core::config::Config>>>,
     export_path: &str,
 ) -> Result<(), String> {
     let use_color = std::io::stdout().is_terminal();
@@ -554,8 +559,8 @@ async fn run_export_stream_domain_to_txt(
     });
 
     // Avoid holding config lock across awaits.
-    let cfg_snapshot = { cfg.lock().await.clone() };
-    ikb_core::update::export_stream_domain_to_txt(&cfg_snapshot, export_path, sink)
+    let cfg_snapshot = { Arc::clone(&*cfg.lock().await) };
+    ikb_core::update::export_stream_domain_to_txt(cfg_snapshot.as_ref(), export_path, sink)
         .await
         .map_err(|e| e.to_string())
 }

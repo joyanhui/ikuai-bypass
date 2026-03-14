@@ -6,9 +6,10 @@ import { loadJson, saveJson } from '../lib/storage.ts';
 import { getLanguage, initLanguage, t, toggleLanguage } from '../lib/i18n.ts';
 import { BRAND } from '../lib/branding.ts';
 import { removeYamlSeqItem, updateYamlPaths, upsertYamlSeqItem } from '../lib/yaml_ast.ts';
+import type * as MonacoTypes from 'monaco-editor';
 
 type MonacoModule = typeof import('monaco-editor/esm/vs/editor/editor.api');
-type MonacoEditor = import('monaco-editor/esm/vs/editor/editor.api').editor.IStandaloneCodeEditor;
+type MonacoEditor = MonacoTypes.editor.IStandaloneCodeEditor;
 type YamlLanguageModule = typeof import('monaco-editor/esm/vs/basic-languages/yaml/yaml.js');
 
 // ============================================
@@ -616,7 +617,13 @@ const loadMonaco = async () => {
 };
 
 const shouldUseLightweightEditor = () => {
-  if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return true;
+  // Mobile must not enable Monaco.
+  // 移动端严禁启用 Monaco（性能/内存/触控体验都不适合）。
+  const ua = navigator.userAgent || '';
+  if (/Android|iPhone|iPad|iPod/i.test(ua)) return true;
+  const isCoarsePointer = !!window.matchMedia?.('(pointer: coarse)').matches;
+  const isSmallViewport = !!window.matchMedia?.('(max-width: 900px)').matches;
+  if (isCoarsePointer || isSmallViewport) return true;
   if (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4) return true;
   return false;
 };
@@ -641,7 +648,7 @@ const ensureRawEditor = async () => {
 
   if (!yamlLanguageRegistered) {
     monaco.languages.register({ id: 'yaml', extensions: ['.yaml', '.yml'], aliases: ['YAML', 'yaml'] });
-    monaco.languages.setMonarchTokensProvider('yaml', yamlLanguageModule.language as monaco.languages.IMonarchLanguage);
+    monaco.languages.setMonarchTokensProvider('yaml', yamlLanguageModule.language);
     monaco.languages.setLanguageConfiguration('yaml', yamlLanguageModule.conf);
     yamlLanguageRegistered = true;
   }
@@ -695,8 +702,11 @@ const initTheme = () => {
     // Safari < 14
     if (typeof mq.addEventListener === 'function') {
       mq.addEventListener('change', onChange);
-    } else if ('addListener' in mq) {
-      (mq as MediaQueryList & { addListener: (listener: () => void) => void }).addListener(onChange);
+    } else {
+      // Avoid deprecated type warnings by using a narrowed, non-deprecated signature.
+      // 通过自定义签名规避 TS 的 deprecated 警告。
+      const legacy = mq as unknown as { addListener?: (listener: () => void) => void };
+      legacy.addListener?.(onChange);
     }
   }
 };
@@ -1521,6 +1531,8 @@ type RuleListKey = keyof RuleItemByKey;
 type RuleDraft = Record<string, string>;
 type RuleMetaItem = { label: string; value: string };
 
+type AnyRuleItem = RuleItemByKey[RuleListKey];
+
 const RULE_LIST_META: Record<RuleListKey, {
   title: string;
   fields: RuleField[];
@@ -1600,33 +1612,35 @@ const createEmptyState = (text: string) => {
   return div;
 };
 
-const getRuleList = <K extends RuleListKey>(listKey: K): RuleItemByKey[K][] => state.cfg[listKey];
-
-const rerenderRuleList = (listKey: RuleListKey) => {
-  const renderers: Record<RuleListKey, () => void> = {
-    customIsp: renderCustomIspList,
-    ipGroup: renderIpGroupList,
-    ipv6Group: renderIpv6GroupList,
-    streamDomain: renderStreamDomainList,
-    streamIpPort: renderStreamIpPortList,
-  };
-  renderers[listKey]();
+const getRuleList = (listKey: RuleListKey): AnyRuleItem[] => {
+  switch (listKey) {
+    case 'customIsp':
+      return state.cfg.customIsp;
+    case 'ipGroup':
+      return state.cfg.ipGroup;
+    case 'ipv6Group':
+      return state.cfg.ipv6Group;
+    case 'streamDomain':
+      return state.cfg.streamDomain;
+    case 'streamIpPort':
+      return state.cfg.streamIpPort;
+  }
 };
 
-const getRulePrimaryText = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]) => {
+const getRulePrimaryText = (listKey: RuleListKey, item: AnyRuleItem) => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
     case 'ipv6Group':
-      return item.tag || '--';
+      return (item as RuleItemByKey['customIsp']).tag || '--';
     case 'streamDomain':
-      return item.tag || '--';
+      return (item as RuleItemByKey['streamDomain']).tag || '--';
     case 'streamIpPort':
-      return item.optTagName || '--';
+      return (item as RuleItemByKey['streamIpPort']).optTagName || '--';
   }
 };
 
-const getRuleSecondaryText = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]) => {
+const getRuleSecondaryText = (listKey: RuleListKey, item: AnyRuleItem) => {
   switch (listKey) {
     case 'customIsp':
       return '自定义运营商';
@@ -1635,39 +1649,45 @@ const getRuleSecondaryText = <K extends RuleListKey>(listKey: K, item: RuleItemB
     case 'ipv6Group':
       return 'IPv6 分组';
     case 'streamDomain':
-      return `接口 ${item.interface || '--'}`;
+      return `接口 ${(item as RuleItemByKey['streamDomain']).interface || '--'}`;
     case 'streamIpPort':
-      return item.type === '1' ? '下一跳网关' : '外网线路';
+      return (item as RuleItemByKey['streamIpPort']).type === '1' ? '下一跳网关' : '外网线路';
   }
 };
 
-const getRuleMetaItems = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]): RuleMetaItem[] => {
+const getRuleMetaItems = (listKey: RuleListKey, item: AnyRuleItem): RuleMetaItem[] => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
     case 'ipv6Group':
       return [];
     case 'streamDomain':
+      {
+        const it = item as RuleItemByKey['streamDomain'];
       return [
-        { label: '源地址/分组', value: item.srcAddrOptIpGroup || item.srcAddr || '--' },
+        { label: '源地址/分组', value: it.srcAddrOptIpGroup || it.srcAddr || '--' },
       ];
+      }
     case 'streamIpPort':
+      {
+        const it = item as RuleItemByKey['streamIpPort'];
       return [
-        { label: '目标', value: item.type === '1' ? (item.nexthop || '--') : (item.interface || '--') },
-        { label: '源地址/分组', value: item.srcAddrOptIpGroup || item.srcAddr || '--' },
+        { label: '目标', value: it.type === '1' ? (it.nexthop || '--') : (it.interface || '--') },
+        { label: '源地址/分组', value: it.srcAddrOptIpGroup || it.srcAddr || '--' },
       ];
+      }
   }
 };
 
-const getRuleDetailText = <K extends RuleListKey>(listKey: K, item: RuleItemByKey[K]) => {
+const getRuleDetailText = (listKey: RuleListKey, item: AnyRuleItem) => {
   switch (listKey) {
     case 'customIsp':
     case 'ipGroup':
     case 'ipv6Group':
     case 'streamDomain':
-      return item.url || '--';
+      return (item as RuleItemByKey['customIsp']).url || '--';
     case 'streamIpPort':
-      return item.ipGroup || '--';
+      return (item as RuleItemByKey['streamIpPort']).ipGroup || '--';
   }
 };
 

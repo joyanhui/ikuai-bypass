@@ -1441,18 +1441,19 @@ jobs:
             if [ -n "${base_tag}" ]; then
               echo "范围: \`${base_tag}\` -> \`${current_ref}\`"
               echo
-              commits="$(git log --reverse --no-merges --pretty=format:'- %s ([`%h`](https://github.com/'"${REPO}"'/commit/%H))' "${base_tag}..${current_sha}" || true)"
+              # Why/为什么: 直接用 git 的 -n 限制条目数，避免在 pipefail 下触发 Broken pipe。
+              # English: Use git's -n to limit lines to avoid Broken pipe with pipefail.
+              commits="$(git log --reverse --no-merges -n 200 --pretty=format:'- %s ([`%h`](https://github.com/'"${REPO}"'/commit/%H))' "${base_tag}..${current_sha}" || true)"
             else
               echo "范围: 初始历史 -> \`${current_ref}\`"
               echo
-              commits="$(git log --reverse --no-merges --pretty=format:'- %s ([`%h`](https://github.com/'"${REPO}"'/commit/%H))' "${current_sha}" || true)"
+              commits="$(git log --reverse --no-merges -n 200 --pretty=format:'- %s ([`%h`](https://github.com/'"${REPO}"'/commit/%H))' "${current_sha}" || true)"
             fi
 
             if [ -z "${commits}" ]; then
               echo "- (无提交)"
             else
-              # Why/为什么: Release notes 过长会影响发布页可读性，这里做一个温和的上限。
-              printf '%s\n' "${commits}" | head -n 200
+              printf '%s\n' "${commits}"
             fi
 
             echo

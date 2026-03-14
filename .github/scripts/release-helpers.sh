@@ -16,3 +16,40 @@ is_prerelease_tag() {
 
   return 1
 }
+
+normalize_version_from_tag() {
+  local raw="${1:-}"
+  if [[ -z "${raw}" ]]; then
+    printf '%s' ""
+    return
+  fi
+
+  if [[ "${raw}" =~ ^ikuai-bypass-v(.+)$ ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return
+  fi
+
+  # Why/为什么: 兼容早期 tag 形如 `vX.Y.Z`。
+  # English: Keep compatibility with legacy tags like `vX.Y.Z`.
+  if [[ "${raw}" =~ ^v(.+)$ ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return
+  fi
+
+  printf '%s' "${raw}"
+}
+
+is_stable_version() {
+  local version="${1:-}"
+  [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+is_stable_release_tag() {
+  local tag="${1:-}"
+  if is_prerelease_tag "${tag}"; then
+    return 1
+  fi
+  local version
+  version="$(normalize_version_from_tag "${tag}")"
+  is_stable_version "${version}"
+}

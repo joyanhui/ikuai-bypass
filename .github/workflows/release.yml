@@ -1406,31 +1406,38 @@ jobs:
           current_ref="${TAG_NAME}"
           current_sha="${CURRENT_SHA}"
 
-          # Why/为什么: base_tag 取“上一个非 pre-release 版本”。
-          # English: Pick the latest *stable* tag (non-prerelease) as changelog base.
-          stable_tags="$(git for-each-ref refs/tags --sort=-creatordate --format '%(refname:strip=2)' | awk 'NF')"
-
+          # Why/为什么: base_tag 取“上一个正式版(非 pre-release)”。
+          # English: Pick the latest stable tag (non-prerelease) reachable from current_sha.
           base_tag=""
-          if [ -n "${stable_tags}" ]; then
-            while IFS= read -r t; do
+          base_tag="$(
+            git for-each-ref refs/tags --sort=-creatordate --format '%(refname:strip=2)' | awk 'NF' | while IFS= read -r t; do
               [ -n "${t}" ] || continue
-              # Only consider canonical release tags.
-              # Why/为什么: 忽略其他 crate tag 或临时 tag，避免范围错误。
-              if ! printf '%s' "${t}" | grep -Eq '^ikuai-bypass-v'; then
-                continue
-              fi
               if [ "${t}" = "${current_ref}" ]; then
                 continue
               fi
-              if is_prerelease_tag "${t}"; then
+
+              # Why/为什么: 只接受 release tag 前缀，避免误选 crate tag。
+              # English: Only accept repo release tag prefixes to avoid crate tags.
+              if ! printf '%s' "${t}" | grep -Eq '^(v|ikuai-bypass-v)'; then
                 continue
               fi
-              if git merge-base --is-ancestor "${t}" "${current_sha}" 2>/dev/null; then
-                base_tag="${t}"
-                break
+
+              if ! is_stable_release_tag "${t}"; then
+                continue
               fi
-            done <<< "${stable_tags}"
-          fi
+
+              if ! git merge-base --is-ancestor "${t}" "${current_sha}" 2>/dev/null; then
+                continue
+              fi
+
+              v="$(normalize_version_from_tag "${t}")"
+              pref=0
+              if printf '%s' "${t}" | grep -Eq '^ikuai-bypass-v'; then
+                pref=1
+              fi
+              printf '%s\t%d\t%s\n' "${v}" "${pref}" "${t}"
+            done | sort -t $'\t' -k1,1V -k2,2n | awk -F $'\t' 'END{print $3}'
+          )"
 
           notes_file="/tmp/release-notes.md"
           {

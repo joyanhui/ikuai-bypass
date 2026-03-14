@@ -41,7 +41,7 @@ let monacoLoading: Promise<void> | null = null;
 
 const RECONNECT_DELAY = 3000;
 let yamlLanguageRegistered = false;
-const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal', 'aboutModal'] as const;
+const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal', 'aboutModal', 'proxyModal'] as const;
 
 let configMissingDetected = false;
 let configMissingPrompted = false;
@@ -128,54 +128,6 @@ const normalizeGhProxy = (proxy: string): string => {
   const p = proxy.trim();
   if (!p) return '';
   return p.endsWith('/') ? p : p + '/';
-};
-
-const isGithubUrlForProxy = (url: string): boolean => {
-  const u = url.trim();
-  return u.startsWith('https://raw.githubusercontent.com/') || u.startsWith('https://github.com/');
-};
-
-const applyGhProxy = (proxy: string, url: string): string => {
-  const p = normalizeGhProxy(proxy);
-  if (!p) return url;
-  return p + url;
-};
-
-const uniqueStrings = (items: string[]): string[] => {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  let hasEmpty = false;
-  for (const it of items) {
-    if (it === '' && !hasEmpty) {
-      hasEmpty = true;
-      out.push('');
-      continue;
-    }
-    const v = it.trim();
-    if (!v) continue;
-    if (seen.has(v)) continue;
-    seen.add(v);
-    out.push(v);
-  }
-  return out;
-};
-
-const buildGhProxyCandidates = (url: string, enabled: boolean, preferredProxy: string, fallbackProxy: string): string[] => {
-  if (!enabled) return [''];
-  if (!isGithubUrlForProxy(url)) return [''];
-
-  const list: string[] = [];
-  const p1 = normalizeGhProxy(preferredProxy);
-  const p2 = normalizeGhProxy(fallbackProxy);
-  if (p1) list.push(p1);
-  if (p2) list.push(p2);
-  list.push(...COMMON_GITHUB_PROXIES.map((p) => normalizeGhProxy(p)));
-
-  const proxies = uniqueStrings(list);
-  // 最后追加一次直连尝试，避免某些环境下代理不可用。
-  // Add direct attempt as a last resort.
-  proxies.push('');
-  return proxies;
 };
 
 const mountGhProxyQuickPick = (inputId: string, containerId: string) => {
@@ -385,12 +337,18 @@ const setAboutUpdateHint = (text: string) => {
 
 const describeProxyForUpdateHint = (): string => {
   const mode = state.cfg.proxy.mode;
-  if (mode === 'disabled') return getLanguage() === 'en' ? 'direct (proxy disabled)' : '直连(禁用代理)';
   if (mode === 'system') return getLanguage() === 'en' ? 'system proxy' : '系统代理';
-  if (mode === 'onlyGithubApi') return getLanguage() === 'en' ? 'only GitHub API uses system proxy' : '仅 GitHub API 使用系统代理';
+  if (mode === 'custom') {
+    const url = (state.cfg.proxy.url || '').trim();
+    if (!url) return getLanguage() === 'en' ? 'custom proxy' : '自定义代理';
+    return getLanguage() === 'en' ? `custom proxy: ${url}` : `自定义代理: ${url}`;
+  }
+  // smart
   const url = (state.cfg.proxy.url || '').trim();
-  if (!url) return getLanguage() === 'en' ? 'custom proxy' : '自定义代理';
-  return getLanguage() === 'en' ? `custom proxy: ${url}` : `自定义代理: ${url}`;
+  if (!url) return getLanguage() === 'en' ? 'smart (GitHub API via system proxy)' : '智能代理(GitHub API 走系统代理)';
+  return getLanguage() === 'en'
+    ? `smart (GitHub API via custom proxy: ${url})`
+    : `智能代理(GitHub API 走自定义代理: ${url})`;
 };
 
 const pickLatestRelease = (releases: GithubRelease[], prerelease: boolean): GithubRelease | null => {
@@ -408,7 +366,8 @@ const syncAboutModalInfo = async () => {
   setTextById('aboutRuntime', isTauri ? t('about.runtime.tauri') : t('about.runtime.web'));
   setTextById('aboutConfigPath', (state.confPath || './config.yml').trim() || './config.yml');
   setTextById('aboutHttpProxy', describeProxyForUpdateHint());
-  setTextById('aboutGithubProxy', state.cfg.githubProxy.trim() ? state.cfg.githubProxy.trim() : '--');
+  const gh = state.cfg.proxy.mode === 'smart' ? state.cfg.githubProxy.trim() : '';
+  setTextById('aboutGithubProxy', gh ? gh : '--');
 };
 
 const checkUpdatesFromAboutModal = async () => {
@@ -422,7 +381,7 @@ const checkUpdatesFromAboutModal = async () => {
   renderAboutReleaseRow('pre', null);
 
   try {
-    const releases = (await bridge.fetchGithubReleases()) as unknown as GithubRelease[];
+    const releases = (await bridge.fetchGithubReleases(state.cfg.proxy)) as unknown as GithubRelease[];
     const stable = pickLatestRelease(releases, false);
     const pre = pickLatestRelease(releases, true);
     renderAboutReleaseRow('stable', stable);
@@ -463,6 +422,29 @@ const initAboutModal = () => {
   document.getElementById('btnCloseAboutBottom')?.addEventListener('click', close);
   document.getElementById('aboutBackdrop')?.addEventListener('click', close);
   document.getElementById('btnCheckUpdate')?.addEventListener('click', () => void checkUpdatesFromAboutModal());
+};
+
+const initProxyModal = () => {
+  const open = () => {
+    // 打开前同步一下显示/禁用状态，避免切换模式后 UI 未刷新。
+    // Sync UI state before open.
+    try {
+      syncProxyModeUi();
+    } catch {
+      // ignore
+    }
+    openModal('proxyModal');
+  };
+
+  const close = () => closeModal('proxyModal');
+
+  document.getElementById('proxyBtn')?.addEventListener('click', open);
+  document.getElementById('proxyBackdrop')?.addEventListener('click', close);
+  document.getElementById('btnCloseProxy')?.addEventListener('click', close);
+  document.getElementById('btnCloseProxyBottom')?.addEventListener('click', close);
+
+  document.getElementById('btnSaveProxyWithComments')?.addEventListener('click', () => void saveConfig(true));
+  document.getElementById('btnSaveProxyNoComments')?.addEventListener('click', () => void saveConfig(false));
 };
 
 // ============================================
@@ -1091,34 +1073,27 @@ const initQuickActions = () => {
 // ============================================
 const initGhProxyPickers = () => {
   mountGhProxyQuickPick('cfgGhProxy', 'cfgGhProxyQuickPick');
-  mountGhProxyQuickPick('remoteGhProxy', 'remoteGhProxyQuickPick');
+};
 
-  const use = document.getElementById('remoteUseGhProxy') as HTMLInputElement | null;
-  const section = document.getElementById('remoteGhProxySection');
-  const proxyInput = document.getElementById('remoteGhProxy') as HTMLInputElement | null;
+const syncProxyModeUi = () => {
+  const mode = state.cfg.proxy.mode;
+  const showHttp = mode === 'custom' || mode === 'smart';
+  const showGh = mode === 'smart';
 
-  const apply = () => {
-    if (!use || !section) return;
-    section.classList.toggle('hidden', !use.checked);
+  const httpWrap = document.getElementById('cfgHttpProxySection');
+  if (httpWrap) httpWrap.classList.toggle('hidden', !showHttp);
+  const ghWrap = document.getElementById('cfgGhProxySection');
+  if (ghWrap) ghWrap.classList.toggle('hidden', !showGh);
+
+  const setInputEnabled = (id: string, enabled: boolean) => {
+    const el = document.getElementById(id) as HTMLInputElement | null;
+    if (!el) return;
+    el.disabled = !enabled;
+    el.classList.toggle('opacity-60', !enabled);
   };
 
-  if (use) {
-    use.checked = loadJson<boolean>('ikb_remote_use_ghproxy', false);
-    use.addEventListener('change', () => {
-      saveJson('ikb_remote_use_ghproxy', use.checked);
-      apply();
-    });
-  }
-
-  if (proxyInput) {
-    const saved = loadJson<string>('ikb_remote_ghproxy', '');
-    if (!proxyInput.value.trim() && saved) proxyInput.value = saved;
-    proxyInput.addEventListener('input', () => {
-      saveJson('ikb_remote_ghproxy', proxyInput.value);
-    });
-  }
-
-  apply();
+  ['cfgProxyUrl', 'cfgProxyUser', 'cfgProxyPass'].forEach((id) => setInputEnabled(id, showHttp));
+  ['cfgGhProxy'].forEach((id) => setInputEnabled(id, showGh));
 };
 
 const initBasicConfigAccordion = () => {
@@ -1170,6 +1145,10 @@ const initConfigModal = () => {
 
   initBasicConfigAccordion();
 
+  // Ensure proxy-related fields match the current mode on first render.
+  // 首次渲染时根据当前模式同步代理相关字段显示。
+  syncProxyModeUi();
+
   document.getElementById('btnTestIkuaiLogin')?.addEventListener('click', async () => {
     const url = (document.getElementById('cfgIkuaiUrl') as HTMLInputElement | null)?.value.trim() || '';
     const user = (document.getElementById('cfgUser') as HTMLInputElement | null)?.value.trim() || '';
@@ -1211,12 +1190,6 @@ const initConfigModal = () => {
 
   document.getElementById('btnOpenRemoteConfig')?.addEventListener('click', () => {
     setRemoteTemplateTip(configMissingDetected ? '检测到当前配置缺失/为空，建议通过远程载入模板初始化，然后修改 iKuai 连接信息并保存。' : null);
-
-    const remoteProxy = document.getElementById('remoteGhProxy') as HTMLInputElement | null;
-    if (remoteProxy && !remoteProxy.value.trim() && state.cfg.githubProxy.trim()) {
-      remoteProxy.value = state.cfg.githubProxy.trim();
-      remoteProxy.dispatchEvent(new Event('input', { bubbles: true }));
-    }
     openModal('remoteConfigModal');
   });
   document.getElementById('btnCloseRemoteConfig')?.addEventListener('click', () => {
@@ -1246,6 +1219,8 @@ const initConfigModal = () => {
     'cfgUser',
     'cfgPass',
     'cfgProxyUrl',
+    'cfgProxyUser',
+    'cfgProxyPass',
     'cfgGhProxy',
     'cfgRetryWait',
     'cfgAddWait',
@@ -1277,11 +1252,14 @@ const initConfigModal = () => {
     document.getElementById(id)?.addEventListener('change', () => {
       commitBasicConfigToRawYaml();
 
+      syncProxyModeUi();
+
+      // custom 模式下若 url 为空则自动填入默认值。
+      // In custom mode, fill default url if empty.
       const urlEl = document.getElementById('cfgProxyUrl') as HTMLInputElement | null;
-      if (urlEl) {
-        const enabled = state.cfg.proxy.mode === 'custom';
-        urlEl.disabled = !enabled;
-        urlEl.classList.toggle('opacity-60', !enabled);
+      const mode = state.cfg.proxy.mode;
+      if (urlEl && mode === 'custom' && !urlEl.value.trim() && state.cfg.proxy.url.trim()) {
+        urlEl.value = state.cfg.proxy.url.trim();
       }
     });
   });
@@ -1309,27 +1287,21 @@ const bindConfigFields = () => {
     const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
     if (el) el.value = value;
   };
-
-  const refreshProxyControls = () => {
-    const urlEl = document.getElementById('cfgProxyUrl') as HTMLInputElement | null;
-    if (!urlEl) return;
-    const enabled = state.cfg.proxy.mode === 'custom';
-    urlEl.disabled = !enabled;
-    urlEl.classList.toggle('opacity-60', !enabled);
-  };
   
   setValue('cfgIkuaiUrl', state.cfg.ikuaiUrl);
   setValue('cfgUser', state.cfg.username);
   setValue('cfgPass', state.cfg.password);
   setValue('cfgProxyMode', state.cfg.proxy.mode);
   setValue('cfgProxyUrl', state.cfg.proxy.url);
+  setValue('cfgProxyUser', state.cfg.proxy.user);
+  setValue('cfgProxyPass', state.cfg.proxy.pass);
   setValue('cfgGhProxy', state.cfg.githubProxy);
   ghProxyPickerRefresh.get('cfgGhProxy')?.();
   setValue('cfgRetryWait', state.cfg.addErrRetryWait);
   setValue('cfgAddWait', state.cfg.addWait);
   setValue('cfgCronInline', state.cfg.cron);
 
-  refreshProxyControls();
+  syncProxyModeUi();
   
   // WebUI
   const webEnable = document.getElementById('cfgWebEnable') as HTMLInputElement;
@@ -1367,15 +1339,13 @@ const syncConfigFromInputs = () => {
   state.cfg.username = getValue('cfgUser');
   state.cfg.password = getValue('cfgPass');
   const modeRaw = (getValue('cfgProxyMode') || 'system').trim();
-  state.cfg.proxy.mode =
-    modeRaw === 'system'
-      ? 'system'
-      : modeRaw === 'disabled'
-        ? 'disabled'
-        : modeRaw === 'onlyGithubApi'
-          ? 'onlyGithubApi'
-          : 'custom';
+  state.cfg.proxy.mode = modeRaw === 'custom' ? 'custom' : modeRaw === 'smart' ? 'smart' : 'system';
   state.cfg.proxy.url = getValue('cfgProxyUrl');
+  state.cfg.proxy.user = getValue('cfgProxyUser');
+  state.cfg.proxy.pass = getValue('cfgProxyPass');
+  if (state.cfg.proxy.mode === 'custom' && !state.cfg.proxy.url.trim()) {
+    state.cfg.proxy.url = 'http://127.0.0.1:7890';
+  }
   state.cfg.githubProxy = getValue('cfgGhProxy');
   state.cfg.addErrRetryWait = getValue('cfgRetryWait');
   state.cfg.addWait = getValue('cfgAddWait');
@@ -1403,6 +1373,8 @@ const commitBasicConfigToRawYaml = () => {
     { path: ['cron'], value: state.cfg.cron },
     { path: ['proxy', 'mode'], value: state.cfg.proxy.mode },
     { path: ['proxy', 'url'], value: state.cfg.proxy.url },
+    { path: ['proxy', 'user'], value: state.cfg.proxy.user },
+    { path: ['proxy', 'pass'], value: state.cfg.proxy.pass },
     { path: ['github-proxy'], value: state.cfg.githubProxy },
     { path: ['AddErrRetryWait'], value: state.cfg.addErrRetryWait },
     { path: ['AddWait'], value: state.cfg.addWait },
@@ -1446,60 +1418,19 @@ const loadRemoteConfig = async () => {
     return;
   }
 
-  const useGhProxy = (document.getElementById('remoteUseGhProxy') as HTMLInputElement | null)?.checked || false;
-  const ghProxyInput = document.getElementById('remoteGhProxy') as HTMLInputElement | null;
-  const preferredProxy = ghProxyInput?.value || '';
-
-  const candidates = buildGhProxyCandidates(url, useGhProxy, preferredProxy, state.cfg.githubProxy);
-  const isTauri = await bridge.isTauriReady();
-
   if (hint) hint.textContent = '正在加载...';
 
   try {
-    let lastErr: unknown = null;
-    for (let i = 0; i < candidates.length; i++) {
-      const proxy = candidates[i];
-      const label = proxy ? proxy : '直连';
-      if (hint) {
-        hint.textContent = candidates.length > 1 ? `正在尝试 (${i + 1}/${candidates.length}): ${label}` : '正在加载...';
-      }
-
-      try {
-        const text = isTauri
-          ? await bridge.fetchRemoteConfig(url, proxy)
-          : await (async () => {
-              const finalUrl = proxy && isGithubUrlForProxy(url) ? applyGhProxy(proxy, url) : url;
-              const r = await fetch(finalUrl);
-              if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
-              return await r.text();
-            })();
-
-        // 成功：写入 rawYaml，并在启用代理时同步覆盖 github-proxy 字段
-        state.rawYaml = text;
-        if (proxy && isGithubUrlForProxy(url)) {
-          const normalized = normalizeGhProxy(proxy);
-          state.rawYaml = updateYamlPaths(state.rawYaml, [{ path: ['github-proxy'], value: normalized }]);
-          if (ghProxyInput) {
-            ghProxyInput.value = normalized;
-            ghProxyInput.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-        }
-
-        applyStateFromRawYaml();
-        bindConfigFields();
-        renderCmd();
-        refreshEditorFromRawYaml();
-        saveJson('ikb_remote_url', url);
-        if (hint) hint.textContent = '加载成功';
-        setRemoteTemplateTip(null);
-        showToast('远程配置已加载');
-        return;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    throw lastErr || new Error('加载失败');
+    const text = await bridge.fetchRemoteConfig(url, state.cfg.proxy, state.cfg.githubProxy);
+    state.rawYaml = text;
+    applyStateFromRawYaml();
+    bindConfigFields();
+    renderCmd();
+    refreshEditorFromRawYaml();
+    saveJson('ikb_remote_url', url);
+    if (hint) hint.textContent = '加载成功';
+    setRemoteTemplateTip(null);
+    showToast('远程配置已加载');
   } catch (err) {
     if (hint) hint.textContent = '加载失败: ' + getErrorMessage(err);
     showToast('加载失败');
@@ -2253,19 +2184,6 @@ const loadBackend = async () => {
         remoteUrlInput.value = DEFAULT_REMOTE_TEMPLATE_URL;
       }
 
-      // 首次提示时默认打开 ghproxy 开关，减少直连失败概率。
-      // Enable ghproxy by default on first prompt.
-      try {
-        if (localStorage.getItem('ikb_remote_use_ghproxy') == null) {
-          const use = document.getElementById('remoteUseGhProxy') as HTMLInputElement | null;
-          if (use) {
-            use.checked = true;
-            use.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        }
-      } catch {
-        // ignore
-      }
       openModal('remoteConfigModal');
     }
     
@@ -2337,6 +2255,7 @@ const init = async () => {
   initConfigModal();
   initStopCronModal();
   initAboutModal();
+  initProxyModal();
   initCmdModal();
   initModalEscape();
   

@@ -547,6 +547,7 @@ svg.w-12 { width: 3rem; height: 3rem; }
 .modal-open #ruleEditorBackdrop,
 .modal-open #stopCronBackdrop,
 .modal-open #aboutBackdrop,
+.modal-open #proxyBackdrop,
 .modal-open #rawEditorBackdrop,
 .modal-open #cmdModalBackdrop {
   opacity: 1;
@@ -557,6 +558,7 @@ svg.w-12 { width: 3rem; height: 3rem; }
 .modal-open #ruleEditorContent,
 .modal-open #stopCronContent,
 .modal-open #aboutContent,
+.modal-open #proxyContent,
 .modal-open #rawEditorContent,
 .modal-open #cmdModalContent {
   transform: translateY(0);

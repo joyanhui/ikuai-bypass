@@ -15,21 +15,23 @@ cron: 0 7 * * * # 更新周期cron表达式，例如 0 7 * * *
 AddErrRetryWait: 10s # 自动重试时间间隔 (10s, 120s)
 AddWait: 1s # 规则添加后的反应等待时间
 
-# 全局 HTTP 代理设置（影响所有出站 HTTP 请求）
-# - 会影响：访问爱快、下载远程规则、测试联通、查询 GitHub API
-# - mode 可选：custom / system / disabled
-#   - custom: 使用 url（支持 http:// 或 https:// 代理；例如 http://127.0.0.1:7890）
-#   - system: 使用系统/环境变量代理（HTTP_PROXY/HTTPS_PROXY/ALL_PROXY 等）
-#   - disabled: 禁用代理（忽略系统代理变量）
-#   - onlyGithubApi: 仅 GitHub API 查询走代理（优先使用 url；否则使用系统/环境代理），其余请求直连
+# 代理模式（proxy）与 GitHub Proxy（github-proxy/ghproxy）的区别见下方说明
+# mode 可选：custom / system / smart
+# - custom：所有外部 HTTP 请求走自定义代理（url 支持 http:// 或 https://，并可选 user/pass），并禁用 github-proxy(ghproxy)
+# - system：使用系统/环境代理（HTTP_PROXY/HTTPS_PROXY/ALL_PROXY 等），并禁用 github-proxy
+# - smart：
+#   - 规则下载/远程载入：优先使用 github-proxy(ghproxy) URL 前缀拼接并直连；未配置 github-proxy 时回退到自定义代理；若 url 为空则回退到系统/环境代理
+#   - GitHub API 查询新版：优先使用自定义代理；若 url 为空则回退到系统/环境代理
 proxy:
-  mode: system
-  url: http://127.0.0.1:7890
+  mode: smart
+  url: ""
+  user: ""
+  pass: ""
 
 # GitHub Proxy (ghproxy) 与上面的 proxy 不是一回事：
-# - github-proxy 是 URL 前缀重写，仅对 raw.githubusercontent.com / github.com 生效，用于加速下载规则文件
-# - proxy 是全局网络代理，影响所有 HTTP 请求（包括爱快与 GitHub API）
-# 如果你已启用 proxy(custom/system)，通常不需要再设置 github-proxy。
+# - github-proxy 是 URL 前缀重写，仅对 raw.githubusercontent.com / github.com 生效
+# - 仅在 proxy.mode=smart 时用于规则下载/远程载入；不会用于 GitHub API 查询新版
+# - 在 proxy.mode=custom/system 时不会使用 github-proxy
 github-proxy: "https://gh-proxy.com/" # GitHub Proxy (ghproxy) URL 前缀，例如 https://gh-proxy.com/ (留空不使用)
 custom-isp: # 自定义运营商分流 (IP分流)
   - tag: 国内IP列表

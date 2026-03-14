@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use crate::ikuai::IKuaiClient;
-use crate::config::ProxyConfig;
 
 use super::{normalize_base_url, normalize_url_prefix};
 
@@ -25,7 +24,7 @@ pub struct TestGithubProxyRequest {
     pub github_proxy: String,
 }
 
-pub async fn test_ikuai_login(req: TestIkuaiLoginRequest, proxy_cfg: &ProxyConfig) -> TestResult {
+pub async fn test_ikuai_login(req: TestIkuaiLoginRequest) -> TestResult {
     let base_url = normalize_base_url(&req.base_url);
     let username = req.username.trim().to_string();
     if base_url.is_empty() {
@@ -41,7 +40,7 @@ pub async fn test_ikuai_login(req: TestIkuaiLoginRequest, proxy_cfg: &ProxyConfi
         };
     }
 
-    let api = match IKuaiClient::new(base_url, proxy_cfg) {
+    let api = match IKuaiClient::new(base_url) {
         Ok(v) => v,
         Err(e) => {
             return TestResult {
@@ -63,7 +62,7 @@ pub async fn test_ikuai_login(req: TestIkuaiLoginRequest, proxy_cfg: &ProxyConfi
     }
 }
 
-pub async fn test_github_proxy(req: TestGithubProxyRequest, proxy_cfg: &ProxyConfig) -> TestResult {
+pub async fn test_github_proxy(req: TestGithubProxyRequest) -> TestResult {
     const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
 
     let ghproxy = normalize_url_prefix(&req.github_proxy);
@@ -85,7 +84,9 @@ pub async fn test_github_proxy(req: TestGithubProxyRequest, proxy_cfg: &ProxyCon
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         .timeout(Duration::from_secs(15))
         ;
-    let client = match crate::net::apply_proxy(builder, proxy_cfg).and_then(|b| b.build()) {
+    // ghproxy 测试必须直连，避免被其他代理干扰。
+    // ghproxy test should be direct to avoid interference.
+    let client = match builder.no_proxy().build() {
         Ok(v) => v,
         Err(e) => {
             return TestResult {

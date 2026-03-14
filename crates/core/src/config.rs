@@ -169,27 +169,24 @@ pub struct MaxNumberOfOneRecordsConfig {
     pub domain: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ProxyMode {
-    #[serde(rename = "disabled")]
-    Disabled,
-    #[serde(rename = "system")]
-    System,
     #[serde(rename = "custom")]
     Custom,
-    /// Only apply proxy when calling GitHub API.
-    /// 仅在访问 GitHub API 时使用代理。
+    #[serde(rename = "system", alias = "disabled")]
+    System,
     #[serde(
-        rename = "onlyGithubApi",
+        rename = "smart",
+        alias = "onlyGithubApi",
         alias = "only-github-api",
         alias = "only_github_api"
     )]
-    OnlyGithubApi,
+    Smart,
 }
 
 impl Default for ProxyMode {
     fn default() -> Self {
-        ProxyMode::System
+        ProxyMode::Smart
     }
 }
 
@@ -199,13 +196,19 @@ pub struct ProxyConfig {
     pub mode: ProxyMode,
     #[serde(default)]
     pub url: String,
+    #[serde(default)]
+    pub user: String,
+    #[serde(default)]
+    pub pass: String,
 }
 
 impl Default for ProxyConfig {
     fn default() -> Self {
         Self {
-            mode: ProxyMode::System,
-            url: "http://127.0.0.1:7890".to_string(),
+            mode: ProxyMode::Smart,
+            url: String::new(),
+            user: String::new(),
+            pass: String::new(),
         }
     }
 }
@@ -290,6 +293,8 @@ impl Config {
         // Proxy defaults & normalization.
         // 代理默认值与标准化处理。
         self.proxy.url = self.proxy.url.trim().to_string();
+        self.proxy.user = self.proxy.user.trim().to_string();
+        self.proxy.pass = self.proxy.pass.trim().to_string();
         if matches!(self.proxy.mode, ProxyMode::Custom) && self.proxy.url.is_empty() {
             self.proxy.url = "http://127.0.0.1:7890".to_string();
         }
@@ -446,12 +451,13 @@ impl Config {
         let add_wait = yaml_quote(&humantime::format_duration(self.add_wait).to_string());
         let github_proxy = yaml_quote(self.github_proxy.trim());
         let proxy_mode = match self.proxy.mode {
-            ProxyMode::Disabled => "disabled",
-            ProxyMode::System => "system",
             ProxyMode::Custom => "custom",
-            ProxyMode::OnlyGithubApi => "onlyGithubApi",
+            ProxyMode::System => "system",
+            ProxyMode::Smart => "smart",
         };
         let proxy_url = yaml_quote(self.proxy.url.trim());
+        let proxy_user = yaml_quote(self.proxy.user.trim());
+        let proxy_pass = yaml_quote(self.proxy.pass.trim());
 
         push_kv(
             &mut out,
@@ -498,6 +504,12 @@ impl Config {
         out.push('\n');
         out.push_str("  url: ");
         out.push_str(&proxy_url);
+        out.push('\n');
+        out.push_str("  user: ");
+        out.push_str(&proxy_user);
+        out.push('\n');
+        out.push_str("  pass: ");
+        out.push_str(&proxy_pass);
         out.push('\n');
 
         push_kv(
@@ -731,12 +743,12 @@ pub fn top_level_comments() -> BTreeMap<String, String> {
         ),
         (
             "proxy".to_string(),
-            "全局 HTTP 代理设置：影响访问爱快、下载远程规则、测试联通、查询 GitHub API。mode 可选 custom/system/disabled/onlyGithubApi：custom 使用 url（支持 http:// 或 https:// 代理，例如 http://127.0.0.1:7890）；system 使用系统/环境代理；disabled 禁用代理并忽略环境变量；onlyGithubApi 仅在查询 GitHub API 时使用代理（优先使用 url；否则使用系统/环境代理），其余请求直连。注意：这与 github-proxy（ghproxy URL 前缀重写，仅对 raw.githubusercontent.com / github.com 生效）不是一回事。"
+            "代理模式：custom/system/smart。custom：所有外部 HTTP 请求走自定义代理（url 支持 http:// 或 https://，并可选 user/pass），并禁用 github-proxy(ghproxy)。system：使用系统/环境代理（HTTP_PROXY/HTTPS_PROXY/ALL_PROXY 等），并禁用 github-proxy。smart：规则下载/远程载入优先使用 github-proxy(ghproxy) 进行 URL 前缀拼接并直连；未配置 github-proxy 时回退到自定义代理（url 为空则回退到系统/环境代理）。GitHub API 查询新版优先使用自定义代理（url 为空则回退到系统/环境代理）。注意：github-proxy 是 URL 前缀重写，不是网络层代理。"
                 .to_string(),
         ),
         (
             "github-proxy".to_string(),
-            "GitHub Proxy (ghproxy) URL 前缀重写：仅对 raw.githubusercontent.com / github.com 生效，用于加速下载规则文件；不等同于全局代理(proxy)。如果你已启用 proxy(custom/system)，通常无需再设置 github-proxy。"
+            "GitHub Proxy (ghproxy) URL 前缀重写：仅对 raw.githubusercontent.com / github.com 生效；仅在 proxy.mode=smart 时用于规则下载/远程载入；不会用于 GitHub API 查询新版。"
                 .to_string(),
         ),
         ("webui".to_string(), "WebUI 管理服务设置".to_string()),

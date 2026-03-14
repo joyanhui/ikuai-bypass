@@ -20,18 +20,21 @@ pub async fn fetch_github_releases(proxy: &ProxyConfig) -> Result<Vec<GithubRele
     const URL: &str =
         "https://api.github.com/repos/joyanhui/ikuai-bypass/releases?per_page=30";
 
+    let net = crate::net::NetConfig::from_parts(proxy, "");
+    let plan = crate::net::plan_github_api(&net, URL);
+
     let builder = reqwest::Client::builder()
         .user_agent("ikb-core")
         .connect_timeout(Duration::from_secs(8))
         .timeout(Duration::from_secs(15));
 
-    let client = crate::net::apply_proxy_for(builder, proxy, crate::net::ProxyTarget::GithubApi)
+    let client = crate::net::apply_proxy_choice(builder, &net, plan.proxy)
         .map_err(|e| format!("Failed to apply proxy: {}", e))?
         .build()
         .map_err(|e| format!("Failed to build http client: {}", e))?;
 
     let resp = client
-        .get(URL)
+        .get(plan.url)
         .header("Accept", "application/vnd.github+json")
         .send()
         .await

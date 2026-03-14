@@ -60,6 +60,26 @@ import '../styles/global.css';
             </button>
 
             <button
+              id="proxyBtn"
+              type="button"
+              class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 text-gray-700 ring-1 ring-black/5 backdrop-blur transition-all duration-200 active:scale-95 hover:bg-white dark:bg-gray-900/60 dark:text-gray-200 dark:ring-white/10 dark:hover:bg-gray-900"
+              aria-label="代理设置"
+              title="代理设置"
+              data-i18n-aria-label="proxy.btn"
+              data-i18n-title="proxy.btn"
+            >
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.094c.55 0 1.02.398 1.11.94l.149.894c.07.424.37.776.784.93.52.195 1.004.444 1.44.74.36.245.825.27 1.205.07l.846-.49c.47-.271 1.08-.192 1.46.188l.773.774c.38.38.46.99.188 1.46l-.49.846c-.2.38-.175.845.07 1.205.296.436.545.92.74 1.44.154.414.506.714.93.784l.894.149c.542.09.94.56.94 1.11v1.094c0 .55-.398 1.02-.94 1.11l-.894.149c-.424.07-.776.37-.93.784-.195.52-.444 1.004-.74 1.44-.245.36-.27.825-.07 1.205l.49.846c.271.47.192 1.08-.188 1.46l-.774.773c-.38.38-.99.46-1.46.188l-.846-.49c-.38-.2-.845-.175-1.205.07-.436.296-.92.545-1.44.74-.414.154-.714.506-.784.93l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.02-.398-1.11-.94l-.149-.894c-.07-.424-.37-.776-.784-.93-.52-.195-1.004-.444-1.44-.74-.36-.245-.825-.27-1.205-.07l-.846.49c-.47.271-1.08.192-1.46-.188l-.773-.774c-.38-.38-.46-.99-.188-1.46l.49-.846c.2-.38.175-.845-.07-1.205-.296-.436-.545-.92-.74-1.44-.154-.414-.506-.714-.93-.784l-.894-.149c-.542-.09-.94-.56-.94-1.11v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.776-.37.93-.784.195-.52.444-1.004.74-1.44.245-.36.27-.825.07-1.205l-.49-.846c-.271-.47-.192-1.08.188-1.46l.774-.773c.38-.38.99-.46 1.46-.188l.846.49c.38.2.845.175 1.205-.07.436-.296.92-.545 1.44-.74.414-.154.714-.506.784-.93l.149-.894z"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+
+            <button
               id="aboutBtn"
               type="button"
               class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 text-gray-700 ring-1 ring-black/5 backdrop-blur transition-all duration-200 active:scale-95 hover:bg-white dark:bg-gray-900/60 dark:text-gray-200 dark:ring-white/10 dark:hover:bg-gray-900"
@@ -217,7 +237,7 @@ import '../styles/global.css';
                 >
                   <div>
                     <h3 class="text-base font-semibold text-gray-900 dark:text-white" data-i18n="config.basic.title">基本配置</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="config.basic.desc">爱快连接、代理、WebUI、分页参数</p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="config.basic.desc">爱快连接、调度、WebUI、分页参数（代理设置在右上角齿轮）</p>
                   </div>
                   <div class="mt-0.5 flex items-center gap-2">
                     <span id="basicConfigToggleLabel" class="text-sm font-medium text-gray-600 dark:text-gray-300">展开</span>
@@ -260,26 +280,8 @@ import '../styles/global.css';
                         </section>
 
                         <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.schedule">调度与代理</h3>
-                            <div class="grid gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40 md:grid-cols-2">
-                            <div>
-                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.mode">代理模式</label>
-                              <select id="cfgProxyMode" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
-                                <option value="custom" data-i18n="config.proxy.mode.custom">自定义代理</option>
-                                <option value="system" data-i18n="config.proxy.mode.system">系统代理</option>
-                                <option value="onlyGithubApi" data-i18n="config.proxy.mode.onlyGithubApi">仅 GitHub API</option>
-                                <option value="disabled" data-i18n="config.proxy.mode.disabled">禁用代理</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.url">代理地址</label>
-                              <input id="cfgProxyUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://127.0.0.1:7890" />
-                            </div>
-                            <div>
-                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy">GitHub Proxy (ghproxy)</label>
-                              <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
-                              <div id="cfgGhProxyQuickPick" class="mt-2"></div>
-                            </div>
+                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.schedule">调度</h3>
+                          <div class="grid gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40 md:grid-cols-2">
                             <div>
                               <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">错误重试等待</label>
                               <input id="cfgRetryWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="10s" />
@@ -288,12 +290,9 @@ import '../styles/global.css';
                               <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">添加等待</label>
                               <input id="cfgAddWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="1s" />
                             </div>
-                            <div>
+                            <div class="md:col-span-2">
                               <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">Cron</label>
                               <input id="cfgCronInline" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="0 7 * * *" />
-                            </div>
-                            <div class="md:col-span-2 rounded-2xl border border-gray-200 bg-white/70 p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-950/30 dark:text-gray-300" data-i18n="config.proxy.diff">
-                              说明：proxy 是全局 HTTP 代理，会影响爱快/规则下载/GitHub API；github-proxy(ghproxy) 是 URL 前缀重写，仅对 GitHub Raw 下载加速。
                             </div>
                           </div>
                         </section>
@@ -523,20 +522,8 @@ import '../styles/global.css';
             <input id="remoteUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://raw.githubusercontent.com/.../config.yml" />
             <p class="mt-3 text-sm text-amber-600 dark:text-amber-400" data-i18n="remote.cover_notice">使用远程配置覆盖本地配置。</p>
 
-            <div class="mt-4 rounded-2xl bg-white/60 p-4 dark:bg-gray-800/30">
-              <div class="flex items-center justify-between gap-3">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300" data-i18n="remote.use_proxy">使用 ghproxy 代理</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="remoteUseGhProxy" />
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div id="remoteGhProxySection" class="mt-3 hidden">
-                <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="remote.proxy_label">GitHub Proxy 地址</label>
-                <input id="remoteGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none ring-0 dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
-                <div id="remoteGhProxyQuickPick" class="mt-2"></div>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400" data-i18n="remote.proxy_hint">仅对 raw.githubusercontent.com / github.com 生效。</p>
-              </div>
+            <div class="mt-4 rounded-2xl bg-white/60 p-4 text-sm text-gray-600 dark:bg-gray-800/30 dark:text-gray-300" data-i18n="remote.proxy_note">
+              远程载入会使用当前代理模式（custom/system/smart）进行下载。
             </div>
 
             <div class="mt-3 flex gap-2">
@@ -675,6 +662,80 @@ import '../styles/global.css';
 
         <div class="flex items-center justify-end gap-3 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
           <button id="btnCloseAboutBottom" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="common.close">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="proxyModal" class="fixed inset-0 z-50 hidden">
+      <div id="proxyBackdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity"></div>
+      <div id="proxyContent" class="absolute inset-x-4 top-24 bottom-8 mx-auto max-w-xl translate-y-6 overflow-hidden rounded-3xl bg-gray-50 shadow-2xl transition-transform dark:bg-gray-950">
+        <div class="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="proxy.title">代理设置</h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" data-i18n="proxy.subtitle">配置网络代理与 GitHub Proxy 行为</p>
+          </div>
+          <button id="btnCloseProxy" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="关闭" data-i18n-aria-label="common.close" data-i18n-title="common.close">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="h-full overflow-y-auto p-6 pb-28">
+          <div class="space-y-4">
+            <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
+              <div class="grid gap-3 md:grid-cols-2">
+                <div class="md:col-span-2">
+                  <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.mode">代理模式</label>
+                  <select id="cfgProxyMode" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
+                    <option value="custom" data-i18n="config.proxy.mode.custom">自定义代理</option>
+                    <option value="system" data-i18n="config.proxy.mode.system">系统代理</option>
+                    <option value="smart" data-i18n="config.proxy.mode.smart">智能代理</option>
+                  </select>
+                </div>
+
+                <div id="cfgHttpProxySection" class="contents">
+                  <div class="md:col-span-2">
+                    <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.url">代理地址</label>
+                    <input id="cfgProxyUrl" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="http://127.0.0.1:7890" />
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.user">用户名</label>
+                    <input id="cfgProxyUser" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="" />
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.proxy.pass">密码</label>
+                    <input id="cfgProxyPass" type="password" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="" />
+                  </div>
+                </div>
+
+                <div id="cfgGhProxySection" class="contents">
+                  <div class="md:col-span-2">
+                    <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy">GitHub Proxy (ghproxy)</label>
+                    <input id="cfgGhProxy" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="https://ghproxy.net/" />
+                    <div id="cfgGhProxyQuickPick" class="mt-2"></div>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-i18n="config.github_proxy.smart_hint">
+                      仅用于 GitHub Raw 下载/远程载入；GitHub API 不使用。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-4 rounded-2xl border border-gray-200 bg-white/70 p-3 text-xs text-gray-600 dark:border-gray-800 dark:bg-gray-950/30 dark:text-gray-300" data-i18n="config.proxy.diff">
+                说明：custom/system/smart 三种模式会决定是否使用自定义代理、系统代理和 github-proxy(ghproxy)。smart 模式下规则下载/远程载入优先走 ghproxy 直连；GitHub API 查询新版优先使用自定义代理。
+              </div>
+            </div>
+
+            <div class="rounded-2xl bg-white/70 p-4 text-xs text-gray-600 dark:bg-gray-950/30 dark:text-gray-300" data-i18n="proxy.note">
+              提示：这里的修改会即时写入当前 YAML 草稿；点击“保存配置”后才会写入到配置文件。
+            </div>
+          </div>
+        </div>
+
+        <div class="absolute right-0 bottom-0 left-0 flex flex-wrap items-center justify-end gap-2 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur dark:border-gray-800 dark:bg-gray-950/90">
+          <button id="btnCloseProxyBottom" class="rounded-2xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="common.close">关闭</button>
+          <button id="btnSaveProxyWithComments" class="rounded-2xl bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-all active:scale-95 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800" data-i18n="config.save_keep_comments">保存配置 (保留注释)</button>
+          <button id="btnSaveProxyNoComments" class="rounded-2xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-600/25 transition-all active:scale-95 hover:bg-primary-700" data-i18n="config.save">保存配置</button>
         </div>
       </div>
     </div>

@@ -45,7 +45,7 @@ pub async fn run_update_by_module(
     sink: LogSink,
 ) -> Result<(), UpdateError> {
     let params = resolve_login_params(cfg, cli_login)?;
-    let api = ikuai::IKuaiClient::new(params.base_url.to_string(), &cfg.proxy)?;
+    let api = ikuai::IKuaiClient::new(params.base_url.to_string())?;
 
     let auth = Logger::new("AUTH:登录认证", Arc::clone(&sink));
     auth.info(
@@ -245,16 +245,19 @@ async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
 }
 
 async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Vec<u8>, UpdateError> {
-    let (full, proxy) = get_full_url(&cfg.github_proxy, original_url);
+    let net = crate::net::NetConfig::from_config(cfg);
+    let plan = crate::net::plan_rule_fetch(&net, original_url);
     let http_logger = Logger::new("HTTP:资源下载", Arc::clone(sink));
-    if proxy.is_empty() {
-        http_logger.info("HTTP:资源下载", format!("http.get '{}'", original_url));
-    } else {
-        http_logger.info(
-            "HTTP:资源下载",
-            format!("http.get '{}' proxy '{}'", original_url, proxy),
-        );
-    }
+    let via = match plan.proxy {
+        crate::net::ProxyChoice::Direct => "直连",
+        crate::net::ProxyChoice::System => "系统代理",
+        crate::net::ProxyChoice::Custom => "自定义代理",
+    };
+    let gh = if plan.used_github_proxy { " (ghproxy)" } else { "" };
+    http_logger.info(
+        "HTTP:资源下载",
+        format!("http.get '{}' via={}{}", original_url, via, gh),
+    );
 
     // 避免远程资源不可达时无限期等待。
     // Avoid hanging forever on remote resources.
@@ -262,13 +265,13 @@ async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Ve
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(120))
         ;
-    let client = crate::net::apply_proxy(builder, &cfg.proxy)
+    let client = crate::net::apply_proxy_choice(builder, &net, plan.proxy)
         .map_err(|e| UpdateError::Download(e.to_string()))?
         .build()
         .map_err(|e| UpdateError::Download(e.to_string()))?;
 
     let resp = client
-        .get(full)
+        .get(plan.url)
         .send()
         .await
         .map_err(|e| UpdateError::Download(e.to_string()))?;
@@ -280,23 +283,6 @@ async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Ve
         .await
         .map_err(|e| UpdateError::Download(e.to_string()))?;
     Ok(bytes.to_vec())
-}
-
-fn get_full_url(proxy: &str, original: &str) -> (String, String) {
-    let proxy = proxy.trim();
-    if proxy.is_empty() {
-        return (original.to_string(), String::new());
-    }
-    if !original.starts_with("https://raw.githubusercontent.com/")
-        && !original.starts_with("https://github.com/")
-    {
-        return (original.to_string(), String::new());
-    }
-    let mut p = proxy.to_string();
-    if !p.ends_with('/') {
-        p.push('/');
-    }
-    (format!("{}{}", p, original), proxy.to_string())
 }
 
 fn split_lines(body: &[u8]) -> Vec<String> {

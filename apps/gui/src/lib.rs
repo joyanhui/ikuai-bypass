@@ -18,15 +18,13 @@ type TestGithubProxyReq = ikb_core::app::TestGithubProxyRequest;
 type GithubRelease = ikb_core::app::GithubRelease;
 
 #[tauri::command]
-async fn test_ikuai_login(state: tauri::State<'_, AppState>, req: TestIkuaiLoginReq) -> Result<TestResult, String> {
-    let cfg = { state.config.lock().await.clone() };
-    Ok(ikb_core::app::test_ikuai_login(req, &cfg.proxy).await)
+async fn test_ikuai_login(_state: tauri::State<'_, AppState>, req: TestIkuaiLoginReq) -> Result<TestResult, String> {
+    Ok(ikb_core::app::test_ikuai_login(req).await)
 }
 
 #[tauri::command]
-async fn test_github_proxy(state: tauri::State<'_, AppState>, req: TestGithubProxyReq) -> Result<TestResult, String> {
-    let cfg = { state.config.lock().await.clone() };
-    Ok(ikb_core::app::test_github_proxy(req, &cfg.proxy).await)
+async fn test_github_proxy(_state: tauri::State<'_, AppState>, req: TestGithubProxyReq) -> Result<TestResult, String> {
+    Ok(ikb_core::app::test_github_proxy(req).await)
 }
 
 #[tauri::command]
@@ -150,18 +148,16 @@ async fn runtime_tail_logs(
 
 #[tauri::command]
 async fn fetch_remote_config(
-    state: tauri::State<'_, AppState>,
     url: String,
+    proxy: ikb_core::config::ProxyConfig,
     github_proxy: String,
 ) -> Result<String, String> {
-    let cfg = { state.config.lock().await.clone() };
-    ikb_core::app::fetch_remote_config(&url, &github_proxy, &cfg.proxy).await
+    ikb_core::app::fetch_remote_config(&url, &proxy, &github_proxy).await
 }
 
 #[tauri::command]
-async fn fetch_github_releases(state: tauri::State<'_, AppState>) -> Result<Vec<GithubRelease>, String> {
-    let cfg = { state.config.lock().await.clone() };
-    ikb_core::app::fetch_github_releases(&cfg.proxy).await
+async fn fetch_github_releases(proxy: ikb_core::config::ProxyConfig) -> Result<Vec<GithubRelease>, String> {
+    ikb_core::app::fetch_github_releases(&proxy).await
 }
 
 pub struct AppState {

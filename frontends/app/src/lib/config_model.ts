@@ -16,8 +16,10 @@ export type UiConfig = {
   password: string;
   cron: string;
   proxy: {
-    mode: 'custom' | 'system' | 'disabled' | 'onlyGithubApi';
+    mode: 'custom' | 'system' | 'smart';
     url: string;
+    user: string;
+    pass: string;
   };
   githubProxy: string;
   addErrRetryWait: string;
@@ -72,8 +74,10 @@ export function defaultUiConfig(): UiConfig {
     password: '',
     cron: '',
     proxy: {
-      mode: 'system',
-      url: 'http://127.0.0.1:7890',
+      mode: 'smart',
+      url: '',
+      user: '',
+      pass: '',
     },
     githubProxy: '',
     addErrRetryWait: '10s',
@@ -168,14 +172,14 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; comments: Comme
     const p = asRecord(metaObj.proxy);
     const modeRaw = asStr(p.mode, cfg.proxy.mode);
     cfg.proxy.mode =
-      modeRaw === 'system'
-        ? 'system'
-        : modeRaw === 'disabled'
-          ? 'disabled'
-          : modeRaw === 'onlyGithubApi' || modeRaw === 'only-github-api' || modeRaw === 'only_github_api'
-            ? 'onlyGithubApi'
-            : 'custom';
+      modeRaw === 'custom'
+        ? 'custom'
+        : modeRaw === 'smart' || modeRaw === 'onlyGithubApi' || modeRaw === 'only-github-api' || modeRaw === 'only_github_api'
+          ? 'smart'
+          : 'system';
     cfg.proxy.url = asStr(p.url, cfg.proxy.url);
+    cfg.proxy.user = asStr(p.user, cfg.proxy.user);
+    cfg.proxy.pass = asStr(p.pass, cfg.proxy.pass);
   }
   cfg.githubProxy = asStr(metaObj['github-proxy'], '');
 
@@ -250,6 +254,8 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
     proxy: {
       mode: ui.proxy.mode,
       url: ui.proxy.url,
+      user: ui.proxy.user,
+      pass: ui.proxy.pass,
     },
     'github-proxy': ui.githubProxy,
     AddErrRetryWait: ui.addErrRetryWait,
@@ -339,19 +345,21 @@ export function yamlDumpWithComments(payload: JsonRecord, comments: CommentMaps)
   // proxy
   cmt(top.proxy);
   const p = asRecord(payload?.proxy);
-  const modeRaw = asStr(p.mode, 'custom');
+  const modeRaw = asStr(p.mode, 'system');
   const mode =
-    modeRaw === 'system'
-      ? 'system'
-      : modeRaw === 'disabled'
-        ? 'disabled'
-        : modeRaw === 'onlyGithubApi' || modeRaw === 'only-github-api' || modeRaw === 'only_github_api'
-          ? 'onlyGithubApi'
-          : 'custom';
+    modeRaw === 'custom'
+      ? 'custom'
+      : modeRaw === 'smart' || modeRaw === 'onlyGithubApi' || modeRaw === 'only-github-api' || modeRaw === 'only_github_api'
+        ? 'smart'
+        : 'system';
   const url = asStr(p.url, 'http://127.0.0.1:7890');
+  const user = asStr(p.user, '');
+  const pass = asStr(p.pass, '');
   out.push('proxy:');
   out.push('  mode: ' + mode);
   out.push('  url: ' + q(url));
+  out.push('  user: ' + q(user));
+  out.push('  pass: ' + q(pass));
 
   kv('github-proxy', payload?.['github-proxy'], top['github-proxy']);
 

@@ -83,6 +83,13 @@ export type GithubRelease = {
   created_at?: string | null;
 };
 
+export type ProxyConfig = {
+  mode: 'custom' | 'system' | 'smart';
+  url: string;
+  user: string;
+  pass: string;
+};
+
 export type ConfigMeta = {
   conf_path: string;
   raw_yaml?: string;
@@ -244,11 +251,14 @@ export const bridge = {
     });
   },
 
-  async fetchGithubReleases(): Promise<GithubRelease[]> {
+  async fetchGithubReleases(proxy: ProxyConfig): Promise<GithubRelease[]> {
     if (await isTauriReady()) {
-      return await tauriInvoke<GithubRelease[]>('fetch_github_releases');
+      return await tauriInvoke<GithubRelease[]>('fetch_github_releases', { proxy });
     }
-    return await fetchJson<GithubRelease[]>('/api/github/releases');
+    return await fetchJson<GithubRelease[]>('/api/github/releases', {
+      method: 'POST',
+      body: JSON.stringify({ proxy }),
+    });
   },
 
   async listenLogs(onRecord: (rec: LogRecord) => void, onError?: (err?: unknown) => void): Promise<UnlistenFn> {
@@ -290,15 +300,23 @@ export const bridge = {
     };
   },
 
-  async fetchRemoteConfig(url: string, githubProxy: string): Promise<string> {
+  async fetchRemoteConfig(url: string, proxy: ProxyConfig, githubProxy: string): Promise<string> {
     if (await isTauriReady()) {
       return await tauriInvoke<string>('fetch_remote_config', {
         url,
-        github_proxy: githubProxy,
+        proxy,
+        githubProxy,
       });
     }
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
-    return await r.text();
+    const r = await fetch('/api/remote/fetch', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ url, proxy, githubProxy }),
+    });
+    const text = await r.text().catch(() => '');
+    if (!r.ok) throw new Error(text || 'HTTP ' + r.status + ' ' + r.statusText);
+    return text;
   },
 };

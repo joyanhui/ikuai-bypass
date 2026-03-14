@@ -217,12 +217,11 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
 
 async fn api_diagnostics_report(State(state): State<Arc<AppState>>) -> Response {
     let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
-    let path = state.config_path.clone();
     let cli_login = state.cli_login.to_string();
     let st = state.runtime.status();
 
     let report =
-        ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path, Some(st), &cli_login)
+        ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &state.config_path, Some(st), &cli_login)
             .await;
     (
         StatusCode::OK,

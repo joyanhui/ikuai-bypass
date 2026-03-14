@@ -60,7 +60,7 @@
 - Tauri IPC 语义需要和 Web API 对齐
 - 前端禁止 `as any` / `@ts-ignore` 绕过类型系统
 - 核心逻辑避免无意义 clone、unwrap 和隐式 panic
-
+- 前端monaco 编辑器仅限pc模式可用，在tauri app的移动端禁止使用，会导致webview崩溃
 ## 注释与文案规范
 
 - 代码注释使用双语文本（中文 + English）

@@ -32,15 +32,17 @@ async fn test_github_proxy(_state: tauri::State<'_, AppState>, req: TestGithubPr
 async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
     // Avoid holding locks across await to prevent deadlocks on mobile.
     let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
-    let path = { state.config_path.lock().await.clone() };
-    ikb_core::app::build_config_meta(cfg_snapshot.as_ref(), &path)
+    let path_guard = state.config_path.lock().await;
+    ikb_core::app::build_config_meta(cfg_snapshot.as_ref(), &path_guard)
 }
 
 #[tauri::command]
 async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), String> {
-    let path = { state.config_path.lock().await.clone() };
-    if let Err(e) = config.save_to_path(&path) {
-        return Err(format!("Failed to save config: {}", e));
+    {
+        let path_guard = state.config_path.lock().await;
+        if let Err(e) = config.save_to_path(&*path_guard) {
+            return Err(format!("Failed to save config: {}", e));
+        }
     }
 
     let new_cron = config.cron.to_string();
@@ -55,9 +57,11 @@ async fn save_config_with_comments(
     config: Config,
     with_comments: bool,
 ) -> Result<(), String> {
-    let path = { state.config_path.lock().await.clone() };
-    if let Err(e) = config.save_to_path_with_comments(&path, with_comments) {
-        return Err(format!("Failed to save config: {}", e));
+    {
+        let path_guard = state.config_path.lock().await;
+        if let Err(e) = config.save_to_path_with_comments(&*path_guard, with_comments) {
+            return Err(format!("Failed to save config: {}", e));
+        }
     }
     let new_cron = config.cron.to_string();
     *state.config.lock().await = Arc::new(config);
@@ -71,9 +75,11 @@ async fn save_raw_yaml(
     yaml_text: String,
     with_comments: bool,
 ) -> Result<(), String> {
-    let path = { state.config_path.lock().await.clone() };
-    let cfg = Config::validate_and_save_raw_yaml(&yaml_text, &path, with_comments)
-        .map_err(|e| format!("Failed to save config: {}", e))?;
+    let cfg = {
+        let path_guard = state.config_path.lock().await;
+        Config::validate_and_save_raw_yaml(&yaml_text, &*path_guard, with_comments)
+            .map_err(|e| format!("Failed to save config: {}", e))?
+    };
     let new_cron = cfg.cron.to_string();
     *state.config.lock().await = Arc::new(cfg);
     state.runtime.set_defaults(None, Some(new_cron)).await;
@@ -165,9 +171,9 @@ async fn fetch_github_releases(proxy: ikb_core::config::ProxyConfig) -> Result<V
 async fn diagnostics_report(state: tauri::State<'_, AppState>) -> Result<DiagnosticsReport, String> {
     // Avoid holding locks across await.
     let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
-    let path = { state.config_path.lock().await.clone() };
+    let path_guard = state.config_path.lock().await;
     let st = state.runtime.status();
-    Ok(ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path, Some(st), "").await)
+    Ok(ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path_guard, Some(st), "").await)
 }
 
 pub struct AppState {
@@ -234,11 +240,12 @@ pub fn run() {
 
             let state = app.state::<AppState>();
             {
-                let path_lock = state.config_path.clone();
+                let path_lock = Arc::clone(&state.config_path);
                 let cfg_clone = Arc::clone(&config_for_setup);
                 tauri::async_runtime::block_on(async move {
-                    *path_lock.lock().await = config_path.clone();
-                    if let Ok(cfg) = Config::load_from_path(&config_path) {
+                    let loaded = Config::load_from_path(&config_path).ok();
+                    *path_lock.lock().await = config_path;
+                    if let Some(cfg) = loaded {
                         *cfg_clone.lock().await = Arc::new(cfg);
                     }
                 });

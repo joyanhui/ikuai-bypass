@@ -155,7 +155,7 @@ Rust 侧需要提供等价的运行时控制能力：
 ### Milestone 0：脚手架与边界冻结
 
 - 建立 `rust/` workspace。
-- 产出：核心对齐清单（本文件）+ 最小可编译的 `core/cli`。
+- 产出：核心对齐清单（本文件）+ 最小可编译的 `crates/core + apps/cli`。
 
 ### Milestone 1：配置层对齐（最关键）
 
@@ -202,7 +202,7 @@ Rust 侧需要提供等价的运行时控制能力：
 
 在 `rust-dev` 分支上优先落地：
 
-1) `rust/` workspace + `core/cli` 最小可编译；
+1) `rust/` workspace + `crates/core + apps/cli` 最小可编译；
 2) 配置层（读取/默认值/安全保存）的 POC + 测试；
 3) 定义与 Go WebUI 兼容的最小 API 形状（先 stub，为后续 Astro/Tauri 接入做准备）。
 4. **永远不使用环境变量**：

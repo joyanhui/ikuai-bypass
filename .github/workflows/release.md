@@ -1,6 +1,6 @@
 # Release Workflow 规则说明
 
-本文档描述当前 [release.yml](/home/y/myworkspace/ikuai-bypass/.github/workflows/release.yml) 的实际构建与发布规则，后续修改 workflow 时应同步更新。
+本文档描述当前 `.github/workflows/release.yml` 的实际构建与发布规则，后续修改 workflow 时应同步更新。
 
 ## 1. 触发方式
 
@@ -258,10 +258,10 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 ## 10. 关键实现文件
 
-- [release.yml](/home/y/myworkspace/ikuai-bypass/.github/workflows/release.yml)
-- [build_matrix.jsonc](/home/y/myworkspace/ikuai-bypass/.github/build_matrix.jsonc)
-- [arch-helpers.sh](/home/y/myworkspace/ikuai-bypass/.github/scripts/arch-helpers.sh)
-- [prepare-container-binaries.sh](/home/y/myworkspace/ikuai-bypass/.github/scripts/prepare-container-binaries.sh)
+- `.github/workflows/release.yml`
+- `.github/build_matrix.jsonc`
+- `.github/scripts/arch-helpers.sh`
+- `.github/scripts/prepare-container-binaries.sh`
 
 ## 11. 维护约束
 

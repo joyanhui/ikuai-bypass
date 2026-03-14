@@ -35,3 +35,4 @@ apps/gui/gen/
 frontends/app/src/env.d.ts
 **/dist/
 /dist/
+flake.lock

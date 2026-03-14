@@ -14,7 +14,7 @@
 > 关于dns分流解析，建议用单 ADGuard home自建，这里有一个本人利用github action自动维护相关规则文件的adguardhome规则.[[joyanhui/adguardhome-rules]](https://github.com/joyanhui/adguardhome-rules)（规则文件在release_file分支48小时更新一次）。可以简单自动更新dns分流解析规则，广告屏蔽，以及ipv4优先等功能
 
 ---
-
+<img src="screenshot/index.gif"  alt="">
 
 ## 爱快两种分流模式解析
 
@@ -26,7 +26,7 @@
 
 **实现逻辑：**
 这种模式下，iKuai 将 旁路由（通常是openwrt）视为一个"虚拟的上级运营商"。
-1. **链路设计**：OpenWrt 作为 iKuai 的下级设备接收流量，处理后再将出口流量"绕回"给 iKuai 的 WAN 口。
+1. **链路设计**：旁路由 作为 iKuai 的下级设备接收流量，处理后再将出口流量"绕回"给 iKuai 的 WAN 口。
 2. **规则同步**：本工具将目标 IP 列表导入 iKuai 的"自定义运营商"。iKuai 会认为这些 IP 属于该"虚拟运营商"，从而将流量转发给 旁路由。
 
 **核心优势：**

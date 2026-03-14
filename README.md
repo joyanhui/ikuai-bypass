@@ -203,11 +203,8 @@ GUI 功能：
 
 ```bash
 # 运行（会自动创建配置文件）
-docker run -d \
-  --name ikuai-bypass \
-  --restart=always \
-  -p 19001:19001 \
-  -v ./data:/etc/ikuai-bypass \
+docker run -itd --name ikuai-bypass --restart=always \
+  -p 19001:19001 -v ./data:/etc/ikuai-bypass \
   joyanhui/ikuai-bypass:latest
 ```
 
@@ -216,21 +213,6 @@ docker run -d \
 2. 在网页界面里配置爱快地址和登录信息
 3. 点击"运行一次"测试，成功后开启定时任务
 
-### 常用命令
-
-```bash
-# 查看日志
-docker logs -f ikuai-bypass
-# 手动触发更新
-docker exec ikuai-bypass ikuai-bypass -r once
-# 重启容器
-docker restart ikuai-bypass
-# 升级版本
-docker pull joyanhui/ikuai-bypass:latest
-docker stop ikuai-bypass && docker rm ikuai-bypass
-# 然后重新运行 docker run 命令（配置文件会保留）
-```
-
 ### Unraid / 群晖 / 爱快内docker 等部署
 
 在群晖的 Docker 套件里：
@@ -238,21 +220,6 @@ docker stop ikuai-bypass && docker rm ikuai-bypass
 2. 创建容器，映射端口 `19001`
 3. 映射一个文件夹到 `/etc/ikuai-bypass` 存放配置
 4. 启动后访问网页界面配置
-
-或者用 docker-compose：
-
-```yaml
-version: "3.8"
-services:
-  ikuai-bypass:
-    image: joyanhui/ikuai-bypass:latest
-    container_name: ikuai-bypass
-    restart: always
-    ports:
-      - "19001:19001"
-    volumes:
-      - ./data:/etc/ikuai-bypass
-```
 
 ---
 

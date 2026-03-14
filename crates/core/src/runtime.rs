@@ -91,6 +91,7 @@ pub struct RuntimeService {
     logs: Mutex<LogBroker>,
     config: Arc<tokio::sync::Mutex<Config>>,
     cli_login: String,
+    update_opts: crate::update::UpdateOptions,
 }
 
 impl RuntimeService {
@@ -99,6 +100,7 @@ impl RuntimeService {
         cli_login: String,
         default_cron: String,
         default_module: String,
+        update_opts: crate::update::UpdateOptions,
     ) -> Self {
         Self {
             inner: Mutex::new(Inner {
@@ -113,6 +115,7 @@ impl RuntimeService {
             logs: Mutex::new(LogBroker::new(5000)),
             config,
             cli_login,
+            update_opts,
         }
     }
 
@@ -243,7 +246,8 @@ impl RuntimeService {
                 })
             };
 
-            let res = crate::update::run_update_by_module(&cfg, &this.cli_login, &module, sink).await;
+            let opts = this.update_opts.clone();
+            let res = crate::update::run_update_by_module(&cfg, &this.cli_login, &module, &opts, sink).await;
             match res {
                 Ok(()) => {
                     this.append_sys(LogLevel::Success, "DONE:任务完成", format!("module={}", module))

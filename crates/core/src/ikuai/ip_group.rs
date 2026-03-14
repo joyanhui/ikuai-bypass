@@ -71,6 +71,14 @@ pub async fn show_ip_group_by_name(api: &IKuaiClient, name: &str) -> Result<Vec<
 }
 
 pub async fn add_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: i64) -> Result<(), IKuaiError> {
+    add_ip_group_named(api, &build_indexed_tag_name(tag, index), addr_pool).await
+}
+
+pub async fn edit_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: i64, id: i64) -> Result<(), IKuaiError> {
+    edit_ip_group_named(api, &build_indexed_tag_name(tag, index), addr_pool, id).await
+}
+
+pub async fn add_ip_group_named(api: &IKuaiClient, group_name: &str, addr_pool: &str) -> Result<(), IKuaiError> {
     let ips: Vec<&str> = addr_pool
         .split(',')
         .map(|s| s.trim())
@@ -81,9 +89,11 @@ pub async fn add_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: 
         .map(|ip| serde_json::json!({"ip": ip, "comment": ""}))
         .collect();
     let param = serde_json::json!({
-        "group_name": build_indexed_tag_name(tag, index),
+        "group_name": group_name,
         "type": 0,
         "group_value": group_value,
+        // 不要加注释：ikuai v4.x 的 IP 分组 comment 行为不稳定
+        // Do not set comment: iKuai v4.x IP group comment is unstable
         "comment": "",
     });
     let _ = api
@@ -92,7 +102,12 @@ pub async fn add_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: 
     Ok(())
 }
 
-pub async fn edit_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: i64, id: i64) -> Result<(), IKuaiError> {
+pub async fn edit_ip_group_named(
+    api: &IKuaiClient,
+    group_name: &str,
+    addr_pool: &str,
+    id: i64,
+) -> Result<(), IKuaiError> {
     let ips: Vec<&str> = addr_pool
         .split(',')
         .map(|s| s.trim())
@@ -103,7 +118,7 @@ pub async fn edit_ip_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index:
         .map(|ip| serde_json::json!({"ip": ip, "comment": ""}))
         .collect();
     let param = serde_json::json!({
-        "group_name": build_indexed_tag_name(tag, index),
+        "group_name": group_name,
         "type": 0,
         "group_value": group_value,
         "comment": "",
@@ -126,16 +141,64 @@ pub async fn del_ip_group(api: &IKuaiClient, id_csv: &str) -> Result<(), IKuaiEr
 }
 
 pub async fn get_ip_group_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
-    let data = show_ip_group_by_tag_name(api, "").await?;
+    let map = get_ip_group_map_with_name(api, tag).await?;
+    Ok(map.into_iter().map(|(k, (id, _))| (k, id)).collect())
+}
+
+fn parse_trailing_digits(s: &str) -> Option<i64> {
+    let s = s.trim();
+    if s.is_empty() {
+        return None;
+    }
+    let mut start = s.len();
+    for (i, ch) in s.char_indices().rev() {
+        if ch.is_ascii_digit() {
+            start = i;
+            continue;
+        }
+        break;
+    }
+    if start == s.len() {
+        return None;
+    }
+    s[start..].parse::<i64>().ok()
+}
+
+fn parse_index_from_group_name(tag: &str, group_name: &str) -> Option<i64> {
+    let name = group_name.trim();
+    if name.is_empty() {
+        return None;
+    }
     let base = build_tag_name(tag);
+    if let Some(rest) = name.strip_prefix(&base) {
+        let rest = rest.trim();
+        if rest.is_empty() {
+            return None;
+        }
+        if let Ok(idx) = rest.parse::<i64>() {
+            return Some(idx);
+        }
+        if let Some(idx) = parse_trailing_digits(rest) {
+            return Some(idx);
+        }
+    }
+    // Fallback for truncated base names: parse trailing digits on the full name.
+    // 截断场景兜底：从完整名称尾部提取数字。
+    parse_trailing_digits(name)
+}
+
+pub async fn get_ip_group_map_with_name(
+    api: &IKuaiClient,
+    tag: &str,
+) -> Result<std::collections::HashMap<i64, (i64, String)>, IKuaiError> {
+    let data = show_ip_group_by_tag_name(api, "").await?;
     let mut out = std::collections::HashMap::new();
     for d in data {
         if !match_tag_name_filter(tag, &d.group_name, &d.comment) {
             continue;
         }
-        let suffix = d.group_name.trim().trim_start_matches(&base);
-        if let Ok(idx) = suffix.parse::<i64>() {
-            out.insert(idx, d.id);
+        if let Some(idx) = parse_index_from_group_name(tag, &d.group_name) {
+            out.entry(idx).or_insert((d.id, d.group_name));
         }
     }
     Ok(out)

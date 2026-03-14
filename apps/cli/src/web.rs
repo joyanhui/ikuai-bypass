@@ -104,6 +104,7 @@ pub async fn start_web_server(
 
     let api = Router::new()
         .route("/api/config", get(api_config))
+        .route("/api/diagnostics/report", get(api_diagnostics_report))
         .route("/api/save", post(api_save))
         .route("/api/save-raw", post(api_save_raw_yaml))
         .route("/api/remote/fetch", post(api_remote_fetch))
@@ -210,6 +211,21 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
         StatusCode::OK,
         [(header::CACHE_CONTROL, "no-store")],
         Json(resp),
+    )
+        .into_response()
+}
+
+async fn api_diagnostics_report(State(state): State<Arc<AppState>>) -> Response {
+    let cfg_snapshot = { state.config.lock().await.clone() };
+    let path = state.config_path.clone();
+    let cli_login = state.cli_login.to_string();
+    let st = state.runtime.status();
+
+    let report = ikb_core::app::build_diagnostics_report(&cfg_snapshot, &path, Some(st), &cli_login).await;
+    (
+        StatusCode::OK,
+        [(header::CACHE_CONTROL, "no-store")],
+        Json(report),
     )
         .into_response()
 }

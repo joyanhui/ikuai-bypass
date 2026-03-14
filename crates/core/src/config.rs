@@ -267,6 +267,16 @@ impl Config {
     }
 
     pub fn apply_defaults(&mut self) {
+        // WebUI defaults.
+        // WebUI 默认值。
+        if self.webui.port.trim().is_empty() {
+            // Keep consistent with docs and frontend defaults.
+            // 与文档/前端默认值保持一致。
+            self.webui.port = "19001".to_string();
+        } else {
+            self.webui.port = self.webui.port.trim().to_string();
+        }
+
         if self.webui.cdn_prefix.is_empty() {
             self.webui.cdn_prefix = "https://cdn.jsdelivr.net/npm".to_string();
         }

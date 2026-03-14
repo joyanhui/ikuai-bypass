@@ -7,6 +7,7 @@ use ikb_core::config::Config;
 fn load_repo_config_yml() {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("..")
+        .join("..")
         .join("config.yml");
     let cfg = match Config::load_from_path(&path) {
         Ok(v) => v,

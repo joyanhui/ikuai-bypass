@@ -334,6 +334,12 @@ const setAboutUpdateHint = (text: string) => {
   el.textContent = text;
 };
 
+const setAboutDiagHint = (text: string) => {
+  const el = document.getElementById('aboutDiagHint');
+  if (!el) return;
+  el.textContent = text;
+};
+
 
 const describeProxyForUpdateHint = (): string => {
   const mode = state.cfg.proxy.mode;
@@ -395,6 +401,32 @@ const checkUpdatesFromAboutModal = async () => {
   }
 };
 
+const runDiagnosticsFromAboutModal = async () => {
+  const btn = document.getElementById('btnRunDiagnostics') as HTMLButtonElement | null;
+  const copyBtn = document.getElementById('btnCopyDiagnostics') as HTMLButtonElement | null;
+  const ta = document.getElementById('aboutDiagText') as HTMLTextAreaElement | null;
+
+  if (btn) btn.disabled = true;
+  if (copyBtn) copyBtn.disabled = true;
+  if (ta) ta.value = '';
+  setAboutDiagHint(t('about.diag.hint.fetching'));
+
+  try {
+    const r = await bridge.diagnosticsReport();
+    const text = (r?.text || '').trim();
+    if (ta) ta.value = text || '';
+    setAboutDiagHint(t('about.diag.hint.ok'));
+    if (copyBtn) copyBtn.disabled = !text;
+    if (text) showToast('诊断报告已生成');
+  } catch (err) {
+    const base = t('about.diag.hint.failed');
+    setAboutDiagHint(`${base}${err ? `: ${getErrorMessage(err)}` : ''}`);
+    showToast(base, 3600);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
 const initAboutModal = () => {
   const open = async () => {
     try {
@@ -410,6 +442,13 @@ const initAboutModal = () => {
     if ((!stableTag || stableTag === '--') && (!preTag || preTag === '--')) {
       setAboutUpdateHint(t('about.update.hint.idle'));
     }
+
+    const diagText = ((document.getElementById('aboutDiagText') as HTMLTextAreaElement | null)?.value || '').trim();
+    if (!diagText) {
+      setAboutDiagHint(t('about.diag.hint.idle'));
+      const copyBtn = document.getElementById('btnCopyDiagnostics') as HTMLButtonElement | null;
+      if (copyBtn) copyBtn.disabled = true;
+    }
     openModal('aboutModal');
   };
 
@@ -420,6 +459,22 @@ const initAboutModal = () => {
   document.getElementById('btnCloseAboutBottom')?.addEventListener('click', close);
   document.getElementById('aboutBackdrop')?.addEventListener('click', close);
   document.getElementById('btnCheckUpdate')?.addEventListener('click', () => void checkUpdatesFromAboutModal());
+  document.getElementById('btnRunDiagnostics')?.addEventListener('click', () => void runDiagnosticsFromAboutModal());
+  document.getElementById('btnCopyDiagnostics')?.addEventListener('click', async () => {
+    const ta = document.getElementById('aboutDiagText') as HTMLTextAreaElement | null;
+    const text = (ta?.value || '').trim();
+    if (!text) {
+      showToast('诊断报告为空');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('已复制诊断报告');
+    } catch (err) {
+      console.warn('[IKB] Failed to copy diagnostics', err);
+      showToast('复制失败');
+    }
+  });
 };
 
 const initProxyModal = () => {
@@ -1027,10 +1082,15 @@ const initQuickActions = () => {
 
       if (state.selectedRunMode === 'once') {
         showToast('正在启动...');
-        await bridge.runtimeRunOnce(state.selectedModule);
-        state.isRunning = true;
-        setRunningPreview(`正在执行模块: ${state.selectedModule}`);
-        showToast('任务已启动');
+        const started = await bridge.runtimeRunOnce(state.selectedModule);
+        if (started) {
+          state.isRunning = true;
+          setRunningPreview(`正在执行模块: ${state.selectedModule}`);
+          showToast('任务已启动');
+        } else {
+          state.isRunning = true;
+          showToast('任务已在运行中');
+        }
         return;
       }
 
@@ -1044,6 +1104,8 @@ const initQuickActions = () => {
         showToast('正在执行并启动定时...');
         await bridge.runtimeRunOnce(state.selectedModule);
         await bridge.runtimeCronStart(expr, state.selectedModule);
+        // started=false means the task is already running.
+        // started=false 表示任务已在运行。
         state.isRunning = true;
         state.isCronRunning = true;
         setRunningPreview(`正在执行模块: ${state.selectedModule}`);
@@ -1945,7 +2007,7 @@ const renderStreamIpPortList = () => {
 // ============================================
 const initCmdModal = () => {
   // 命令参数变化时重新渲染
-  ['cmdRunMode', 'cmdModule', 'cmdConfigPath', 'cmdCleanTag'].forEach(id => {
+  ['cmdRunMode', 'cmdModule', 'cmdConfigPath', 'cmdExportPath', 'cmdCleanTag'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => {
       renderCmd();
       persistCmdSettings();
@@ -1995,6 +2057,7 @@ const renderCmd = () => {
   const runMode = getValue('cmdRunMode');
   const module = getValue('cmdModule');
   const configPath = getValue('cmdConfigPath') || './config.yml';
+  const exportPath = getValue('cmdExportPath') || '/tmp';
   const cleanTag = getValue('cmdCleanTag');
   
   const randBtn = document.querySelector('.cmd-toggle.active');
@@ -2004,15 +2067,27 @@ const renderCmd = () => {
   
   if (runMode === 'clean') {
     if (cleanTag) parts.push('-tag', cleanTag);
-  } else if (runMode !== 'web') {
+  } else {
     parts.push('-m', module);
   }
-  
-  if (state.cfg.ikuaiUrl && state.cfg.username) {
+
+  // exportPath: only meaningful for stream-domain export, but keep it explicit for CLI parity.
+  // exportPath: 主要用于域名分流导出，这里保持参数可见，便于复制执行。
+  if (exportPath.trim()) {
+    parts.push('-exportPath', exportPath.trim());
+  }
+
+  // 只有在 url/user/pass 都齐全时才拼 -login，避免生成无效参数。
+  // Only include -login when url/user/pass are all present.
+  if (state.cfg.ikuaiUrl && state.cfg.username && state.cfg.password) {
     parts.push('-login', `${state.cfg.ikuaiUrl},${state.cfg.username},${state.cfg.password}`);
   }
-  
-  parts.push('-isIpGroupNameAddRandomSuff', rand);
+
+  // random suffix switch: default is 1, only include when user turns it off.
+  // 随机后缀开关：默认 1，仅在用户关闭时输出。
+  if (rand !== '1') {
+    parts.push('-isIpGroupNameAddRandomSuff', rand);
+  }
   
   const cmdOut = document.getElementById('cmdOut');
   if (cmdOut) cmdOut.textContent = parts.join(' ');
@@ -2029,21 +2104,25 @@ const persistCmdSettings = () => {
   saveJson('ikb_cmd', {
     runMode: getValue('cmdRunMode'),
     module: getValue('cmdModule'),
+    exportPath: getValue('cmdExportPath'),
     cleanTag: getValue('cmdCleanTag'),
     randomSuff: randBtn?.getAttribute('data-value') || '1',
   });
 };
 
 const restoreCmdSettings = () => {
-  const saved = loadJson('ikb_cmd', { runMode: 'cron', module: 'ispdomain', cleanTag: 'cleanAll', randomSuff: '1' });
+  const saved = loadJson('ikb_cmd', { runMode: 'cron', module: 'ispdomain', exportPath: '/tmp', cleanTag: 'cleanAll', randomSuff: '1' });
   
   const setValue = (id: string, value: string) => {
     const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement;
     if (el) el.value = value;
   };
   
-  setValue('cmdRunMode', saved.runMode);
+  const runMode = (saved.runMode || '').trim();
+  const allowed = new Set(['cron', 'cronAft', 'once', 'clean']);
+  setValue('cmdRunMode', allowed.has(runMode) ? runMode : 'cron');
   setValue('cmdModule', saved.module);
+  setValue('cmdExportPath', saved.exportPath || '/tmp');
   setValue('cmdCleanTag', saved.cleanTag);
   
   document.querySelectorAll('.cmd-toggle').forEach(btn => {
@@ -2056,6 +2135,7 @@ type CmdPreset = {
   data: {
     runMode: string;
     module: string;
+    exportPath: string;
     cleanTag: string;
     randomSuff: string;
   };
@@ -2083,6 +2163,7 @@ const savePreset = async () => {
     data: {
       runMode: getValue('cmdRunMode'),
       module: getValue('cmdModule'),
+      exportPath: getValue('cmdExportPath'),
       cleanTag: getValue('cmdCleanTag'),
       randomSuff: randBtn?.getAttribute('data-value') || '1',
     }
@@ -2124,6 +2205,7 @@ const renderPresets = () => {
       
       setValue('cmdRunMode', preset.data.runMode);
       setValue('cmdModule', preset.data.module);
+      setValue('cmdExportPath', preset.data.exportPath || '/tmp');
       setValue('cmdCleanTag', preset.data.cleanTag);
       
       document.querySelectorAll('.cmd-toggle').forEach(btn => {

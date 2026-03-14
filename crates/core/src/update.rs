@@ -6,6 +6,17 @@ use crate::ikuai;
 use crate::logger::{LogSink, Logger};
 use crate::session::{resolve_login_params, LoginParamsError};
 
+#[derive(Debug, Clone, Default)]
+pub struct UpdateOptions {
+    /// Export directory for stream-domain rule lists (best-effort).
+    /// 域名分流规则列表导出目录（尽力而为，不影响更新流程）。
+    pub export_path: String,
+
+    /// Whether to add a deterministic random-like suffix for ip-group/ipv6-group names.
+    /// IP 分组名称是否增加“随机后缀”（确定性 hash token，用于降低截断碰撞概率）。
+    pub ip_group_name_add_random_suffix: bool,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateError {
     #[error("login params error: {0}")]
@@ -42,6 +53,7 @@ pub async fn run_update_by_module(
     cfg: &Config,
     cli_login: &str,
     module: &str,
+    opts: &UpdateOptions,
     sink: LogSink,
 ) -> Result<(), UpdateError> {
     let params = resolve_login_params(cfg, cli_login)?;
@@ -59,41 +71,41 @@ pub async fn run_update_by_module(
     match module {
         "ispdomain" => {
             sys.info("TASK:任务启动", "Starting ISP and Domain streaming mode");
-            update_ispdomain(cfg, &api, &sink).await;
+            update_ispdomain(cfg, &api, opts, &sink).await;
         }
         "ipgroup" => {
             sys.info("TASK:任务启动", "Starting IP group and Next-hop gateway mode");
-            update_ipgroup(cfg, &api, &sink).await;
+            update_ipgroup(cfg, &api, opts, &sink).await;
         }
         "ipv6group" => {
             sys.info("TASK:任务启动", "Starting IPv6 group mode");
-            update_ipv6group(cfg, &api, &sink).await;
+            update_ipv6group(cfg, &api, opts, &sink).await;
         }
         "ii" => {
             sys.info("TASK:任务启动", "Starting hybrid mode: ISP/Domain + IP group");
-            update_ispdomain(cfg, &api, &sink).await;
-            update_ipgroup(cfg, &api, &sink).await;
+            update_ispdomain(cfg, &api, opts, &sink).await;
+            update_ipgroup(cfg, &api, opts, &sink).await;
         }
         "ip" => {
             sys.info("TASK:任务启动", "Starting hybrid mode: IPv4 group + IPv6 group");
-            update_ipgroup(cfg, &api, &sink).await;
-            update_ipv6group(cfg, &api, &sink).await;
+            update_ipgroup(cfg, &api, opts, &sink).await;
+            update_ipv6group(cfg, &api, opts, &sink).await;
         }
         "iip" => {
             sys.info(
                 "TASK:任务启动",
                 "Starting full hybrid mode: ISP/Domain + IPv4/v6 group",
             );
-            update_ispdomain(cfg, &api, &sink).await;
-            update_ipgroup(cfg, &api, &sink).await;
-            update_ipv6group(cfg, &api, &sink).await;
+            update_ispdomain(cfg, &api, opts, &sink).await;
+            update_ipgroup(cfg, &api, opts, &sink).await;
+            update_ipv6group(cfg, &api, opts, &sink).await;
         }
         other => return Err(UpdateError::InvalidModule(other.to_string())),
     }
     Ok(())
 }
 
-async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
+async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
     let isp = Logger::new("ISP:运营商分流", Arc::clone(sink));
     let domain = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
     let sys = Logger::new("SYS:系统组件", Arc::clone(sink));
@@ -129,7 +141,7 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
             src_addr: &item.src_addr,
             url: &item.url,
         };
-        let res = update_stream_domain(cfg, api, sink, input).await;
+        let res = update_stream_domain(cfg, api, opts, sink, input).await;
         if let Err(e) = res {
             domain.error(
                 "UPDATE:更新失败",
@@ -149,12 +161,12 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink
     );
 }
 
-async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
+async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
     let ip_logger = Logger::new("IP:IP分组", Arc::clone(sink));
     let stream_logger = Logger::new("STREAM:端口分流", Arc::clone(sink));
 
     for item in &cfg.ip_group {
-        let res = update_ip_group(cfg, api, sink, &item.tag, &item.url).await;
+        let res = update_ip_group(cfg, api, opts, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
             ip_logger.error(
                 "UPDATE:更新失败",
@@ -226,10 +238,10 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) 
     }
 }
 
-async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, sink: &LogSink) {
+async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
     let ipv6_logger = Logger::new("IPV6:IPv6分组", Arc::clone(sink));
     for item in &cfg.ipv6_group {
-        let res = update_ipv6_group(cfg, api, sink, &item.tag, &item.url).await;
+        let res = update_ipv6_group(cfg, api, opts, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
             ipv6_logger.error(
                 "UPDATE:更新失败",
@@ -346,6 +358,34 @@ fn filter_domains(lines: Vec<String>) -> Vec<String> {
     out
 }
 
+fn export_stream_domains(
+    export_path: &str,
+    iface: &str,
+    tag: &str,
+    domains: &[String],
+) -> Result<std::path::PathBuf, std::io::Error> {
+    let dir = std::path::PathBuf::from(export_path.trim());
+    if dir.as_os_str().is_empty() {
+        return Ok(dir);
+    }
+    std::fs::create_dir_all(&dir)?;
+
+    let iface_token = ikuai::tag_name::sanitize_tag_name(iface);
+    let tag_token = ikuai::tag_name::sanitize_tag_name(tag);
+    let iface_token = if iface_token.is_empty() { "iface" } else { &iface_token };
+    let tag_token = if tag_token.is_empty() { "tag" } else { &tag_token };
+
+    let filename = format!("stream-domain_{}_{}.txt", iface_token, tag_token);
+    let path = dir.join(filename);
+    let mut content = String::new();
+    for d in domains {
+        content.push_str(d);
+        content.push('\n');
+    }
+    std::fs::write(&path, content.as_bytes())?;
+    Ok(path)
+}
+
 fn group(arr: Vec<String>, sub_len: usize) -> Vec<Vec<String>> {
     let sub_len = sub_len.max(1);
     let mut out = Vec::new();
@@ -450,6 +490,7 @@ async fn update_custom_isp(
 async fn update_stream_domain(
     cfg: &Config,
     api: &ikuai::IKuaiClient,
+    opts: &UpdateOptions,
     sink: &LogSink,
     input: StreamDomainUpdate<'_>,
 ) -> Result<(), UpdateError> {
@@ -465,6 +506,27 @@ async fn update_stream_domain(
             domains.len()
         ),
     );
+
+    // Best-effort export for debugging/manual inspection.
+    // 规则导出（尽力而为，用于调试/人工检查，不影响更新流程）。
+    if !opts.export_path.trim().is_empty() {
+        match export_stream_domains(&opts.export_path, input.iface, input.tag, &domains) {
+            Ok(p) => {
+                if !p.as_os_str().is_empty() {
+                    domain_logger.info(
+                        "EXPORT:导出成功",
+                        format!("path='{}'", p.to_string_lossy()),
+                    );
+                }
+            }
+            Err(e) => {
+                domain_logger.warn(
+                    "EXPORT:导出失败",
+                    format!("exportPath='{}' error={}", opts.export_path, e),
+                );
+            }
+        }
+    }
 
     let mut map = ikuai::stream_domain::get_stream_domain_map(api, input.tag).await?;
     let groups = group(domains, cfg.max_number_of_one_records.domain as usize);
@@ -559,6 +621,7 @@ async fn update_stream_domain(
 async fn update_ip_group(
     cfg: &Config,
     api: &ikuai::IKuaiClient,
+    opts: &UpdateOptions,
     sink: &LogSink,
     tag: &str,
     url: &str,
@@ -569,7 +632,7 @@ async fn update_ip_group(
     let groups = group(ips, cfg.max_number_of_one_records.ipv4 as usize);
     ip_logger.success("PARSE:解析成功", format!("{}: obtained new data", tag));
 
-    let mut map = ikuai::ip_group::get_ip_group_map(api, tag).await?;
+    let mut map = ikuai::ip_group::get_ip_group_map_with_name(api, tag).await?;
     ip_logger.info(
         "QUERY:查询成功",
         format!("{}: found {} existing groups", tag, map.len()),
@@ -577,9 +640,13 @@ async fn update_ip_group(
 
     for (i, chunk) in groups.iter().enumerate() {
         let index = (i + 1) as i64;
-        let name = ikuai::tag_name::build_indexed_tag_name(tag, i as i64);
+        let name = if opts.ip_group_name_add_random_suffix {
+            ikuai::tag_name::build_indexed_ip_group_tag_name(tag, i as i64)
+        } else {
+            ikuai::tag_name::build_indexed_tag_name(tag, i as i64)
+        };
         let joined = chunk.join(",");
-        let res = if let Some(id) = map.remove(&index) {
+        let res = if let Some((id, existing_name)) = map.remove(&index) {
             ip_logger.info(
                 "EDIT:正在修改",
                 format!(
@@ -587,17 +654,17 @@ async fn update_ip_group(
                     i + 1,
                     groups.len(),
                     tag,
-                    name,
+                    existing_name,
                     id
                 ),
             );
-            ikuai::ip_group::edit_ip_group(api, tag, &joined, i as i64, id).await
+            ikuai::ip_group::edit_ip_group_named(api, &existing_name, &joined, id).await
         } else {
             ip_logger.info(
                 "ADD:正在添加",
                 format!("[{}/{}] {}: adding {}...", i + 1, groups.len(), tag, name),
             );
-            ikuai::ip_group::add_ip_group(api, tag, &joined, i as i64).await
+            ikuai::ip_group::add_ip_group_named(api, &name, &joined).await
         };
         if let Err(e) = res {
             ip_logger.error(
@@ -615,7 +682,7 @@ async fn update_ip_group(
     }
 
     if !map.is_empty() {
-        let extra: Vec<String> = map.values().map(|v| v.to_string()).collect();
+        let extra: Vec<String> = map.values().map(|(id, _)| id.to_string()).collect();
         ip_logger.info(
             "CLEAN:冗余删除",
             format!(
@@ -645,6 +712,7 @@ async fn update_ip_group(
 async fn update_ipv6_group(
     cfg: &Config,
     api: &ikuai::IKuaiClient,
+    opts: &UpdateOptions,
     sink: &LogSink,
     tag: &str,
     url: &str,
@@ -655,7 +723,7 @@ async fn update_ipv6_group(
     let groups = group(ips, cfg.max_number_of_one_records.ipv6 as usize);
     ipv6_logger.success("PARSE:解析成功", format!("{}: obtained new data", tag));
 
-    let mut map = ikuai::ipv6_group::get_ipv6_group_map(api, tag).await?;
+    let mut map = ikuai::ipv6_group::get_ipv6_group_map_with_name(api, tag).await?;
     ipv6_logger.info(
         "QUERY:查询成功",
         format!("{}: found {} existing IPv6 groups", tag, map.len()),
@@ -663,9 +731,13 @@ async fn update_ipv6_group(
 
     for (i, chunk) in groups.iter().enumerate() {
         let index = (i + 1) as i64;
-        let name = ikuai::tag_name::build_indexed_tag_name(tag, i as i64);
+        let name = if opts.ip_group_name_add_random_suffix {
+            ikuai::tag_name::build_indexed_ip_group_tag_name(tag, i as i64)
+        } else {
+            ikuai::tag_name::build_indexed_tag_name(tag, i as i64)
+        };
         let joined = chunk.join(",");
-        let res = if let Some(id) = map.remove(&index) {
+        let res = if let Some((id, existing_name)) = map.remove(&index) {
             ipv6_logger.info(
                 "EDIT:正在修改",
                 format!(
@@ -673,17 +745,17 @@ async fn update_ipv6_group(
                     i + 1,
                     groups.len(),
                     tag,
-                    name,
+                    existing_name,
                     id
                 ),
             );
-            ikuai::ipv6_group::edit_ipv6_group(api, tag, &joined, i as i64, id).await
+            ikuai::ipv6_group::edit_ipv6_group_named(api, &existing_name, &joined, id).await
         } else {
             ipv6_logger.info(
                 "ADD:正在添加",
                 format!("[{}/{}] {}: adding {}...", i + 1, groups.len(), tag, name),
             );
-            ikuai::ipv6_group::add_ipv6_group(api, tag, &joined, i as i64).await
+            ikuai::ipv6_group::add_ipv6_group_named(api, &name, &joined).await
         };
         if let Err(e) = res {
             ipv6_logger.error(
@@ -701,7 +773,7 @@ async fn update_ipv6_group(
     }
 
     if !map.is_empty() {
-        let extra: Vec<String> = map.values().map(|v| v.to_string()).collect();
+        let extra: Vec<String> = map.values().map(|(id, _)| id.to_string()).collect();
         ipv6_logger.info(
             "CLEAN:冗余删除",
             format!(

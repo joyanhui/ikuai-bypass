@@ -459,7 +459,6 @@ import '../styles/global.css';
                           <option value="cronAft">cronAft (仅定时)</option>
                           <option value="once">once (执行一次退出)</option>
                           <option value="clean">clean (清理)</option>
-                          <option value="web">web (仅WebUI)</option>
                         </select>
                       </div>
                       <div>
@@ -476,6 +475,10 @@ import '../styles/global.css';
                       <div>
                         <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.config_path">配置路径</label>
                         <input id="cmdConfigPath" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="./config.yml" />
+                      </div>
+                      <div>
+                        <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.export_path">导出目录</label>
+                        <input id="cmdExportPath" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="/tmp" />
                       </div>
                       <div>
                         <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cmd.label.clean_tag">清理标签</label>
@@ -510,7 +513,7 @@ import '../styles/global.css';
               </div>
               <div class="rounded-2xl border border-primary-500/15 bg-primary-500/5 p-4 text-sm text-gray-600 dark:text-gray-300">
                 <div class="font-medium text-gray-900 dark:text-white">说明</div>
-                <p class="mt-2">`clean`、`web` 等模式建议在命令行环境中使用。这里的命令生成器负责生成准确参数，便于直接复制执行。</p>
+                <p class="mt-2">`clean` 等模式建议在命令行环境中使用。这里的命令生成器负责生成准确参数，便于直接复制执行。</p>
               </div>
             </div>
           </div>
@@ -671,6 +674,20 @@ import '../styles/global.css';
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div class="rounded-2xl bg-gray-100/60 p-4 text-sm text-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="about.section.diagnostics">一键诊断</div>
+                  <div id="aboutDiagHint" class="mt-1 text-xs text-gray-500 dark:text-gray-400"></div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button id="btnRunDiagnostics" class="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-black/90 disabled:opacity-60 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100" data-i18n="about.diag.generate">生成报告</button>
+                  <button id="btnCopyDiagnostics" class="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:bg-gray-950/40 dark:text-gray-200 dark:hover:bg-gray-900" data-i18n="about.diag.copy">复制</button>
+                </div>
+              </div>
+              <textarea id="aboutDiagText" class="w-full min-h-40 resize-y rounded-2xl border border-gray-200 bg-white/70 p-3 font-mono text-xs text-gray-700 outline-none dark:border-gray-800 dark:bg-gray-950/40 dark:text-gray-200" readonly></textarea>
             </div>
           </div>
         </div>

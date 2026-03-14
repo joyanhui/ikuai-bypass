@@ -170,43 +170,12 @@ async fn run(
     config: Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
     stop: Arc<AtomicBool>,
 ) -> i32 {
+    let update_opts = ikb_core::update::UpdateOptions {
+        export_path: args.export_path.to_string(),
+        ip_group_name_add_random_suffix: parse_bool_flag(&args.is_ip_group_name_add_random_suff),
+    };
+
     match args.run_mode.as_str() {
-        "web" => {
-            println!("[MODE:运行模式] WebUI mode - starting web service");
-            // web 模式是显式入口：即使配置中禁用 webui，也允许通过 WebUI 写入配置。
-            // Web mode is explicit: allow config writes even if webui.enable=false.
-            let port = {
-                let port = config.lock().await.webui.port.trim().to_string();
-                if port.is_empty() { "8080".to_string() } else { port }
-            };
-
-            let default_cron = { config.lock().await.cron.to_string() };
-            let runtime = Arc::new(RuntimeService::new(
-                Arc::clone(&config),
-                args.ikuai_login_info.to_string(),
-                default_cron,
-                args.module.to_string(),
-            ));
-            spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
-
-            if let Err(e) = web::start_web_server(
-                config_path,
-                Arc::clone(&config),
-                Arc::clone(&runtime),
-                args.ikuai_login_info.to_string(),
-                port,
-            )
-            .await
-            {
-                eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
-                return 1;
-            }
-
-            wait_until_stopped(&stop).await;
-            let _ = runtime.stop_all().await;
-            0
-        }
-
         "cron" => {
             println!("[MODE:运行模式] Cron mode - executing once then entering scheduled mode");
 
@@ -226,7 +195,10 @@ async fn run(
                     }
                 }
                 let port = cfg_guard.webui.port.trim().to_string();
-                let port = if port.is_empty() { "8080".to_string() } else { port };
+                if cfg_guard.webui.enable && port.is_empty() {
+                    eprintln!("[CONF:配置错误] webui.port 为空，无法启动 WebUI");
+                    return 2;
+                }
                 (cfg_guard.cron.to_string(), cfg_guard.webui.enable, port)
             };
 
@@ -235,6 +207,7 @@ async fn run(
                 args.ikuai_login_info.to_string(),
                 cron_expr.to_string(),
                 args.module.to_string(),
+                update_opts.clone(),
             ));
             spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
 
@@ -251,11 +224,6 @@ async fn run(
                     eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
                     return 1;
                 }
-            }
-
-            if cron_expr.trim().is_empty() {
-                println!("[CRON:定时任务] Cron configuration is empty, exiting...");
-                return 0;
             }
 
             match Arc::clone(&runtime).start_run_once(args.module.to_string()).await {
@@ -275,17 +243,27 @@ async fn run(
                 }
             }
 
-            if let Err(e) = Arc::clone(&runtime)
-                .start_cron(cron_expr.to_string(), args.module.to_string())
-                .await
-            {
-                eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
-                return 1;
+            if cron_expr.trim().is_empty() {
+                println!("[CRON:定时任务] Cron 配置为空：不会自动定时；可在 WebUI 中手动启动 cron");
+            } else {
+                if let Err(e) = Arc::clone(&runtime)
+                    .start_cron(cron_expr.to_string(), args.module.to_string())
+                    .await
+                {
+                    eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
+                    return 1;
+                }
+
+                let norm = normalize_cron_expr(&cron_expr).ok();
+                let st = runtime.status();
+                print_cron_started_banner("cron", &st, norm.as_deref());
             }
 
-            let norm = normalize_cron_expr(&cron_expr).ok();
-            let st = runtime.status();
-            print_cron_started_banner("cron", &st, norm.as_deref());
+            // 若未启用 WebUI，cron 为空时直接退出，避免无意义常驻。
+            // If WebUI is disabled and cron is empty, exit to avoid a pointless daemon.
+            if !webui_enable && cron_expr.trim().is_empty() {
+                return 0;
+            }
 
             wait_until_stopped(&stop).await;
             let _ = runtime.stop_all().await;
@@ -311,7 +289,10 @@ async fn run(
                     }
                 }
                 let port = cfg_guard.webui.port.trim().to_string();
-                let port = if port.is_empty() { "8080".to_string() } else { port };
+                if cfg_guard.webui.enable && port.is_empty() {
+                    eprintln!("[CONF:配置错误] webui.port 为空，无法启动 WebUI");
+                    return 2;
+                }
                 (cfg_guard.cron.to_string(), cfg_guard.webui.enable, port)
             };
 
@@ -320,6 +301,7 @@ async fn run(
                 args.ikuai_login_info.to_string(),
                 cron_expr.to_string(),
                 args.module.to_string(),
+                update_opts.clone(),
             ));
             spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
 
@@ -339,21 +321,24 @@ async fn run(
             }
 
             if cron_expr.trim().is_empty() {
-                println!("[CRON:定时任务] Cron configuration is empty, exiting...");
+                println!("[CRON:定时任务] Cron 配置为空：不会自动定时；可在 WebUI 中手动启动 cron");
+            } else {
+                if let Err(e) = Arc::clone(&runtime)
+                    .start_cron(cron_expr.to_string(), args.module.to_string())
+                    .await
+                {
+                    eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
+                    return 1;
+                }
+
+                let norm = normalize_cron_expr(&cron_expr).ok();
+                let st = runtime.status();
+                print_cron_started_banner("cronAft", &st, norm.as_deref());
+            }
+
+            if !webui_enable && cron_expr.trim().is_empty() {
                 return 0;
             }
-
-            if let Err(e) = Arc::clone(&runtime)
-                .start_cron(cron_expr.to_string(), args.module.to_string())
-                .await
-            {
-                eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
-                return 1;
-            }
-
-            let norm = normalize_cron_expr(&cron_expr).ok();
-            let st = runtime.status();
-            print_cron_started_banner("cronAft", &st, norm.as_deref());
 
             wait_until_stopped(&stop).await;
             let _ = runtime.stop_all().await;
@@ -362,7 +347,7 @@ async fn run(
 
         "nocron" | "once" | "1" => {
             let started_at = Instant::now();
-            if let Err(e) = run_update_once(&config, &args.ikuai_login_info, &args.module).await {
+            if let Err(e) = run_update_once(&config, &args.ikuai_login_info, &args.module, &update_opts).await {
                 eprintln!("[UPDATE:更新失败] {}", e);
                 return 1;
             }
@@ -467,7 +452,13 @@ async fn run(
         }
 
         other => {
-            eprintln!("[ERR:参数错误] Invalid -r parameter: {}", other);
+            if other == "web" {
+                eprintln!(
+                    "[ERR:参数错误] -r web 已移除：请使用 -r cron / cronAft，并在配置中启用 webui.enable=true"
+                );
+            } else {
+                eprintln!("[ERR:参数错误] Invalid -r parameter: {}", other);
+            }
             2
         }
     }
@@ -494,6 +485,7 @@ async fn run_update_once(
     cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
     cli_login: &str,
     module: &str,
+    update_opts: &ikb_core::update::UpdateOptions,
 ) -> Result<(), String> {
     let use_color = std::io::stdout().is_terminal();
     let renderer = ikb_core::logger::Renderer::new(use_color);
@@ -504,9 +496,14 @@ async fn run_update_once(
     // 更新期间避免长时间持有配置锁：配置只读，拷贝一份用于本次任务。
     // Avoid holding config lock across awaits: clone config for this run.
     let cfg_snapshot = { cfg.lock().await.clone() };
-    ikb_core::update::run_update_by_module(&cfg_snapshot, cli_login, module, sink)
+    ikb_core::update::run_update_by_module(&cfg_snapshot, cli_login, module, update_opts, sink)
         .await
         .map_err(|e| e.to_string())
+}
+
+fn parse_bool_flag(raw: &str) -> bool {
+    let s = raw.trim().to_ascii_lowercase();
+    !(s.is_empty() || s == "0" || s == "false" || s == "off" || s == "no")
 }
 
 async fn wait_until_stopped(stop: &Arc<AtomicBool>) {

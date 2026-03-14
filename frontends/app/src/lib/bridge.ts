@@ -73,6 +73,11 @@ export type TestResult = {
   message: string;
 };
 
+export type DiagnosticsReport = {
+  generated_at: string;
+  text: string;
+};
+
 export type GithubRelease = {
   tag_name: string;
   name?: string | null;
@@ -259,6 +264,13 @@ export const bridge = {
       method: 'POST',
       body: JSON.stringify({ proxy }),
     });
+  },
+
+  async diagnosticsReport(): Promise<DiagnosticsReport> {
+    if (await isTauriReady()) {
+      return await tauriInvoke<DiagnosticsReport>('diagnostics_report');
+    }
+    return await fetchJson<DiagnosticsReport>('/api/diagnostics/report');
   },
 
   async listenLogs(onRecord: (rec: LogRecord) => void, onError?: (err?: unknown) => void): Promise<UnlistenFn> {

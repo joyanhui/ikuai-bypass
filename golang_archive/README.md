@@ -1,5 +1,7 @@
 # iKuai Bypass
 
+> 注意：本目录为 Go 版本历史归档（不再作为主线维护）。其中的文档/脚本/CI 编排使用的是旧时代目录结构，与当前 Rust 主线的 `crates/`、`apps/`、`frontends/` 布局不一致属正常现象。
+
 ![iKuai](https://img.shields.io/badge/Router-iKuai-brightgreen) ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg) ![Go](https://img.shields.io/badge/Language-Go-blue)
 
 **iKuai Bypass** 是专为爱快路由器打造的自动化分流规则同步工具。通过模拟 Web 管理界面，自动将远程订阅的 IP/域名列表同步到路由器，实现精准流量调度。支持自定义运营商、IP/IPv6分组、域名分流、端口分流等多种模式，具备高并发处理、平滑更新、定时任务、可视化配置界面等特性，兼容全平台多架构。。[旧版本说明](README_bakcup.md)

@@ -2,3 +2,5 @@
 *.sh linguist-detectable=false
 *.py linguist-detectable=false
 *.go linguist-detectable=false
+*.mjs linguist-detectable=false
+*.css linguist-detectable=false

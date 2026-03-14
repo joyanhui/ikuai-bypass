@@ -138,6 +138,8 @@ github-proxy: "https://gh-proxy.com/"
 ./ikuai-bypass -r cron -c ./config.yml
 # 只运行一次就退出
 ./ikuai-bypass -r once -c ./config.yml
+# 导出域名分流列表到 TXT（不连接 iKuai，仅用于调试/人工导入）
+./ikuai-bypass -r exportDomainSteamToTxt -c ./config.yml -exportPath /tmp
 # 清理所有规则（慎用）
 ./ikuai-bypass -r clean -tag cleanAll -c ./config.yml
 
@@ -195,7 +197,7 @@ GUI 功能：
 | `cronAft` | 定时运行 | 暂时不执行，直接进入计划任务模式 |
 | `once` | 只运行一次 | 测试配置、手动更新 |
 | `clean` | 清理规则 | 删掉所有规则和分组，或指定的名字/备注适配的规则 |
-
+| `exportDomainSteamToTxt` | 导出域名分流 TXT | 下载 `stream-domain` 的域名列表并导出到 `-exportPath` 目录 |
 ### 分流模式 (`-m`)
 
 一般使用默认的 `ispdomain` 即可，特殊情况才需要改：
@@ -223,7 +225,7 @@ GUI 功能：
 
 ### Docker 用户
 
-适合 NAS、群晖、或者喜欢用容器的用户，详见下方 Docker 章节。
+适合 NAS、群晖、或者喜欢用容器的用户，详见下方 Docker 章节。 注意：docker镜像为 `joyanhui/ikuai-bypass` 其他docker可能是本项目的fork或者网友自治版。
 
 ```bash
 # 运行（会自动创建配置文件）

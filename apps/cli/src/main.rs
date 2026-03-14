@@ -55,6 +55,20 @@ fn print_clean_done_banner(tag: &str, is_all: bool, conf_path: &str, elapsed: Du
     println!();
 }
 
+fn print_export_done_banner(export_path: &str, conf_path: &str, elapsed: Duration) {
+    let secs = elapsed.as_secs_f64();
+    println!();
+    println!("===========================================================");
+    println!("[END:导出完毕] 导出完成");
+    println!("-----------------------------------------------------------");
+    println!("模式: exportDomainSteamToTxt");
+    println!("导出目录: {}", export_path);
+    println!("配置: {}", conf_path);
+    println!("耗时: {:.3}s", secs);
+    println!("===========================================================");
+    println!();
+}
+
 fn print_cron_started_banner(mode: &str, st: &ikb_core::runtime::RuntimeStatus, normalized: Option<&str>) {
     let running_text = if st.running { "执行中" } else { "待机" };
     println!();
@@ -137,7 +151,13 @@ fn main() {
     let config = Arc::new(tokio::sync::Mutex::new(cfg));
 
     if let Err(e) = ikb_core::runner::validate_module(&args.module) {
-        eprintln!("[ERR:参数错误] {}", e);
+        if args.module.trim() == "exportDomainSteamToTxt" {
+            eprintln!(
+                "[ERR:参数错误] -m exportDomainSteamToTxt 不是模块：请使用 -r exportDomainSteamToTxt 并可配合 -exportPath 指定导出目录"
+            );
+        } else {
+            eprintln!("[ERR:参数错误] {}", e);
+        }
         std::process::exit(2);
     }
 
@@ -176,6 +196,28 @@ async fn run(
     };
 
     match args.run_mode.as_str() {
+        "exportDomainSteamToTxt" | "exportDomainStreamToTxt" => {
+            let started_at = Instant::now();
+            println!(
+                "[MODE:运行模式] exportDomainSteamToTxt - exporting stream-domain lists to TXT"
+            );
+
+            let export_path = update_opts.export_path.trim().to_string();
+            if export_path.is_empty() {
+                eprintln!("[ERR:参数错误] exportDomainSteamToTxt requires -exportPath");
+                return 2;
+            }
+
+            if let Err(e) = run_export_stream_domain_to_txt(&config, &export_path).await {
+                eprintln!("[EXPORT:导出失败] {}", e);
+                return 1;
+            }
+
+            let conf_path = display_conf_path(&config_path);
+            print_export_done_banner(&export_path, &conf_path, started_at.elapsed());
+            0
+        }
+
         "cron" => {
             println!("[MODE:运行模式] Cron mode - executing once then entering scheduled mode");
 
@@ -497,6 +539,23 @@ async fn run_update_once(
     // Avoid holding config lock across awaits: clone config for this run.
     let cfg_snapshot = { cfg.lock().await.clone() };
     ikb_core::update::run_update_by_module(&cfg_snapshot, cli_login, module, update_opts, sink)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+async fn run_export_stream_domain_to_txt(
+    cfg: &Arc<tokio::sync::Mutex<ikb_core::config::Config>>,
+    export_path: &str,
+) -> Result<(), String> {
+    let use_color = std::io::stdout().is_terminal();
+    let renderer = ikb_core::logger::Renderer::new(use_color);
+    let sink: ikb_core::logger::LogSink = std::sync::Arc::new(move |rec| {
+        println!("{}", renderer.render(&rec));
+    });
+
+    // Avoid holding config lock across awaits.
+    let cfg_snapshot = { cfg.lock().await.clone() };
+    ikb_core::update::export_stream_domain_to_txt(&cfg_snapshot, export_path, sink)
         .await
         .map_err(|e| e.to_string())
 }

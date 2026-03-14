@@ -105,6 +105,96 @@ pub async fn run_update_by_module(
     Ok(())
 }
 
+/// Export stream-domain rule lists into plain TXT files.
+/// 将 stream-domain 规则列表导出为纯文本 TXT（便于调试/人工导入）。
+pub async fn export_stream_domain_to_txt(
+    cfg: &Config,
+    export_path: &str,
+    sink: LogSink,
+) -> Result<(), UpdateError> {
+    let export_path = export_path.trim();
+    if export_path.is_empty() {
+        return Err(UpdateError::Download("exportPath is empty".to_string()));
+    }
+
+    let domain = Logger::new("DOMAIN:域名分流", Arc::clone(&sink));
+    domain.info(
+        "EXPORT:开始导出",
+        format!(
+            "exportPath='{}' items={} (stream-domain)",
+            export_path,
+            cfg.stream_domain.len()
+        ),
+    );
+
+    if cfg.stream_domain.is_empty() {
+        domain.warn("EXPORT:无可导出项", "stream-domain is empty".to_string());
+        return Ok(());
+    }
+
+    let mut failed = 0usize;
+    for item in &cfg.stream_domain {
+        let iface = item.interface.trim();
+        let tag = item.tag.trim();
+        let url = item.url.trim();
+        if url.is_empty() {
+            failed += 1;
+            domain.error(
+                "EXPORT:导出失败",
+                format!("interface='{}' tag='{}' error=empty_url", iface, tag),
+            );
+            continue;
+        }
+
+        domain.info(
+            "EXPORT:开始导出",
+            format!("interface='{}' tag='{}' url='{}'", iface, tag, url),
+        );
+        let body = match http_get(cfg, &sink, url).await {
+            Ok(v) => v,
+            Err(e) => {
+                failed += 1;
+                domain.error(
+                    "EXPORT:导出失败",
+                    format!("interface='{}' tag='{}' error={}", iface, tag, e),
+                );
+                continue;
+            }
+        };
+
+        let domains = filter_domains(split_lines(&body));
+        match export_stream_domains(export_path, iface, tag, &domains) {
+            Ok(p) => {
+                domain.success(
+                    "EXPORT:导出成功",
+                    format!("domains={} path='{}'", domains.len(), p.to_string_lossy()),
+                );
+            }
+            Err(e) => {
+                failed += 1;
+                domain.error(
+                    "EXPORT:导出失败",
+                    format!("interface='{}' tag='{}' error={}", iface, tag, e),
+                );
+            }
+        }
+    }
+
+    if failed > 0 {
+        domain.error(
+            "EXPORT:导出完成",
+            format!("failed={}", failed),
+        );
+        return Err(UpdateError::Download(format!(
+            "export finished with {} failures",
+            failed
+        )));
+    }
+
+    domain.success("EXPORT:导出完成", "OK".to_string());
+    Ok(())
+}
+
 async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
     let isp = Logger::new("ISP:运营商分流", Arc::clone(sink));
     let domain = Logger::new("DOMAIN:域名分流", Arc::clone(sink));

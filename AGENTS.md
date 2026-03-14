@@ -6,10 +6,10 @@
 
 ## 当前目录结构
 
-- `core/`：核心业务库（配置、iKuai API、更新流程、运行时、日志）
-- `cli/`：CLI + Web 模式
-- `app/frontend/`：Bun + Astro 单页前端
-- `app/src-tauri/`：Tauri v2 后端
+- `crates/core/`：核心业务库（配置、iKuai API、更新流程、运行时、日志）
+- `apps/cli/`：CLI + Web 模式
+- `frontends/app/`：Bun + Astro 单页前端
+- `apps/gui/`：Tauri v2 后端
 - `config.yml`：示例配置
 - `golang_archive/`：Go 版本归档，除非用户明确要求，否则不要把新功能继续做进归档目录
 
@@ -40,9 +40,9 @@
 
 - 新增或修改配置项时，至少同步更新：
   - `config.yml`
-  - `core/src/config.rs`
-  - `app/frontend/src/lib/config_model.ts`
-  - `app/frontend` 相关表单 / YAML AST / 保存逻辑
+  - `crates/core/src/config.rs`
+  - `frontends/app/src/lib/config_model.ts`
+  - `frontends/app` 相关表单 / YAML AST / 保存逻辑
 - 统一使用 `tag` 字段作为用户标识，不再新增 `name` 字段语义
 
 ### 5. 更新与安全策略
@@ -56,7 +56,7 @@
 ## 技术约束
 
 - CLI 是完整功能本体，GUI/WebUI 只是可视化入口
-- WebUI 与 Tauri 共用 `app/frontend/` 这一套 Astro 单页
+- WebUI 与 Tauri 共用 `frontends/app/` 这一套 Astro 单页
 - Tauri IPC 语义需要和 Web API 对齐
 - 前端禁止 `as any` / `@ts-ignore` 绕过类型系统
 - 核心逻辑避免无意义 clone、unwrap 和隐式 panic

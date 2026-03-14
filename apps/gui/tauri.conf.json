@@ -4,10 +4,10 @@
     "version": "0.0.1",
     "identifier": "com.joyanhui.ikuai-bypass",
     "build": {
-        "beforeDevCommand": "cd ../frontend && bun run dev",
-        "beforeBuildCommand": "cd ../frontend && bun run build",
+        "beforeDevCommand": "cd ../../frontends/app && bun run dev",
+        "beforeBuildCommand": "cd ../../frontends/app && bun run build",
         "devUrl": "http://localhost:4321",
-        "frontendDist": "../frontend/dist"
+        "frontendDist": "../../frontends/app/dist"
     },
     "app": {
         "withGlobalTauri": true,

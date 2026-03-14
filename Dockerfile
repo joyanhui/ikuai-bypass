@@ -9,7 +9,7 @@ WORKDIR /opt/ikuai-bypass
 COPY docker/bin /opt/ikuai-bypass/docker/bin
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 COPY config.yml /opt/ikuai-bypass/config.yml
-COPY docker/app/frontend/dist /opt/ikuai-bypass/app/frontend/dist
+COPY docker/frontends/app/dist /opt/ikuai-bypass/frontends/app/dist
 
 RUN mkdir -p /etc/ikuai-bypass \
     && case "${TARGETPLATFORM}" in \

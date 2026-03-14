@@ -71,14 +71,8 @@ struct AppState {
 #[derive(Debug, Serialize)]
 struct ConfigResponse {
     #[serde(flatten)]
-    config: serde_json::Value,
+    meta: ikb_core::app::ConfigMeta,
     exe_path: String,
-    conf_path: String,
-    raw_yaml: String,
-    top_level_comments: std::collections::BTreeMap<String, String>,
-    item_comments: std::collections::BTreeMap<String, String>,
-    webui_comments: std::collections::BTreeMap<String, String>,
-    max_number_of_one_records_comments: std::collections::BTreeMap<String, String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,26 +86,6 @@ struct SaveRequest {
 struct SaveRawYamlRequest {
     yaml_text: String,
     with_comments: bool,
-}
-
-#[derive(Debug, Serialize)]
-struct TestResult {
-    ok: bool,
-    message: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct TestIkuaiLoginRequest {
-    #[serde(alias = "baseUrl")]
-    base_url: String,
-    username: String,
-    password: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct TestGithubProxyRequest {
-    #[serde(alias = "githubProxy")]
-    github_proxy: String,
 }
 
 pub async fn start_web_server(
@@ -180,6 +154,9 @@ fn find_frontend_dist_dir() -> Option<std::path::PathBuf> {
 
     let mut candidates: Vec<std::path::PathBuf> = Vec::new();
     if let Ok(cwd) = std::env::current_dir() {
+        candidates.push(cwd.join("frontends/app/dist"));
+        candidates.push(cwd.join("./frontends/app/dist"));
+        // Legacy paths (pre-restructure)
         candidates.push(cwd.join("app/frontend/dist"));
         candidates.push(cwd.join("./app/frontend/dist"));
     }
@@ -187,14 +164,21 @@ fn find_frontend_dist_dir() -> Option<std::path::PathBuf> {
     if let Ok(exe) = std::env::current_exe()
         && let Some(exe_dir) = exe.parent()
     {
+        candidates.push(exe_dir.join("../frontends/app/dist"));
+        candidates.push(exe_dir.join("../../frontends/app/dist"));
+        // Legacy paths (pre-restructure)
         candidates.push(exe_dir.join("../app/frontend/dist"));
         candidates.push(exe_dir.join("../../app/frontend/dist"));
 
         for ancestor in exe_dir.ancestors().take(8) {
+            candidates.push(ancestor.join("frontends/app/dist"));
             candidates.push(ancestor.join("app/frontend/dist"));
         }
     }
 
+    candidates.push(std::path::PathBuf::from("frontends/app/dist"));
+    candidates.push(std::path::PathBuf::from("./frontends/app/dist"));
+    // Legacy paths (pre-restructure)
     candidates.push(std::path::PathBuf::from("app/frontend/dist"));
     candidates.push(std::path::PathBuf::from("./app/frontend/dist"));
 
@@ -211,37 +195,13 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
         .and_then(|p| p.to_str().map(|s| s.to_string()))
         .unwrap_or_default();
 
-    let conf_path = if state.config_path.is_absolute() {
-        state.config_path.to_path_buf()
-    } else {
-        std::env::current_dir()
-            .unwrap_or_else(|_| std::path::PathBuf::from("."))
-            .join(&state.config_path)
-    };
-    let conf_path = conf_path.to_string_lossy().to_string();
-
-    let cfg_guard = state.config.lock().await;
-    let config = match serde_json::to_value(&*cfg_guard) {
+    // Avoid holding config lock while reading config file.
+    let cfg_snapshot = { state.config.lock().await.clone() };
+    let meta = match ikb_core::app::build_config_meta(&cfg_snapshot, &state.config_path) {
         Ok(v) => v,
-        Err(e) => {
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Failed to encode config: {}", e),
-            )
-                .into_response();
-        }
+        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e).into_response(),
     };
-    let raw_yaml = std::fs::read_to_string(&state.config_path).unwrap_or_default();
-    let resp = ConfigResponse {
-        config,
-        exe_path,
-        conf_path,
-        raw_yaml,
-        top_level_comments: ikb_core::config::top_level_comments(),
-        item_comments: ikb_core::config::item_comments(),
-        webui_comments: ikb_core::config::webui_comments(),
-        max_number_of_one_records_comments: ikb_core::config::max_number_of_one_records_comments(),
-    };
+    let resp = ConfigResponse { meta, exe_path };
     // 返回内容包含密码等敏感信息，避免被浏览器/代理缓存。
     // Response contains secrets; disable caching.
     (
@@ -313,131 +273,20 @@ async fn api_save_raw_yaml(
         .into_response()
 }
 
-fn normalize_base_url(input: &str) -> String {
-    let raw = input.trim();
-    if raw.is_empty() {
-        return String::new();
-    }
-    if raw.contains("://") {
-        return raw.to_string();
-    }
-    format!("http://{}", raw)
-}
-
-fn normalize_url_prefix(input: &str) -> String {
-    let raw = input.trim();
-    if raw.is_empty() {
-        return String::new();
-    }
-    if raw.contains("://") {
-        return raw.to_string();
-    }
-    format!("https://{}", raw)
-}
-
 async fn api_test_ikuai_login(
     State(_state): State<Arc<AppState>>,
-    Json(req): Json<TestIkuaiLoginRequest>,
+    Json(req): Json<ikb_core::app::TestIkuaiLoginRequest>,
 ) -> impl IntoResponse {
-    let base_url = normalize_base_url(&req.base_url);
-    let username = req.username.trim().to_string();
-    if base_url.is_empty() {
-        return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty iKuai URL".to_string() }));
-    }
-    if username.is_empty() {
-        return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty username".to_string() }));
-    }
-
-    let api = match ikb_core::ikuai::IKuaiClient::new(base_url) {
-        Ok(v) => v,
-        Err(e) => {
-            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
-        }
-    };
-
-    match api.login(&username, &req.password).await {
-        Ok(()) => (StatusCode::OK, Json(TestResult { ok: true, message: "OK".to_string() })),
-        Err(e) => (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() })),
-    }
+    let r = ikb_core::app::test_ikuai_login(req).await;
+    (StatusCode::OK, Json(r))
 }
 
 async fn api_test_github_proxy(
     State(_state): State<Arc<AppState>>,
-    Json(req): Json<TestGithubProxyRequest>,
+    Json(req): Json<ikb_core::app::TestGithubProxyRequest>,
 ) -> impl IntoResponse {
-    const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
-
-    let proxy = normalize_url_prefix(&req.github_proxy);
-    if proxy.is_empty() {
-        return (StatusCode::OK, Json(TestResult { ok: false, message: "Empty github proxy".to_string() }));
-    }
-
-    let final_url = if proxy.ends_with('/') {
-        format!("{}{}", proxy, URL)
-    } else {
-        format!("{}/{}", proxy, URL)
-    };
-
-    let client = match reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        .timeout(std::time::Duration::from_secs(15))
-        .build()
-    {
-        Ok(v) => v,
-        Err(e) => {
-            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
-        }
-    };
-
-    let resp = match client.get(&final_url).send().await {
-        Ok(v) => v,
-        Err(e) => {
-            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
-        }
-    };
-    let status = resp.status();
-    if !status.is_success() {
-        let body = resp.text().await.unwrap_or_default();
-        let trimmed = body.trim();
-        let hint = if trimmed.is_empty() {
-            String::new()
-        } else {
-            let mut out = trimmed.chars().take(200).collect::<String>();
-            if trimmed.chars().count() > 200 {
-                out.push_str("...");
-            }
-            format!(" body='{}'", out.replace('\n', " "))
-        };
-        return (StatusCode::OK, Json(TestResult { ok: false, message: format!("HTTP {} url='{}'{}", status, final_url, hint) }));
-    }
-    let text = match resp.text().await {
-        Ok(v) => v,
-        Err(e) => {
-            return (StatusCode::OK, Json(TestResult { ok: false, message: e.to_string() }));
-        }
-    };
-    let trimmed = text.trim();
-    if trimmed.is_empty() {
-        return (
-            StatusCode::OK,
-            Json(TestResult { ok: false, message: format!("Empty response url='{}'", final_url) }),
-        );
-    }
-    let lower = trimmed.to_ascii_lowercase();
-    if lower.contains("<html") || lower.contains("<!doctype") {
-        let mut out = trimmed.chars().take(200).collect::<String>();
-        if trimmed.chars().count() > 200 {
-            out.push_str("...");
-        }
-        return (
-            StatusCode::OK,
-            Json(TestResult {
-                ok: false,
-                message: format!("Unexpected HTML url='{}' body='{}'", final_url, out.replace('\n', " ")),
-            }),
-        );
-    }
-    (StatusCode::OK, Json(TestResult { ok: true, message: format!("OK url='{}'", final_url) }))
+    let r = ikb_core::app::test_github_proxy(req).await;
+    (StatusCode::OK, Json(r))
 }
 
 async fn api_runtime_status(State(state): State<Arc<AppState>>) -> impl IntoResponse {
@@ -521,47 +370,10 @@ async fn api_runtime_clean(
     // Avoid holding config lock while doing network requests.
     let cfg_snapshot = { state.config.lock().await.clone() };
     let cli_login = state.cli_login.to_string();
-    match run_clean_with_cli_login(&cfg_snapshot, &cli_login, req.clean_tag).await {
-        Ok(_) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
-        Err(e) => (StatusCode::BAD_REQUEST, e).into_response(),
+    match ikb_core::app::run_clean(&cfg_snapshot, &cli_login, &req.clean_tag).await {
+        Ok(()) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
     }
-}
-
-async fn run_clean_with_cli_login(
-    config: &ikb_core::config::Config,
-    cli_login: &str,
-    clean_tag: String,
-) -> Result<(), String> {
-    let tag = clean_tag.trim().to_string();
-    if tag.is_empty() {
-        return Err("Clean mode requires clean_tag".to_string());
-    }
-
-    let params = ikb_core::session::resolve_login_params(config, cli_login)
-        .map_err(|_| "Invalid login parameters".to_string())?;
-    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string())
-        .map_err(|e| e.to_string())?;
-    api.login(&params.username, &params.password)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    ikb_core::ikuai::custom_isp::del_custom_isp_all(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::stream_domain::del_stream_domain_all(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::ip_group::del_ikuai_bypass_ip_group(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::ipv6_group::del_ikuai_bypass_ipv6_group(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::stream_ipport::del_ikuai_bypass_stream_ipport(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
 }
 
 async fn api_runtime_logs(State(state): State<Arc<AppState>>, req: axum::http::Request<axum::body::Body>) -> Response {

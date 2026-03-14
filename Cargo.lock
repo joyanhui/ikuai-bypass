@@ -1908,7 +1908,6 @@ name = "ikb-app"
 version = "4.4.100-alpha5"
 dependencies = [
  "ikb-core",
- "reqwest 0.12.28",
  "serde",
  "serde_json",
  "tauri",
@@ -1931,7 +1930,6 @@ dependencies = [
  "futures-core",
  "ikb-core",
  "regex",
- "reqwest 0.12.28",
  "serde",
  "serde_json",
  "tokio",

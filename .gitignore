@@ -5,6 +5,8 @@
 **/node_modules/
 /.astro/
 **/.astro/
+/_astro/
+**/_astro/
 /.bun-install/
 **/.bun-install/
 /.bun-tmp/
@@ -29,5 +31,7 @@ GEMINI.md
 *.profraw
 /tmp/
 *.log
-app/src-tauri/gen/
-app/frontend/src/env.d.ts
+apps/gui/gen/
+frontends/app/src/env.d.ts
+**/dist/
+/dist/

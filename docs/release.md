@@ -109,7 +109,7 @@ Docker tag 策略：
 workflow 已启用：
 
 - `Swatinem/rust-cache`：Rust 依赖与 `target`
-- `actions/cache`：Bun 包缓存与 `app/frontend/node_modules`
+- `actions/cache`：Bun 包缓存与 `frontends/app/node_modules`
 - Docker Buildx 的 `type=gha` 层缓存
 
 ## UPX
@@ -138,7 +138,7 @@ CLI 发布默认强制尝试使用 `UPX -9` 压缩：
 构建前端：
 
 ```bash
-cd app/frontend
+cd frontends/app
 bun install
 bun run build
 ```
@@ -152,5 +152,5 @@ cargo build --release -p ikb-cli
 构建 GUI：
 
 ```bash
-cargo tauri build --manifest-path app/src-tauri/Cargo.toml
+cargo tauri build --manifest-path apps/gui/Cargo.toml
 ```

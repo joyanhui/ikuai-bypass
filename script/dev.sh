@@ -19,12 +19,12 @@ cli_dev() {
 
 
 frontend_dev() {
-    cd "${PROJECT_ROOT}/app/frontend"
+    cd "${PROJECT_ROOT}/frontends/app"
     bun run dev
 }
 
 frontend_build() {
-    cd "${PROJECT_ROOT}/app/frontend"
+    cd "${PROJECT_ROOT}/frontends/app"
     bun run build
 }
 
@@ -33,9 +33,9 @@ gui_dev() {
         shift
     fi
 
-    cd "${PROJECT_ROOT}/app/frontend"
+    cd "${PROJECT_ROOT}/frontends/app"
     local log_file
-    log_file="${PROJECT_ROOT}/app/frontend/.astro-dev.log"
+    log_file="${PROJECT_ROOT}/frontends/app/.astro-dev.log"
     : > "${log_file}"
     bun run dev >"${log_file}" 2>&1 &
     local fe_pid=$!
@@ -63,8 +63,8 @@ gui_dev() {
         exit 1
     fi
 
-    cd "${PROJECT_ROOT}"
-    bunx tauri dev --config app/src-tauri/tauri.conf.json --config "{\"build\":{\"beforeDevCommand\":\"\",\"devUrl\":\"http://localhost:${port}\"}}" "$@"
+    cd "${PROJECT_ROOT}/apps/gui"
+    bunx tauri dev --config tauri.conf.json --config "{\"build\":{\"beforeDevCommand\":\"\",\"devUrl\":\"http://localhost:${port}\"}}" "$@"
 
     kill "${fe_pid}" 2>/dev/null || true
 }

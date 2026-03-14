@@ -1,4 +1,5 @@
 pub mod config;
+pub mod app;
 pub mod ikuai;
 pub mod logger;
 pub mod paths;

@@ -395,46 +395,70 @@ async fn run(
             // 避免在网络请求期间持有配置锁。
             // Avoid holding config lock while doing network requests.
             let cfg_snapshot = { config.lock().await.clone() };
-            let params = match ikb_core::session::resolve_login_params(&cfg_snapshot, &args.ikuai_login_info) {
-                Ok(p) => p,
-                Err(_) => {
-                    eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
-                    return 2;
-                }
-            };
-
-            let api = match ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string()) {
-                Ok(v) => v,
-                Err(e) => {
-                    eprintln!("[LOGIN:登录失败] Failed to build iKuai client: {}", e);
-                    return 1;
-                }
-            };
-            if let Err(e) = api.login(&params.username, &params.password).await {
-                eprintln!("[LOGIN:登录失败] Failed to login to iKuai: {}", e);
-                return 1;
-            }
-
             let clean_tag = args.clean_tag.to_string();
-            if let Err(e) = ikb_core::ikuai::custom_isp::del_custom_isp_all(&api, &clean_tag).await {
-                eprintln!("[CLEAN:清理失败] Failed to remove old custom ISP for tag {}: {}", clean_tag, e);
-                return 1;
-            }
-            if let Err(e) = ikb_core::ikuai::stream_domain::del_stream_domain_all(&api, &clean_tag).await {
-                eprintln!("[CLEAN:清理失败] Failed to remove old domain streaming for tag {}: {}", clean_tag, e);
-                return 1;
-            }
-            if let Err(e) = ikb_core::ikuai::ip_group::del_ikuai_bypass_ip_group(&api, &clean_tag).await {
-                eprintln!("[CLEAN:清理失败] Failed to remove old IP group for tag {}: {}", clean_tag, e);
-                return 1;
-            }
-            if let Err(e) = ikb_core::ikuai::ipv6_group::del_ikuai_bypass_ipv6_group(&api, &clean_tag).await {
-                eprintln!("[CLEAN:清理失败] Failed to remove old IPv6 group for tag {}: {}", clean_tag, e);
-                return 1;
-            }
-            if let Err(e) = ikb_core::ikuai::stream_ipport::del_ikuai_bypass_stream_ipport(&api, &clean_tag).await {
-                eprintln!("[CLEAN:清理失败] Failed to remove old port streaming for tag {}: {}", clean_tag, e);
-                return 1;
+
+            if let Err(e) = ikb_core::app::run_clean(&cfg_snapshot, &args.ikuai_login_info, &clean_tag).await {
+                use ikb_core::app::CleanError;
+                use ikb_core::session::LoginParamsError;
+
+                match e {
+                    CleanError::LoginParams(LoginParamsError::CliFormat) => {
+                        eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
+                        return 2;
+                    }
+                    CleanError::LoginParams(other) => {
+                        eprintln!("[AUTH:登录认证] {}", other);
+                        return 2;
+                    }
+                    CleanError::MissingTag => {
+                        eprintln!("[ERR:参数错误] Clean mode requires -tag (or cleanAll)");
+                        return 2;
+                    }
+                    CleanError::Step { step, source } => {
+                        match step {
+                            "init_client" => {
+                                eprintln!("[LOGIN:登录失败] Failed to build iKuai client: {}", source);
+                            }
+                            "login" => {
+                                eprintln!("[LOGIN:登录失败] Failed to login to iKuai: {}", source);
+                            }
+                            "custom_isp" => {
+                                eprintln!(
+                                    "[CLEAN:清理失败] Failed to remove old custom ISP for tag {}: {}",
+                                    clean_tag, source
+                                );
+                            }
+                            "stream_domain" => {
+                                eprintln!(
+                                    "[CLEAN:清理失败] Failed to remove old domain streaming for tag {}: {}",
+                                    clean_tag, source
+                                );
+                            }
+                            "ip_group" => {
+                                eprintln!(
+                                    "[CLEAN:清理失败] Failed to remove old IP group for tag {}: {}",
+                                    clean_tag, source
+                                );
+                            }
+                            "ipv6_group" => {
+                                eprintln!(
+                                    "[CLEAN:清理失败] Failed to remove old IPv6 group for tag {}: {}",
+                                    clean_tag, source
+                                );
+                            }
+                            "stream_ipport" => {
+                                eprintln!(
+                                    "[CLEAN:清理失败] Failed to remove old port streaming for tag {}: {}",
+                                    clean_tag, source
+                                );
+                            }
+                            _ => {
+                                eprintln!("[CLEAN:清理失败] clean step {} failed: {}", step, source);
+                            }
+                        }
+                        return 1;
+                    }
+                }
             }
 
             let conf_path = display_conf_path(&config_path);

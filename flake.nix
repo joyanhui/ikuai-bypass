@@ -7,7 +7,11 @@
   };
 
   outputs =
-    { self, nixpkgs, flake-utils }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -113,10 +117,10 @@
             iKuai Bypass dev shell ready (Rust 主线版本)
 
             项目结构:
-              core/           - 核心业务库
-              cli/            - CLI + Web 模式
-              app/frontend/   - Bun + Astro 前端
-              app/src-tauri/  - Tauri v2 GUI
+              crates/core/     - 核心业务库
+              apps/cli/        - CLI + Web 模式
+              frontends/app/   - Bun + Astro 前端
+              apps/gui/        - Tauri v2 GUI
 
             首次使用:
               rustup default stable

@@ -11,192 +11,27 @@ async fn get_config(state: tauri::State<'_, AppState>) -> Result<serde_json::Val
     serde_json::to_value(&*cfg).map_err(|e| format!("Failed to encode config: {}", e))
 }
 
-#[derive(serde::Serialize)]
-struct ConfigMeta {
-    #[serde(flatten)]
-    config: serde_json::Value,
-    conf_path: String,
-    raw_yaml: String,
-    top_level_comments: std::collections::BTreeMap<String, String>,
-    item_comments: std::collections::BTreeMap<String, String>,
-    webui_comments: std::collections::BTreeMap<String, String>,
-    max_number_of_one_records_comments: std::collections::BTreeMap<String, String>,
-}
-
-#[derive(serde::Serialize)]
-struct TestResult {
-    ok: bool,
-    message: String,
-}
-
-#[derive(serde::Deserialize)]
-struct TestIkuaiLoginReq {
-    #[serde(alias = "baseUrl")]
-    base_url: String,
-    username: String,
-    password: String,
-}
-
-#[derive(serde::Deserialize)]
-struct TestGithubProxyReq {
-    #[serde(alias = "githubProxy")]
-    github_proxy: String,
-}
-
-fn normalize_base_url(input: &str) -> String {
-    let raw = input.trim();
-    if raw.is_empty() {
-        return String::new();
-    }
-    if raw.contains("://") {
-        return raw.to_string();
-    }
-    format!("http://{}", raw)
-}
-
-fn normalize_url_prefix(input: &str) -> String {
-    let raw = input.trim();
-    if raw.is_empty() {
-        return String::new();
-    }
-    if raw.contains("://") {
-        return raw.to_string();
-    }
-    format!("https://{}", raw)
-}
+type ConfigMeta = ikb_core::app::ConfigMeta;
+type TestResult = ikb_core::app::TestResult;
+type TestIkuaiLoginReq = ikb_core::app::TestIkuaiLoginRequest;
+type TestGithubProxyReq = ikb_core::app::TestGithubProxyRequest;
 
 #[tauri::command]
 async fn test_ikuai_login(req: TestIkuaiLoginReq) -> Result<TestResult, String> {
-    let base_url = normalize_base_url(&req.base_url);
-    let username = req.username.trim().to_string();
-    if base_url.is_empty() {
-        return Ok(TestResult {
-            ok: false,
-            message: "Empty iKuai URL".to_string(),
-        });
-    }
-    if username.is_empty() {
-        return Ok(TestResult {
-            ok: false,
-            message: "Empty username".to_string(),
-        });
-    }
-
-    let api = match ikb_core::ikuai::IKuaiClient::new(base_url) {
-        Ok(v) => v,
-        Err(e) => {
-            return Ok(TestResult {
-                ok: false,
-                message: e.to_string(),
-            })
-        }
-    };
-
-    match api.login(&username, &req.password).await {
-        Ok(()) => Ok(TestResult {
-            ok: true,
-            message: "OK".to_string(),
-        }),
-        Err(e) => Ok(TestResult {
-            ok: false,
-            message: e.to_string(),
-        }),
-    }
+    Ok(ikb_core::app::test_ikuai_login(req).await)
 }
 
 #[tauri::command]
 async fn test_github_proxy(req: TestGithubProxyReq) -> Result<TestResult, String> {
-    const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
-
-    let proxy = normalize_url_prefix(&req.github_proxy);
-    if proxy.is_empty() {
-        return Ok(TestResult {
-            ok: false,
-            message: "Empty github proxy".to_string(),
-        });
-    }
-
-    let final_url = if proxy.ends_with('/') { format!("{}{}", proxy, URL) } else { format!("{}/{}", proxy, URL) };
-
-    let client = reqwest::Client::builder()
-        // 部分 ghproxy 站点会对非常规 UA 做限制。
-        // Some ghproxy sites may restrict uncommon user agents.
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        .timeout(std::time::Duration::from_secs(15))
-        .build()
-        .map_err(|e| e.to_string())?;
-    let resp = client.get(&final_url).send().await.map_err(|e| e.to_string())?;
-    let status = resp.status();
-    if !status.is_success() {
-        let body = resp.text().await.unwrap_or_default();
-        let trimmed = body.trim();
-        let hint = if trimmed.is_empty() {
-            String::new()
-        } else {
-            let mut out = trimmed.chars().take(200).collect::<String>();
-            if trimmed.chars().count() > 200 {
-                out.push_str("...");
-            }
-            format!(" body='{}'", out.replace('\n', " "))
-        };
-        return Ok(TestResult {
-            ok: false,
-            message: format!("HTTP {} url='{}'{}", status, final_url, hint),
-        });
-    }
-    let text = resp.text().await.map_err(|e| e.to_string())?;
-    let trimmed = text.trim();
-    if trimmed.is_empty() {
-        return Ok(TestResult {
-            ok: false,
-            message: format!("Empty response url='{}'", final_url),
-        });
-    }
-    let lower = trimmed.to_ascii_lowercase();
-    if lower.contains("<html") || lower.contains("<!doctype") {
-        let mut out = trimmed.chars().take(200).collect::<String>();
-        if trimmed.chars().count() > 200 {
-            out.push_str("...");
-        }
-        return Ok(TestResult {
-            ok: false,
-            message: format!(
-                "Unexpected HTML url='{}' body='{}'",
-                final_url,
-                out.replace('\n', " ")
-            ),
-        });
-    }
-    Ok(TestResult {
-        ok: true,
-        message: format!("OK url='{}'", final_url),
-    })
+    Ok(ikb_core::app::test_github_proxy(req).await)
 }
 
 #[tauri::command]
 async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta, String> {
-    // 避免在 await 中持有锁，防止移动端偶现卡死/死锁。
     // Avoid holding locks across await to prevent deadlocks on mobile.
-    let config = {
-        let cfg_guard = state.config.lock().await;
-        serde_json::to_value(&*cfg_guard)
-            .map_err(|e| format!("Failed to encode config: {}", e))?
-    };
-
-    let (conf_path, raw_yaml) = {
-        let path = state.config_path.lock().await;
-        let raw_yaml = std::fs::read_to_string(&*path).unwrap_or_default();
-        (path.to_string_lossy().to_string(), raw_yaml)
-    };
-    Ok(ConfigMeta {
-        config,
-        conf_path,
-        raw_yaml,
-        top_level_comments: ikb_core::config::top_level_comments(),
-        item_comments: ikb_core::config::item_comments(),
-        webui_comments: ikb_core::config::webui_comments(),
-        max_number_of_one_records_comments: ikb_core::config::max_number_of_one_records_comments(),
-    })
+    let cfg_snapshot = { state.config.lock().await.clone() };
+    let path = { state.config_path.lock().await.clone() };
+    ikb_core::app::build_config_meta(&cfg_snapshot, &path)
 }
 
 #[tauri::command]
@@ -286,36 +121,9 @@ async fn runtime_stop(state: tauri::State<'_, AppState>) -> Result<(), String> {
 }
 
 async fn run_clean(config: &Config, clean_tag: String) -> Result<(), String> {
-    let tag = clean_tag.trim().to_string();
-    if tag.is_empty() {
-        return Err("Clean mode requires clean_tag".to_string());
-    }
-
-    let params = ikb_core::session::resolve_login_params(config, "")
-        .map_err(|_| "Invalid login parameters".to_string())?;
-    let api = ikb_core::ikuai::IKuaiClient::new(params.base_url.to_string())
-        .map_err(|e| e.to_string())?;
-    api.login(&params.username, &params.password)
+    ikb_core::app::run_clean(config, "", &clean_tag)
         .await
-        .map_err(|e| e.to_string())?;
-
-    ikb_core::ikuai::custom_isp::del_custom_isp_all(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::stream_domain::del_stream_domain_all(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::ip_group::del_ikuai_bypass_ip_group(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::ipv6_group::del_ikuai_bypass_ipv6_group(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-    ikb_core::ikuai::stream_ipport::del_ikuai_bypass_stream_ipport(&api, &tag)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    Ok(())
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -339,33 +147,7 @@ async fn runtime_tail_logs(
 
 #[tauri::command]
 async fn fetch_remote_config(url: String, github_proxy: String) -> Result<String, String> {
-    let url = url.trim();
-    if url.is_empty() {
-        return Err("Remote URL is empty".to_string());
-    }
-    let mut final_url = url.to_string();
-    let proxy = github_proxy.trim();
-    if !proxy.is_empty()
-        && (url.starts_with("https://raw.githubusercontent.com/") || url.starts_with("https://github.com/"))
-    {
-        final_url = if proxy.ends_with('/') {
-            format!("{}{}", proxy, url)
-        } else {
-            format!("{}/{}", proxy, url)
-        };
-    }
-
-    let client = reqwest::Client::builder()
-        .user_agent("ikb-app")
-        .timeout(std::time::Duration::from_secs(15))
-        .build()
-        .map_err(|e| e.to_string())?;
-    let resp = client.get(final_url).send().await.map_err(|e| e.to_string())?;
-    let status = resp.status();
-    if !status.is_success() {
-        return Err(format!("HTTP {}", status));
-    }
-    resp.text().await.map_err(|e| e.to_string())
+    ikb_core::app::fetch_remote_config(&url, &github_proxy).await
 }
 
 pub struct AppState {

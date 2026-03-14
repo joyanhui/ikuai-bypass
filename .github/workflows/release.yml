@@ -311,26 +311,26 @@ jobs:
         with:
           path: |
             ~/.bun/install/cache
-            app/frontend/node_modules
-          key: frontend-bun-${{ hashFiles('app/frontend/bun.lock', 'app/frontend/package.json') }}
+            frontends/app/node_modules
+          key: frontend-bun-${{ hashFiles('frontends/app/bun.lock', 'frontends/app/package.json') }}
           restore-keys: |
             frontend-bun-
 
       - name: Install frontend dependencies
-        working-directory: app/frontend
+        working-directory: frontends/app
         run: bun install --frozen-lockfile
 
       - name: Build frontend dist
-        working-directory: app/frontend
+        working-directory: frontends/app
         run: bun run build
 
       - name: Verify frontend dist
-        run: test -f app/frontend/dist/index.html
+        run: test -f frontends/app/dist/index.html
 
       - uses: actions/upload-artifact@v6
         with:
           name: frontend-dist
-          path: app/frontend/dist
+          path: frontends/app/dist
 
   build-tauri-icons:
     name: Build Tauri Icons
@@ -354,13 +354,13 @@ jobs:
           tool: tauri-cli@2
 
       - name: Generate Tauri icons
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         run: cargo tauri icon icons/icon.png
 
       - uses: actions/upload-artifact@v6
         with:
           name: tauri-icons
-          path: app/src-tauri/icons
+          path: apps/gui/icons
 
   build-cli:
     name: CLI ${{ matrix.label }}
@@ -664,12 +664,12 @@ jobs:
       - uses: actions/download-artifact@v6
         with:
           name: frontend-dist
-          path: app/frontend/dist
+          path: frontends/app/dist
 
       - uses: actions/download-artifact@v6
         with:
           name: tauri-icons
-          path: app/src-tauri/icons
+          path: apps/gui/icons
 
       - name: Ensure bash on Windows
         if: runner.os == 'Windows'
@@ -705,7 +705,7 @@ jobs:
           tool: tauri-cli@2
 
       - name: Prepare Tauri CI config
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         env:
           BUNDLE_ACTIVE: ${{ matrix.bundle_active }}
@@ -721,7 +721,7 @@ jobs:
           build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-              build["frontendDist"] = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
+              build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
           bundle["active"] = os.environ.get("BUNDLE_ACTIVE", "true").lower() == "true"
           bundle["icon"] = ["icons/icon.png", "icons/icon.ico", "icons/icon.icns"]
@@ -729,7 +729,7 @@ jobs:
           PY
 
       - name: Build GUI bundle
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         env:
           TARGET: ${{ matrix.target }}
@@ -836,12 +836,12 @@ jobs:
       - uses: actions/download-artifact@v6
         with:
           name: frontend-dist
-          path: app/frontend/dist
+          path: frontends/app/dist
 
       - uses: actions/download-artifact@v6
         with:
           name: tauri-icons
-          path: app/src-tauri/icons
+          path: apps/gui/icons
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -868,7 +868,7 @@ jobs:
           tool: tauri-cli@2
 
       - name: Prepare Tauri Android config
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         run: |
           python <<'PY'
@@ -882,14 +882,14 @@ jobs:
           build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-              build["frontendDist"] = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
+              build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
           bundle["icon"] = ["icons/icon.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.android.conf.json").write_text(json.dumps(cfg))
           PY
 
       - name: Initialize Android project if missing
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         run: |
           if [ ! -d "gen/android" ]; then
@@ -897,7 +897,7 @@ jobs:
           fi
 
       - name: Build Android APK
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         run: |
           set -euo pipefail
@@ -923,9 +923,9 @@ jobs:
             exit 1
           fi
 
-          unsigned_apk="$(find app/src-tauri/gen/android/app/build/outputs/apk -type f -name '*universal*release*unsigned.apk' | head -1 || true)"
+          unsigned_apk="$(find apps/gui/gen/android/app/build/outputs/apk -type f -name '*universal*release*unsigned.apk' | head -1 || true)"
           if [ -z "${unsigned_apk}" ]; then
-            unsigned_apk="$(find app/src-tauri/gen/android/app/build/outputs/apk -type f -name '*release*unsigned.apk' | head -1 || true)"
+            unsigned_apk="$(find apps/gui/gen/android/app/build/outputs/apk -type f -name '*release*unsigned.apk' | head -1 || true)"
           fi
           test -n "${unsigned_apk}"
 
@@ -1048,12 +1048,12 @@ jobs:
       - uses: actions/download-artifact@v6
         with:
           name: frontend-dist
-          path: app/frontend/dist
+          path: frontends/app/dist
 
       - uses: actions/download-artifact@v6
         with:
           name: tauri-icons
-          path: app/src-tauri/icons
+          path: apps/gui/icons
 
       - name: Use preinstalled Xcode
         shell: bash
@@ -1085,7 +1085,7 @@ jobs:
           tool: tauri-cli@2
 
       - name: Prepare Tauri iOS config
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         run: |
           python <<'PY'
@@ -1099,7 +1099,7 @@ jobs:
           build["beforeBuildCommand"] = ""
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
           if workspace:
-              build["frontendDist"] = str(pathlib.Path(workspace) / "app" / "frontend" / "dist")
+              build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
           bundle_ios = bundle.setdefault("iOS", {})
           bundle_ios["developmentTeam"] = "0000000000"
@@ -1108,7 +1108,7 @@ jobs:
           PY
 
       - name: Recreate iOS project
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         run: |
           set -euo pipefail
@@ -1116,7 +1116,7 @@ jobs:
           cargo tauri ios init --ci
 
       - name: Build iOS artifact
-        working-directory: app/src-tauri
+        working-directory: apps/gui
         shell: bash
         run: |
           set -euo pipefail
@@ -1192,13 +1192,13 @@ jobs:
           source .github/scripts/arch-helpers.sh
           mkdir -p dist
           final_name="$(ikb_gui_native_name "${TARGET}" ".ipa")"
-          ipa="$(find app/src-tauri -type f -name '*.ipa' | head -1 || true)"
+          ipa="$(find apps/gui -type f -name '*.ipa' | head -1 || true)"
           if [ -n "${ipa}" ] && [ -f "${ipa}" ]; then
             cp "${ipa}" "dist/${final_name}"
             exit 0
           fi
 
-          app="$(find app/src-tauri -type d -name '*.app' | head -1 || true)"
+          app="$(find apps/gui -type d -name '*.app' | head -1 || true)"
           test -n "${app}"
           rm -rf /tmp/ios-payload
           mkdir -p /tmp/ios-payload/Payload
@@ -1218,7 +1218,7 @@ jobs:
           name: ios-build-logs-${{ matrix.label }}
           path: |
             /tmp/xcodebuild-ios.log
-            app/src-tauri/gen/apple/build/**/Logs/**
+            apps/gui/gen/apple/build/**/Logs/**
           if-no-files-found: ignore
 
   build-bsd:
@@ -1311,7 +1311,7 @@ jobs:
       - uses: actions/download-artifact@v6
         with:
           name: frontend-dist
-          path: app/frontend/dist
+          path: frontends/app/dist
 
       - uses: actions/download-artifact@v6
         with:

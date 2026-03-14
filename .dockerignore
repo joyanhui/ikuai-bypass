@@ -8,11 +8,11 @@ target
 **/target
 node_modules
 **/node_modules
-app/frontend/dist
-app/frontend/.astro
-app/frontend/.bun-install
-app/frontend/.bun-tmp
-app/frontend/.astro-dev.log
+frontends/app/dist
+frontends/app/.astro
+frontends/app/.bun-install
+frontends/app/.bun-tmp
+frontends/app/.astro-dev.log
 golang_archive
 release
 .docker-release

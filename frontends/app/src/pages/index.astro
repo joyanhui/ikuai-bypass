@@ -361,24 +361,25 @@ import '../styles/global.css';
               </div>
               <div class="glass-card rounded-3xl p-6">
                 <div class="mb-1 flex items-center justify-between">
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">域名分流（常用）</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">域名分流/ISP分流</h3>
                 </div>
-                <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">把指定域名走指定线路；需要更精细时，再配合下方“运营商列表”。</p>
+                <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">把流量按域名或运营商 IP 分到不同上游线路。</p>
                 <div class="space-y-4">
                   <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                     <div class="mb-3 flex items-center justify-between">
                       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">域名规则</span>
                       <button id="addStreamDomain" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
                     </div>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">网络配置&gt;分流策略&gt;域名分流 通过域名判断上游wan</p>
                     <div id="listStreamDomain"></div>
                   </div>
 
                   <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                     <div class="mb-1 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">运营商列表（可选）</span>
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">自定义运营商</span>
                       <button id="addCustomIsp" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
                     </div>
-                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">只有你需要“按运营商区分线路”时，才需要配置这里。</p>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">网络配置&gt;分流策略&gt;多线负载&gt;自定义运营商 通过ip选择上游wan</p>
                     <div id="listCustomIsp"></div>
                   </div>
                 </div>
@@ -386,7 +387,7 @@ import '../styles/global.css';
 
               <div class="glass-card rounded-3xl p-6">
                 <div class="mb-1 flex items-center justify-between">
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">IP / 端口分流（进阶）</h3>
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">IP分组/端口分流</h3>
                 </div>
                 <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">适合更精细的场景：按 IP 分组或端口把流量走不同线路/下一跳。</p>
                 <div class="space-y-4">
@@ -394,7 +395,7 @@ import '../styles/global.css';
                     <div class="mb-1 flex items-center justify-between">
                       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">地址分组</span>
                     </div>
-                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">先把常用的地址整理成分组，后面的规则会用到。</p>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">常用ip分组方便配合端口分流和ACL</p>
                     <div class="space-y-4">
                       <div>
                         <div class="mb-3 flex items-center justify-between">
@@ -415,9 +416,10 @@ import '../styles/global.css';
 
                   <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                     <div class="mb-3 flex items-center justify-between">
-                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">IP / 端口规则</span>
+                      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">端口分流</span>
                       <button id="addStreamIpPort" class="rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-600 dark:bg-primary-900/30 dark:text-primary-400">添加</button>
                     </div>
+                    <p class="mb-3 text-xs text-gray-500 dark:text-gray-400">网络配置&gt;分流策略&gt;端口分流</p>
                     <div id="listStreamIpPort"></div>
                   </div>
                 </div>

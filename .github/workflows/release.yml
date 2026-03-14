@@ -98,6 +98,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          source .github/scripts/release-helpers.sh
+
           canonicalize_tag_name() {
             local raw="${1:-}"
             if [[ -z "${raw}" ]]; then
@@ -165,11 +167,10 @@ jobs:
 
           version="$(normalize_version_from_tag "${tag_name}")"
 
-          lc_version="$(printf '%s' "${version}" | tr '[:upper:]' '[:lower:]')"
           prerelease="false"
           if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
             prerelease="true"
-          elif printf '%s' "${lc_version}" | grep -Eq '(alpha|beta|rc|pre|preview|dev|nightly|test)'; then
+          elif is_prerelease_tag "${tag_name}"; then
             prerelease="true"
           fi
 
@@ -1397,20 +1398,31 @@ jobs:
         run: |
           set -euo pipefail
 
+          source .github/scripts/release-helpers.sh
+
           # Ensure tags are available for history range detection.
           git fetch --tags --force >/dev/null 2>&1 || true
 
           current_ref="${TAG_NAME}"
           current_sha="${CURRENT_SHA}"
 
-          stable_regex='^(ikuai-bypass-)?v[0-9]+\.[0-9]+\.[0-9]+$'
-          stable_tags="$(git for-each-ref refs/tags --sort=-creatordate --format '%(refname:strip=2)' | grep -E "${stable_regex}" || true)"
+          # Why/为什么: base_tag 取“上一个非 pre-release 版本”。
+          # English: Pick the latest *stable* tag (non-prerelease) as changelog base.
+          stable_tags="$(git for-each-ref refs/tags --sort=-creatordate --format '%(refname:strip=2)' | awk 'NF')"
 
           base_tag=""
           if [ -n "${stable_tags}" ]; then
             while IFS= read -r t; do
               [ -n "${t}" ] || continue
+              # Only consider canonical release tags.
+              # Why/为什么: 忽略其他 crate tag 或临时 tag，避免范围错误。
+              if ! printf '%s' "${t}" | grep -Eq '^ikuai-bypass-v'; then
+                continue
+              fi
               if [ "${t}" = "${current_ref}" ]; then
+                continue
+              fi
+              if is_prerelease_tag "${t}"; then
                 continue
               fi
               if git merge-base --is-ancestor "${t}" "${current_sha}" 2>/dev/null; then
@@ -1429,17 +1441,18 @@ jobs:
             if [ -n "${base_tag}" ]; then
               echo "范围: \`${base_tag}\` -> \`${current_ref}\`"
               echo
-              commits="$(git log --reverse --pretty=format:'- %s' "${base_tag}..${current_sha}" || true)"
+              commits="$(git log --reverse --no-merges --pretty=format:'- %s ([`%h`](https://github.com/'"${REPO}"'/commit/%H))' "${base_tag}..${current_sha}" || true)"
             else
               echo "范围: 初始历史 -> \`${current_ref}\`"
               echo
-              commits="$(git log --reverse --pretty=format:'- %s' "${current_sha}" || true)"
+              commits="$(git log --reverse --no-merges --pretty=format:'- %s ([`%h`](https://github.com/'"${REPO}"'/commit/%H))' "${current_sha}" || true)"
             fi
 
             if [ -z "${commits}" ]; then
               echo "- (无提交)"
             else
-              printf '%s\n' "${commits}"
+              # Why/为什么: Release notes 过长会影响发布页可读性，这里做一个温和的上限。
+              printf '%s\n' "${commits}" | head -n 200
             fi
 
             echo

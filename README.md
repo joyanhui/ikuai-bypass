@@ -279,7 +279,15 @@ docker run -itd --name ikuai-bypass --restart=always \
 当然，您也可以通过在 GitHub 上给项目点一个 ⭐️ Star 来支持我，这对我也是莫大的支持！
 
 ---
+## Star History
 
+<a href="https://www.star-history.com/?repos=joyanhui%2Fikuai-bypass&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/image?repos=joyanhui/ikuai-bypass&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/image?repos=joyanhui/ikuai-bypass&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/image?repos=joyanhui/ikuai-bypass&type=date&legend=top-left" />
+ </picture>
+</a>
 ## 交流与反馈
 
 - **交流讨论**：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛

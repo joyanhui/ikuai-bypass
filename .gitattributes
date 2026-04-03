@@ -1,3 +1,7 @@
+# 确保 shell 脚本在所有平台 checkout 时保持 LF 换行符
+# Ensure shell scripts always use LF line endings on all platforms
+*.sh text eol=lf
+
 *.html linguist-detectable=false
 *.sh linguist-detectable=false
 *.py linguist-detectable=false

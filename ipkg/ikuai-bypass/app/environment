@@ -1,0 +1,7 @@
+TZ=Asia/Shanghai
+IKUAI_URL=http://192.168.9.1
+IKUAI_USERNAME=admin
+IKUAI_PASSWORD=admin888
+WEBUI_USER=admin
+WEBUI_PASS=admin888
+

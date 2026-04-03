@@ -1298,6 +1298,76 @@ jobs:
           name: cli-${{ matrix.label }}
           path: release/*
 
+  build-ipkg:
+    name: iKuai v4 ipkg
+    needs:
+      - resolve-matrix
+      - build-cli
+      - build-frontend
+    if: needs.resolve-matrix.outputs.has_linux_amd64_cli == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: cli-linux-amd64
+          path: release
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
+
+      - name: Build ipkg
+        shell: bash
+        env:
+          VERSION: ${{ needs.resolve-matrix.outputs.version }}
+        run: |
+          set -euo pipefail
+          source .github/scripts/arch-helpers.sh
+
+          # 1. 准备根 Dockerfile 所需的目录结构
+          # 1. Prepare directory layout expected by root Dockerfile
+          stage=".ipkg-stage"
+          rm -rf "${stage}"
+          mkdir -p "${stage}/docker/bin/linux-amd64" "${stage}/docker/frontends/app"
+
+          zipball="$(find release -maxdepth 1 -type f -name 'ikuai-bypass-cli-linux-x86_64.zip' | head -1)"
+          test -n "${zipball}"
+          unzip -q "${zipball}" -d "${stage}/unpack"
+          cp "${stage}/unpack/ikuai-bypass" "${stage}/docker/bin/linux-amd64/ikuai-bypass"
+          chmod +x "${stage}/docker/bin/linux-amd64/ikuai-bypass"
+          rm -rf "${stage}/unpack"
+
+          cp -R frontends/app/dist "${stage}/docker/frontends/app/dist"
+          cp Dockerfile docker-entrypoint.sh config.yml "${stage}/"
+
+          # 2. 用根 Dockerfile 构建单架构镜像（DOCKER_BUILDKIT=0 兼容 iKuai Docker 18.09）
+          # 2. Build single-arch image with root Dockerfile (DOCKER_BUILDKIT=0 for iKuai compat)
+          cd "${stage}"
+          DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM=linux/amd64 -t ikuai-bypass:ikuai .
+          cd ..
+
+          # 3. 同步版本号并导出镜像
+          # 3. Sync version and export image
+          ipkg_version="${VERSION}"
+          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"${ipkg_version}\"/" ipkg/ikuai-bypass/manifest.json
+          docker save ikuai-bypass:ikuai | gzip > ipkg/ikuai-bypass/docker_image.tar.gz
+
+          # 4. 打包 ipkg
+          # 4. Pack ipkg
+          cd ipkg
+          tar -czf "ikuai-bypass-${ipkg_version}.ipkg" ikuai-bypass/
+          rm -f ikuai-bypass/docker_image.tar.gz
+          cp "ikuai-bypass-${ipkg_version}.ipkg" ../release/
+          echo "ipkg_name=ikuai-bypass-${ipkg_version}.ipkg" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: cli-ipkg
+          path: release/*.ipkg
+
   docker:
     name: Docker Multi-Arch
     needs:
@@ -1362,6 +1432,7 @@ jobs:
       - build-cli
       - build-cli-nightly
       - build-lxc
+      - build-ipkg
       - build-gui
       - build-gui-android
       - build-gui-ios

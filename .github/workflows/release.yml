@@ -296,7 +296,7 @@ jobs:
   build-frontend:
     name: Build Frontend Dist
     needs: resolve-matrix
-    if: needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true'
+    if: needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true' || needs.resolve-matrix.outputs.has_linux_amd64_cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

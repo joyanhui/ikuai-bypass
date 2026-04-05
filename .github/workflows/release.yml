@@ -1391,6 +1391,50 @@ jobs:
           name: cli-ipkg
           path: release/*.ipkg
 
+  build-openwrt-luci:
+    name: OpenWrt LuCI Package
+    needs:
+      - resolve-matrix
+    if: needs.resolve-matrix.outputs.has_cli == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.24"
+
+      - name: Install nfpm
+        shell: bash
+        run: |
+          set -euo pipefail
+          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.0
+          echo "$(go env GOPATH)/bin" >> "${GITHUB_PATH}"
+
+      - name: Build OpenWrt LuCI package
+        shell: bash
+        env:
+          VERSION: ${{ needs.resolve-matrix.outputs.version }}
+          OPENWRT_PACKAGE_ARCH: all
+        run: |
+          set -euo pipefail
+          source .github/scripts/arch-helpers.sh
+
+          luci_base="$(ikb_luci_base)"
+          bash .github/scripts/build-openwrt-luci-package.sh \
+            "${{ github.workspace }}" \
+            "./release" \
+            "${VERSION}" \
+            "${OPENWRT_PACKAGE_ARCH}" \
+            "${luci_base}"
+
+          ls -la release/
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: openwrt-luci
+          path: release/*.ipk
+
   docker:
     name: Docker Multi-Arch
     needs:
@@ -1456,6 +1500,7 @@ jobs:
       - build-cli-nightly
       - build-lxc
       - build-ipkg
+      - build-openwrt-luci
       - build-gui
       - build-gui-android
       - build-gui-ios
@@ -1479,6 +1524,12 @@ jobs:
           path: release
           pattern: "gui-*"
           merge-multiple: true
+
+      - uses: actions/download-artifact@v6
+        if: needs.build-openwrt-luci.result == 'success'
+        with:
+          path: release
+          name: openwrt-luci
 
       - name: Show release files
         run: find release -maxdepth 2 -type f | sort

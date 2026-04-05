@@ -125,3 +125,7 @@ ikb_gui_native_name() {
   local ext="${2:-}"
   printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}")${ext}"
 }
+
+ikb_luci_base() {
+  printf '%s\n' "ikuai-bypass-luci-openwrt-all"
+}

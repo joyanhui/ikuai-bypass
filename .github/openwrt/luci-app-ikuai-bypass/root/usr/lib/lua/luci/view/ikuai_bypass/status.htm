@@ -1,0 +1,392 @@
+<%
+local dispatcher = require "luci.dispatcher"
+local status_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "status")
+local latest_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "latest")
+local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "install")
+%>
+
+<script type="text/javascript">
+	(function() {
+		var endpoints = {
+			status: <%= string.format("%q", status_url) %>,
+			latest: <%= string.format("%q", latest_url) %>,
+			install: <%= string.format("%q", install_url) %>
+		};
+		var state = {
+			status: null,
+			latest: null,
+			busy: false
+		};
+
+		function el(id) {
+			return document.getElementById(id);
+		}
+
+		function escapeHtml(value) {
+			return String(value == null ? "" : value)
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/\"/g, "&quot;")
+				.replace(/'/g, "&#39;");
+		}
+
+		function setText(id, value) {
+			var node = el(id);
+			if (node) {
+				node.textContent = value || "-";
+			}
+		}
+
+		function setHtml(id, value) {
+			var node = el(id);
+			if (node) {
+				node.innerHTML = value || "-";
+			}
+		}
+
+		function setMessage(kind, text) {
+			var node = el("ikb-message");
+			if (!node) {
+				return;
+			}
+
+			node.className = "ikb-message " + (kind || "info");
+			node.textContent = text || "Ready.";
+		}
+
+		function buildQuery(params) {
+			var parts = [];
+			for (var key in params) {
+				if (Object.prototype.hasOwnProperty.call(params, key)) {
+					parts.push(encodeURIComponent(key) + "=" + encodeURIComponent(params[key]));
+				}
+			}
+			return parts.join("&");
+		}
+
+		function request(method, url, params, callback) {
+			var xhr = new XMLHttpRequest();
+			var payload = buildQuery(params || {});
+			var target = url;
+
+			if (method === "GET" && payload) {
+				target += (url.indexOf("?") === -1 ? "?" : "&") + payload;
+			}
+
+			xhr.open(method, target, true);
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState !== 4) {
+					return;
+				}
+
+				var data = null;
+				var text = xhr.responseText || "";
+				try {
+					data = text ? JSON.parse(text) : null;
+				} catch (e) {
+					data = null;
+				}
+
+				if (xhr.status >= 200 && xhr.status < 300) {
+					callback(null, data || {});
+					return;
+				}
+
+				var message = (data && data.message) || text || ("HTTP " + xhr.status);
+				callback(message, data || null);
+			};
+
+			if (method === "POST") {
+				xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+				xhr.send(payload);
+				return;
+			}
+
+			xhr.send(null);
+		}
+
+		function channelValue() {
+			var node = el("ikb-channel");
+			return node ? node.value : "stable";
+		}
+
+		function updateButtons() {
+			var checkButton = el("ikb-check-button");
+			var installButton = el("ikb-install-button");
+			var disabled = state.busy || !(state.status && state.status.supported && state.status.download_ready);
+
+			if (checkButton) {
+				checkButton.disabled = state.busy;
+			}
+
+			if (installButton) {
+				installButton.disabled = disabled;
+			}
+		}
+
+		function renderStatus(data) {
+			var status = data && data.status ? data.status : {};
+			state.status = status;
+
+			setText("ikb-binary-status", status.binary_exists ? (status.binary_version || "Installed") : "Not installed");
+			setText("ikb-binary-path", status.binary_path || "/usr/bin/ikuai-bypass");
+			setText("ikb-router-arch", status.raw_uname || "Unknown");
+			setText("ikb-opkg-arch", status.opkg_arches || "Unknown");
+			setText("ikb-asset-name", status.asset_name || "Unsupported");
+			setText("ikb-download-tool", status.fetch_tool || "Missing");
+			setText("ikb-unzip-status", status.unzip_available ? "Ready" : "Missing unzip");
+			setText("ikb-last-tag", status.last_tag || "Not recorded");
+			setText("ikb-last-installed-at", status.last_installed_at || "Not recorded");
+			setText("ikb-config-sample", status.config_sample_path || "Not generated");
+
+			var supportText = status.supported ? "Supported" : "Unsupported";
+			if (status.supported && status.download_ready) {
+				supportText += " / Download ready";
+			} else if (status.supported) {
+				supportText += " / Missing runtime dependency";
+			}
+			setText("ikb-support-status", supportText);
+			updateButtons();
+		}
+
+		function renderLatest(data) {
+			var release = data && data.release ? data.release : null;
+			state.latest = release;
+
+			if (!release) {
+				setText("ikb-release-tag", "Not available");
+				setText("ikb-release-time", "-");
+				setText("ikb-release-asset", "-");
+				setText("ikb-release-channel", channelValue());
+				setHtml("ikb-release-page", "-");
+				return;
+			}
+
+			setText("ikb-release-tag", release.tag_name || "-");
+			setText("ikb-release-time", release.published_at || "-");
+			setText("ikb-release-asset", release.asset_name || "-");
+			setText("ikb-release-channel", data.channel || channelValue());
+
+			if (release.html_url) {
+				setHtml(
+					"ikb-release-page",
+					'<a href="' + escapeHtml(release.html_url) + '" target="_blank" rel="noopener">' + escapeHtml(release.html_url) + '</a>'
+				);
+			} else {
+				setHtml("ikb-release-page", "-");
+			}
+		}
+
+		function withBusy(message, fn) {
+			state.busy = true;
+			updateButtons();
+			setMessage("info", message);
+			fn(function() {
+				state.busy = false;
+				updateButtons();
+			});
+		}
+
+		function loadStatus() {
+			request("GET", endpoints.status, {}, function(err, data) {
+				if (err) {
+					setMessage("error", err);
+					return;
+				}
+
+				renderStatus(data);
+				if (!(data && data.status && data.status.supported)) {
+					setMessage("warn", "This router architecture is not mapped to a published iKuai Bypass CLI asset yet.");
+				}
+			});
+		}
+
+		window.ikbCheckLatest = function() {
+			withBusy("Checking the latest matching GitHub release...", function(done) {
+				request("GET", endpoints.latest, { channel: channelValue() }, function(err, data) {
+					done();
+					if (err) {
+						renderLatest(null);
+						if (data && data.status) {
+							renderStatus({ status: data.status });
+						}
+						setMessage("error", err);
+						return;
+					}
+
+					renderStatus(data);
+					renderLatest(data);
+					setMessage("success", "Found the latest matching release.");
+				});
+			});
+		};
+
+		window.ikbInstallLatest = function() {
+			withBusy("Downloading and installing the matching CLI archive on this router...", function(done) {
+				request("POST", endpoints.install, { channel: channelValue() }, function(err, data) {
+					done();
+					if (err) {
+						if (data && data.status) {
+							renderStatus({ status: data.status });
+						}
+						if (data && data.release) {
+							renderLatest(data);
+						}
+						setMessage("error", err);
+						return;
+					}
+
+					if (data && data.status) {
+						renderStatus({ status: data.status });
+					}
+					if (data && data.release) {
+						renderLatest(data);
+					}
+					setMessage("success", data.message || "Install completed.");
+				});
+			});
+		};
+
+		document.addEventListener("DOMContentLoaded", function() {
+			loadStatus();
+			window.ikbCheckLatest();
+		});
+	})();
+</script>
+
+<style type="text/css">
+	.ikb-actions {
+		display: flex;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.ikb-note {
+		margin: 0 0 1rem;
+		line-height: 1.7;
+		color: #555;
+	}
+
+	.ikb-message {
+		padding: 0.85rem 1rem;
+		border-radius: 4px;
+		line-height: 1.6;
+		background: #eef4ff;
+		color: #1f3b5b;
+	}
+
+	.ikb-message.success {
+		background: #edf8ef;
+		color: #1b5e20;
+	}
+
+	.ikb-message.warn {
+		background: #fff7e6;
+		color: #8a5a00;
+	}
+
+	.ikb-message.error {
+		background: #fff0f0;
+		color: #b71c1c;
+	}
+</style>
+
+<div class="cbi-section">
+	<p class="ikb-note">
+		Stable means GitHub releases with <code>prerelease=false</code>. Prerelease means GitHub releases with <code>prerelease=true</code>.
+		This package stays architecture-independent and installs the matching CLI only when you click the install button.
+	</p>
+</div>
+
+<div class="cbi-section">
+	<h3>Router Status</h3>
+	<div class="table">
+		<div class="tr">
+			<div class="td left" width="33%">Support status</div>
+			<div class="td left" id="ikb-support-status">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Installed CLI</div>
+			<div class="td left" id="ikb-binary-status">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Binary path</div>
+			<div class="td left" id="ikb-binary-path">/usr/bin/ikuai-bypass</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Kernel architecture</div>
+			<div class="td left" id="ikb-router-arch">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">OpenWrt package arches</div>
+			<div class="td left" id="ikb-opkg-arch">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Expected GitHub asset</div>
+			<div class="td left" id="ikb-asset-name">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Download tool</div>
+			<div class="td left" id="ikb-download-tool">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Archive extraction</div>
+			<div class="td left" id="ikb-unzip-status">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Last installed release</div>
+			<div class="td left" id="ikb-last-tag">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Last installed at</div>
+			<div class="td left" id="ikb-last-installed-at">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Config sample path</div>
+			<div class="td left" id="ikb-config-sample">Loading...</div>
+		</div>
+	</div>
+</div>
+
+<div class="cbi-section">
+	<h3>Release Installer</h3>
+	<div class="ikb-actions">
+		<label for="ikb-channel">Release channel</label>
+		<select id="ikb-channel" class="cbi-input-select">
+			<option value="stable">Stable</option>
+			<option value="prerelease">Prerelease</option>
+		</select>
+		<input id="ikb-check-button" class="btn cbi-button" type="button" value="Check Latest" onclick="ikbCheckLatest()" />
+		<input id="ikb-install-button" class="btn cbi-button cbi-button-apply" type="button" value="Download And Install" onclick="ikbInstallLatest()" />
+	</div>
+	<div class="table">
+		<div class="tr">
+			<div class="td left" width="33%">Selected channel</div>
+			<div class="td left" id="ikb-release-channel">stable</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Latest tag</div>
+			<div class="td left" id="ikb-release-tag">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Published at</div>
+			<div class="td left" id="ikb-release-time">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Matched asset</div>
+			<div class="td left" id="ikb-release-asset">Loading...</div>
+		</div>
+		<div class="tr">
+			<div class="td left">Release page</div>
+			<div class="td left" id="ikb-release-page">Loading...</div>
+		</div>
+	</div>
+</div>
+
+<div class="cbi-section">
+	<h3>Activity</h3>
+	<div id="ikb-message" class="ikb-message">Preparing installer state...</div>
+</div>

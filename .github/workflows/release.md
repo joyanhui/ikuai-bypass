@@ -243,6 +243,27 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - `packaging/ikuai-ipkg/`
 - `packaging/ikuai-ipkg/build-ipkg.sh`
 
+### OpenWrt LuCI
+
+当 CLI 构建启用时构建：
+
+- `ikuai-bypass-luci-openwrt-all.ipk`
+
+触发与实现规则：
+
+- `build-openwrt-luci` 仅在 `has_cli=true` 时执行
+- LuCI 包固定为 `Architecture: all`
+- LuCI 包本身不内置 `ikuai-bypass` CLI 二进制，因此是一个通用跨架构包
+- LuCI 页面运行时通过 GitHub API 查询 `joyanhui/ikuai-bypass` releases，并按当前 OpenWrt 路由器架构匹配 `ikuai-bypass-cli-linux-*.zip`
+- 页面支持在 stable（`prerelease=false`）与 prerelease（`prerelease=true`）之间切换
+- 点击安装后，由路由器本机下载对应 release asset，解压并安装到 `/usr/bin/ikuai-bypass`
+- 若 release archive 内包含 `config.yml`，会额外落地到 `/etc/ikuai-bypass/config.yml.example`
+
+实现位置：
+
+- `.github/openwrt/luci-app-ikuai-bypass/`
+- `.github/scripts/build-openwrt-luci-package.sh`
+
 ### Docker Multi-Arch
 
 仅在以下条件同时满足时执行：
@@ -286,6 +307,8 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - `.github/scripts/arch-helpers.sh`
 - `.github/scripts/prepare-container-binaries.sh`
 - `packaging/ikuai-ipkg/build-ipkg.sh`
+- `.github/scripts/build-openwrt-luci-package.sh`
+- `.github/openwrt/luci-app-ikuai-bypass/`
 
 ## 11. 维护约束
 
@@ -297,5 +320,5 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - stable / nightly / BSD / GUI 构建矩阵
 - `full` 模式下的 nightly 构建逻辑
 - 最终发布文件命名规则
-- ipkg 构建条件、版本归一化与目录位置
+- ipkg / OpenWrt LuCI 构建条件、版本处理与目录位置
 - 发布门槛与产物收集逻辑

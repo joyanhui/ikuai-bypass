@@ -1915,7 +1915,7 @@ dependencies = [
 
 [[package]]
 name = "ikb-app"
-version = "4.4.100-alpha9.3"
+version = "4.4.100-alpha9.4"
 dependencies = [
  "ikb-core",
  "serde",
@@ -1928,7 +1928,7 @@ dependencies = [
 
 [[package]]
 name = "ikb-cli"
-version = "4.4.100-alpha9.3"
+version = "4.4.100-alpha9.4"
 dependencies = [
  "async-stream",
  "axum",
@@ -1949,7 +1949,7 @@ dependencies = [
 
 [[package]]
 name = "ikb-core"
-version = "4.4.100-alpha9.3"
+version = "4.4.100-alpha9.4"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -1971,7 +1971,7 @@ dependencies = [
 
 [[package]]
 name = "ikb-integration-tests"
-version = "4.4.100-alpha9.3"
+version = "4.4.100-alpha9.4"
 dependencies = [
  "axum",
  "base64 0.22.1",

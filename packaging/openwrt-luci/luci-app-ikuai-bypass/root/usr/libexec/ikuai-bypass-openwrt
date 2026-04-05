@@ -1,0 +1,304 @@
+#!/bin/sh
+
+set -eu
+
+# Why/为什么: keep the LuCI package architecture-independent and install the matching CLI lazily on the router.
+# English: the LuCI package ships no binary and resolves the correct CLI archive only when needed.
+GITHUB_API_URL="https://api.github.com/repos/joyanhui/ikuai-bypass/releases?per_page=100"
+BINARY_PATH="/usr/bin/ikuai-bypass"
+CONFIG_DIR="/etc/ikuai-bypass"
+CONFIG_SAMPLE_PATH="${CONFIG_DIR}/config.yml.example"
+STATE_DIR="/var/lib/ikuai-bypass"
+STATE_FILE="${STATE_DIR}/openwrt-installer.state"
+
+print_kv() {
+	key="$1"
+	value="${2-}"
+	value="$(printf '%s' "$value" | tr '\r\n' '  ' | sed 's/[[:space:]][[:space:]]*/ /g; s/^ //; s/ $//')"
+	printf '%s=%s\n' "$key" "$value"
+}
+
+fail() {
+	print_kv status error
+	print_kv message "$1"
+	exit 1
+}
+
+command_exists() {
+	command -v "$1" >/dev/null 2>&1
+}
+
+first_line() {
+	printf '%s' "$1" | sed -n '1p'
+}
+
+lower() {
+	printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
+}
+
+fetch_tool() {
+	if command_exists uclient-fetch; then
+		printf '%s\n' "uclient-fetch"
+		return 0
+	fi
+
+	if command_exists wget; then
+		printf '%s\n' "wget"
+		return 0
+	fi
+
+	if command_exists curl; then
+		printf '%s\n' "curl"
+		return 0
+	fi
+
+	return 1
+}
+
+download_to_path() {
+	url="$1"
+	destination="$2"
+	tool="$(fetch_tool)" || fail "No supported HTTPS download tool is available"
+
+	case "$tool" in
+		uclient-fetch)
+			uclient-fetch -q -O "$destination" "$url" >/dev/null 2>&1 || fail "Failed to download data from GitHub"
+			;;
+		wget)
+			wget -q -O "$destination" "$url" >/dev/null 2>&1 || fail "Failed to download data from GitHub"
+			;;
+		curl)
+			curl -fsSL -o "$destination" "$url" >/dev/null 2>&1 || fail "Failed to download data from GitHub"
+			;;
+		*)
+			fail "Unsupported download tool: $tool"
+			;;
+	esac
+}
+
+opkg_arches() {
+	if ! command_exists opkg; then
+		return 0
+	fi
+
+	opkg print-architecture 2>/dev/null | sed -n 's/^arch[[:space:]][[:space:]]*\([^[:space:]]*\).*/\1/p' | tr '\n' ' '
+}
+
+current_binary_version() {
+	if [ ! -x "$BINARY_PATH" ]; then
+		return 0
+	fi
+
+	first_line "$("$BINARY_PATH" --version 2>/dev/null || true)"
+}
+
+detect_release_suffix() {
+	raw_uname="$(uname -m 2>/dev/null || true)"
+	hints="$(lower "$raw_uname $(opkg_arches)")"
+
+	case "$hints" in
+		*x86_64*|*amd64*)
+			printf '%s\n' "linux-x86_64"
+			;;
+		*i686*|*i586*|*i486*|*i386*|*pentium4*|*x86*)
+			printf '%s\n' "linux-x86_32"
+			;;
+		*aarch64*|*arm64*)
+			printf '%s\n' "linux-aarch64"
+			;;
+		*armv5*|*arm926*|*fa526*|*xscale*)
+			printf '%s\n' "linux-arm5"
+			;;
+		*armv6*|*arm1176*)
+			printf '%s\n' "linux-arm6"
+			;;
+		*armv7*|*armhf*|*cortex-a5*|*cortex-a7*|*cortex-a8*|*cortex-a9*|*cortex-a15*|*arm_cortex-a*|*krait*|*neon*)
+			printf '%s\n' "linux-arm7"
+			;;
+		*mips64el*|*mips64le*)
+			printf '%s\n' "linux-mips64le"
+			;;
+		*mips64*)
+			printf '%s\n' "linux-mips64"
+			;;
+		*mipsel*|*mipsle*)
+			printf '%s\n' "linux-mipsle"
+			;;
+		*mips*)
+			printf '%s\n' "linux-mips"
+			;;
+		*riscv64*)
+			printf '%s\n' "linux-riscv64gc"
+			;;
+		*ppc64le*|*powerpc64le*)
+			printf '%s\n' "linux-ppc64le"
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+detect_asset_name() {
+	suffix="$(detect_release_suffix)" || return 1
+	printf '%s\n' "ikuai-bypass-cli-${suffix}.zip"
+}
+
+read_state_value() {
+	key="$1"
+	if [ ! -f "$STATE_FILE" ]; then
+		return 0
+	fi
+
+	sed -n "s/^${key}=//p" "$STATE_FILE" | sed -n '1p'
+}
+
+write_state() {
+	tag="$1"
+	asset="$2"
+	url="$3"
+	version="$4"
+	installed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || true)"
+
+	mkdir -p "$STATE_DIR"
+	{
+		print_kv last_tag "$tag"
+		print_kv last_asset "$asset"
+		print_kv last_url "$url"
+		print_kv last_binary_version "$version"
+		print_kv last_installed_at "$installed_at"
+	} > "$STATE_FILE"
+
+	print_kv installed_at "$installed_at"
+}
+
+inspect() {
+	raw_uname="$(uname -m 2>/dev/null || true)"
+	fetcher="$(fetch_tool 2>/dev/null || true)"
+	asset_name="$(detect_asset_name 2>/dev/null || true)"
+	release_suffix="$(detect_release_suffix 2>/dev/null || true)"
+	supported="0"
+	download_ready="0"
+
+	if [ -n "$asset_name" ] && [ -n "$release_suffix" ]; then
+		supported="1"
+	fi
+
+	if [ -n "$fetcher" ] && command_exists unzip; then
+		download_ready="1"
+	fi
+
+	print_kv helper_version "1"
+	print_kv binary_path "$BINARY_PATH"
+	if [ -x "$BINARY_PATH" ]; then
+		print_kv binary_exists "1"
+		print_kv binary_version "$(current_binary_version)"
+	else
+		print_kv binary_exists "0"
+		print_kv binary_version ""
+	fi
+	print_kv raw_uname "$raw_uname"
+	print_kv opkg_arches "$(opkg_arches)"
+	print_kv release_suffix "$release_suffix"
+	print_kv asset_name "$asset_name"
+	print_kv supported "$supported"
+	print_kv fetch_tool "$fetcher"
+	if command_exists unzip; then
+		print_kv unzip_available "1"
+	else
+		print_kv unzip_available "0"
+	fi
+	print_kv download_ready "$download_ready"
+	print_kv last_tag "$(read_state_value last_tag)"
+	print_kv last_asset "$(read_state_value last_asset)"
+	print_kv last_installed_at "$(read_state_value last_installed_at)"
+	if [ -f "$CONFIG_SAMPLE_PATH" ]; then
+		print_kv config_sample_path "$CONFIG_SAMPLE_PATH"
+	else
+		print_kv config_sample_path ""
+	fi
+}
+
+fetch_releases() {
+	tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t ikb-fetch)"
+	trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
+	download_to_path "$GITHUB_API_URL" "${tmp_dir}/releases.json"
+	cat "${tmp_dir}/releases.json"
+}
+
+validate_release_download() {
+	url="$1"
+	tag="$2"
+	asset_name="$3"
+
+	case "$url" in
+		"https://github.com/joyanhui/ikuai-bypass/releases/download/${tag}/${asset_name}")
+			return 0
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+install_release() {
+	url="${1-}"
+	tag="${2-}"
+	asset_name="${3-}"
+
+	[ -n "$url" ] || fail "Missing download URL"
+	[ -n "$tag" ] || fail "Missing release tag"
+	[ -n "$asset_name" ] || fail "Missing asset name"
+
+	expected_asset="$(detect_asset_name 2>/dev/null || true)"
+	[ -n "$expected_asset" ] || fail "Current OpenWrt architecture is not supported by published CLI assets"
+	[ "$asset_name" = "$expected_asset" ] || fail "Asset name does not match the detected router architecture"
+	validate_release_download "$url" "$tag" "$asset_name" || fail "Unexpected GitHub release download URL"
+	command_exists unzip || fail "The unzip package is required before installing the CLI archive"
+	command_exists install || fail "The install command is not available on this router"
+
+	tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t ikb-install)"
+	trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
+
+	archive_path="${tmp_dir}/${asset_name}"
+	unpack_dir="${tmp_dir}/unpack"
+	mkdir -p "$unpack_dir"
+
+	download_to_path "$url" "$archive_path"
+	unzip -qo "$archive_path" -d "$unpack_dir" >/dev/null 2>&1 || fail "Failed to extract the CLI archive"
+	[ -f "${unpack_dir}/ikuai-bypass" ] || fail "The downloaded archive does not contain the ikuai-bypass binary"
+
+	install -d "$(dirname "$BINARY_PATH")"
+	install -m 0755 "${unpack_dir}/ikuai-bypass" "$BINARY_PATH" || fail "Failed to install the CLI binary"
+
+	config_sample_output=""
+	if [ -f "${unpack_dir}/config.yml" ]; then
+		install -d "$CONFIG_DIR"
+		install -m 0644 "${unpack_dir}/config.yml" "$CONFIG_SAMPLE_PATH" >/dev/null 2>&1 || true
+		config_sample_output="$CONFIG_SAMPLE_PATH"
+	fi
+
+	version="$(current_binary_version)"
+	write_state "$tag" "$asset_name" "$url" "$version"
+	print_kv status ok
+	print_kv message "CLI installed successfully"
+	print_kv binary_path "$BINARY_PATH"
+	print_kv binary_version "$version"
+	print_kv config_sample_path "$config_sample_output"
+}
+
+case "${1-}" in
+	inspect)
+		inspect
+		;;
+	fetch-releases)
+		fetch_releases
+		;;
+	install)
+		shift
+		install_release "$@"
+		;;
+	*)
+		fail "Unsupported action"
+		;;
+esac

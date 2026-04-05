@@ -7,7 +7,9 @@
     "dev": "astro dev --host 0.0.0.0 --port 4321",
     "check": "astro check",
     "build": "astro build",
-    "preview": "astro preview --host 0.0.0.0 --port 4321"
+    "preview": "astro preview --host 0.0.0.0 --port 4321",
+    "test": "bunx vitest run",
+    "test:ci": "bunx vitest run --reporter=verbose"
   },
   "dependencies": {
     "astro": "^4.16.0",

@@ -4,4 +4,5 @@ members = [
   "crates/core",
   "apps/cli",
   "apps/gui",
+  "apps/integration-tests",
 ]

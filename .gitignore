@@ -19,6 +19,7 @@
 *.psd
 /aaa_*.md
 GEMINI.md
+*.qcow2
 *.bak
 *.orig
 *.rej

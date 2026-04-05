@@ -1,0 +1,37 @@
+ikuai-url: "http://192.168.9.1"
+username: "admin"
+password: "admin888"
+cron: ""
+AddErrRetryWait: 10ms
+AddWait: 10ms
+github-proxy: ""
+proxy:
+  mode: system
+  url: ""
+  user: ""
+  pass: ""
+custom-isp:
+  - tag: CliBugIsp
+    url: "http://192.168.9.2:38199/isp.txt"
+stream-domain:
+  - interface: wan2
+    src-addr: 192.168.1.10-192.168.1.20
+    src-addr-opt-ipgroup: ""
+    url: "http://192.168.9.2:38199/domain.txt"
+    tag: CliBugDom
+ip-group:
+  - tag: CliBug4
+    url: "http://192.168.9.2:38199/ipv4.txt"
+ipv6-group:
+  - tag: CliBug6
+    url: "http://192.168.9.2:38199/ipv6.txt"
+stream-ipport:
+  - type: "1"
+    opt-tagname: CliBugRoute
+    interface: ""
+    nexthop: 192.168.1.2
+    src-addr: 192.168.1.10-192.168.1.20
+    src-addr-opt-ipgroup: ""
+    ip-group: CliBug4
+    mode: 0
+    ifaceband: 0

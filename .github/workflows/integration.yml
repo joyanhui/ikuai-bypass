@@ -1,0 +1,94 @@
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    tags-ignore:
+      - "*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-smoke:
+    name: KVM Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      CARGO_TERM_COLOR: always
+      IKB_TEST_IKUAI_IMAGE: ${{ runner.temp }}/ikuai-image/ikuai.qcow2
+      IKB_TEST_IKUAI_URL: http://192.168.9.1
+      IKB_TEST_IKUAI_USERNAME: admin
+      IKB_TEST_IKUAI_PASSWORD: admin888
+      IKB_TEST_TAP_IF: tap0
+      IKB_TEST_FIXTURE_BIND_HOST: 0.0.0.0
+      IKB_TEST_FIXTURE_GUEST_HOST: 192.168.9.2
+      IKB_TEST_QEMU_MEMORY: 1G
+      IKB_TEST_QEMU_SMP: cores=2
+      IKB_TEST_ARTIFACT_ROOT: ${{ github.workspace }}/apps/integration-tests/.artifacts
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
+          shared-key: integration-smoke
+
+      - name: Install QEMU and archive tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils p7zip-full
+
+      - name: Extract iKuai image archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/ikuai-image"
+          7z x ".github/ikuai.qcow2.7z" "-o${RUNNER_TEMP}/ikuai-image"
+          test -f "$IKB_TEST_IKUAI_IMAGE"
+
+      - name: Prepare tap interface
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! ip link show "$IKB_TEST_TAP_IF" >/dev/null 2>&1; then
+            sudo ip tuntap add dev "$IKB_TEST_TAP_IF" mode tap user "$(id -un)"
+          fi
+          sudo ip link set "$IKB_TEST_TAP_IF" up
+          sudo ip addr replace 192.168.9.2/24 dev "$IKB_TEST_TAP_IF"
+
+      - name: Verify KVM prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$IKB_TEST_IKUAI_IMAGE"
+          if [[ ! -e /dev/kvm ]]; then
+            echo "::error::/dev/kvm is unavailable on this GitHub-hosted runner. GitHub 官方文档说明 nested virtualization 仅为 experimental，且不提供稳定性保证。"
+            exit 1
+          fi
+          command -v qemu-system-x86_64
+          command -v qemu-img
+          ip addr show "$IKB_TEST_TAP_IF"
+
+      - name: Run KVM smoke tests
+        shell: bash
+        run: bash apps/integration-tests/run-smoke-test.sh
+
+      - name: Upload integration artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-artifacts
+          path: apps/integration-tests/.artifacts/
+          if-no-files-found: ignore

@@ -1457,16 +1457,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v6
-        with:
-          go-version: "1.24"
-
       - name: Install nfpm
         shell: bash
         run: |
           set -euo pipefail
-          go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.46.0
-          echo "$(go env GOPATH)/bin" >> "${GITHUB_PATH}"
+          # Why/为什么: LuCI 打包只需要 nfpm 二进制，不应为 Rust 仓库额外引入 Go 工具链。
+          # English: Download the prebuilt nfpm binary directly to avoid a Go dependency in this Rust repo.
+          nfpm_version="2.46.0"
+          nfpm_archive="nfpm_${nfpm_version}_Linux_x86_64.tar.gz"
+          curl -fsSL -o /tmp/${nfpm_archive} "https://github.com/goreleaser/nfpm/releases/download/v${nfpm_version}/${nfpm_archive}"
+          tar -xzf /tmp/${nfpm_archive} -C /tmp nfpm
+          mkdir -p "$HOME/.local/bin"
+          install -m 0755 /tmp/nfpm "$HOME/.local/bin/nfpm"
+          echo "$HOME/.local/bin" >> "${GITHUB_PATH}"
 
       - name: Build OpenWrt LuCI package
         shell: bash

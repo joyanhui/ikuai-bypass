@@ -1,8 +1,13 @@
 # 集成测试 / Integration Tests
 
-本目录放置 `iKuai Bypass` 的黑盒集成测试，目标是直接驱动真实的爱快系统镜像，验证 CLI 对核心规则同步流程的端到端行为。
+本目录放置 `iKuai Bypass` 的集成测试能力，包含两套后端：
+
+- 本地默认使用 KVM/QEMU 驱动真实爱快镜像。
+- GitHub CI 使用内置的 iKuai 模拟器，不再依赖在线 KVM。
 
 所有 smoke 用例统一通过 `bash script/dev.sh cli:dev -- ...` 进入真实 CLI 开发入口，避免测试路径和日常手工使用路径脱节。
+
+模拟器代码目录：`apps/integration-tests/src/ikuai_simulator/`
 
 当前 smoke 用例覆盖：
 
@@ -10,7 +15,7 @@
 - `safe_before_smoke`：验证远程规则下载失败时，不会清理已有旧规则。
 - `clean_mode_smoke`：验证 `clean` 必须显式带 `-tag`，且只清理匹配标签的规则，不误删其他标签。
 
-## 前置条件
+## 本地前置条件
 
 - `qemu-system-x86_64` 和 `qemu-img` 已安装。
 - 当前机器支持 `/dev/kvm`。
@@ -20,7 +25,27 @@
 
 ## 运行方式
 
+本地默认走 `auto`：优先尝试 KVM/QEMU；如果本机缺少 `qemu-system-x86_64`、`qemu-img`、镜像或 `/dev/kvm`，并且开发者显式设置了 `IKB_TEST_IKUAI_URL`，则自动退到“连接现成爱快设备”模式。
+
+本地默认运行：
+
 ```bash
+bash apps/integration-tests/run-smoke-test.sh
+```
+
+当本机存在 `qemu-system-x86_64` 且未显式设置 `IKB_TEST_IKUAI_IMAGE` 时，脚本会优先使用仓库里的 `.github/ikuai.qcow2.7z` 解压产物 `.github/ikuai.qcow2` 作为默认镜像。
+
+如果要显式指定模拟器后端：
+
+```bash
+IKB_TEST_BACKEND=simulator bash apps/integration-tests/run-smoke-test.sh
+```
+
+如果本机没有 QEMU，但你已经有一台可访问的爱快设备，可以显式指定它的地址：
+
+```bash
+IKB_TEST_IKUAI_URL=http://192.168.1.1 \
+IKB_TEST_FIXTURE_GUEST_HOST=<你的宿主机局域网IP> \
 bash apps/integration-tests/run-smoke-test.sh
 ```
 
@@ -58,13 +83,14 @@ bash script/dev.sh cli:dev -- -c apps/integration-tests/manual-cli.yml -r clean 
 
 ## 常用环境变量
 
-- `IKB_TEST_IKUAI_IMAGE`：爱快 qcow2 基础镜像路径。
+- `IKB_TEST_IKUAI_IMAGE`：爱快 qcow2 基础镜像路径；未显式设置时，若本机可用 QEMU，则默认取 `.github/ikuai.qcow2`。
+- `IKB_TEST_BACKEND`：集成测试后端，支持 `auto`、`kvm`、`simulator`、`external`，默认 `auto`。
 - `IKB_TEST_IKUAI_URL`：爱快管理地址，默认 `http://192.168.9.1`。
 - `IKB_TEST_IKUAI_USERNAME`：登录用户名，默认 `admin`。
 - `IKB_TEST_IKUAI_PASSWORD`：登录密码，默认 `admin888`。
 - `IKB_TEST_TAP_IF`：QEMU 第一张网卡使用的 tap 设备，默认 `tap0`。
 - `IKB_TEST_FIXTURE_BIND_HOST`：宿主机测试 HTTP 服务器监听地址，默认 `0.0.0.0`。
-- `IKB_TEST_FIXTURE_GUEST_HOST`：爱快虚机访问宿主机测试 HTTP 服务器时使用的地址，默认 `192.168.9.2`。
+- `IKB_TEST_FIXTURE_GUEST_HOST`：爱快访问宿主机测试 HTTP 服务器时使用的地址；KVM 默认 `192.168.9.2`，外部爱快模式下通常需要显式设成宿主机局域网 IP。
 - `IKB_TEST_DEV_SCRIPT`：CLI 开发入口脚本路径，默认 `script/dev.sh`。
 - `IKB_TEST_QEMU_BIN` / `IKB_TEST_QEMU_IMG_BIN`：QEMU 可执行文件路径。
 - `IKB_TEST_QEMU_ACCEL`：QEMU 加速器，默认 `kvm`。
@@ -75,11 +101,7 @@ bash script/dev.sh cli:dev -- -c apps/integration-tests/manual-cli.yml -r clean 
 ## CI 说明
 
 `.github/workflows/integration.yml` 会在 `pull_request` 与非 tag `push` 时运行该目录下的 smoke 测试。
-该工作流现在会在 GitHub Hosted `ubuntu-latest` runner 上：
 
-- 解压仓库内的 `.github/ikuai.qcow2.7z`
-- 创建 `tap0` 并把宿主机地址设为 `192.168.9.2/24`
-- 用 `1G` 内存和 `kvm` 加速启动爱快虚机
-- 运行 `bash apps/integration-tests/run-smoke-test.sh`
+GitHub CI 默认设置 `IKB_TEST_BACKEND=simulator`，直接启动 `apps/integration-tests/src/ikuai_simulator/` 中的 iKuai 模拟器，再执行 smoke 用例。
 
-注意：GitHub 官方文档目前明确说明，Hosted Runner 上的 nested virtualization 虽然“technically possible”，但**不属于 officially supported 能力**，属于 experimental，用于 KVM 时不保证稳定性、性能或兼容性。如果某次运行中 `/dev/kvm` 不可用，workflow 会直接失败并给出明确错误。
+本地如果需要覆盖真实爱快行为，继续使用 KVM 路径即可；CI 和本地后端分离，避免 Hosted Runner 上的虚拟化不确定性影响 PR 结果。

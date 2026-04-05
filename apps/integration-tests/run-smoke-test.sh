@@ -31,8 +31,23 @@ fi
 workspace_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 artifact_root="${IKB_TEST_ARTIFACT_ROOT:-$workspace_root/apps/integration-tests/.artifacts}"
 dev_script_path="${IKB_TEST_DEV_SCRIPT:-$workspace_root/script/dev.sh}"
+backend="${IKB_TEST_BACKEND:-auto}"
+default_image_path="$workspace_root/.github/ikuai.qcow2"
+default_image_archive="$workspace_root/.github/ikuai.qcow2.7z"
 
 mkdir -p "$artifact_root"
+
+if [ -z "${IKB_TEST_IKUAI_IMAGE:-}" ] && [ "$backend" != "simulator" ] && [ "$backend" != "sim" ]; then
+  if command -v qemu-system-x86_64 >/dev/null 2>&1; then
+    if [ ! -f "$default_image_path" ] && [ -f "$default_image_archive" ] && command -v 7z >/dev/null 2>&1; then
+      printf '==> Extracting default iKuai image from %s\n' "$default_image_archive"
+      7z x "$default_image_archive" "-o$workspace_root/.github" >/dev/null
+    fi
+    if [ -f "$default_image_path" ]; then
+      export IKB_TEST_IKUAI_IMAGE="$default_image_path"
+    fi
+  fi
+fi
 
 printf '==> Building CLI test binary\n'
 cargo build --locked -p ikb-cli --bin ikb-cli

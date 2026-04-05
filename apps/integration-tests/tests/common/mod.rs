@@ -13,8 +13,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use ikb_core::config::Config;
 use ikb_core::ikuai::{self, IKuaiClient};
+use ikb_integration_tests::ikuai_simulator::IKuaiSimulator;
 
-const DEFAULT_IMAGE_PATH: &str = "/home/y/kvm/ikuai.qcow2";
 const DEFAULT_IKUAI_URL: &str = "http://192.168.9.1";
 const DEFAULT_IKUAI_USERNAME: &str = "admin";
 const DEFAULT_IKUAI_PASSWORD: &str = "admin888";
@@ -29,13 +29,23 @@ const DEFAULT_QEMU_SMP: &str = "cores=4";
 const DEFAULT_BOOT_TIMEOUT: Duration = Duration::from_secs(180);
 const READY_POLL_INTERVAL: Duration = Duration::from_secs(2);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TestBackend {
+    Auto,
+    Kvm,
+    Simulator,
+    External,
+}
+
 #[derive(Clone)]
 pub struct TestEnv {
+    backend: TestBackend,
     workspace_root: PathBuf,
     artifact_root: PathBuf,
     cli_dev_script: PathBuf,
     image_path: PathBuf,
     ikuai_url: String,
+    ikuai_url_explicit: bool,
     username: String,
     password: String,
     tap_if: String,
@@ -51,8 +61,15 @@ pub struct TestEnv {
 pub struct TestHarness {
     env: TestEnv,
     artifact_dir: PathBuf,
+    ikuai_base_url: String,
     fixture: FixtureServer,
-    vm: VmInstance,
+    _backend: BackendInstance,
+}
+
+enum BackendInstance {
+    Kvm(VmInstance),
+    Simulator(IKuaiSimulator),
+    External,
 }
 
 pub struct VmInstance {
@@ -79,6 +96,7 @@ pub struct FixtureServer {
 
 impl TestEnv {
     pub fn load() -> Result<Self, String> {
+        let backend = TestBackend::load()?;
         let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .canonicalize()
@@ -89,7 +107,15 @@ impl TestEnv {
         let cli_dev_script = std::env::var("IKB_TEST_DEV_SCRIPT")
             .map(PathBuf::from)
             .unwrap_or_else(|_| workspace_root.join("script/dev.sh"));
-        let image_path = PathBuf::from(env_or("IKB_TEST_IKUAI_IMAGE", DEFAULT_IMAGE_PATH));
+        let image_path = std::env::var("IKB_TEST_IKUAI_IMAGE")
+            .ok()
+            .map(|value| PathBuf::from(value.trim()))
+            .filter(|path| !path.as_os_str().is_empty())
+            .unwrap_or_else(|| workspace_root.join(".github/ikuai.qcow2"));
+        let ikuai_url_explicit = std::env::var("IKB_TEST_IKUAI_URL")
+            .ok()
+            .map(|value| !value.trim().is_empty())
+            .unwrap_or(false);
 
         if !cli_dev_script.is_file() {
             return Err(format!(
@@ -97,24 +123,37 @@ impl TestEnv {
                 cli_dev_script.display()
             ));
         }
-        if !image_path.is_file() {
+        if backend == TestBackend::Kvm && !image_path.is_file() {
             return Err(format!(
                 "iKuai image not found: {}. Set IKB_TEST_IKUAI_IMAGE to a valid qcow2 path.",
                 image_path.display()
             ));
         }
 
+        let fixture_guest_host = std::env::var("IKB_TEST_FIXTURE_GUEST_HOST")
+            .ok()
+            .map(|value| value.trim().to_string())
+            .filter(|value| !value.is_empty())
+            .unwrap_or_else(|| match backend {
+                TestBackend::Auto | TestBackend::Kvm | TestBackend::External => {
+                    DEFAULT_FIXTURE_GUEST_HOST.to_string()
+                }
+                TestBackend::Simulator => "127.0.0.1".to_string(),
+            });
+
         Ok(Self {
+            backend,
             workspace_root,
             artifact_root,
             cli_dev_script,
             image_path,
             ikuai_url: env_or("IKB_TEST_IKUAI_URL", DEFAULT_IKUAI_URL),
+            ikuai_url_explicit,
             username: env_or("IKB_TEST_IKUAI_USERNAME", DEFAULT_IKUAI_USERNAME),
             password: env_or("IKB_TEST_IKUAI_PASSWORD", DEFAULT_IKUAI_PASSWORD),
             tap_if: env_or("IKB_TEST_TAP_IF", DEFAULT_TAP_IF),
             fixture_bind_host: env_or("IKB_TEST_FIXTURE_BIND_HOST", DEFAULT_FIXTURE_BIND_HOST),
-            fixture_guest_host: env_or("IKB_TEST_FIXTURE_GUEST_HOST", DEFAULT_FIXTURE_GUEST_HOST),
+            fixture_guest_host,
             qemu_bin: env_or("IKB_TEST_QEMU_BIN", DEFAULT_QEMU_BIN),
             qemu_img_bin: env_or("IKB_TEST_QEMU_IMG_BIN", DEFAULT_QEMU_IMG_BIN),
             qemu_accel: env_or("IKB_TEST_QEMU_ACCEL", DEFAULT_QEMU_ACCEL),
@@ -129,12 +168,33 @@ impl TestHarness {
         let env = TestEnv::load()?;
         let artifact_dir = create_artifact_dir(&env.artifact_root, test_name)?;
         let fixture = FixtureServer::start(&env, &artifact_dir)?;
-        let vm = VmInstance::start(&env, &artifact_dir).await?;
+        let resolved_backend = resolve_backend(&env).await?;
+        let (ikuai_base_url, backend_instance) = match resolved_backend {
+            TestBackend::Kvm => {
+                let vm = VmInstance::start(&env, &artifact_dir).await?;
+                (env.ikuai_url.clone(), BackendInstance::Kvm(vm))
+            }
+            TestBackend::Simulator => {
+                let simulator = IKuaiSimulator::start(&env.username, &env.password).await?;
+                (
+                    simulator.base_url().to_string(),
+                    BackendInstance::Simulator(simulator),
+                )
+            }
+            TestBackend::External => {
+                login_api(&env).await?;
+                (env.ikuai_url.clone(), BackendInstance::External)
+            }
+            TestBackend::Auto => {
+                return Err("auto backend should be resolved before start".to_string());
+            }
+        };
         Ok(Self {
             env,
             artifact_dir,
+            ikuai_base_url,
             fixture,
-            vm,
+            _backend: backend_instance,
         })
     }
 
@@ -147,7 +207,7 @@ impl TestHarness {
     }
 
     pub fn base_url(&self) -> &str {
-        &self.env.ikuai_url
+        &self.ikuai_base_url
     }
 
     pub fn username(&self) -> &str {
@@ -239,7 +299,7 @@ impl TestHarness {
     }
 
     pub async fn login_api(&self) -> Result<IKuaiClient, String> {
-        login_api(&self.env).await
+        login_api_at(&self.ikuai_base_url, &self.env.username, &self.env.password).await
     }
 
     pub async fn clean_tag(&self, tag: &str) -> Result<(), String> {
@@ -261,6 +321,85 @@ impl TestHarness {
             .map_err(|e| format!("failed to clean stream-ipport '{tag}': {e}"))?;
         Ok(())
     }
+}
+
+impl TestBackend {
+    fn load() -> Result<Self, String> {
+        match env_or("IKB_TEST_BACKEND", "auto").to_ascii_lowercase().as_str() {
+            "auto" => Ok(Self::Auto),
+            "kvm" => Ok(Self::Kvm),
+            "sim" | "simulator" => Ok(Self::Simulator),
+            "external" | "existing" => Ok(Self::External),
+            other => Err(format!(
+                "unsupported IKB_TEST_BACKEND '{}', expected 'auto', 'kvm', 'simulator', or 'external'",
+                other
+            )),
+        }
+    }
+}
+
+async fn resolve_backend(env: &TestEnv) -> Result<TestBackend, String> {
+    match env.backend {
+        TestBackend::Simulator => Ok(TestBackend::Simulator),
+        TestBackend::Kvm => {
+            ensure_kvm_prerequisites(env)?;
+            Ok(TestBackend::Kvm)
+        }
+        TestBackend::External => {
+            login_api(env).await?;
+            Ok(TestBackend::External)
+        }
+        TestBackend::Auto => {
+            let missing = kvm_prerequisites(env);
+            if missing.is_empty() {
+                return Ok(TestBackend::Kvm);
+            }
+            if env.ikuai_url_explicit {
+                login_api(env).await?;
+                return Ok(TestBackend::External);
+            }
+            Err(format!(
+                "KVM prerequisites missing: {}. Install QEMU/KVM, or set IKB_TEST_IKUAI_URL to an existing iKuai instance.",
+                missing.join(", ")
+            ))
+        }
+    }
+}
+
+fn ensure_kvm_prerequisites(env: &TestEnv) -> Result<(), String> {
+    let missing = kvm_prerequisites(env);
+    if missing.is_empty() {
+        return Ok(());
+    }
+    Err(format!("KVM prerequisites missing: {}", missing.join(", ")))
+}
+
+fn kvm_prerequisites(env: &TestEnv) -> Vec<String> {
+    let mut missing = Vec::new();
+    if !binary_available(&env.qemu_bin) {
+        missing.push(format!("qemu binary not found ({})", env.qemu_bin));
+    }
+    if !binary_available(&env.qemu_img_bin) {
+        missing.push(format!("qemu-img binary not found ({})", env.qemu_img_bin));
+    }
+    if env.qemu_accel == "kvm" && !Path::new("/dev/kvm").exists() {
+        missing.push("/dev/kvm not available".to_string());
+    }
+    if !env.image_path.is_file() {
+        missing.push(format!("image missing ({})", env.image_path.display()));
+    }
+    missing
+}
+
+fn binary_available(binary: &str) -> bool {
+    let candidate = Path::new(binary);
+    if candidate.components().count() > 1 {
+        return candidate.is_file();
+    }
+    let Some(path) = std::env::var_os("PATH") else {
+        return false;
+    };
+    std::env::split_paths(&path).any(|dir| dir.join(binary).is_file())
 }
 
 impl VmInstance {
@@ -461,15 +600,19 @@ impl Drop for FixtureServer {
     }
 }
 
-pub async fn login_api(env: &TestEnv) -> Result<IKuaiClient, String> {
-    let api = IKuaiClient::new(env.ikuai_url.clone())
+async fn login_api(env: &TestEnv) -> Result<IKuaiClient, String> {
+    login_api_at(&env.ikuai_url, &env.username, &env.password).await
+}
+
+async fn login_api_at(base_url: &str, username: &str, password: &str) -> Result<IKuaiClient, String> {
+    let api = IKuaiClient::new(base_url.to_string())
         .map_err(|e| format!("failed to create IKuaiClient: {e}"))?;
-    api.login(&env.username, &env.password)
+    api.login(username, password)
         .await
         .map_err(|e| {
             format!(
                 "failed to login to {} with username '{}': {}",
-                env.ikuai_url, env.username, e
+                base_url, username, e
             )
         })?;
     Ok(api)

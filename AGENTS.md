@@ -8,10 +8,19 @@
 
 - `crates/core/`：核心业务库（配置、iKuai API、更新流程、运行时、日志）
 - `apps/cli/`：CLI + Web 模式
+- `apps/integration-tests/`：集成测试模块
+  其中 `apps/integration-tests/src/ikuai_simulator/` 是 iKuai 真机模拟器目录（CI 默认使用）
 - `frontends/app/`：Bun + Astro 单页前端
 - `apps/gui/`：Tauri v2 后端
 - `config.yml`：示例配置
 - `golang_archive/`：Go 版本归档，除非用户明确要求，否则不要把新功能继续做进归档目录
+
+## 集成测试约定
+
+- GitHub CI 默认使用 `apps/integration-tests/src/ikuai_simulator/` 里的 iKuai 模拟器，不再依赖在线 KVM
+- 本地进行集成测试时，默认优先使用 KVM/QEMU 真机链路，用于验证和模拟器的行为差异
+- 如果本地没有 `qemu-system-x86_64` / `qemu-img` / `/dev/kvm`，允许通过 `IKB_TEST_IKUAI_URL` 连接开发者显式指定的爱快地址继续跑集成测试
+- 本地 KVM 默认镜像优先使用仓库内 `.github/ikuai.qcow2.7z` 解压得到的 `.github/ikuai.qcow2`，除非开发者自己通过环境变量覆盖
 
 ## 核心业务逻辑
 

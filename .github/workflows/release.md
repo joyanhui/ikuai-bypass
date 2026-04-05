@@ -255,6 +255,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - LuCI 包固定为 `Architecture: all`
 - LuCI 包本身不内置 `ikuai-bypass` CLI 二进制，因此是一个通用跨架构包
 - LuCI 页面运行时通过 GitHub API 查询 `joyanhui/ikuai-bypass` releases，并按当前 OpenWrt 路由器架构匹配 `ikuai-bypass-cli-linux-*.zip`
+- 页面语言按浏览器语言自动切换，`zh-*` 显示中文，其余显示英文，且不依赖 LuCI 语言包
 - 页面支持在 stable（`prerelease=false`）与 prerelease（`prerelease=true`）之间切换
 - 点击安装后，由路由器本机下载对应 release asset，解压并安装到 `/usr/bin/ikuai-bypass`
 - 若 release archive 内包含 `config.yml`，会额外落地到 `/etc/ikuai-bypass/config.yml.example`

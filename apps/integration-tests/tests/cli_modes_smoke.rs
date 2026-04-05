@@ -66,7 +66,7 @@ async fn cli_modes_smoke() -> Result<(), String> {
         "-m",
         "invalid-module",
     ])?;
-    assert_stderr_contains(&invalid_m, "invalid -m parameter")?;
+    assert_stderr_contains(&invalid_m, "Invalid -m parameter")?;
 
     let clean_missing_tag = harness.run_cli_expect_failure(&["-c", &config_path_str, "-r", "clean"])?;
     assert_stderr_contains(&clean_missing_tag, "Clean mode requires -tag")?;

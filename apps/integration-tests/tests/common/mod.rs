@@ -249,7 +249,7 @@ impl TestHarness {
             .duration_since(UNIX_EPOCH)
             .map_err(|e| format!("failed to read system time: {e}"))?
             .as_millis();
-        let prefix = sanitize_for_path(&args.join("_"));
+        let prefix = build_log_prefix(args);
         let stdout_path = self
             .artifact_dir
             .join(format!("{}-{}.stdout.log", prefix, stamp));
@@ -753,6 +753,22 @@ fn sanitize_for_path(raw: &str) -> String {
         return "test".to_string();
     }
     out
+}
+
+fn build_log_prefix(args: &[&str]) -> String {
+    use std::hash::{Hash, Hasher};
+
+    let joined = args.join("_");
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    joined.hash(&mut hasher);
+    let hash = hasher.finish();
+
+    let mut prefix = sanitize_for_path(&joined);
+    const MAX_PREFIX: usize = 96;
+    if prefix.len() > MAX_PREFIX {
+        prefix.truncate(MAX_PREFIX);
+    }
+    format!("{}-{:x}", prefix, hash)
 }
 
 fn env_or(key: &str, default: &str) -> String {

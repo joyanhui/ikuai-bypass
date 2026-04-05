@@ -1,6 +1,6 @@
 #!/bin/bash
 # iKuai Bypass ipkg 打包脚本 / Build script for iKuai v4 ipkg package
-# 用法 / Usage: cd ipkg && bash build-ipkg.sh
+# 用法 / Usage: cd packaging/ikuai-ipkg && bash build-ipkg.sh
 #
 # 复用根目录 Dockerfile，本地构建时先用临时容器编译产物，再组装镜像。
 # 在 CI 中可直接使用已有 build-cli / build-frontend 产物，避免二次编译。
@@ -15,13 +15,22 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 STAGE_DIR="$SCRIPT_DIR/.stage"
+
+normalize_ipkg_version() {
+  local raw="${1:-}"
+  if [[ "$raw" =~ ^([0-9]+\.[0-9]+\.[0-9]+)([-+].*)?$ ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return
+  fi
+  printf '%s' "$raw"
+}
 
 # 从 Cargo.toml 提取版本号，去掉预发布后缀以满足 ipkg 的 X.Y.Z 格式
 # Extract version from Cargo.toml, strip prerelease suffix for ipkg semver X.Y.Z
 RAW_VERSION=$(grep '^version' "$PROJECT_DIR/apps/cli/Cargo.toml" | head -1 | sed 's/.*"\(.*\)".*/\1/')
-VERSION=$(echo "$RAW_VERSION" | sed 's/-.*//')
+VERSION=$(normalize_ipkg_version "$RAW_VERSION")
 if [ -z "$VERSION" ]; then
   echo "ERROR: could not extract version from apps/cli/Cargo.toml"
   exit 1
@@ -98,7 +107,7 @@ rm -f "$SCRIPT_DIR/ikuai-bypass/docker_image.tar.gz"
 
 echo ""
 echo "=== 完成 / Done ==="
-echo "输出 / Output: ipkg/ikuai-bypass-${VERSION}.ipkg (${IPKG_SIZE})"
+echo "输出 / Output: packaging/ikuai-ipkg/ikuai-bypass-${VERSION}.ipkg (${IPKG_SIZE})"
 echo ""
 echo "安装方式 / Install on iKuai v4:"
 echo "  Web: 高级应用 → 应用市场 → 本地安装"

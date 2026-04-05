@@ -1327,9 +1327,25 @@ jobs:
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
 
+          normalize_ipkg_version() {
+            local raw="${1:-}"
+            if [[ "${raw}" =~ ^([0-9]+\.[0-9]+\.[0-9]+)([-+].*)?$ ]]; then
+              printf '%s' "${BASH_REMATCH[1]}"
+              return
+            fi
+            printf '%s' "${raw}"
+          }
+
+          read_cli_semver() {
+            local raw
+            raw="$(sed -n 's/^version = "\([^"]*\)"$/\1/p' apps/cli/Cargo.toml | head -1)"
+            normalize_ipkg_version "${raw}"
+          }
+
           # 1. 准备根 Dockerfile 所需的目录结构
           # 1. Prepare directory layout expected by root Dockerfile
           stage=".ipkg-stage"
+          ipkg_dir="packaging/ikuai-ipkg"
           rm -rf "${stage}"
           mkdir -p "${stage}/docker/bin/linux-amd64" "${stage}/docker/frontends/app"
 
@@ -1351,16 +1367,23 @@ jobs:
 
           # 3. 同步版本号并导出镜像
           # 3. Sync version and export image
-          ipkg_version="${VERSION}"
-          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"${ipkg_version}\"/" ipkg/ikuai-bypass/manifest.json
-          docker save ikuai-bypass:ikuai | gzip > ipkg/ikuai-bypass/docker_image.tar.gz
+          ipkg_version="$(normalize_ipkg_version "${VERSION}")"
+          if [[ ! "${ipkg_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            ipkg_version="$(read_cli_semver)"
+          fi
+          if [[ ! "${ipkg_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid ipkg version: ${ipkg_version}" >&2
+            exit 1
+          fi
+          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"${ipkg_version}\"/" "${ipkg_dir}/ikuai-bypass/manifest.json"
+          docker save ikuai-bypass:ikuai | gzip > "${ipkg_dir}/ikuai-bypass/docker_image.tar.gz"
 
           # 4. 打包 ipkg
           # 4. Pack ipkg
-          cd ipkg
+          cd "${ipkg_dir}"
           tar -czf "ikuai-bypass-${ipkg_version}.ipkg" ikuai-bypass/
           rm -f ikuai-bypass/docker_image.tar.gz
-          cp "ikuai-bypass-${ipkg_version}.ipkg" ../release/
+          cp "ikuai-bypass-${ipkg_version}.ipkg" ../../release/
           echo "ipkg_name=ikuai-bypass-${ipkg_version}.ipkg" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v6

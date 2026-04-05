@@ -220,6 +220,29 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 - `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz`
 
+### iKuai v4 ipkg
+
+当 stable CLI 中包含 `linux-amd64` 时构建：
+
+- `ikuai-bypass-<version>.ipkg`
+
+触发与依赖规则：
+
+- `build-ipkg` 仅在 `has_linux_amd64_cli=true` 时执行
+- `build-ipkg` 依赖 `build-cli` 的 `cli-linux-amd64` artifact
+- `build-ipkg` 依赖 `build-frontend` 的 `frontend-dist` artifact，因为 ipkg 内置 WebUI 静态文件
+- 为了满足上面的依赖，`build-frontend` 在 `has_gui=true`、`push_docker=true` 或 `has_linux_amd64_cli=true` 任一条件满足时都会执行
+
+版本规则：
+
+- ipkg 的 `manifest.json` 与最终文件名会对 semver 预发布后缀做归一化，例如 `4.4.100-alpha9.2` 会写成 `4.4.100`
+- 如果 workflow 的发布版本号不是 semver（例如 `manual-build-*` / `manual-release-*`），ipkg 会回退读取 `apps/cli/Cargo.toml` 的版本并继续归一化，确保 `manifest.json` 始终是 `X.Y.Z`
+
+实现位置：
+
+- `packaging/ikuai-ipkg/`
+- `packaging/ikuai-ipkg/build-ipkg.sh`
+
 ### Docker Multi-Arch
 
 仅在以下条件同时满足时执行：
@@ -262,6 +285,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - `.github/build_matrix.jsonc`
 - `.github/scripts/arch-helpers.sh`
 - `.github/scripts/prepare-container-binaries.sh`
+- `packaging/ikuai-ipkg/build-ipkg.sh`
 
 ## 11. 维护约束
 
@@ -273,4 +297,5 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - stable / nightly / BSD / GUI 构建矩阵
 - `full` 模式下的 nightly 构建逻辑
 - 最终发布文件命名规则
+- ipkg 构建条件、版本归一化与目录位置
 - 发布门槛与产物收集逻辑

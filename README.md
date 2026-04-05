@@ -84,6 +84,7 @@
 | 服务器/路由器/容器 | CLI 版本 `ikuai-bypass-cli-linux-xxx.zip` |
 | LXC/PVE CT 容器 | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
 | Docker | `joyanhui/ikuai-bypass` |
+| iKuai v4 应用市场 | `ikuai-bypass-<version>.ipkg`，在爱快“高级应用 -> 应用市场 -> 本地安装”上传 |
 
 > **新手建议**：如果你在电脑上使用，直接下载 GUI 版本（安装包），双击安装即可，无需命令行。
 
@@ -242,6 +243,10 @@ docker run -itd --name ikuai-bypass --restart=always \
 2. 在网页界面里配置爱快地址和登录信息
 3. 点击"运行一次"测试，成功后开启定时任务
 
+### iKuai v4 应用市场 / ipkg
+
+如果你打算直接在爱快 `高级应用 -> 应用市场 -> 本地安装` 中上传 `.ipkg` 包，安装流程、参数填写和界面截图请直接参考 [PR #118 使用说明](https://github.com/joyanhui/ikuai-bypass/pull/118)。
+
 ### Unraid / 群晖 / 爱快内docker 等部署
 
 在群晖的 Docker 套件里：
@@ -266,6 +271,7 @@ docker run -itd --name ikuai-bypass --restart=always \
 - 桌面版安装包
 - 手机版安装包
 - CLI 命令行版本
+- iKuai v4 应用市场 `.ipkg` 安装包
 - Docker 镜像
 
 ---

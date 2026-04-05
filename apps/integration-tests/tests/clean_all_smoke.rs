@@ -1,3 +1,9 @@
+// 覆盖点：
+// 1) cleanAll 全量清理路径；
+// 2) 多类规则（isp/domain/ip-group/stream-ipport）清空验证。
+// Coverage:
+// 1) cleanAll flow.
+// 2) Verifies all managed rule categories are removed.
 mod common;
 
 use common::{TestHarness, render_test_config};
@@ -6,6 +12,7 @@ use ikb_core::ikuai;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn clean_all_smoke() -> Result<(), String> {
     let harness = TestHarness::start("clean_all_smoke").await?;
+    common::print_failure_hint("clean_all_smoke", harness.artifact_dir());
 
     harness.fixture().set_text("/cleanall/a-isp.txt", "10.1.1.0/24\n");
     harness.fixture().set_text("/cleanall/b-isp.txt", "10.2.2.0/24\n");

@@ -651,6 +651,17 @@ pub fn assert_stderr_contains(output: &Output, needle: &str) -> Result<(), Strin
     ))
 }
 
+pub fn print_failure_hint(test_name: &str, artifact_dir: &Path) {
+    println!(
+        "[TEST:HINT] {} artifacts: {}",
+        test_name,
+        artifact_dir.display()
+    );
+    println!(
+        "[TEST:HINT] 定位失败可查看该目录下的 *.stdout.log / *.stderr.log / qemu*.log"
+    );
+}
+
 pub fn render_test_config(
     base_url: &str,
     username: &str,

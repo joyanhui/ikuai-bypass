@@ -1,3 +1,11 @@
+// 覆盖点：
+// 1) once -m iip 全链路创建规则；
+// 2) 第二次同步走原地 edit（ID 稳定）；
+// 3) custom-isp / stream-domain / ip-group / ipv6-group / stream-ipport 全量断言。
+// Coverage:
+// 1) Full iip sync creates rules.
+// 2) Second sync updates in place with stable IDs.
+// 3) Asserts all major rule types end-to-end.
 mod common;
 
 use common::{TestHarness, csv_items, render_test_config};
@@ -6,6 +14,7 @@ use ikb_core::ikuai;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
     let harness = TestHarness::start("rule_sync_update_in_place_smoke").await?;
+    common::print_failure_hint("rule_sync_update_in_place_smoke", harness.artifact_dir());
 
     harness
         .fixture()

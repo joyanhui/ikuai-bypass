@@ -1,3 +1,11 @@
+// 覆盖点：
+// 1) 模拟器 Action/login 与会话流程；
+// 2) custom_isp / route_object / stream_domain / stream_ipport 的 add/show/edit/del；
+// 3) 覆盖 core 当前使用到的主要 API 面。
+// Coverage:
+// 1) Simulator login/session path.
+// 2) CRUD for all major API groups used by core.
+// 3) Guards simulator API surface compatibility.
 use ikb_core::ikuai;
 use ikb_core::ikuai::IKuaiClient;
 use ikb_integration_tests::ikuai_simulator::IKuaiSimulator;

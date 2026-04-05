@@ -1,3 +1,11 @@
+// 覆盖点：
+// 1) clean 缺少 -tag 必须失败；
+// 2) 指定 tag 清理仅影响目标规则；
+// 3) 非目标 tag 规则必须保留。
+// Coverage:
+// 1) clean without -tag fails.
+// 2) Targeted clean removes only selected tag rules.
+// 3) Non-target rules remain unchanged.
 mod common;
 
 use common::{TestHarness, assert_stderr_contains, render_test_config};
@@ -6,6 +14,7 @@ use ikb_core::ikuai;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn clean_mode_smoke() -> Result<(), String> {
     let harness = TestHarness::start("clean_mode_smoke").await?;
+    common::print_failure_hint("clean_mode_smoke", harness.artifact_dir());
 
     harness.fixture().set_text("/clean/a-isp.txt", "10.10.10.0/24\n");
     harness.fixture().set_text("/clean/b-isp.txt", "10.10.20.0/24\n");

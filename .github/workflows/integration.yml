@@ -15,23 +15,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  integration-smoke:
-    name: Integration Matrix
+  cli-core-unit:
+    name: CLI Core Unit
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
     env:
       CARGO_TERM_COLOR: always
-      IKB_TEST_BACKEND: simulator
-      IKB_TEST_FIXTURE_BIND_HOST: 127.0.0.1
-      IKB_TEST_ARTIFACT_ROOT: ${{ github.workspace }}/apps/integration-tests/.artifacts
     steps:
       - uses: actions/checkout@v5
 
       - uses: dtolnay/rust-toolchain@stable
-
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -48,33 +41,64 @@ jobs:
         shell: bash
         run: cargo test --locked -p ikb-core
 
-      - name: Smoke - simulator_api_surface
-        shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh simulator_api_surface_smoke
+  cli-smoke:
+    name: CLI Smoke (${{ matrix.test_name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        test_name:
+          - simulator_api_surface_smoke
+          - rule_sync_update_in_place_smoke
+          - safe_before_smoke
+          - clean_mode_smoke
+          - clean_all_smoke
+          - export_stream_domain_smoke
+          - cli_modes_smoke
+    env:
+      CARGO_TERM_COLOR: always
+      IKB_TEST_BACKEND: simulator
+      IKB_TEST_FIXTURE_BIND_HOST: 127.0.0.1
+      IKB_TEST_ARTIFACT_ROOT: ${{ github.workspace }}/apps/integration-tests/.artifacts
+    steps:
+      - uses: actions/checkout@v5
 
-      - name: Smoke - rule_sync_update_in_place
-        shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh rule_sync_update_in_place_smoke
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Smoke - safe_before
-        shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh safe_before_smoke
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
+          shared-key: integration-smoke
 
-      - name: Smoke - clean_mode
+      - name: Build CLI binary
         shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh clean_mode_smoke
+        run: cargo build --locked -p ikb-cli --bin ikb-cli
 
-      - name: Smoke - clean_all
+      - name: Run smoke case
         shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh clean_all_smoke
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh "${{ matrix.test_name }}"
 
-      - name: Smoke - export_stream_domain
-        shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh export_stream_domain_smoke
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-artifacts-${{ matrix.test_name }}
+          path: apps/integration-tests/.artifacts/
+          if-no-files-found: ignore
 
-      - name: Smoke - cli_modes
-        shell: bash
-        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh cli_modes_smoke
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Frontend install dependencies
         shell: bash
@@ -91,14 +115,24 @@ jobs:
         run: bun run test:ci
         working-directory: frontends/app
 
+  tauri-tests:
+    name: Tauri Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+          cache-on-failure: true
+          shared-key: integration-smoke
+
       - name: Tauri backend command tests
         shell: bash
         run: cargo test --locked -p ikb-app --test command_surface -- --nocapture
-
-      - name: Upload integration artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: integration-artifacts
-          path: apps/integration-tests/.artifacts/
-          if-no-files-found: ignore

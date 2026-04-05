@@ -1,3 +1,11 @@
+// 覆盖点：
+// 1) CLI 参数错误分支（invalid -r / invalid -m / clean 缺 tag / -r web 已移除）；
+// 2) once 别名模式（-r 1）；
+// 3) cronAft 启动路径。
+// Coverage:
+// 1) CLI invalid-arg branches.
+// 2) once alias mode (-r 1).
+// 3) cronAft startup path.
 mod common;
 
 use common::{TestHarness, assert_stderr_contains, assert_stdout_contains, render_test_config};
@@ -5,6 +13,7 @@ use common::{TestHarness, assert_stderr_contains, assert_stdout_contains, render
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cli_modes_smoke() -> Result<(), String> {
     let harness = TestHarness::start("cli_modes_smoke").await?;
+    common::print_failure_hint("cli_modes_smoke", harness.artifact_dir());
 
     harness
         .fixture()

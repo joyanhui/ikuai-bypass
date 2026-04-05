@@ -1,3 +1,11 @@
+// 覆盖点：
+// 1) 首次同步成功写入规则；
+// 2) 远程源返回 503 后再次同步；
+// 3) 验证 Safe-Before：旧规则不被清理。
+// Coverage:
+// 1) Initial successful sync.
+// 2) Retry sync with upstream 503.
+// 3) Verifies Safe-Before keeps existing rules.
 mod common;
 
 use common::{TestHarness, csv_items, render_test_config};
@@ -6,6 +14,7 @@ use ikb_core::ikuai;
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn safe_before_smoke() -> Result<(), String> {
     let harness = TestHarness::start("safe_before_smoke").await?;
+    common::print_failure_hint("safe_before_smoke", harness.artifact_dir());
 
     harness
         .fixture()

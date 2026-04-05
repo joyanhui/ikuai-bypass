@@ -1,3 +1,11 @@
+// 覆盖点：
+// 1) CLI 导出模式 exportDomainSteamToTxt；
+// 2) 导出文件命名和内容过滤（注释/空行/非法域名）；
+// 3) 导出完成 banner。
+// Coverage:
+// 1) CLI exportDomainSteamToTxt mode.
+// 2) Output file naming and domain filtering.
+// 3) Export completion banner.
 mod common;
 
 use std::fs;
@@ -7,6 +15,7 @@ use common::{TestHarness, assert_stdout_contains, render_test_config};
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn export_stream_domain_smoke() -> Result<(), String> {
     let harness = TestHarness::start("export_stream_domain_smoke").await?;
+    common::print_failure_hint("export_stream_domain_smoke", harness.artifact_dir());
 
     harness.fixture().set_text(
         "/export/domains.txt",

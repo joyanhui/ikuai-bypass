@@ -503,12 +503,14 @@ jobs:
           with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
               for path in stage.rglob("*"):
                   zf.write(path, path.relative_to(stage))
+          shutil.rmtree(stage)
           PY
 
       - uses: actions/upload-artifact@v6
         with:
           name: cli-${{ matrix.label }}
-          path: release/*
+          path: release/*.zip
+          compression-level: 0
 
   build-cli-nightly:
     name: CLI Nightly Experimental
@@ -613,13 +615,15 @@ jobs:
           with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
               for path in stage.rglob("*"):
                   zf.write(path, path.relative_to(stage))
+          shutil.rmtree(stage)
           PY
 
       - uses: actions/upload-artifact@v6
         if: steps.build_nightly_cli.outputs.build_exit == '0'
         with:
           name: cli-${{ matrix.label }}
-          path: release/*
+          path: release/*.zip
+          compression-level: 0
 
   build-lxc:
     name: LXC/Alpine Package

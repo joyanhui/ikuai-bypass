@@ -1,6 +1,6 @@
 [package]
 name = "ikb-integration-tests"
-version = "4.4.100-alpha9.4"
+version = "4.4.100-alpha9.5"
 edition = "2024"
 publish = false
 

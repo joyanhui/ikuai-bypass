@@ -271,8 +271,9 @@ docker run -itd --name ikuai-bypass --restart=always \
 - 桌面版安装包
 - 手机版安装包
 - CLI 命令行版本
+- PVE lxc /CT 模板
 - iKuai v4 应用市场 `.ipkg` 安装包
-- Docker 镜像
+- [Docker 镜像](https://hub.docker.com/r/joyanhui/ikuai-bypass)
 
 ---
 

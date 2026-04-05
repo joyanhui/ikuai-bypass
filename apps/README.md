@@ -4,5 +4,6 @@
 
 - `apps/cli/`：CLI + Web 模式（内置 WebUI Server）
 - `apps/gui/`：Tauri v2 GUI（桌面/移动端）
+- `apps/integration-tests/`：KVM/QEMU 黑盒集成测试（PR / pre-commit 复用）
 
 前端单页位于 `frontends/app/`（Astro），CLI WebUI 与 Tauri 共用。

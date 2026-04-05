@@ -231,7 +231,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 当 stable CLI 中包含 `linux-amd64` 时构建：
 
-- `ikuai-bypass-<version>.ipkg`
+- `ikuai-bypass-x86_64.ipk`
 
 触发与依赖规则：
 
@@ -242,8 +242,9 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 版本规则：
 
-- ipkg 的 `manifest.json` 与最终文件名会对 semver 预发布后缀做归一化，例如 `4.4.100-alpha9.2` 会写成 `4.4.100`
-- 如果 workflow 的发布版本号不是 semver（例如 `manual-build-*` / `manual-release-*`），ipkg 会回退读取 `apps/cli/Cargo.toml` 的版本并继续归一化，确保 `manifest.json` 始终是 `X.Y.Z`
+- ipk 的最终文件名按架构固定为 `ikuai-bypass-x86_64.ipk`，不包含版本号
+- `manifest.json` 内的版本仍会对 semver 预发布后缀做归一化，例如 `4.4.100-alpha9.2` 会写成 `4.4.100`
+- 如果 workflow 的发布版本号不是 semver（例如 `manual-build-*` / `manual-release-*`），会回退读取 `apps/cli/Cargo.toml` 的版本并继续归一化，确保 `manifest.json` 始终是 `X.Y.Z`
 
 实现位置：
 

@@ -378,6 +378,10 @@ jobs:
         working-directory: frontends/app
         run: bun install --frozen-lockfile
 
+      - name: Sync WebUI icons
+        shell: bash
+        run: bash apps/gui/scripts/sync-icons.sh web-only
+
       - name: Build frontend dist
         working-directory: frontends/app
         run: bun run build
@@ -412,8 +416,8 @@ jobs:
           tool: tauri-cli@2
 
       - name: Generate Tauri icons
-        working-directory: apps/gui
-        run: cargo tauri icon icons/icon.png
+        shell: bash
+        run: bash apps/gui/scripts/sync-icons.sh tauri-only
 
       - uses: actions/upload-artifact@v6
         with:
@@ -786,7 +790,7 @@ jobs:
               build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
           bundle["active"] = os.environ.get("BUNDLE_ACTIVE", "true").lower() == "true"
-          bundle["icon"] = ["icons/icon.png", "icons/icon.ico", "icons/icon.icns"]
+          bundle["icon"] = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.ci.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -946,7 +950,7 @@ jobs:
           if workspace:
               build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
-          bundle["icon"] = ["icons/icon.png", "icons/icon.ico", "icons/icon.icns"]
+          bundle["icon"] = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.android.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -1165,7 +1169,7 @@ jobs:
           bundle = cfg.setdefault("bundle", {})
           bundle_ios = bundle.setdefault("iOS", {})
           bundle_ios["developmentTeam"] = "0000000000"
-          bundle["icon"] = ["icons/icon.png", "icons/icon.ico", "icons/icon.icns"]
+          bundle["icon"] = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.ios.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -1407,6 +1411,7 @@ jobs:
           # 1. Prepare directory layout expected by packaging/docker/Dockerfile
           stage=".ipkg-stage"
           ipkg_dir="packaging/ikuai-ipkg"
+          bash apps/gui/scripts/sync-icons.sh ipkg-only
           rm -rf "${stage}"
           mkdir -p "${stage}/docker/bin/linux-amd64" "${stage}/docker/frontends/app"
 
@@ -1439,18 +1444,19 @@ jobs:
           sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"${ipkg_version}\"/" "${ipkg_dir}/ikuai-bypass/manifest.json"
           docker save ikuai-bypass:ikuai | gzip > "${ipkg_dir}/ikuai-bypass/docker_image.tar.gz"
 
-          # 4. 打包 ipkg
-          # 4. Pack ipkg
+          # 4. 打包 ipk（文件名按架构固定，版本仅保留在 manifest.json）
+          # 4. Pack ipk (architecture-based filename; version stays in manifest.json)
+          ipkg_name="ikuai-bypass-x86_64.ipk"
           cd "${ipkg_dir}"
-          tar -czf "ikuai-bypass-${ipkg_version}.ipkg" ikuai-bypass/
+          tar -czf "${ipkg_name}" ikuai-bypass/
           rm -f ikuai-bypass/docker_image.tar.gz
-          cp "ikuai-bypass-${ipkg_version}.ipkg" ../../release/
-          echo "ipkg_name=ikuai-bypass-${ipkg_version}.ipkg" >> "$GITHUB_ENV"
+          cp "${ipkg_name}" ../../release/
+          echo "ipkg_name=${ipkg_name}" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v6
         with:
           name: cli-ipkg
-          path: release/*.ipkg
+          path: release/*.ipk
 
   build-openwrt-luci:
     name: OpenWrt LuCI Package

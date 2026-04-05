@@ -10,7 +10,7 @@
 #
 # 版本号自动从 apps/cli/Cargo.toml 读取（唯一来源）
 # Version is auto-read from apps/cli/Cargo.toml (single source of truth)
-# 输出 / Output: ikuai-bypass-<version>.ipkg
+# 输出 / Output: ikuai-bypass-x86_64.ipk
 
 set -e
 
@@ -37,6 +37,11 @@ if [ -z "$VERSION" ]; then
 fi
 
 echo "=== 构建 ikuai-bypass v${VERSION} ipkg (原始版本: ${RAW_VERSION}) ==="
+
+PACKAGE_NAME="ikuai-bypass-x86_64.ipk"
+
+# 步骤 0：同步图标 / Step 0: Sync icons from the GUI source icon
+bash "$PROJECT_DIR/apps/gui/scripts/sync-icons.sh" ipkg-only
 
 # 步骤 1：同步版本号到 manifest.json / Step 1: Sync version to manifest.json
 echo "[1/6] 同步版本号到 manifest.json..."
@@ -95,11 +100,11 @@ docker save ikuai-bypass:ikuai | gzip > "$SCRIPT_DIR/ikuai-bypass/docker_image.t
 IMAGE_SIZE=$(du -h "$SCRIPT_DIR/ikuai-bypass/docker_image.tar.gz" | cut -f1)
 echo "    镜像大小 / Image size: ${IMAGE_SIZE}"
 
-# 步骤 6：打包 ipkg / Step 6: Pack ipkg
+# 步骤 6：打包 ipk / Step 6: Pack ipk
 echo "[6/6] 打包 ipkg..."
 cd "$SCRIPT_DIR"
-tar -czf "ikuai-bypass-${VERSION}.ipkg" ikuai-bypass/
-IPKG_SIZE=$(du -h "ikuai-bypass-${VERSION}.ipkg" | cut -f1)
+tar -czf "${PACKAGE_NAME}" ikuai-bypass/
+IPKG_SIZE=$(du -h "${PACKAGE_NAME}" | cut -f1)
 
 # 清理临时文件 / Clean up
 rm -rf "$STAGE_DIR"
@@ -107,7 +112,7 @@ rm -f "$SCRIPT_DIR/ikuai-bypass/docker_image.tar.gz"
 
 echo ""
 echo "=== 完成 / Done ==="
-echo "输出 / Output: packaging/ikuai-ipkg/ikuai-bypass-${VERSION}.ipkg (${IPKG_SIZE})"
+echo "输出 / Output: packaging/ikuai-ipkg/${PACKAGE_NAME} (${IPKG_SIZE})"
 echo ""
 echo "安装方式 / Install on iKuai v4:"
 echo "  Web: 高级应用 → 应用市场 → 本地安装"

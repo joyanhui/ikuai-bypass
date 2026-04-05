@@ -83,8 +83,8 @@
 | iOS 手机 | `.ipa`（仅支持自签名或越狱设备） |
 | 服务器/路由器/容器 | CLI 版本 `ikuai-bypass-cli-linux-xxx.zip` |
 | LXC/PVE CT 容器 | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
-| Docker | `joyanhui/ikuai-bypass` |
-| iKuai v4 应用市场 | `ikuai-bypass-<version>.ipkg`，在爱快“高级应用 -> 应用市场 -> 本地安装”上传 |
+| Docker | [joyanhui/ikuai-bypass](https://hub.docker.com/r/joyanhui/ikuai-bypass/tags) |
+| iKuai v4 应用市场 | `ikuai-bypass-x86_64.ipk`，在爱快“高级应用 -> 应用市场 -> 本地安装”上传 |
 
 > **新手建议**：如果你在电脑上使用，直接下载 GUI 版本（安装包），双击安装即可，无需命令行。
 
@@ -263,17 +263,6 @@ docker run -itd --name ikuai-bypass --restart=always \
 - 与旧版ikuai-bypass不同，新版清理规则时必须指定 `-tag` 参数，避免误删
 - 网页界面端口默认是 `19001`，可以在配置里改
 
----
-
-## 更新与下载
-
-所有版本都在 [Releases](https://github.com/joyanhui/ikuai-bypass/releases) 页面下载，包括：
-- 桌面版安装包
-- 手机版安装包
-- CLI 命令行版本
-- PVE lxc /CT 模板
-- iKuai v4 应用市场 `.ipkg` 安装包
-- [Docker 镜像](https://hub.docker.com/r/joyanhui/ikuai-bypass)
 
 ---
 

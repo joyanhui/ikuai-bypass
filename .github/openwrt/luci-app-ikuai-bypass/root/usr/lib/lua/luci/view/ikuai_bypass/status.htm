@@ -7,6 +7,225 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 
 <script type="text/javascript">
 	(function() {
+		var DICT = {
+			en: {
+				introHtml: 'Stable means GitHub releases with <code>prerelease=false</code>. Prerelease means GitHub releases with <code>prerelease=true</code>. This package stays architecture-independent and installs the matching CLI only when you click the install button.',
+				routerStatusTitle: 'Router Status',
+				supportStatusLabel: 'Support status',
+				installedCliLabel: 'Installed CLI',
+				binaryPathLabel: 'Binary path',
+				kernelArchLabel: 'Kernel architecture',
+				opkgArchLabel: 'OpenWrt package arches',
+				expectedAssetLabel: 'Expected GitHub asset',
+				downloadToolLabel: 'Download tool',
+				archiveExtractionLabel: 'Archive extraction',
+				lastInstalledReleaseLabel: 'Last installed release',
+				lastInstalledAtLabel: 'Last installed at',
+				configSamplePathLabel: 'Config sample path',
+				releaseInstallerTitle: 'Release Installer',
+				releaseChannelLabel: 'Release channel',
+				stableOption: 'Stable',
+				prereleaseOption: 'Prerelease',
+				checkLatestButton: 'Check Latest',
+				installButton: 'Download And Install',
+				selectedChannelLabel: 'Selected channel',
+				latestTagLabel: 'Latest tag',
+				publishedAtLabel: 'Published at',
+				matchedAssetLabel: 'Matched asset',
+				releasePageLabel: 'Release page',
+				activityTitle: 'Activity',
+				preparingState: 'Preparing installer state...',
+				ready: 'Ready.',
+				loading: 'Loading...',
+				dash: '-',
+				installed: 'Installed',
+				notInstalled: 'Not installed',
+				unknown: 'Unknown',
+				unsupported: 'Unsupported',
+				missing: 'Missing',
+				readyShort: 'Ready',
+				notRecorded: 'Not recorded',
+				notGenerated: 'Not generated',
+				supported: 'Supported',
+				downloadReady: 'Download ready',
+				missingRuntimeDependency: 'Missing runtime dependency',
+				latestNotAvailable: 'Not available',
+				checkingLatest: 'Checking the latest matching GitHub release...',
+				foundLatest: 'Found the latest matching release.',
+				installingLatest: 'Downloading and installing the matching CLI archive on this router...',
+				installCompleted: 'Install completed.',
+				unsupportedRouterWarn: 'This router architecture is not mapped to a published iKuai Bypass CLI asset yet.',
+				missingUnzip: 'Missing unzip'
+			},
+			zh: {
+				introHtml: '正式版表示 GitHub 发布项的 <code>prerelease=false</code>，预发布版表示 <code>prerelease=true</code>。该包本身不内置任何 CLI 二进制，只有在你点击安装时才会按当前路由器架构下载并安装匹配的 CLI。',
+				routerStatusTitle: '路由器状态',
+				supportStatusLabel: '支持状态',
+				installedCliLabel: '已安装 CLI',
+				binaryPathLabel: '二进制路径',
+				kernelArchLabel: '内核架构',
+				opkgArchLabel: 'OpenWrt 包架构',
+				expectedAssetLabel: '预期 GitHub 资产名',
+				downloadToolLabel: '下载工具',
+				archiveExtractionLabel: '解压能力',
+				lastInstalledReleaseLabel: '上次安装的发布版本',
+				lastInstalledAtLabel: '上次安装时间',
+				configSamplePathLabel: '示例配置路径',
+				releaseInstallerTitle: '发布安装器',
+				releaseChannelLabel: '发布通道',
+				stableOption: '正式版',
+				prereleaseOption: '预发布版',
+				checkLatestButton: '查询最新版本',
+				installButton: '下载并安装',
+				selectedChannelLabel: '当前通道',
+				latestTagLabel: '最新标签',
+				publishedAtLabel: '发布时间',
+				matchedAssetLabel: '匹配到的资产',
+				releasePageLabel: '发布页面',
+				activityTitle: '活动状态',
+				preparingState: '正在准备安装器状态...',
+				ready: '已就绪。',
+				loading: '加载中...',
+				dash: '-',
+				installed: '已安装',
+				notInstalled: '未安装',
+				unknown: '未知',
+				unsupported: '不支持',
+				missing: '缺失',
+				readyShort: '已就绪',
+				notRecorded: '未记录',
+				notGenerated: '未生成',
+				supported: '已支持',
+				downloadReady: '可下载安装',
+				missingRuntimeDependency: '缺少运行依赖',
+				latestNotAvailable: '暂无可用结果',
+				checkingLatest: '正在查询与当前架构匹配的最新 GitHub 发布版本...',
+				foundLatest: '已找到匹配的最新发布版本。',
+				installingLatest: '正在本机下载并安装与当前路由器架构匹配的 CLI 压缩包...',
+				installCompleted: '安装已完成。',
+				unsupportedRouterWarn: '当前路由器架构还没有映射到已发布的 iKuai Bypass CLI 资产。',
+				missingUnzip: '缺少 unzip'
+			}
+		};
+
+		function detectLanguage() {
+			var langs = [];
+			var i;
+
+			if (navigator.languages && navigator.languages.length) {
+				for (i = 0; i < navigator.languages.length; i++) {
+					langs.push(String(navigator.languages[i] || ''));
+				}
+			} else if (navigator.language) {
+				langs.push(String(navigator.language));
+			}
+
+			for (i = 0; i < langs.length; i++) {
+				if (/^zh(?:-|_|$)/i.test(langs[i])) {
+					return 'zh';
+				}
+			}
+
+			return 'en';
+		}
+
+		var LANG = detectLanguage();
+
+		function t(key) {
+			if (DICT[LANG] && DICT[LANG][key]) {
+				return DICT[LANG][key];
+			}
+			if (DICT.en[key]) {
+				return DICT.en[key];
+			}
+			return key;
+		}
+
+		function translateChannel(channel) {
+			return channel === 'prerelease' ? t('prereleaseOption') : t('stableOption');
+		}
+
+		function translateBackendMessage(message) {
+			var prefix;
+			if (!message) {
+				return t('ready');
+			}
+
+			if (LANG !== 'zh') {
+				return message;
+			}
+
+			if (message === 'Failed to execute helper script') {
+				return '执行辅助脚本失败';
+			}
+			if (message === 'Failed to parse GitHub API response') {
+				return '解析 GitHub API 响应失败';
+			}
+			if (message === 'Current OpenWrt architecture is not supported by published CLI assets') {
+				return '当前 OpenWrt 架构没有对应的已发布 CLI 资产';
+			}
+			if (message === 'Install failed') {
+				return '安装失败';
+			}
+			if (message === 'Install completed') {
+				return '安装已完成';
+			}
+			if (message === 'Failed to download data from GitHub') {
+				return '从 GitHub 下载数据失败';
+			}
+			if (message === 'No supported HTTPS download tool is available') {
+				return '当前系统缺少可用的 HTTPS 下载工具';
+			}
+			if (message === 'The unzip package is required before installing the CLI archive') {
+				return '安装 CLI 压缩包前需要先安装 unzip';
+			}
+			if (message === 'The install command is not available on this router') {
+				return '当前路由器缺少 install 命令';
+			}
+			if (message === 'Failed to extract the CLI archive') {
+				return '解压 CLI 压缩包失败';
+			}
+			if (message === 'The downloaded archive does not contain the ikuai-bypass binary') {
+				return '下载的压缩包中没有 ikuai-bypass 二进制文件';
+			}
+			if (message === 'Failed to install the CLI binary') {
+				return '安装 CLI 二进制文件失败';
+			}
+			if (message === 'Asset name does not match the detected router architecture') {
+				return '资产名称与当前识别到的路由器架构不匹配';
+			}
+			if (message === 'Unexpected GitHub release download URL') {
+				return 'GitHub 发布下载地址不符合预期';
+			}
+			if (message === 'CLI installed successfully') {
+				return 'CLI 安装成功';
+			}
+			if (message === 'Missing download URL') {
+				return '缺少下载地址';
+			}
+			if (message === 'Missing release tag') {
+				return '缺少发布标签';
+			}
+			if (message === 'Missing asset name') {
+				return '缺少资产名称';
+			}
+			if (message === 'Unsupported action') {
+				return '不支持的操作';
+			}
+
+			prefix = 'No stable release contains ';
+			if (message.indexOf(prefix) === 0) {
+				return '未找到包含 ' + message.substring(prefix.length) + ' 的正式版发布。';
+			}
+
+			prefix = 'No prerelease release contains ';
+			if (message.indexOf(prefix) === 0) {
+				return '未找到包含 ' + message.substring(prefix.length) + ' 的预发布版本。';
+			}
+
+			return message;
+		}
+
 		var endpoints = {
 			status: <%= string.format("%q", status_url) %>,
 			latest: <%= string.format("%q", latest_url) %>,
@@ -20,6 +239,45 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 
 		function el(id) {
 			return document.getElementById(id);
+		}
+
+		function applyTranslations() {
+			var textNodes = document.querySelectorAll('[data-i18n]');
+			var htmlNodes = document.querySelectorAll('[data-i18n-html]');
+			var valueNodes = document.querySelectorAll('[data-i18n-value]');
+			var i;
+
+			document.documentElement.setAttribute('lang', LANG === 'zh' ? 'zh-CN' : 'en');
+
+			for (i = 0; i < textNodes.length; i++) {
+				textNodes[i].textContent = t(textNodes[i].getAttribute('data-i18n'));
+			}
+
+			for (i = 0; i < htmlNodes.length; i++) {
+				htmlNodes[i].innerHTML = t(htmlNodes[i].getAttribute('data-i18n-html'));
+			}
+
+			for (i = 0; i < valueNodes.length; i++) {
+				valueNodes[i].value = t(valueNodes[i].getAttribute('data-i18n-value'));
+			}
+		}
+
+		function primeDynamicPlaceholders() {
+			setText('ikb-support-status', t('loading'));
+			setText('ikb-binary-status', t('loading'));
+			setText('ikb-router-arch', t('loading'));
+			setText('ikb-opkg-arch', t('loading'));
+			setText('ikb-asset-name', t('loading'));
+			setText('ikb-download-tool', t('loading'));
+			setText('ikb-unzip-status', t('loading'));
+			setText('ikb-last-tag', t('loading'));
+			setText('ikb-last-installed-at', t('loading'));
+			setText('ikb-config-sample', t('loading'));
+			setText('ikb-release-channel', translateChannel(channelValue()));
+			setText('ikb-release-tag', t('loading'));
+			setText('ikb-release-time', t('loading'));
+			setText('ikb-release-asset', t('loading'));
+			setHtml('ikb-release-page', t('loading'));
 		}
 
 		function escapeHtml(value) {
@@ -52,7 +310,7 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 			}
 
 			node.className = "ikb-message " + (kind || "info");
-			node.textContent = text || "Ready.";
+			node.textContent = translateBackendMessage(text || t("ready"));
 		}
 
 		function buildQuery(params) {
@@ -129,22 +387,22 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 			var status = data && data.status ? data.status : {};
 			state.status = status;
 
-			setText("ikb-binary-status", status.binary_exists ? (status.binary_version || "Installed") : "Not installed");
+			setText("ikb-binary-status", status.binary_exists ? (status.binary_version || t("installed")) : t("notInstalled"));
 			setText("ikb-binary-path", status.binary_path || "/usr/bin/ikuai-bypass");
-			setText("ikb-router-arch", status.raw_uname || "Unknown");
-			setText("ikb-opkg-arch", status.opkg_arches || "Unknown");
-			setText("ikb-asset-name", status.asset_name || "Unsupported");
-			setText("ikb-download-tool", status.fetch_tool || "Missing");
-			setText("ikb-unzip-status", status.unzip_available ? "Ready" : "Missing unzip");
-			setText("ikb-last-tag", status.last_tag || "Not recorded");
-			setText("ikb-last-installed-at", status.last_installed_at || "Not recorded");
-			setText("ikb-config-sample", status.config_sample_path || "Not generated");
+			setText("ikb-router-arch", status.raw_uname || t("unknown"));
+			setText("ikb-opkg-arch", status.opkg_arches || t("unknown"));
+			setText("ikb-asset-name", status.asset_name || t("unsupported"));
+			setText("ikb-download-tool", status.fetch_tool || t("missing"));
+			setText("ikb-unzip-status", status.unzip_available ? t("readyShort") : t("missingUnzip"));
+			setText("ikb-last-tag", status.last_tag || t("notRecorded"));
+			setText("ikb-last-installed-at", status.last_installed_at || t("notRecorded"));
+			setText("ikb-config-sample", status.config_sample_path || t("notGenerated"));
 
-			var supportText = status.supported ? "Supported" : "Unsupported";
+			var supportText = status.supported ? t("supported") : t("unsupported");
 			if (status.supported && status.download_ready) {
-				supportText += " / Download ready";
+				supportText += " / " + t("downloadReady");
 			} else if (status.supported) {
-				supportText += " / Missing runtime dependency";
+				supportText += " / " + t("missingRuntimeDependency");
 			}
 			setText("ikb-support-status", supportText);
 			updateButtons();
@@ -155,18 +413,18 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 			state.latest = release;
 
 			if (!release) {
-				setText("ikb-release-tag", "Not available");
-				setText("ikb-release-time", "-");
-				setText("ikb-release-asset", "-");
-				setText("ikb-release-channel", channelValue());
-				setHtml("ikb-release-page", "-");
+				setText("ikb-release-tag", t("latestNotAvailable"));
+				setText("ikb-release-time", t("dash"));
+				setText("ikb-release-asset", t("dash"));
+				setText("ikb-release-channel", translateChannel(channelValue()));
+				setHtml("ikb-release-page", t("dash"));
 				return;
 			}
 
-			setText("ikb-release-tag", release.tag_name || "-");
-			setText("ikb-release-time", release.published_at || "-");
-			setText("ikb-release-asset", release.asset_name || "-");
-			setText("ikb-release-channel", data.channel || channelValue());
+			setText("ikb-release-tag", release.tag_name || t("dash"));
+			setText("ikb-release-time", release.published_at || t("dash"));
+			setText("ikb-release-asset", release.asset_name || t("dash"));
+			setText("ikb-release-channel", translateChannel(data.channel || channelValue()));
 
 			if (release.html_url) {
 				setHtml(
@@ -174,7 +432,7 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 					'<a href="' + escapeHtml(release.html_url) + '" target="_blank" rel="noopener">' + escapeHtml(release.html_url) + '</a>'
 				);
 			} else {
-				setHtml("ikb-release-page", "-");
+				setHtml("ikb-release-page", t("dash"));
 			}
 		}
 
@@ -197,13 +455,13 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 
 				renderStatus(data);
 				if (!(data && data.status && data.status.supported)) {
-					setMessage("warn", "This router architecture is not mapped to a published iKuai Bypass CLI asset yet.");
+					setMessage("warn", t("unsupportedRouterWarn"));
 				}
 			});
 		}
 
 		window.ikbCheckLatest = function() {
-			withBusy("Checking the latest matching GitHub release...", function(done) {
+			withBusy(t("checkingLatest"), function(done) {
 				request("GET", endpoints.latest, { channel: channelValue() }, function(err, data) {
 					done();
 					if (err) {
@@ -217,13 +475,13 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 
 					renderStatus(data);
 					renderLatest(data);
-					setMessage("success", "Found the latest matching release.");
+					setMessage("success", t("foundLatest"));
 				});
 			});
 		};
 
 		window.ikbInstallLatest = function() {
-			withBusy("Downloading and installing the matching CLI archive on this router...", function(done) {
+			withBusy(t("installingLatest"), function(done) {
 				request("POST", endpoints.install, { channel: channelValue() }, function(err, data) {
 					done();
 					if (err) {
@@ -243,12 +501,15 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 					if (data && data.release) {
 						renderLatest(data);
 					}
-					setMessage("success", data.message || "Install completed.");
+					setMessage("success", data.message || t("installCompleted"));
 				});
 			});
 		};
 
 		document.addEventListener("DOMContentLoaded", function() {
+			applyTranslations();
+			primeDynamicPlaceholders();
+			setMessage("info", t("preparingState"));
 			loadStatus();
 			window.ikbCheckLatest();
 		});
@@ -295,98 +556,98 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 </style>
 
 <div class="cbi-section">
-	<p class="ikb-note">
+	<p class="ikb-note" data-i18n-html="introHtml">
 		Stable means GitHub releases with <code>prerelease=false</code>. Prerelease means GitHub releases with <code>prerelease=true</code>.
 		This package stays architecture-independent and installs the matching CLI only when you click the install button.
 	</p>
 </div>
 
 <div class="cbi-section">
-	<h3>Router Status</h3>
+	<h3 data-i18n="routerStatusTitle">Router Status</h3>
 	<div class="table">
 		<div class="tr">
-			<div class="td left" width="33%">Support status</div>
+			<div class="td left" width="33%" data-i18n="supportStatusLabel">Support status</div>
 			<div class="td left" id="ikb-support-status">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Installed CLI</div>
+			<div class="td left" data-i18n="installedCliLabel">Installed CLI</div>
 			<div class="td left" id="ikb-binary-status">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Binary path</div>
+			<div class="td left" data-i18n="binaryPathLabel">Binary path</div>
 			<div class="td left" id="ikb-binary-path">/usr/bin/ikuai-bypass</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Kernel architecture</div>
+			<div class="td left" data-i18n="kernelArchLabel">Kernel architecture</div>
 			<div class="td left" id="ikb-router-arch">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">OpenWrt package arches</div>
+			<div class="td left" data-i18n="opkgArchLabel">OpenWrt package arches</div>
 			<div class="td left" id="ikb-opkg-arch">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Expected GitHub asset</div>
+			<div class="td left" data-i18n="expectedAssetLabel">Expected GitHub asset</div>
 			<div class="td left" id="ikb-asset-name">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Download tool</div>
+			<div class="td left" data-i18n="downloadToolLabel">Download tool</div>
 			<div class="td left" id="ikb-download-tool">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Archive extraction</div>
+			<div class="td left" data-i18n="archiveExtractionLabel">Archive extraction</div>
 			<div class="td left" id="ikb-unzip-status">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Last installed release</div>
+			<div class="td left" data-i18n="lastInstalledReleaseLabel">Last installed release</div>
 			<div class="td left" id="ikb-last-tag">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Last installed at</div>
+			<div class="td left" data-i18n="lastInstalledAtLabel">Last installed at</div>
 			<div class="td left" id="ikb-last-installed-at">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Config sample path</div>
+			<div class="td left" data-i18n="configSamplePathLabel">Config sample path</div>
 			<div class="td left" id="ikb-config-sample">Loading...</div>
 		</div>
 	</div>
 </div>
 
 <div class="cbi-section">
-	<h3>Release Installer</h3>
+	<h3 data-i18n="releaseInstallerTitle">Release Installer</h3>
 	<div class="ikb-actions">
-		<label for="ikb-channel">Release channel</label>
+		<label for="ikb-channel" data-i18n="releaseChannelLabel">Release channel</label>
 		<select id="ikb-channel" class="cbi-input-select">
-			<option value="stable">Stable</option>
-			<option value="prerelease">Prerelease</option>
+			<option value="stable" data-i18n="stableOption">Stable</option>
+			<option value="prerelease" data-i18n="prereleaseOption">Prerelease</option>
 		</select>
-		<input id="ikb-check-button" class="btn cbi-button" type="button" value="Check Latest" onclick="ikbCheckLatest()" />
-		<input id="ikb-install-button" class="btn cbi-button cbi-button-apply" type="button" value="Download And Install" onclick="ikbInstallLatest()" />
+		<input id="ikb-check-button" class="btn cbi-button" type="button" value="Check Latest" data-i18n-value="checkLatestButton" onclick="ikbCheckLatest()" />
+		<input id="ikb-install-button" class="btn cbi-button cbi-button-apply" type="button" value="Download And Install" data-i18n-value="installButton" onclick="ikbInstallLatest()" />
 	</div>
 	<div class="table">
 		<div class="tr">
-			<div class="td left" width="33%">Selected channel</div>
+			<div class="td left" width="33%" data-i18n="selectedChannelLabel">Selected channel</div>
 			<div class="td left" id="ikb-release-channel">stable</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Latest tag</div>
+			<div class="td left" data-i18n="latestTagLabel">Latest tag</div>
 			<div class="td left" id="ikb-release-tag">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Published at</div>
+			<div class="td left" data-i18n="publishedAtLabel">Published at</div>
 			<div class="td left" id="ikb-release-time">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Matched asset</div>
+			<div class="td left" data-i18n="matchedAssetLabel">Matched asset</div>
 			<div class="td left" id="ikb-release-asset">Loading...</div>
 		</div>
 		<div class="tr">
-			<div class="td left">Release page</div>
+			<div class="td left" data-i18n="releasePageLabel">Release page</div>
 			<div class="td left" id="ikb-release-page">Loading...</div>
 		</div>
 	</div>
 </div>
 
 <div class="cbi-section">
-	<h3>Activity</h3>
+	<h3 data-i18n="activityTitle">Activity</h3>
 	<div id="ikb-message" class="ikb-message">Preparing installer state...</div>
 </div>

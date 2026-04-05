@@ -1,6 +1,6 @@
 [package]
 name = "ikb-cli"
-version = "4.4.100-alpha9.9"
+version = "4.4.100-alpha9.10"
 edition = "2024"
 license = "AGPL-3.0"
 

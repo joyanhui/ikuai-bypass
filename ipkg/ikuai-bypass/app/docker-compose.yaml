@@ -1,0 +1,30 @@
+services:
+  ikuai-bypass:
+    image: ikuai-bypass:ikuai
+    container_name: ikuai-bypass-${NAME_NONCE}
+    deploy:
+      resources:
+        limits:
+          cpus: ${CPUS_LIMIT}
+          memory: ${MEMORY_LIMIT}
+    restart: ${RESTART}
+    ports:
+      - ${HOST_IP}:${APP_PORT_WEB}:19001
+    volumes:
+      - ./data/ikuai-bypass:/etc/ikuai-bypass
+    env_file:
+      - ./environment
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - doc_app_default
+    labels:
+      createdBy: "iKuai Bypass"
+
+networks:
+  doc_app_default:
+    external: true
+    name: doc_app_default

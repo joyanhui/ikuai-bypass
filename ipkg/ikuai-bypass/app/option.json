@@ -1,0 +1,75 @@
+[
+  {
+    "default": 19001,
+    "min": 1,
+    "max": 65535,
+    "attrname": "APP_PORT_WEB",
+    "label": {
+      "en": "WebUI Port",
+      "zh": "WebUI 端口"
+    },
+    "required": true,
+    "scope": "config",
+    "type": "integer"
+  },
+  {
+    "default": "http://192.168.9.1",
+    "max": 256,
+    "attrname": "IKUAI_URL",
+    "label": {
+      "en": "iKuai URL",
+      "zh": "iKuai 地址"
+    },
+    "required": true,
+    "scope": "environment",
+    "type": "string"
+  },
+  {
+    "default": "admin",
+    "max": 64,
+    "attrname": "IKUAI_USERNAME",
+    "label": {
+      "en": "iKuai Username",
+      "zh": "iKuai 用户名"
+    },
+    "required": true,
+    "scope": "environment",
+    "type": "string"
+  },
+  {
+    "default": "admin888",
+    "max": 64,
+    "attrname": "IKUAI_PASSWORD",
+    "label": {
+      "en": "iKuai Password",
+      "zh": "iKuai 密码"
+    },
+    "required": true,
+    "scope": "environment",
+    "type": "password"
+  },
+  {
+    "default": "admin",
+    "max": 64,
+    "attrname": "WEBUI_USER",
+    "label": {
+      "en": "WebUI Username",
+      "zh": "WebUI 用户名"
+    },
+    "required": false,
+    "scope": "environment",
+    "type": "string"
+  },
+  {
+    "default": "admin888",
+    "max": 64,
+    "attrname": "WEBUI_PASS",
+    "label": {
+      "en": "WebUI Password",
+      "zh": "WebUI 密码"
+    },
+    "required": false,
+    "scope": "environment",
+    "type": "password"
+  }
+]

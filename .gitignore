@@ -36,3 +36,7 @@ frontends/app/src/env.d.ts
 **/dist/
 /dist/
 flake.lock
+ipkg/*.ipkg
+ipkg/.stage/
+ipkg/ikuai-bypass/docker_image.tar.gz
+CLAUDE.md

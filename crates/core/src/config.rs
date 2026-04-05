@@ -303,6 +303,37 @@ impl Config {
         if matches!(self.proxy.mode, ProxyMode::Custom) && self.proxy.url.is_empty() {
             self.proxy.url = "http://127.0.0.1:7890".to_string();
         }
+
+        // Environment variable overrides (for Docker / ipkg deployment).
+        // Only override when the env var is set and non-empty, so that
+        // config-file-only users are not affected.
+        // 环境变量覆盖（用于 Docker / ipkg 部署场景）。
+        // 仅当环境变量已设置且非空时才覆盖，确保纯配置文件用户不受影响。
+        if let Ok(v) = std::env::var("IKUAI_URL") {
+            if !v.trim().is_empty() {
+                self.ikuai_url = v.trim().to_string();
+            }
+        }
+        if let Ok(v) = std::env::var("IKUAI_USERNAME") {
+            if !v.trim().is_empty() {
+                self.username = v.trim().to_string();
+            }
+        }
+        if let Ok(v) = std::env::var("IKUAI_PASSWORD") {
+            if !v.trim().is_empty() {
+                self.password = v.trim().to_string();
+            }
+        }
+        if let Ok(v) = std::env::var("WEBUI_USER") {
+            if !v.trim().is_empty() {
+                self.webui.user = v.trim().to_string();
+            }
+        }
+        if let Ok(v) = std::env::var("WEBUI_PASS") {
+            if !v.trim().is_empty() {
+                self.webui.pass = v.trim().to_string();
+            }
+        }
     }
 
     pub fn save_to_path(&self, path: impl AsRef<Path>) -> Result<(), ConfigError> {

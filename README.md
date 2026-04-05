@@ -297,7 +297,7 @@ docker run -itd --name ikuai-bypass --restart=always \
 </a>
 ## 交流与反馈
 
-- 交流讨论：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛
+- 交流讨论：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛 或 [Telegram 电报群](https://t.me/+cosAS1HgFOtlMTc1)
 - Bug 反馈：[GitHub Issues](https://github.com/joyanhui/ikuai-bypass/issues)
 - 致谢：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的初始版本思路，以及所有提供 PR 的开发者。
 - 欢迎 PR（含文档与体验优化），但 Rust/TS 代码须严格遵循零 Clone、零隐式 Panic 及零 Any、零类型错误原则。不得有clippy警告.

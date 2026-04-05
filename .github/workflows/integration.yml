@@ -16,9 +16,9 @@ concurrency:
 
 jobs:
   integration-smoke:
-    name: Simulator Smoke
+    name: Integration Matrix
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       CARGO_TERM_COLOR: always
       IKB_TEST_BACKEND: simulator
@@ -29,6 +29,10 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
@@ -36,9 +40,60 @@ jobs:
           cache-on-failure: true
           shared-key: integration-smoke
 
-      - name: Run simulator smoke tests
+      - name: Build CLI binary
         shell: bash
-        run: bash apps/integration-tests/run-smoke-test.sh
+        run: cargo build --locked -p ikb-cli --bin ikb-cli
+
+      - name: Run core unit tests
+        shell: bash
+        run: cargo test --locked -p ikb-core
+
+      - name: Smoke - simulator_api_surface
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh simulator_api_surface_smoke
+
+      - name: Smoke - rule_sync_update_in_place
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh rule_sync_update_in_place_smoke
+
+      - name: Smoke - safe_before
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh safe_before_smoke
+
+      - name: Smoke - clean_mode
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh clean_mode_smoke
+
+      - name: Smoke - clean_all
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh clean_all_smoke
+
+      - name: Smoke - export_stream_domain
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh export_stream_domain_smoke
+
+      - name: Smoke - cli_modes
+        shell: bash
+        run: IKB_SMOKE_SKIP_SETUP=1 bash apps/integration-tests/run-smoke-test.sh cli_modes_smoke
+
+      - name: Frontend install dependencies
+        shell: bash
+        run: bun install --frozen-lockfile
+        working-directory: frontends/app
+
+      - name: Frontend type check
+        shell: bash
+        run: bun run check
+        working-directory: frontends/app
+
+      - name: Frontend unit tests
+        shell: bash
+        run: bun run test:ci
+        working-directory: frontends/app
+
+      - name: Tauri backend command tests
+        shell: bash
+        run: cargo test --locked -p ikb-app --test command_surface -- --nocapture
 
       - name: Upload integration artifacts
         if: always()

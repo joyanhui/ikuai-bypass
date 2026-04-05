@@ -61,6 +61,8 @@ bash apps/integration-tests/run-smoke-test.sh safe_before_smoke
 bash apps/integration-tests/install-git-hooks.sh
 ```
 
+安装脚本会把仓库内的 `.github/githooks/pre-commit` 复制到本地 `.git/hooks/pre-commit`。
+
 ## 人工复现
 
 仓库提供了一套可直接手工复现的最小材料：

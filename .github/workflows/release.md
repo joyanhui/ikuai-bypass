@@ -262,8 +262,8 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 实现位置：
 
-- `.github/openwrt/luci-app-ikuai-bypass/`
-- `.github/scripts/build-openwrt-luci-package.sh`
+- `packaging/openwrt-luci/luci-app-ikuai-bypass/`
+- `packaging/openwrt-luci/build-openwrt-luci-package.sh`
 
 ### Docker Multi-Arch
 
@@ -306,10 +306,10 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - `.github/workflows/release.yml`
 - `.github/build_matrix.jsonc`
 - `.github/scripts/arch-helpers.sh`
-- `.github/scripts/prepare-container-binaries.sh`
+- `packaging/docker/prepare-container-binaries.sh`
 - `packaging/ikuai-ipkg/build-ipkg.sh`
-- `.github/scripts/build-openwrt-luci-package.sh`
-- `.github/openwrt/luci-app-ikuai-bypass/`
+- `packaging/openwrt-luci/build-openwrt-luci-package.sh`
+- `packaging/openwrt-luci/luci-app-ikuai-bypass/`
 
 ## 11. 维护约束
 

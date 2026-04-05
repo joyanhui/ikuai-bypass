@@ -1342,8 +1342,8 @@ jobs:
             normalize_ipkg_version "${raw}"
           }
 
-          # 1. 准备根 Dockerfile 所需的目录结构
-          # 1. Prepare directory layout expected by root Dockerfile
+          # 1. 准备 packaging/docker/Dockerfile 所需的目录结构
+          # 1. Prepare directory layout expected by packaging/docker/Dockerfile
           stage=".ipkg-stage"
           ipkg_dir="packaging/ikuai-ipkg"
           rm -rf "${stage}"
@@ -1357,10 +1357,10 @@ jobs:
           rm -rf "${stage}/unpack"
 
           cp -R frontends/app/dist "${stage}/docker/frontends/app/dist"
-          cp Dockerfile docker-entrypoint.sh config.yml "${stage}/"
+          cp packaging/docker/Dockerfile packaging/docker/docker-entrypoint.sh config.yml "${stage}/"
 
-          # 2. 用根 Dockerfile 构建单架构镜像（DOCKER_BUILDKIT=0 兼容 iKuai Docker 18.09）
-          # 2. Build single-arch image with root Dockerfile (DOCKER_BUILDKIT=0 for iKuai compat)
+          # 2. 用 packaging/docker/Dockerfile 构建单架构镜像（DOCKER_BUILDKIT=0 兼容 iKuai Docker 18.09）
+          # 2. Build single-arch image with packaging/docker/Dockerfile (DOCKER_BUILDKIT=0 for iKuai compat)
           cd "${stage}"
           DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM=linux/amd64 -t ikuai-bypass:ikuai .
           cd ..
@@ -1421,7 +1421,7 @@ jobs:
           source .github/scripts/arch-helpers.sh
 
           luci_base="$(ikb_luci_base)"
-          bash .github/scripts/build-openwrt-luci-package.sh \
+          bash packaging/openwrt-luci/build-openwrt-luci-package.sh \
             "${{ github.workspace }}" \
             "./release" \
             "${VERSION}" \
@@ -1460,7 +1460,7 @@ jobs:
       - name: Prepare Docker build context
         env:
           DOCKER_CLI_JSON: ${{ needs.resolve-matrix.outputs.docker_cli_matrix }}
-        run: bash .github/scripts/prepare-container-binaries.sh release .docker-release/multiarch
+        run: bash packaging/docker/prepare-container-binaries.sh release .docker-release/multiarch
 
       - uses: docker/setup-qemu-action@v3
 

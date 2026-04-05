@@ -2,9 +2,13 @@
 set -euo pipefail
 
 default_tests=(
+  simulator_api_surface_smoke
   rule_sync_update_in_place_smoke
   safe_before_smoke
   clean_mode_smoke
+  clean_all_smoke
+  export_stream_domain_smoke
+  cli_modes_smoke
 )
 
 test_names=()
@@ -50,10 +54,14 @@ if [ -z "${IKB_TEST_IKUAI_IMAGE:-}" ] && [ "$backend" != "simulator" ] && [ "$ba
 fi
 
 printf '==> Building CLI test binary\n'
-cargo build --locked -p ikb-cli --bin ikb-cli
+if [ "${IKB_SMOKE_SKIP_SETUP:-0}" != "1" ]; then
+  cargo build --locked -p ikb-cli --bin ikb-cli
 
-printf '\n==> Running core unit tests\n'
-cargo test --locked -p ikb-core
+  printf '\n==> Running core unit tests\n'
+  cargo test --locked -p ikb-core
+else
+  printf '==> Skipping setup (IKB_SMOKE_SKIP_SETUP=1)\n'
+fi
 
 for test_name in "${test_names[@]}"; do
   printf '\n==> Running %s\n' "$test_name"

@@ -4,7 +4,8 @@
 
 ## 1. 触发方式
 
-- 仅支持 `tag push`
+- 支持 `tag push`
+- 支持 `main` 分支上的 release commit push（兼容 `cargo release --execute` 把 commit 与 tags 一起 push 的场景）
 - 仅支持 `workflow_dispatch`
 - 不包含 `schedule`，不会每日自动构建
 
@@ -15,6 +16,12 @@
 - tag push 时默认：
   - `publish_release=true`
   - `push_docker=true`
+
+### Release Commit Push 触发
+
+- 当 `main` 分支收到 push 时，如果当前 `HEAD` 指向 `ikuai-bypass-v*` canonical tag，也会触发发布流程
+- 这是为了兼容 `cargo release --execute` 将 release commit 与多个 tag 一次性 push 的场景
+- 如果只是普通 `main` 提交，且 `HEAD` 上不存在 `ikuai-bypass-v*`，workflow 会在 `resolve-matrix` 阶段直接跳过
 
 ### 手动触发
 

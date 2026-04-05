@@ -2,6 +2,8 @@ name: Release rust
 
 on:
   push:
+    branches:
+      - main
     tags:
       # Why/为什么: `cargo release`(workspace) 通常会创建多个 crate tag；只监听一个 canonical tag 避免重复发布。
       - "ikuai-bypass-v*"
@@ -57,6 +59,7 @@ jobs:
     name: Resolve Release Meta
     runs-on: ubuntu-latest
     outputs:
+      enabled: ${{ steps.meta.outputs.enabled }}
       version: ${{ steps.meta.outputs.version }}
       tag_name: ${{ steps.meta.outputs.tag_name }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
@@ -84,11 +87,15 @@ jobs:
       has_linux_amd64_cli: ${{ steps.matrix.outputs.has_linux_amd64_cli }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - id: meta
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
           INPUT_PUBLISH_RELEASE: ${{ github.event.inputs.publish_release || 'true' }}
@@ -146,8 +153,23 @@ jobs:
             printf '%s' "${raw}"
           }
 
+          resolve_release_tag_from_head() {
+            git tag --points-at HEAD --list 'ikuai-bypass-v*' | sed -n '1p'
+          }
+
+          enabled="true"
+
           if [[ "${EVENT_NAME}" == "push" ]]; then
-            tag_name="${REF_NAME}"
+            if [[ "${REF}" == refs/tags/* ]]; then
+              tag_name="${REF_NAME}"
+            else
+              # Why/为什么: `cargo release --execute` 经常把 release commit 和 tags 一起 push。
+              # GitHub 可能先只给我们 branch push 事件，这里允许从 HEAD 上反查 canonical tag 继续发布。
+              tag_name="$(resolve_release_tag_from_head)"
+              if [[ -z "${tag_name}" ]]; then
+                enabled="false"
+              fi
+            fi
             publish_release="true"
             push_docker="true"
           else
@@ -165,10 +187,15 @@ jobs:
             fi
           fi
 
-          version="$(normalize_version_from_tag "${tag_name}")"
+          version=""
+          if [[ "${enabled}" == "true" ]]; then
+            version="$(normalize_version_from_tag "${tag_name}")"
+          fi
 
           prerelease="false"
-          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+          if [[ "${enabled}" != "true" ]]; then
+            prerelease="false"
+          elif [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
             prerelease="true"
           elif is_prerelease_tag "${tag_name}"; then
             prerelease="true"
@@ -184,12 +211,13 @@ jobs:
             docker_creds_available="true"
           fi
 
-          if [[ "${push_docker}" == "true" && "${docker_creds_available}" != "true" ]]; then
+          if [[ "${enabled}" == "true" && "${push_docker}" == "true" && "${docker_creds_available}" != "true" ]]; then
             echo "Docker credentials are required when push_docker=true" >&2
             exit 1
           fi
 
           {
+            echo "enabled=${enabled}"
             echo "version=${version}"
             echo "tag_name=${tag_name}"
             echo "prerelease=${prerelease}"
@@ -203,6 +231,7 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
+          ENABLED: ${{ steps.meta.outputs.enabled }}
           INPUT_BUILD_MODE: ${{ github.event.inputs.build_mode || '' }}
           INPUT_BUILD_TARGET: ${{ github.event.inputs.build_target || '' }}
         run: |
@@ -211,6 +240,34 @@ jobs:
           import json
           import os
           import pathlib
+
+          enabled = os.environ.get("ENABLED", "true") == "true"
+
+          if not enabled:
+              outputs = {
+                  "build_mode": "",
+                  "build_target": "",
+                  "cli_matrix": "[]",
+                  "cli_nightly_matrix": "[]",
+                  "bsd_matrix": "[]",
+                  "gui_matrix": "[]",
+                  "gui_android_matrix": "[]",
+                  "gui_ios_matrix": "[]",
+                  "docker_cli_matrix": "[]",
+                  "docker_platforms": "",
+                  "has_cli": "false",
+                  "has_cli_nightly": "false",
+                  "has_bsd": "false",
+                  "has_gui": "false",
+                  "has_gui_desktop": "false",
+                  "has_gui_android": "false",
+                  "has_gui_ios": "false",
+                  "has_linux_amd64_cli": "false",
+              }
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+                  for key, value in outputs.items():
+                      fh.write(f"{key}={value}\n")
+              raise SystemExit(0)
 
           event_name = os.environ.get("EVENT_NAME", "")
           if event_name == "push":

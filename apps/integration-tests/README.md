@@ -13,10 +13,14 @@
 
 - `rule_sync_update_in_place_smoke`：验证 `once -m iip` 可以创建并原地更新核心规则，且 ID 保持稳定。
 - `chunked_sync_shrink_cleanup_smoke`：验证多分片规则在缩容同步后会原地更新首分片并清理冗余分片。
+- `long_tag_random_suffix_truncation_smoke`：验证超长 tag 在随机后缀与截断场景下，仍能稳定识别分片并原地更新。
 - `stream_rule_ipgroup_refs_smoke`：验证 `ii` 组合模式首轮同步即可正确解析基于 `ip-group` 对象引用的域名分流与端口分流。
 - `safe_before_smoke`：验证远程规则下载失败时，不会清理已有旧规则。
+- `safe_before_chunk_shrink_smoke`：验证多分片规则在本应缩容时若下载失败，旧分片不会被清理。
 - `clean_mode_smoke`：验证 `clean` 必须显式带 `-tag`，且只清理匹配标签的规则，不误删其他标签。
 - `legacy_clean_compat_smoke`：验证 `clean` 对旧版 `IKUAI_BYPASS` 备注规则的兼容清理。
+- `webui_auth_runtime_config_smoke`：验证内置 WebUI 的 BasicAuth、配置保存、任务启动/停止 API 链路。
+- `webui_cron_modes_smoke`：验证 CLI `cron` / `cronAft` 模式通过内置 WebUI 暴露出的状态流转与定时行为。
 
 ## 本地前置条件
 

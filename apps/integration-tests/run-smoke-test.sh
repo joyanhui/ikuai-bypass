@@ -5,13 +5,17 @@ default_tests=(
   simulator_api_surface_smoke
   rule_sync_update_in_place_smoke
   chunked_sync_shrink_cleanup_smoke
+  long_tag_random_suffix_truncation_smoke
   stream_rule_ipgroup_refs_smoke
   safe_before_smoke
+  safe_before_chunk_shrink_smoke
   clean_mode_smoke
   legacy_clean_compat_smoke
   clean_all_smoke
   export_stream_domain_smoke
   cli_modes_smoke
+  webui_auth_runtime_config_smoke
+  webui_cron_modes_smoke
 )
 
 test_names=()

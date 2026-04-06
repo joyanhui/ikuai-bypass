@@ -8,6 +8,7 @@ publish = false
 axum = "0.8"
 base64 = "0.22"
 ikb-core = { path = "../../crates/core" }
+reqwest = { version = "0.12", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tempfile = "3.14"

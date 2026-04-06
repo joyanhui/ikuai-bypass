@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::fs::{self, File};
+use std::future::Future;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
@@ -14,6 +15,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use ikb_core::config::Config;
 use ikb_core::ikuai::{self, IKuaiClient};
 use ikb_integration_tests::ikuai_simulator::IKuaiSimulator;
+use reqwest::StatusCode;
 
 const DEFAULT_IKUAI_URL: &str = "http://192.168.9.1";
 const DEFAULT_IKUAI_USERNAME: &str = "admin";
@@ -77,6 +79,12 @@ pub struct VmInstance {
     stdout_log_path: PathBuf,
     stderr_log_path: PathBuf,
     overlay_path: PathBuf,
+}
+
+pub struct CliBackgroundProcess {
+    child: Child,
+    stdout_log_path: PathBuf,
+    stderr_log_path: PathBuf,
 }
 
 #[derive(Clone)]
@@ -222,12 +230,8 @@ impl TestHarness {
         Config::load_from_yaml_str(raw_yaml)
             .map_err(|e| format!("generated test config is invalid: {e}"))?;
         let path = self.artifact_dir.join(file_name);
-        fs::write(&path, raw_yaml).map_err(|e| {
-            format!(
-                "failed to write test config '{}': {e}",
-                path.display()
-            )
-        })?;
+        fs::write(&path, raw_yaml)
+            .map_err(|e| format!("failed to write test config '{}': {e}", path.display()))?;
         Ok(path)
     }
 
@@ -239,12 +243,7 @@ impl TestHarness {
             .arg("--")
             .args(args)
             .output()
-            .map_err(|e| {
-                format!(
-                    "failed to run cli:dev '{}': {e}",
-                    args.join(" ")
-                )
-            })?;
+            .map_err(|e| format!("failed to run cli:dev '{}': {e}", args.join(" ")))?;
         let stamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|e| format!("failed to read system time: {e}"))?
@@ -298,6 +297,50 @@ impl TestHarness {
         ))
     }
 
+    pub fn spawn_cli_background(
+        &self,
+        process_name: &str,
+        args: &[&str],
+    ) -> Result<CliBackgroundProcess, String> {
+        let cli_bin = ensure_cli_binary(&self.env.workspace_root)?;
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|e| format!("failed to read system time: {e}"))?
+            .as_millis();
+        let name = sanitize_for_path(process_name);
+        let stdout_log_path = self
+            .artifact_dir
+            .join(format!("{}-{}.stdout.log", name, stamp));
+        let stderr_log_path = self
+            .artifact_dir
+            .join(format!("{}-{}.stderr.log", name, stamp));
+
+        let stdout_log = File::create(&stdout_log_path)
+            .map_err(|e| format!("failed to create {}: {e}", stdout_log_path.display()))?;
+        let stderr_log = File::create(&stderr_log_path)
+            .map_err(|e| format!("failed to create {}: {e}", stderr_log_path.display()))?;
+
+        let child = Command::new(&cli_bin)
+            .current_dir(&self.env.workspace_root)
+            .args(args)
+            .stdout(Stdio::from(stdout_log))
+            .stderr(Stdio::from(stderr_log))
+            .spawn()
+            .map_err(|e| {
+                format!(
+                    "failed to spawn cli binary '{}' with args '{}': {e}",
+                    cli_bin.display(),
+                    args.join(" ")
+                )
+            })?;
+
+        Ok(CliBackgroundProcess {
+            child,
+            stdout_log_path,
+            stderr_log_path,
+        })
+    }
+
     pub async fn login_api(&self) -> Result<IKuaiClient, String> {
         login_api_at(&self.ikuai_base_url, &self.env.username, &self.env.password).await
     }
@@ -325,7 +368,10 @@ impl TestHarness {
 
 impl TestBackend {
     fn load() -> Result<Self, String> {
-        match env_or("IKB_TEST_BACKEND", "auto").to_ascii_lowercase().as_str() {
+        match env_or("IKB_TEST_BACKEND", "auto")
+            .to_ascii_lowercase()
+            .as_str()
+        {
             "auto" => Ok(Self::Auto),
             "kvm" => Ok(Self::Kvm),
             "sim" | "simulator" => Ok(Self::Simulator),
@@ -488,6 +534,23 @@ impl Drop for VmInstance {
     }
 }
 
+impl CliBackgroundProcess {
+    pub fn stdout_log_path(&self) -> &Path {
+        &self.stdout_log_path
+    }
+
+    pub fn stderr_log_path(&self) -> &Path {
+        &self.stderr_log_path
+    }
+}
+
+impl Drop for CliBackgroundProcess {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
 impl FixtureResponse {
     fn ok(body: impl Into<Vec<u8>>) -> Self {
         Self {
@@ -529,23 +592,25 @@ impl FixtureServer {
         let state_for_thread = Arc::clone(&state);
         let stop_for_thread = Arc::clone(&stop);
 
-        let join = thread::spawn(move || loop {
-            if stop_for_thread.load(Ordering::SeqCst) {
-                break;
-            }
-            match listener.accept() {
-                Ok((stream, _)) => {
-                    let state = Arc::clone(&state_for_thread);
-                    let _ = thread::Builder::new()
-                        .name("ikb-fixture-conn".to_string())
-                        .spawn(move || {
-                            let _ = handle_fixture_connection(stream, state);
-                        });
+        let join = thread::spawn(move || {
+            loop {
+                if stop_for_thread.load(Ordering::SeqCst) {
+                    break;
                 }
-                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
-                    thread::sleep(Duration::from_millis(50));
+                match listener.accept() {
+                    Ok((stream, _)) => {
+                        let state = Arc::clone(&state_for_thread);
+                        let _ = thread::Builder::new()
+                            .name("ikb-fixture-conn".to_string())
+                            .spawn(move || {
+                                let _ = handle_fixture_connection(stream, state);
+                            });
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        thread::sleep(Duration::from_millis(50));
+                    }
+                    Err(_) => break,
                 }
-                Err(_) => break,
             }
         });
 
@@ -563,7 +628,10 @@ impl FixtureServer {
     }
 
     pub fn set_status(&self, path: &str, status: u16, body: &str) {
-        self.set_response(path, FixtureResponse::with_status(status, body.as_bytes().to_vec()));
+        self.set_response(
+            path,
+            FixtureResponse::with_status(status, body.as_bytes().to_vec()),
+        );
     }
 
     pub fn url(&self, path: &str) -> String {
@@ -586,7 +654,10 @@ impl FixtureServer {
         } else {
             format!("/{path}")
         };
-        self.state.lock().expect("fixture state poisoned").insert(normalized, response);
+        self.state
+            .lock()
+            .expect("fixture state poisoned")
+            .insert(normalized, response);
     }
 }
 
@@ -604,17 +675,19 @@ async fn login_api(env: &TestEnv) -> Result<IKuaiClient, String> {
     login_api_at(&env.ikuai_url, &env.username, &env.password).await
 }
 
-async fn login_api_at(base_url: &str, username: &str, password: &str) -> Result<IKuaiClient, String> {
+async fn login_api_at(
+    base_url: &str,
+    username: &str,
+    password: &str,
+) -> Result<IKuaiClient, String> {
     let api = IKuaiClient::new(base_url.to_string())
         .map_err(|e| format!("failed to create IKuaiClient: {e}"))?;
-    api.login(username, password)
-        .await
-        .map_err(|e| {
-            format!(
-                "failed to login to {} with username '{}': {}",
-                base_url, username, e
-            )
-        })?;
+    api.login(username, password).await.map_err(|e| {
+        format!(
+            "failed to login to {} with username '{}': {}",
+            base_url, username, e
+        )
+    })?;
     Ok(api)
 }
 
@@ -657,17 +730,163 @@ pub fn print_failure_hint(test_name: &str, artifact_dir: &Path) {
         test_name,
         artifact_dir.display()
     );
-    println!(
-        "[TEST:HINT] 定位失败可查看该目录下的 *.stdout.log / *.stderr.log / qemu*.log"
-    );
+    println!("[TEST:HINT] 定位失败可查看该目录下的 *.stdout.log / *.stderr.log / qemu*.log");
 }
 
-pub fn render_test_config(
+pub fn reserve_local_port() -> Result<u16, String> {
+    let listener = TcpListener::bind(("127.0.0.1", 0))
+        .map_err(|e| format!("failed to reserve local port: {e}"))?;
+    let port = listener
+        .local_addr()
+        .map_err(|e| format!("failed to read reserved port: {e}"))?
+        .port();
+    drop(listener);
+    Ok(port)
+}
+
+pub async fn wait_for_condition<F, Fut>(
+    label: &str,
+    timeout: Duration,
+    interval: Duration,
+    mut check: F,
+) -> Result<(), String>
+where
+    F: FnMut() -> Fut,
+    Fut: Future<Output = Result<bool, String>>,
+{
+    let started = Instant::now();
+    loop {
+        if check().await? {
+            return Ok(());
+        }
+        if started.elapsed() >= timeout {
+            return Err(format!("timed out waiting for {label}"));
+        }
+        tokio::time::sleep(interval).await;
+    }
+}
+
+pub async fn wait_for_webui_ready(
     base_url: &str,
-    username: &str,
-    password: &str,
-    body: &str,
-) -> String {
+    auth: Option<(&str, &str)>,
+    timeout: Duration,
+) -> Result<(), String> {
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .map_err(|e| format!("failed to build reqwest client: {e}"))?;
+    wait_for_condition(
+        "webui readiness",
+        timeout,
+        Duration::from_millis(200),
+        || {
+            let client = client.clone();
+            let url = format!("{}/api/runtime/status", base_url.trim_end_matches('/'));
+            let auth = auth.map(|(u, p)| (u.to_string(), p.to_string()));
+            async move {
+                let mut req = client.get(&url);
+                if let Some((user, pass)) = auth {
+                    req = req.basic_auth(user, Some(pass));
+                }
+                let resp = match req.send().await {
+                    Ok(resp) => resp,
+                    Err(_) => return Ok(false),
+                };
+                Ok(resp.status().is_success())
+            }
+        },
+    )
+    .await
+}
+
+pub async fn http_get_status(url: &str, auth: Option<(&str, &str)>) -> Result<StatusCode, String> {
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .map_err(|e| format!("failed to build reqwest client: {e}"))?;
+    let mut req = client.get(url);
+    if let Some((user, pass)) = auth {
+        req = req.basic_auth(user, Some(pass));
+    }
+    req.send()
+        .await
+        .map(|resp| resp.status())
+        .map_err(|e| format!("GET {} failed: {}", url, e))
+}
+
+pub async fn http_get_json<T: serde::de::DeserializeOwned>(
+    url: &str,
+    auth: Option<(&str, &str)>,
+) -> Result<T, String> {
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .map_err(|e| format!("failed to build reqwest client: {e}"))?;
+    let mut req = client.get(url);
+    if let Some((user, pass)) = auth {
+        req = req.basic_auth(user, Some(pass));
+    }
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("GET {} failed: {}", url, e))?;
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("GET {} returned {}: {}", url, status, body));
+    }
+    resp.json::<T>()
+        .await
+        .map_err(|e| format!("failed to decode JSON from {}: {}", url, e))
+}
+
+pub async fn http_post_json<TReq: serde::Serialize, TResp: serde::de::DeserializeOwned>(
+    url: &str,
+    auth: Option<(&str, &str)>,
+    body: &TReq,
+) -> Result<TResp, String> {
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .map_err(|e| format!("failed to build reqwest client: {e}"))?;
+    let mut req = client.post(url).json(body);
+    if let Some((user, pass)) = auth {
+        req = req.basic_auth(user, Some(pass));
+    }
+    let resp = req
+        .send()
+        .await
+        .map_err(|e| format!("POST {} failed: {}", url, e))?;
+    let status = resp.status();
+    if !status.is_success() {
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("POST {} returned {}: {}", url, status, body));
+    }
+    resp.json::<TResp>()
+        .await
+        .map_err(|e| format!("failed to decode JSON from {}: {}", url, e))
+}
+
+pub async fn http_post_json_expect_status<TReq: serde::Serialize>(
+    url: &str,
+    auth: Option<(&str, &str)>,
+    body: &TReq,
+) -> Result<StatusCode, String> {
+    let client = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .map_err(|e| format!("failed to build reqwest client: {e}"))?;
+    let mut req = client.post(url).json(body);
+    if let Some((user, pass)) = auth {
+        req = req.basic_auth(user, Some(pass));
+    }
+    req.send()
+        .await
+        .map(|resp| resp.status())
+        .map_err(|e| format!("POST {} failed: {}", url, e))
+}
+
+pub fn render_test_config(base_url: &str, username: &str, password: &str, body: &str) -> String {
     format!(
         concat!(
             "ikuai-url: \"{}\"\n",
@@ -688,7 +907,11 @@ pub fn render_test_config(
     )
 }
 
-async fn wait_for_ikuai(env: &TestEnv, child: &mut Child, stderr_log_path: &Path) -> Result<(), String> {
+async fn wait_for_ikuai(
+    env: &TestEnv,
+    child: &mut Child,
+    stderr_log_path: &Path,
+) -> Result<(), String> {
     let started_at = Instant::now();
     let mut last_error = match login_api(env).await {
         Ok(_) => return Ok(()),
@@ -711,9 +934,7 @@ async fn wait_for_ikuai(env: &TestEnv, child: &mut Child, stderr_log_path: &Path
             let tail = read_tail(stderr_log_path, 120);
             return Err(format!(
                 "timed out waiting for iKuai at {}\nlast error: {}\nqemu stderr tail:\n{}",
-                env.ikuai_url,
-                last_error,
-                tail
+                env.ikuai_url, last_error, tail
             ));
         }
 
@@ -738,6 +959,35 @@ fn create_artifact_dir(root: &Path, test_name: &str) -> Result<PathBuf, String> 
     fs::create_dir_all(&dir)
         .map_err(|e| format!("failed to create artifact dir '{}': {e}", dir.display()))?;
     Ok(dir)
+}
+
+fn ensure_cli_binary(workspace_root: &Path) -> Result<PathBuf, String> {
+    let cli_bin = std::env::var("IKB_TEST_CLI_BIN")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| workspace_root.join("target/debug/ikb-cli"));
+    if cli_bin.is_file() {
+        return Ok(cli_bin);
+    }
+
+    let output = Command::new("cargo")
+        .current_dir(workspace_root)
+        .args(["build", "--locked", "-p", "ikb-cli", "--bin", "ikb-cli"])
+        .output()
+        .map_err(|e| format!("failed to build ikb-cli binary: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "failed to build ikb-cli binary\nstdout:\n{}\nstderr:\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    if cli_bin.is_file() {
+        return Ok(cli_bin);
+    }
+    Err(format!(
+        "ikb-cli binary not found after build: {}",
+        cli_bin.display()
+    ))
 }
 
 fn sanitize_for_path(raw: &str) -> String {

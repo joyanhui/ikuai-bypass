@@ -4,7 +4,9 @@ use serde_json::Value;
 use super::clean::match_clean_tag;
 use super::ip_group;
 use super::tag_name::{build_indexed_tag_name, match_tag_name_filter};
-use super::types::{IKuaiClient, IKuaiError, StreamDomainData, FUNC_NAME_STREAM_DOMAIN, NEW_COMMENT};
+use super::types::{
+    FUNC_NAME_STREAM_DOMAIN, IKuaiClient, IKuaiError, NEW_COMMENT, StreamDomainData,
+};
 use super::utils::{categorize_addrs, to_string_list};
 
 #[derive(Debug, Deserialize)]
@@ -54,7 +56,10 @@ struct DelParam {
     id: String,
 }
 
-pub async fn show_stream_domain_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Result<Vec<StreamDomainData>, IKuaiError> {
+pub async fn show_stream_domain_by_tag_name(
+    api: &IKuaiClient,
+    tag_name: &str,
+) -> Result<Vec<StreamDomainData>, IKuaiError> {
     let param = ShowParam {
         r#type: "total,data".to_string(),
         limit: "0,1000".to_string(),
@@ -175,7 +180,10 @@ pub async fn del_stream_domain(api: &IKuaiClient, id_csv: &str) -> Result<(), IK
     Ok(())
 }
 
-pub async fn get_stream_domain_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
+pub async fn get_stream_domain_map(
+    api: &IKuaiClient,
+    tag: &str,
+) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
     let data = show_stream_domain_by_tag_name(api, "").await?;
     let base = super::tag_name::build_tag_name(tag);
     let mut out = std::collections::HashMap::new();
@@ -218,7 +226,9 @@ async fn resolve_src_addrs(
             if name.is_empty() {
                 continue;
             }
-            if let Ok(matches) = ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, name).await {
+            if let Ok(matches) =
+                ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, name).await
+            {
                 resolved.extend(matches);
             }
         }
@@ -236,7 +246,10 @@ async fn resolve_src_addrs(
     Ok((custom, objects))
 }
 
-async fn resolve_ip_group_objects(api: &IKuaiClient, names: &[String]) -> Result<Vec<Value>, IKuaiError> {
+async fn resolve_ip_group_objects(
+    api: &IKuaiClient,
+    names: &[String],
+) -> Result<Vec<Value>, IKuaiError> {
     if names.is_empty() {
         return Ok(Vec::new());
     }

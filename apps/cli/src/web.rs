@@ -1,18 +1,18 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use async_stream::stream;
 use axum::extract::State;
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::middleware::Next;
+use axum::response::sse::{Event, Sse};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
-use tower_http::services::ServeDir;
-use async_stream::stream;
-use axum::response::sse::{Event, Sse};
 use std::convert::Infallible;
+use tower_http::services::ServeDir;
 
 use ikb_core::runtime::RuntimeService;
 
@@ -24,11 +24,7 @@ fn display_conf_path(p: &PathBuf) -> String {
     cwd.join(p).to_string_lossy().to_string()
 }
 
-fn print_webui_banner(
-    port: &str,
-    conf_path: &str,
-    auth_user: &str,
-) {
+fn print_webui_banner(port: &str, conf_path: &str, auth_user: &str) {
     let listen_addr = format!("0.0.0.0:{}", port);
     let open_url = format!("http://127.0.0.1:{}", port);
     let auth_user = auth_user.trim();
@@ -52,7 +48,9 @@ fn print_webui_banner(
     println!("-----------------------------------------------------------");
     if !auth_enabled {
         println!("警告: 当前未启用 BasicAuth，WebUI 将对局域网完全开放");
-        println!("警告: /api/config 会返回包含密码的配置内容；/api/save 可写入配置；/api/runtime/clean 可清理规则");
+        println!(
+            "警告: /api/config 会返回包含密码的配置内容；/api/save 可写入配置；/api/runtime/clean 可清理规则"
+        );
         println!("提示: 建议在配置文件中设置 webui.user/webui.pass 启用 BasicAuth");
     }
     println!("提示: 停止定时任务后，计划任务将不会再按 Cron 自动执行");
@@ -110,7 +108,10 @@ pub async fn start_web_server(
         .route("/api/remote/fetch", post(api_remote_fetch))
         .route("/api/test/ikuai-login", post(api_test_ikuai_login))
         .route("/api/test/github-proxy", post(api_test_github_proxy))
-        .route("/api/github/releases", get(api_github_releases).post(api_github_releases_with_proxy))
+        .route(
+            "/api/github/releases",
+            get(api_github_releases).post(api_github_releases_with_proxy),
+        )
         .route("/api/runtime/status", get(api_runtime_status))
         .route("/api/runtime/run-once", post(api_runtime_run_once))
         .route("/api/runtime/cron/start", post(api_runtime_cron_start))
@@ -125,18 +126,26 @@ pub async fn start_web_server(
         Router::new()
             .merge(api)
             .fallback_service(ServeDir::new(dist))
-            .layer(axum::middleware::from_fn_with_state(Arc::clone(&state), basic_auth))
+            .layer(axum::middleware::from_fn_with_state(
+                Arc::clone(&state),
+                basic_auth,
+            ))
             .with_state(Arc::clone(&state))
     } else {
         Router::new()
             .route("/", get(index))
             .merge(api)
-            .layer(axum::middleware::from_fn_with_state(Arc::clone(&state), basic_auth))
+            .layer(axum::middleware::from_fn_with_state(
+                Arc::clone(&state),
+                basic_auth,
+            ))
             .with_state(Arc::clone(&state))
     };
 
     let addr = format!("0.0.0.0:{}", port);
-    let listener = tokio::net::TcpListener::bind(&addr).await.map_err(|e| e.to_string())?;
+    let listener = tokio::net::TcpListener::bind(&addr)
+        .await
+        .map_err(|e| e.to_string())?;
     tokio::spawn(async move {
         let _ = axum::serve(listener, app).await;
     });
@@ -220,9 +229,13 @@ async fn api_diagnostics_report(State(state): State<Arc<AppState>>) -> Response 
     let cli_login = state.cli_login.to_string();
     let st = state.runtime.status();
 
-    let report =
-        ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &state.config_path, Some(st), &cli_login)
-            .await;
+    let report = ikb_core::app::build_diagnostics_report(
+        cfg_snapshot.as_ref(),
+        &state.config_path,
+        Some(st),
+        &cli_login,
+    )
+    .await;
     (
         StatusCode::OK,
         [(header::CACHE_CONTROL, "no-store")],
@@ -273,7 +286,7 @@ async fn api_save_raw_yaml(
                 StatusCode::BAD_REQUEST,
                 format!("Failed to save config: {}", e),
             )
-                .into_response()
+                .into_response();
         }
     };
 
@@ -373,7 +386,11 @@ async fn api_runtime_run_once(
     Json(req): Json<RunOnceRequest>,
 ) -> Response {
     match Arc::clone(&state.runtime).start_run_once(req.module).await {
-        Ok(started) => (StatusCode::OK, Json(serde_json::json!({"started": started}))).into_response(),
+        Ok(started) => (
+            StatusCode::OK,
+            Json(serde_json::json!({"started": started})),
+        )
+            .into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to start run: {}", e),
@@ -402,7 +419,11 @@ async fn api_runtime_cron_start(
         )
             .into_response();
     }
-    (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({"status": "success"})),
+    )
+        .into_response()
 }
 
 async fn api_runtime_cron_stop(State(state): State<Arc<AppState>>) -> Response {
@@ -413,7 +434,11 @@ async fn api_runtime_cron_stop(State(state): State<Arc<AppState>>) -> Response {
         )
             .into_response();
     }
-    (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({"status": "success"})),
+    )
+        .into_response()
 }
 
 async fn api_runtime_stop(State(state): State<Arc<AppState>>) -> Response {
@@ -424,7 +449,11 @@ async fn api_runtime_stop(State(state): State<Arc<AppState>>) -> Response {
         )
             .into_response();
     }
-    (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response()
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({"status": "success"})),
+    )
+        .into_response()
 }
 
 #[derive(Debug, Deserialize)]
@@ -441,12 +470,19 @@ async fn api_runtime_clean(
     let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let cli_login = state.cli_login.to_string();
     match ikb_core::app::run_clean(cfg_snapshot.as_ref(), &cli_login, &req.clean_tag).await {
-        Ok(()) => (StatusCode::OK, Json(serde_json::json!({"status": "success"}))).into_response(),
+        Ok(()) => (
+            StatusCode::OK,
+            Json(serde_json::json!({"status": "success"})),
+        )
+            .into_response(),
         Err(e) => (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
     }
 }
 
-async fn api_runtime_logs(State(state): State<Arc<AppState>>, req: axum::http::Request<axum::body::Body>) -> Response {
+async fn api_runtime_logs(
+    State(state): State<Arc<AppState>>,
+    req: axum::http::Request<axum::body::Body>,
+) -> Response {
     let query = req.uri().query().unwrap_or("");
     let tail = parse_tail_query(query).unwrap_or(200);
     let logs = state.runtime.tail_logs(tail).await;
@@ -458,7 +494,10 @@ fn parse_tail_query(query: &str) -> Option<usize> {
         let mut kv = part.splitn(2, '=');
         let k = kv.next().unwrap_or("");
         let v = kv.next().unwrap_or("");
-        if k == "tail" && let Ok(n) = v.parse::<usize>() && n > 0 {
+        if k == "tail"
+            && let Ok(n) = v.parse::<usize>()
+            && n > 0
+        {
             return Some(n);
         }
     }

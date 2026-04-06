@@ -52,7 +52,8 @@ async fn cli_modes_smoke() -> Result<(), String> {
     let config_path = harness.write_config("cli-modes.yml", &config)?;
     let config_path_str = config_path.to_string_lossy().to_string();
 
-    let invalid_r = harness.run_cli_expect_failure(&["-c", &config_path_str, "-r", "invalid-mode"])?;
+    let invalid_r =
+        harness.run_cli_expect_failure(&["-c", &config_path_str, "-r", "invalid-mode"])?;
     assert_stderr_contains(&invalid_r, "Invalid -r parameter")?;
 
     let removed_web = harness.run_cli_expect_failure(&["-c", &config_path_str, "-r", "web"])?;
@@ -68,27 +69,16 @@ async fn cli_modes_smoke() -> Result<(), String> {
     ])?;
     assert_stderr_contains(&invalid_m, "Invalid -m parameter")?;
 
-    let clean_missing_tag = harness.run_cli_expect_failure(&["-c", &config_path_str, "-r", "clean"])?;
+    let clean_missing_tag =
+        harness.run_cli_expect_failure(&["-c", &config_path_str, "-r", "clean"])?;
     assert_stderr_contains(&clean_missing_tag, "Clean mode requires -tag")?;
 
-    let once_alias = harness.run_cli_expect_success(&[
-        "-c",
-        &config_path_str,
-        "-r",
-        "1",
-        "-m",
-        "ii",
-    ])?;
+    let once_alias =
+        harness.run_cli_expect_success(&["-c", &config_path_str, "-r", "1", "-m", "ii"])?;
     assert_stdout_contains(&once_alias, "[END:运行完毕]")?;
 
-    let cron_aft = harness.run_cli_expect_success(&[
-        "-c",
-        &config_path_str,
-        "-r",
-        "cronAft",
-        "-m",
-        "ii",
-    ])?;
+    let cron_aft =
+        harness.run_cli_expect_success(&["-c", &config_path_str, "-r", "cronAft", "-m", "ii"])?;
     assert_stdout_contains(&cron_aft, "CronAft mode")?;
 
     Ok(())

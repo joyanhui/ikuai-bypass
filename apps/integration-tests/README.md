@@ -22,6 +22,10 @@
 - `webui_auth_runtime_config_smoke`：验证内置 WebUI 的 BasicAuth、配置保存、任务启动/停止 API 链路。
 - `webui_cron_modes_smoke`：验证 CLI `cron` / `cronAft` 模式通过内置 WebUI 暴露出的状态流转与定时行为。
 
+另外还提供一条**非默认**的浏览器级 WebUI smoke：
+
+- `apps/integration-tests/run-webui-browser-smoke.sh`：启动长期驻留的 simulator-backed WebUI fixture，再用 Playwright 覆盖 BasicAuth 进入、页面加载、执行一次/停止、配置修改与保存。
+
 ## 本地前置条件
 
 - `qemu-system-x86_64` 和 `qemu-img` 已安装。
@@ -61,6 +65,14 @@ bash apps/integration-tests/run-smoke-test.sh
 ```bash
 bash apps/integration-tests/run-smoke-test.sh safe_before_smoke
 ```
+
+运行可选浏览器 smoke：
+
+```bash
+bash apps/integration-tests/run-webui-browser-smoke.sh
+```
+
+这条浏览器 smoke 默认**不**加入 `run-smoke-test.sh`，避免把默认 PR smoke 时间拉长；需要时可在本地或单独 CI job 中显式执行。
 
 安装本地 `pre-commit` hook：
 
@@ -106,6 +118,21 @@ bash script/dev.sh cli:dev -- -c apps/integration-tests/manual-cli.yml -r clean 
 - `IKB_TEST_QEMU_MEMORY`：QEMU 内存大小，默认 `4G`。
 - `IKB_TEST_QEMU_SMP`：QEMU vCPU 参数，默认 `cores=4`。
 - `IKB_TEST_ARTIFACT_ROOT`：测试产物目录，默认 `apps/integration-tests/.artifacts/`。
+- `IKB_PLAYWRIGHT_CHROME_PATH`：Playwright 使用的 Chrome/Chromium 可执行文件路径；未设置时脚本会自动探测 `google-chrome` / `chromium`。
+- `IKB_WEBUI_BROWSER_SKIP_SETUP`：设为 `1` 时跳过 `ikb-cli` 与 `ikb-webui-fixture` 二进制构建。
+- `IKB_WEBUI_BROWSER_SKIP_FRONTEND_BUILD`：设为 `1` 时跳过 `frontends/app/dist` 构建。
+
+## 浏览器 Smoke 说明
+
+`ikb-webui-fixture` 启动器会负责同时拉起：
+
+- `apps/integration-tests/src/ikuai_simulator/` 中的 iKuai 模拟器
+- 本地规则文件 fixture server
+- `ikb-cli` 内置 WebUI
+
+启动器会把 `IKB_WEBUI_BASE_URL`、`IKB_WEBUI_USER`、`IKB_WEBUI_PASS`、`IKB_WEBUI_CONFIG_PATH` 等环境变量写给调用方，供 Playwright 直接复用。
+
+浏览器 smoke 使用 Playwright 的 `httpCredentials` 走真实 BasicAuth challenge，不使用 `http://user:pass@host` 这种会污染 `window.location` 的 URL 凭证写法。
 
 ## CI 说明
 

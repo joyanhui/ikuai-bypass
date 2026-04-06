@@ -16,12 +16,24 @@ async fn clean_mode_smoke() -> Result<(), String> {
     let harness = TestHarness::start("clean_mode_smoke").await?;
     common::print_failure_hint("clean_mode_smoke", harness.artifact_dir());
 
-    harness.fixture().set_text("/clean/a-isp.txt", "10.10.10.0/24\n");
-    harness.fixture().set_text("/clean/b-isp.txt", "10.10.20.0/24\n");
-    harness.fixture().set_text("/clean/a-domain.txt", "alpha.example\n");
-    harness.fixture().set_text("/clean/b-domain.txt", "beta.example\n");
-    harness.fixture().set_text("/clean/a-ipv4.txt", "172.16.10.1\n");
-    harness.fixture().set_text("/clean/b-ipv4.txt", "172.16.20.1\n");
+    harness
+        .fixture()
+        .set_text("/clean/a-isp.txt", "10.10.10.0/24\n");
+    harness
+        .fixture()
+        .set_text("/clean/b-isp.txt", "10.10.20.0/24\n");
+    harness
+        .fixture()
+        .set_text("/clean/a-domain.txt", "alpha.example\n");
+    harness
+        .fixture()
+        .set_text("/clean/b-domain.txt", "beta.example\n");
+    harness
+        .fixture()
+        .set_text("/clean/a-ipv4.txt", "172.16.10.1\n");
+    harness
+        .fixture()
+        .set_text("/clean/b-ipv4.txt", "172.16.20.1\n");
 
     let config = render_test_config(
         harness.base_url(),

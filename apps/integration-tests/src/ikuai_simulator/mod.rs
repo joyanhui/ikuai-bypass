@@ -2,12 +2,12 @@ use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
 
+use axum::Router;
 use axum::extract::{Json, State};
 use axum::http::header::{COOKIE, SET_COOKIE};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
-use axum::Router;
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -195,10 +195,13 @@ async fn login_handler(
     State(state): State<AppState>,
     Json(req): Json<LoginReq>,
 ) -> Result<Response, Response> {
-    let mut guard = state.shared.lock().map_err(|_| api_error_response("state poisoned"))?;
+    let mut guard = state
+        .shared
+        .lock()
+        .map_err(|_| api_error_response("state poisoned"))?;
     let expected_md5 = ikb_core::ikuai::md5_hex(&guard.password);
-    let expected_pass = base64::engine::general_purpose::STANDARD
-        .encode(format!("salt_11{}", guard.password));
+    let expected_pass =
+        base64::engine::general_purpose::STANDARD.encode(format!("salt_11{}", guard.password));
     if req.username != guard.username || req.passwd != expected_md5 || req.pass != expected_pass {
         return Err(api_error_response("login failed"));
     }
@@ -222,7 +225,10 @@ async fn call_handler(
     headers: HeaderMap,
     Json(req): Json<CallReqRaw>,
 ) -> Result<Response, Response> {
-    let mut guard = state.shared.lock().map_err(|_| api_error_response("state poisoned"))?;
+    let mut guard = state
+        .shared
+        .lock()
+        .map_err(|_| api_error_response("state poisoned"))?;
     if !is_valid_session(&guard, &headers) {
         return Ok(Json(json!({
             "code": 1,
@@ -232,9 +238,7 @@ async fn call_handler(
     }
 
     let response = match (req.func_name.as_str(), req.action.as_str()) {
-        (ikb_core::ikuai::FUNC_NAME_CUSTOM_ISP, "show") => {
-            show_response(&guard.custom_isps)
-        }
+        (ikb_core::ikuai::FUNC_NAME_CUSTOM_ISP, "show") => show_response(&guard.custom_isps),
         (ikb_core::ikuai::FUNC_NAME_CUSTOM_ISP, "add") => {
             let id = add_custom_isp(&mut guard, &req.param)?;
             rowid_response(id)
@@ -269,9 +273,7 @@ async fn call_handler(
             del_route_object(&mut guard, &req.param)?;
             ok_response()
         }
-        (ikb_core::ikuai::FUNC_NAME_STREAM_DOMAIN, "show") => {
-            show_response(&guard.stream_domains)
-        }
+        (ikb_core::ikuai::FUNC_NAME_STREAM_DOMAIN, "show") => show_response(&guard.stream_domains),
         (ikb_core::ikuai::FUNC_NAME_STREAM_DOMAIN, "add") => {
             let id = add_stream_domain(&mut guard, &req.param)?;
             rowid_response(id)
@@ -284,9 +286,7 @@ async fn call_handler(
             del_stream_domain(&mut guard, &req.param)?;
             ok_response()
         }
-        (ikb_core::ikuai::FUNC_NAME_STREAM_IPPORT, "show") => {
-            show_response(&guard.stream_ipports)
-        }
+        (ikb_core::ikuai::FUNC_NAME_STREAM_IPPORT, "show") => show_response(&guard.stream_ipports),
         (ikb_core::ikuai::FUNC_NAME_STREAM_IPPORT, "add") => {
             let id = add_stream_ipport(&mut guard, &req.param)?;
             rowid_response(id)
@@ -496,7 +496,10 @@ fn parse_group_value(param: &Value) -> Result<Vec<HashMap<String, String>>, Resp
             .ok_or_else(|| api_error_response("invalid group_value item"))?;
         let mut row = HashMap::new();
         for (key, value) in map {
-            row.insert(key.to_string(), value.as_str().unwrap_or_default().to_string());
+            row.insert(
+                key.to_string(),
+                value.as_str().unwrap_or_default().to_string(),
+            );
         }
         out.push(row);
     }
@@ -584,14 +587,16 @@ fn required_string(param: &Value, key: &str) -> Result<String, Response> {
 }
 
 fn optional_string(param: &Value, key: &str) -> String {
-    param.get(key)
+    param
+        .get(key)
         .and_then(Value::as_str)
         .unwrap_or_default()
         .to_string()
 }
 
 fn optional_string_with_default(param: &Value, key: &str, default: &str) -> String {
-    param.get(key)
+    param
+        .get(key)
         .and_then(Value::as_str)
         .unwrap_or(default)
         .to_string()

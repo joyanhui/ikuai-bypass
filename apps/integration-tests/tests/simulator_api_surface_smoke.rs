@@ -63,8 +63,8 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
             index: 0,
         },
     )
-        .await
-        .map_err(|e| format!("stream_domain add failed: {e}"))?;
+    .await
+    .map_err(|e| format!("stream_domain add failed: {e}"))?;
     let domains = ikuai::stream_domain::show_stream_domain_by_tag_name(&api, "SimDom")
         .await
         .map_err(|e| format!("stream_domain show failed: {e}"))?;
@@ -97,8 +97,8 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
             iface_band: 0,
         },
     )
-        .await
-        .map_err(|e| format!("stream_ipport add failed: {e}"))?;
+    .await
+    .map_err(|e| format!("stream_ipport add failed: {e}"))?;
     let sip_rows = ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "SimRoute")
         .await
         .map_err(|e| format!("stream_ipport show failed: {e}"))?;

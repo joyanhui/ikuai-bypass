@@ -1,13 +1,13 @@
 use std::collections::VecDeque;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use chrono::DateTime;
 use chrono::Local;
 use cron::Schedule;
-use tokio::sync::{broadcast, Mutex};
+use tokio::sync::{Mutex, broadcast};
 
 use crate::config::Config;
 use crate::logger::{LogLevel, LogRecord, LogSink};
@@ -147,16 +147,8 @@ impl RuntimeService {
                 cron_running: i.cron_task.is_some(),
                 cron_expr: i.cron_expr.as_str().to_string(),
                 module: i.module.as_str().to_string(),
-                last_run_at: i
-                    .last_run_at
-                    .as_deref()
-                    .unwrap_or_default()
-                    .to_string(),
-                next_run_at: i
-                    .next_run_at
-                    .as_deref()
-                    .unwrap_or_default()
-                    .to_string(),
+                last_run_at: i.last_run_at.as_deref().unwrap_or_default().to_string(),
+                next_run_at: i.next_run_at.as_deref().unwrap_or_default().to_string(),
             };
         }
         RuntimeStatus {
@@ -192,8 +184,12 @@ impl RuntimeService {
             inner.module = module.to_string();
         }
 
-        self.append_sys(LogLevel::Info, "TASK:任务启动", format!("module={}", module))
-            .await;
+        self.append_sys(
+            LogLevel::Info,
+            "TASK:任务启动",
+            format!("module={}", module),
+        )
+        .await;
 
         let this = Arc::clone(&self);
         let handle = tokio::spawn(async move {
@@ -201,8 +197,12 @@ impl RuntimeService {
             // Avoid holding config lock across awaits: clone config for this run.
             let cfg = { Arc::clone(&*this.config.lock().await) };
 
-            this.append_sys(LogLevel::Info, "TASK:任务执行", format!("module={}", module))
-                .await;
+            this.append_sys(
+                LogLevel::Info,
+                "TASK:任务执行",
+                format!("module={}", module),
+            )
+            .await;
 
             let plan = match module.as_str() {
                 "ispdomain" => format!(
@@ -223,7 +223,11 @@ impl RuntimeService {
                     cfg.ip_group.len(),
                     cfg.stream_ipport.len()
                 ),
-                "ip" => format!("ip_group={} ipv6_group={}", cfg.ip_group.len(), cfg.ipv6_group.len()),
+                "ip" => format!(
+                    "ip_group={} ipv6_group={}",
+                    cfg.ip_group.len(),
+                    cfg.ipv6_group.len()
+                ),
                 "iip" => format!(
                     "custom_isp={} stream_domain={} ip_group={} ipv6_group={} stream_ipport={}",
                     cfg.custom_isp.len(),
@@ -257,8 +261,12 @@ impl RuntimeService {
             .await;
             match res {
                 Ok(()) => {
-                    this.append_sys(LogLevel::Success, "DONE:任务完成", format!("module={}", module))
-                        .await;
+                    this.append_sys(
+                        LogLevel::Success,
+                        "DONE:任务完成",
+                        format!("module={}", module),
+                    )
+                    .await;
                 }
                 Err(e) => {
                     this.append_sys(
@@ -331,9 +339,7 @@ impl RuntimeService {
                     if next <= now {
                         break;
                     }
-                    let wait = (next - now)
-                        .to_std()
-                        .unwrap_or(Duration::from_millis(200));
+                    let wait = (next - now).to_std().unwrap_or(Duration::from_millis(200));
                     tokio::time::sleep(wait.min(Duration::from_secs(1))).await;
                 }
 
@@ -361,7 +367,11 @@ impl RuntimeService {
         let (handle, expr, module) = {
             let mut inner = self.inner.lock().await;
             inner.next_run_at = None;
-            (inner.cron_task.take(), inner.cron_expr.to_string(), inner.module.to_string())
+            (
+                inner.cron_task.take(),
+                inner.cron_expr.to_string(),
+                inner.module.to_string(),
+            )
         };
         if let Some(h) = handle {
             h.abort();
@@ -391,8 +401,12 @@ impl RuntimeService {
         }
 
         self.running.store(false, Ordering::SeqCst);
-        self.append_sys(LogLevel::Warn, "TASK:任务停止", "runtime stop requested".to_string())
-            .await;
+        self.append_sys(
+            LogLevel::Warn,
+            "TASK:任务停止",
+            "runtime stop requested".to_string(),
+        )
+        .await;
         Ok(())
     }
 

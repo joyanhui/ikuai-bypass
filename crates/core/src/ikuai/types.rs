@@ -134,8 +134,7 @@ impl IKuaiClient {
         let builder = reqwest::Client::builder()
             .cookie_store(true)
             .connect_timeout(Duration::from_secs(5))
-            .timeout(Duration::from_secs(30))
-            ;
+            .timeout(Duration::from_secs(30));
         // iKuai 通常是内网地址，这里强制直连，避免系统/自定义代理干扰。
         // iKuai is typically a LAN address; force direct connection.
         let client = builder.no_proxy().build()?;
@@ -144,8 +143,7 @@ impl IKuaiClient {
 
     pub async fn login(&self, username: &str, password: &str) -> Result<(), IKuaiError> {
         let passwd = crate::ikuai::utils::md5_hex(password);
-        let pass = base64::engine::general_purpose::STANDARD
-            .encode(format!("salt_11{}", password));
+        let pass = base64::engine::general_purpose::STANDARD.encode(format!("salt_11{}", password));
 
         let req = serde_json::json!({
             "passwd": passwd,
@@ -182,7 +180,11 @@ impl IKuaiClient {
         Ok(resp)
     }
 
-    async fn post_json_text<T: Serialize>(&self, url: &str, body: &T) -> Result<String, IKuaiError> {
+    async fn post_json_text<T: Serialize>(
+        &self,
+        url: &str,
+        body: &T,
+    ) -> Result<String, IKuaiError> {
         let resp = self.client.post(url).json(body).send().await?;
         let status = resp.status();
         let text = resp.text().await?;
@@ -197,7 +199,9 @@ impl IKuaiClient {
     }
 }
 
-fn parse_call_response<T: for<'de> Deserialize<'de>>(text: &str) -> Result<CallResp<T>, IKuaiError> {
+fn parse_call_response<T: for<'de> Deserialize<'de>>(
+    text: &str,
+) -> Result<CallResp<T>, IKuaiError> {
     serde_json::from_str(text).map_err(|e| {
         IKuaiError::InvalidResponse(format!("decode error: {} body: {}", e, trim_body(text)))
     })

@@ -4,7 +4,7 @@ use std::time::Duration;
 use crate::config::Config;
 use crate::ikuai;
 use crate::logger::{LogSink, Logger};
-use crate::session::{resolve_login_params, LoginParamsError};
+use crate::session::{LoginParamsError, resolve_login_params};
 
 #[derive(Debug, Clone, Default)]
 pub struct UpdateOptions {
@@ -74,7 +74,10 @@ pub async fn run_update_by_module(
             update_ispdomain(cfg, &api, opts, &sink).await;
         }
         "ipgroup" => {
-            sys.info("TASK:任务启动", "Starting IP group and Next-hop gateway mode");
+            sys.info(
+                "TASK:任务启动",
+                "Starting IP group and Next-hop gateway mode",
+            );
             update_ipgroup(cfg, &api, opts, &sink).await;
         }
         "ipv6group" => {
@@ -82,7 +85,10 @@ pub async fn run_update_by_module(
             update_ipv6group(cfg, &api, opts, &sink).await;
         }
         "ii" => {
-            sys.info("TASK:任务启动", "Starting hybrid mode: ISP/Domain + IP group");
+            sys.info(
+                "TASK:任务启动",
+                "Starting hybrid mode: ISP/Domain + IP group",
+            );
             // stream-domain / stream-ipport can depend on freshly synced IP groups,
             // so combined modes must materialize IP groups before domain rules.
             // stream-domain / stream-ipport 可能依赖本轮刚同步出的 IP 分组，
@@ -91,7 +97,10 @@ pub async fn run_update_by_module(
             update_ispdomain(cfg, &api, opts, &sink).await;
         }
         "ip" => {
-            sys.info("TASK:任务启动", "Starting hybrid mode: IPv4 group + IPv6 group");
+            sys.info(
+                "TASK:任务启动",
+                "Starting hybrid mode: IPv4 group + IPv6 group",
+            );
             update_ipgroup(cfg, &api, opts, &sink).await;
             update_ipv6group(cfg, &api, opts, &sink).await;
         }
@@ -185,10 +194,7 @@ pub async fn export_stream_domain_to_txt(
     }
 
     if failed > 0 {
-        domain.error(
-            "EXPORT:导出完成",
-            format!("failed={}", failed),
-        );
+        domain.error("EXPORT:导出完成", format!("failed={}", failed));
         return Err(UpdateError::Download(format!(
             "export finished with {} failures",
             failed
@@ -199,7 +205,12 @@ pub async fn export_stream_domain_to_txt(
     Ok(())
 }
 
-async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
+async fn update_ispdomain(
+    cfg: &Config,
+    api: &ikuai::IKuaiClient,
+    opts: &UpdateOptions,
+    sink: &LogSink,
+) {
     let isp = Logger::new("ISP:运营商分流", Arc::clone(sink));
     let domain = Logger::new("DOMAIN:域名分流", Arc::clone(sink));
     let sys = Logger::new("SYS:系统组件", Arc::clone(sink));
@@ -239,7 +250,10 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateO
         if let Err(e) = res {
             domain.error(
                 "UPDATE:更新失败",
-                format!("Failed to update domain streaming for tag {}: {}", item.tag, e),
+                format!(
+                    "Failed to update domain streaming for tag {}: {}",
+                    item.tag, e
+                ),
             );
         } else {
             domain.success(
@@ -255,7 +269,12 @@ async fn update_ispdomain(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateO
     );
 }
 
-async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
+async fn update_ipgroup(
+    cfg: &Config,
+    api: &ikuai::IKuaiClient,
+    opts: &UpdateOptions,
+    sink: &LogSink,
+) {
     let ip_logger = Logger::new("IP:IP分组", Arc::clone(sink));
     let stream_logger = Logger::new("STREAM:端口分流", Arc::clone(sink));
 
@@ -313,9 +332,7 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOpt
                 "UPDATE:更新失败",
                 format!(
                     "Failed to update port streaming '{}@{}': {}",
-                    route_name,
-                    item.ip_group,
-                    e
+                    route_name, item.ip_group, e
                 ),
             );
         } else {
@@ -324,33 +341,47 @@ async fn update_ipgroup(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOpt
                 "UPDATE:更新成功",
                 format!(
                     "Successfully updated port streaming '{}@{}'",
-                    route_name,
-                    item.ip_group
+                    route_name, item.ip_group
                 ),
             );
         }
     }
 }
 
-async fn update_ipv6group(cfg: &Config, api: &ikuai::IKuaiClient, opts: &UpdateOptions, sink: &LogSink) {
+async fn update_ipv6group(
+    cfg: &Config,
+    api: &ikuai::IKuaiClient,
+    opts: &UpdateOptions,
+    sink: &LogSink,
+) {
     let ipv6_logger = Logger::new("IPV6:IPv6分组", Arc::clone(sink));
     for item in &cfg.ipv6_group {
         let res = update_ipv6_group(cfg, api, opts, sink, &item.tag, &item.url).await;
         if let Err(e) = res {
             ipv6_logger.error(
                 "UPDATE:更新失败",
-                format!("Failed to add IPv6 group '{}@{}': {}", item.tag, item.url, e),
+                format!(
+                    "Failed to add IPv6 group '{}@{}': {}",
+                    item.tag, item.url, e
+                ),
             );
         } else {
             ipv6_logger.success(
                 "UPDATE:更新成功",
-                format!("Successfully updated IPv6 group '{}@{}'", item.tag, item.url),
+                format!(
+                    "Successfully updated IPv6 group '{}@{}'",
+                    item.tag, item.url
+                ),
             );
         }
     }
 }
 
-async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Vec<u8>, UpdateError> {
+async fn http_get(
+    cfg: &Config,
+    sink: &LogSink,
+    original_url: &str,
+) -> Result<Vec<u8>, UpdateError> {
     let net = crate::net::NetConfig::from_config(cfg);
     let plan = crate::net::plan_rule_fetch(&net, original_url);
     let http_logger = Logger::new("HTTP:资源下载", Arc::clone(sink));
@@ -359,7 +390,11 @@ async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Ve
         crate::net::ProxyChoice::System => "系统代理",
         crate::net::ProxyChoice::Custom => "自定义代理",
     };
-    let gh = if plan.used_github_proxy { " (ghproxy)" } else { "" };
+    let gh = if plan.used_github_proxy {
+        " (ghproxy)"
+    } else {
+        ""
+    };
     http_logger.info(
         "HTTP:资源下载",
         format!("http.get '{}' via={}{}", original_url, via, gh),
@@ -369,8 +404,7 @@ async fn http_get(cfg: &Config, sink: &LogSink, original_url: &str) -> Result<Ve
     // Avoid hanging forever on remote resources.
     let builder = reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(10))
-        .timeout(Duration::from_secs(120))
-        ;
+        .timeout(Duration::from_secs(120));
     let client = crate::net::apply_proxy_choice(builder, &net, plan.proxy)
         .map_err(|e| UpdateError::Download(e.to_string()))?
         .build()
@@ -466,8 +500,16 @@ fn export_stream_domains(
 
     let iface_token = ikuai::tag_name::sanitize_tag_name(iface);
     let tag_token = ikuai::tag_name::sanitize_tag_name(tag);
-    let iface_token = if iface_token.is_empty() { "iface" } else { &iface_token };
-    let tag_token = if tag_token.is_empty() { "tag" } else { &tag_token };
+    let iface_token = if iface_token.is_empty() {
+        "iface"
+    } else {
+        &iface_token
+    };
+    let tag_token = if tag_token.is_empty() {
+        "tag"
+    } else {
+        &tag_token
+    };
 
     let filename = format!("stream-domain_{}_{}.txt", iface_token, tag_token);
     let path = dir.join(filename);
@@ -508,7 +550,10 @@ async fn update_custom_isp(
     let isp_logger = Logger::new("ISP:运营商分流", Arc::clone(sink));
     let body = http_get(cfg, sink, url).await?;
     let ips = remove_ipv6_and_empty(split_lines(&body));
-    isp_logger.info("STAT:规则统计", format!("Fetched {} IPs for {}", ips.len(), tag));
+    isp_logger.info(
+        "STAT:规则统计",
+        format!("Fetched {} IPs for {}", ips.len(), tag),
+    );
 
     let mut map = ikuai::custom_isp::get_custom_isp_map(api, tag).await?;
     let groups = group(ips, cfg.max_number_of_one_records.isp as usize);
@@ -607,10 +652,8 @@ async fn update_stream_domain(
         match export_stream_domains(&opts.export_path, input.iface, input.tag, &domains) {
             Ok(p) => {
                 if !p.as_os_str().is_empty() {
-                    domain_logger.info(
-                        "EXPORT:导出成功",
-                        format!("path='{}'", p.to_string_lossy()),
-                    );
+                    domain_logger
+                        .info("EXPORT:导出成功", format!("path='{}'", p.to_string_lossy()));
                 }
             }
             Err(e) => {
@@ -763,13 +806,7 @@ async fn update_ip_group(
         if let Err(e) = res {
             ip_logger.error(
                 "UPDATE:更新失败",
-                format!(
-                    "[{}/{}] {}: failed, error: {}",
-                    i + 1,
-                    groups.len(),
-                    tag,
-                    e
-                ),
+                format!("[{}/{}] {}: failed, error: {}", i + 1, groups.len(), tag, e),
             );
             sleep(cfg.add_err_retry_wait).await;
         }
@@ -854,13 +891,7 @@ async fn update_ipv6_group(
         if let Err(e) = res {
             ipv6_logger.error(
                 "UPDATE:更新失败",
-                format!(
-                    "[{}/{}] {}: failed, error: {}",
-                    i + 1,
-                    groups.len(),
-                    tag,
-                    e
-                ),
+                format!("[{}/{}] {}: failed, error: {}", i + 1, groups.len(), tag, e),
             );
             sleep(cfg.add_err_retry_wait).await;
         }
@@ -912,7 +943,8 @@ async fn update_stream_ipport(
             if item.is_empty() {
                 continue;
             }
-            let matches = ikuai::ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, item).await?;
+            let matches =
+                ikuai::ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, item).await?;
             dst_groups.extend(matches);
         }
         if dst_groups.is_empty() {
@@ -936,7 +968,8 @@ async fn update_stream_ipport(
             if item.is_empty() {
                 continue;
             }
-            let matches = ikuai::ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, item).await?;
+            let matches =
+                ikuai::ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, item).await?;
             src_groups.extend(matches);
         }
         if !src_groups.is_empty() {

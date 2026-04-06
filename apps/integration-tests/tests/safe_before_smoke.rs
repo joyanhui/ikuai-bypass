@@ -22,7 +22,9 @@ async fn safe_before_smoke() -> Result<(), String> {
     harness
         .fixture()
         .set_text("/safe/domain.txt", "safe.example\nkeep.example\n");
-    harness.fixture().set_text("/safe/ipv4.txt", "100.64.0.1\n100.64.0.2\n");
+    harness
+        .fixture()
+        .set_text("/safe/ipv4.txt", "100.64.0.1\n100.64.0.2\n");
     harness
         .fixture()
         .set_text("/safe/ipv6.txt", "2001:db8:2::1\n2001:db8:2::/64\n");
@@ -132,16 +134,28 @@ async fn safe_before_smoke() -> Result<(), String> {
     assert_eq!(after_stream.len(), 1);
 
     assert_eq!(after_custom[0].id, before_custom[0].id);
-    assert_eq!(csv_items(&after_custom[0].ipgroup), csv_items(&before_custom[0].ipgroup));
+    assert_eq!(
+        csv_items(&after_custom[0].ipgroup),
+        csv_items(&before_custom[0].ipgroup)
+    );
 
     assert_eq!(after_domain[0].id, before_domain[0].id);
-    assert_eq!(csv_items(&after_domain[0].domain), csv_items(&before_domain[0].domain));
+    assert_eq!(
+        csv_items(&after_domain[0].domain),
+        csv_items(&before_domain[0].domain)
+    );
 
     assert_eq!(after_ipv4[0].id, before_ipv4[0].id);
-    assert_eq!(csv_items(&after_ipv4[0].addr_pool), csv_items(&before_ipv4[0].addr_pool));
+    assert_eq!(
+        csv_items(&after_ipv4[0].addr_pool),
+        csv_items(&before_ipv4[0].addr_pool)
+    );
 
     assert_eq!(after_ipv6[0].id, before_ipv6[0].id);
-    assert_eq!(csv_items(&after_ipv6[0].addr_pool), csv_items(&before_ipv6[0].addr_pool));
+    assert_eq!(
+        csv_items(&after_ipv6[0].addr_pool),
+        csv_items(&before_ipv6[0].addr_pool)
+    );
 
     assert_eq!(after_stream[0].id, before_stream[0].id);
     assert_eq!(after_stream[0].nexthop, before_stream[0].nexthop);

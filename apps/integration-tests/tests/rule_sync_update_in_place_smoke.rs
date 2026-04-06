@@ -22,7 +22,9 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
     harness
         .fixture()
         .set_text("/sync/domain.txt", "example.com\nfoo.example\n");
-    harness.fixture().set_text("/sync/ipv4.txt", "8.8.8.8\n9.9.9.0/24\n");
+    harness
+        .fixture()
+        .set_text("/sync/ipv4.txt", "8.8.8.8\n9.9.9.0/24\n");
     harness
         .fixture()
         .set_text("/sync/ipv6.txt", "2001:db8::1\n2001:db8::/64\n");
@@ -77,7 +79,10 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
         .map_err(|e| format!("failed to query custom ISP: {e}"))?;
     custom_isp.sort_by_key(|item| item.id);
     assert_eq!(custom_isp.len(), 1, "expected one custom ISP chunk");
-    assert_eq!(csv_items(&custom_isp[0].ipgroup), vec!["1.1.1.0/24", "2.2.2.0/24"]);
+    assert_eq!(
+        csv_items(&custom_isp[0].ipgroup),
+        vec!["1.1.1.0/24", "2.2.2.0/24"]
+    );
     assert_eq!(custom_isp[0].comment, ikuai::NEW_COMMENT);
     let custom_isp_id = custom_isp[0].id;
 
@@ -87,7 +92,10 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
     stream_domains.sort_by_key(|item| item.id);
     assert_eq!(stream_domains.len(), 1, "expected one stream-domain chunk");
     assert_eq!(stream_domains[0].interface, "wan2");
-    assert_eq!(csv_items(&stream_domains[0].domain), vec!["example.com", "foo.example"]);
+    assert_eq!(
+        csv_items(&stream_domains[0].domain),
+        vec!["example.com", "foo.example"]
+    );
     assert_eq!(stream_domains[0].comment, ikuai::NEW_COMMENT);
     let stream_domain_id = stream_domains[0].id;
 
@@ -96,7 +104,10 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
         .map_err(|e| format!("failed to query IPv4 groups: {e}"))?;
     ipv4_groups.sort_by_key(|item| item.id);
     assert_eq!(ipv4_groups.len(), 1, "expected one IPv4 group chunk");
-    assert_eq!(csv_items(&ipv4_groups[0].addr_pool), vec!["8.8.8.8", "9.9.9.0/24"]);
+    assert_eq!(
+        csv_items(&ipv4_groups[0].addr_pool),
+        vec!["8.8.8.8", "9.9.9.0/24"]
+    );
     let ipv4_group_id = ipv4_groups[0].id;
 
     let mut ipv6_groups = ikuai::ipv6_group::show_ipv6_group_by_tag_name(&api, "Sync6")
@@ -104,12 +115,16 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
         .map_err(|e| format!("failed to query IPv6 groups: {e}"))?;
     ipv6_groups.sort_by_key(|item| item.id);
     assert_eq!(ipv6_groups.len(), 1, "expected one IPv6 group chunk");
-    assert_eq!(csv_items(&ipv6_groups[0].addr_pool), vec!["2001:db8::/64", "2001:db8::1"]);
+    assert_eq!(
+        csv_items(&ipv6_groups[0].addr_pool),
+        vec!["2001:db8::/64", "2001:db8::1"]
+    );
     let ipv6_group_id = ipv6_groups[0].id;
 
-    let mut stream_ipports = ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "SyncRoute")
-        .await
-        .map_err(|e| format!("failed to query stream-ipport: {e}"))?;
+    let mut stream_ipports =
+        ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "SyncRoute")
+            .await
+            .map_err(|e| format!("failed to query stream-ipport: {e}"))?;
     stream_ipports.sort_by_key(|item| item.id);
     assert_eq!(stream_ipports.len(), 1, "expected one stream-ipport rule");
     assert_eq!(stream_ipports[0].nexthop, "192.168.1.2");
@@ -121,7 +136,9 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
     harness
         .fixture()
         .set_text("/sync/domain.txt", "bar.example\nupdated.example\n");
-    harness.fixture().set_text("/sync/ipv4.txt", "4.4.4.4\n5.5.5.0/24\n");
+    harness
+        .fixture()
+        .set_text("/sync/ipv4.txt", "4.4.4.4\n5.5.5.0/24\n");
     harness
         .fixture()
         .set_text("/sync/ipv6.txt", "2001:db8:1::1\n2001:db8:1::/64\n");
@@ -135,8 +152,14 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
         .map_err(|e| format!("failed to re-query custom ISP: {e}"))?;
     custom_isp.sort_by_key(|item| item.id);
     assert_eq!(custom_isp.len(), 1);
-    assert_eq!(custom_isp[0].id, custom_isp_id, "custom ISP should edit in-place");
-    assert_eq!(csv_items(&custom_isp[0].ipgroup), vec!["1.1.1.0/24", "3.3.3.0/24"]);
+    assert_eq!(
+        custom_isp[0].id, custom_isp_id,
+        "custom ISP should edit in-place"
+    );
+    assert_eq!(
+        csv_items(&custom_isp[0].ipgroup),
+        vec!["1.1.1.0/24", "3.3.3.0/24"]
+    );
 
     let mut stream_domains = ikuai::stream_domain::show_stream_domain_by_tag_name(&api, "SyncDom")
         .await
@@ -157,23 +180,33 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
         .map_err(|e| format!("failed to re-query IPv4 groups: {e}"))?;
     ipv4_groups.sort_by_key(|item| item.id);
     assert_eq!(ipv4_groups.len(), 1);
-    assert_eq!(ipv4_groups[0].id, ipv4_group_id, "IPv4 group should edit in-place");
-    assert_eq!(csv_items(&ipv4_groups[0].addr_pool), vec!["4.4.4.4", "5.5.5.0/24"]);
+    assert_eq!(
+        ipv4_groups[0].id, ipv4_group_id,
+        "IPv4 group should edit in-place"
+    );
+    assert_eq!(
+        csv_items(&ipv4_groups[0].addr_pool),
+        vec!["4.4.4.4", "5.5.5.0/24"]
+    );
 
     let mut ipv6_groups = ikuai::ipv6_group::show_ipv6_group_by_tag_name(&api, "Sync6")
         .await
         .map_err(|e| format!("failed to re-query IPv6 groups: {e}"))?;
     ipv6_groups.sort_by_key(|item| item.id);
     assert_eq!(ipv6_groups.len(), 1);
-    assert_eq!(ipv6_groups[0].id, ipv6_group_id, "IPv6 group should edit in-place");
+    assert_eq!(
+        ipv6_groups[0].id, ipv6_group_id,
+        "IPv6 group should edit in-place"
+    );
     assert_eq!(
         csv_items(&ipv6_groups[0].addr_pool),
         vec!["2001:db8:1::/64", "2001:db8:1::1"]
     );
 
-    let mut stream_ipports = ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "SyncRoute")
-        .await
-        .map_err(|e| format!("failed to re-query stream-ipport: {e}"))?;
+    let mut stream_ipports =
+        ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "SyncRoute")
+            .await
+            .map_err(|e| format!("failed to re-query stream-ipport: {e}"))?;
     stream_ipports.sort_by_key(|item| item.id);
     assert_eq!(stream_ipports.len(), 1);
     assert_eq!(

@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use ikb_core::config::Config;
 use ikb_core::runtime::RuntimeService;
@@ -19,12 +19,18 @@ type GithubRelease = ikb_core::app::GithubRelease;
 type DiagnosticsReport = ikb_core::app::DiagnosticsReport;
 
 #[tauri::command]
-async fn test_ikuai_login(_state: tauri::State<'_, AppState>, req: TestIkuaiLoginReq) -> Result<TestResult, String> {
+async fn test_ikuai_login(
+    _state: tauri::State<'_, AppState>,
+    req: TestIkuaiLoginReq,
+) -> Result<TestResult, String> {
     Ok(ikb_core::app::test_ikuai_login(req).await)
 }
 
 #[tauri::command]
-async fn test_github_proxy(_state: tauri::State<'_, AppState>, req: TestGithubProxyReq) -> Result<TestResult, String> {
+async fn test_github_proxy(
+    _state: tauri::State<'_, AppState>,
+    req: TestGithubProxyReq,
+) -> Result<TestResult, String> {
     Ok(ikb_core::app::test_github_proxy(req).await)
 }
 
@@ -87,12 +93,17 @@ async fn save_raw_yaml(
 }
 
 #[tauri::command]
-async fn runtime_status(state: tauri::State<'_, AppState>) -> Result<ikb_core::runtime::RuntimeStatus, String> {
+async fn runtime_status(
+    state: tauri::State<'_, AppState>,
+) -> Result<ikb_core::runtime::RuntimeStatus, String> {
     Ok(state.runtime.status())
 }
 
 #[tauri::command]
-async fn runtime_run_once(state: tauri::State<'_, AppState>, module: String) -> Result<bool, String> {
+async fn runtime_run_once(
+    state: tauri::State<'_, AppState>,
+    module: String,
+) -> Result<bool, String> {
     let started = Arc::clone(&state.runtime)
         .start_run_once(module)
         .await
@@ -135,10 +146,7 @@ async fn run_clean(config: &Config, clean_tag: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn runtime_clean(
-    state: tauri::State<'_, AppState>,
-    clean_tag: String,
-) -> Result<(), String> {
+async fn runtime_clean(state: tauri::State<'_, AppState>, clean_tag: String) -> Result<(), String> {
     // 避免在网络请求期间持有配置锁。
     // Avoid holding config lock while doing network requests.
     let cfg = { Arc::clone(&*state.config.lock().await) };
@@ -163,17 +171,24 @@ async fn fetch_remote_config(
 }
 
 #[tauri::command]
-async fn fetch_github_releases(proxy: ikb_core::config::ProxyConfig) -> Result<Vec<GithubRelease>, String> {
+async fn fetch_github_releases(
+    proxy: ikb_core::config::ProxyConfig,
+) -> Result<Vec<GithubRelease>, String> {
     ikb_core::app::fetch_github_releases(&proxy).await
 }
 
 #[tauri::command]
-async fn diagnostics_report(state: tauri::State<'_, AppState>) -> Result<DiagnosticsReport, String> {
+async fn diagnostics_report(
+    state: tauri::State<'_, AppState>,
+) -> Result<DiagnosticsReport, String> {
     // Avoid holding locks across await.
     let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let path_guard = state.config_path.lock().await;
     let st = state.runtime.status();
-    Ok(ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path_guard, Some(st), "").await)
+    Ok(
+        ikb_core::app::build_diagnostics_report(cfg_snapshot.as_ref(), &path_guard, Some(st), "")
+            .await,
+    )
 }
 
 pub struct AppState {
@@ -229,7 +244,10 @@ pub fn run() {
             // Mobile: use Tauri's app_config_dir; Desktop: use ikb_core's platform path
             let is_mobile = cfg!(target_os = "android") || cfg!(target_os = "ios");
             let config_path = if is_mobile {
-                let dir = app.path().app_config_dir().unwrap_or_else(|_| PathBuf::from("."));
+                let dir = app
+                    .path()
+                    .app_config_dir()
+                    .unwrap_or_else(|_| PathBuf::from("."));
                 if !dir.exists() {
                     let _ = std::fs::create_dir_all(&dir);
                 }

@@ -1,5 +1,5 @@
-pub mod config;
 pub mod app;
+pub mod config;
 pub mod ikuai;
 pub mod logger;
 pub mod net;

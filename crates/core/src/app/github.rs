@@ -17,8 +17,7 @@ pub struct GithubRelease {
 }
 
 pub async fn fetch_github_releases(proxy: &ProxyConfig) -> Result<Vec<GithubRelease>, String> {
-    const URL: &str =
-        "https://api.github.com/repos/joyanhui/ikuai-bypass/releases?per_page=30";
+    const URL: &str = "https://api.github.com/repos/joyanhui/ikuai-bypass/releases?per_page=30";
 
     let net = crate::net::NetConfig::from_parts(proxy, "");
     let plan = crate::net::plan_github_api(&net, URL);

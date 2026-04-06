@@ -80,13 +80,13 @@ fn windows_roaming_appdata() -> Option<PathBuf> {
     use std::ffi::OsString;
     use std::os::windows::ffi::OsStringExt;
 
-    use windows_sys::core::PWSTR;
     use windows_sys::Win32::System::Com::{
-        CoInitializeEx, CoTaskMemFree, COINIT_APARTMENTTHREADED,
+        COINIT_APARTMENTTHREADED, CoInitializeEx, CoTaskMemFree,
     };
     use windows_sys::Win32::UI::Shell::{
-        FOLDERID_RoamingAppData, SHGetKnownFolderPath, KF_FLAG_DEFAULT,
+        FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, SHGetKnownFolderPath,
     };
+    use windows_sys::core::PWSTR;
 
     unsafe {
         let _ = CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32);

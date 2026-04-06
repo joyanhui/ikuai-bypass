@@ -1,5 +1,5 @@
-use std::time::Duration;
 use std::path::Path;
+use std::time::Duration;
 
 use crate::ikuai::IKuaiClient;
 use crate::{config::Config, net::ProxyChoice};
@@ -51,7 +51,7 @@ pub async fn test_ikuai_login(req: TestIkuaiLoginRequest) -> TestResult {
             return TestResult {
                 ok: false,
                 message: e.to_string(),
-            }
+            };
         }
     };
 
@@ -68,7 +68,8 @@ pub async fn test_ikuai_login(req: TestIkuaiLoginRequest) -> TestResult {
 }
 
 pub async fn test_github_proxy(req: TestGithubProxyRequest) -> TestResult {
-    const URL: &str = "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
+    const URL: &str =
+        "https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/main/.gitignore";
 
     let ghproxy = normalize_url_prefix(&req.github_proxy);
     if ghproxy.is_empty() {
@@ -97,7 +98,7 @@ pub async fn test_github_proxy(req: TestGithubProxyRequest) -> TestResult {
             return TestResult {
                 ok: false,
                 message: e.to_string(),
-            }
+            };
         }
     };
 
@@ -107,7 +108,7 @@ pub async fn test_github_proxy(req: TestGithubProxyRequest) -> TestResult {
             return TestResult {
                 ok: false,
                 message: e.to_string(),
-            }
+            };
         }
     };
     let status = resp.status();
@@ -135,7 +136,7 @@ pub async fn test_github_proxy(req: TestGithubProxyRequest) -> TestResult {
             return TestResult {
                 ok: false,
                 message: e.to_string(),
-            }
+            };
         }
     };
     let trimmed = text.trim();
@@ -248,7 +249,7 @@ async fn probe_rule_url(cfg: &Config, original_url: &str) -> UrlProbeResult {
                 used_github_proxy: plan.used_github_proxy,
                 bytes: 0,
                 error: format!("build client failed: {}", e),
-            }
+            };
         }
     };
 
@@ -267,7 +268,7 @@ async fn probe_rule_url(cfg: &Config, original_url: &str) -> UrlProbeResult {
                 used_github_proxy: plan.used_github_proxy,
                 bytes: 0,
                 error: e.to_string(),
-            }
+            };
         }
     };
 
@@ -304,7 +305,7 @@ async fn probe_rule_url(cfg: &Config, original_url: &str) -> UrlProbeResult {
                 used_github_proxy: plan.used_github_proxy,
                 bytes: 0,
                 error: e.to_string(),
-            }
+            };
         }
     };
 
@@ -399,7 +400,10 @@ pub async fn build_diagnostics_report(
                 password: p.password,
             })
             .await;
-            out.push_str(&format!("ikuai.login: {}\n", if r.ok { "OK" } else { "FAIL" }));
+            out.push_str(&format!(
+                "ikuai.login: {}\n",
+                if r.ok { "OK" } else { "FAIL" }
+            ));
             if !r.ok {
                 out.push_str(&format!("ikuai.login.error: {}\n", r.message));
             }
@@ -414,7 +418,10 @@ pub async fn build_diagnostics_report(
             github_proxy: cfg.github_proxy.to_string(),
         })
         .await;
-        out.push_str(&format!("github-proxy.test: {}\n", if r.ok { "OK" } else { "FAIL" }));
+        out.push_str(&format!(
+            "github-proxy.test: {}\n",
+            if r.ok { "OK" } else { "FAIL" }
+        ));
         if !r.ok {
             out.push_str(&format!("github-proxy.error: {}\n", r.message));
         }

@@ -17,8 +17,7 @@ pub async fn fetch_remote_config(
 
     let builder = reqwest::Client::builder()
         .user_agent("ikb-core")
-        .timeout(Duration::from_secs(15))
-        ;
+        .timeout(Duration::from_secs(15));
     let client = crate::net::apply_proxy_choice(builder, &net, plan.proxy)
         .map_err(|e| e.to_string())?
         .build()

@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use super::clean::match_clean_tag;
 use super::tag_name::{build_tag_name, match_tag_name_filter};
-use super::types::{CustomIspData, IKuaiClient, IKuaiError, FUNC_NAME_CUSTOM_ISP, NEW_COMMENT};
+use super::types::{CustomIspData, FUNC_NAME_CUSTOM_ISP, IKuaiClient, IKuaiError, NEW_COMMENT};
 
 #[derive(Debug, Serialize)]
 struct ShowParam {
@@ -37,7 +37,12 @@ pub async fn show_custom_isp_by_tag_name(
         .collect())
 }
 
-pub async fn add_custom_isp(api: &IKuaiClient, tag: &str, ipgroup: &str, index: i64) -> Result<(), IKuaiError> {
+pub async fn add_custom_isp(
+    api: &IKuaiClient,
+    tag: &str,
+    ipgroup: &str,
+    index: i64,
+) -> Result<(), IKuaiError> {
     let param = serde_json::json!({
         "name": build_tag_name(tag),
         "ipgroup": ipgroup.trim(),
@@ -78,7 +83,10 @@ pub async fn del_custom_isp(api: &IKuaiClient, id_csv: &str) -> Result<(), IKuai
     Ok(())
 }
 
-pub async fn get_custom_isp_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
+pub async fn get_custom_isp_map(
+    api: &IKuaiClient,
+    tag: &str,
+) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
     let data = show_custom_isp_by_tag_name(api, "").await?;
     let mut out = std::collections::HashMap::new();
     for d in data {
@@ -135,7 +143,9 @@ fn parse_custom_isp_chunk_index_from_comment(comment: &str) -> Option<i64> {
         if suffix.is_empty() {
             return Some(1);
         }
-        if let Ok(v) = suffix.parse::<i64>() && v > 0 {
+        if let Ok(v) = suffix.parse::<i64>()
+            && v > 0
+        {
             return Some(v);
         }
     }

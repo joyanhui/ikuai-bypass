@@ -14,16 +14,24 @@ async fn clean_all_smoke() -> Result<(), String> {
     let harness = TestHarness::start("clean_all_smoke").await?;
     common::print_failure_hint("clean_all_smoke", harness.artifact_dir());
 
-    harness.fixture().set_text("/cleanall/a-isp.txt", "10.1.1.0/24\n");
-    harness.fixture().set_text("/cleanall/b-isp.txt", "10.2.2.0/24\n");
+    harness
+        .fixture()
+        .set_text("/cleanall/a-isp.txt", "10.1.1.0/24\n");
+    harness
+        .fixture()
+        .set_text("/cleanall/b-isp.txt", "10.2.2.0/24\n");
     harness
         .fixture()
         .set_text("/cleanall/a-domain.txt", "a.example\n");
     harness
         .fixture()
         .set_text("/cleanall/b-domain.txt", "b.example\n");
-    harness.fixture().set_text("/cleanall/a-ipv4.txt", "172.16.10.1\n");
-    harness.fixture().set_text("/cleanall/b-ipv4.txt", "172.16.20.1\n");
+    harness
+        .fixture()
+        .set_text("/cleanall/a-ipv4.txt", "172.16.10.1\n");
+    harness
+        .fixture()
+        .set_text("/cleanall/b-ipv4.txt", "172.16.20.1\n");
 
     let config = render_test_config(
         harness.base_url(),

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use ikb_core::config::{validate_save_path, ConfigError};
+use ikb_core::config::{ConfigError, validate_save_path};
 use ikb_core::paths;
 
 #[test]

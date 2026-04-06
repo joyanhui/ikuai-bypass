@@ -1,15 +1,15 @@
+use std::io::IsTerminal;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::str::FromStr;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use std::time::Instant;
-use std::str::FromStr;
-use std::io::IsTerminal;
 
 use clap::Parser;
 
-use ikb_cli::normalize_go_style_args;
 use ikb_cli::normalize_cron_expr;
+use ikb_cli::normalize_go_style_args;
 use ikb_core::runtime::RuntimeService;
 
 use chrono::Local;
@@ -69,7 +69,11 @@ fn print_export_done_banner(export_path: &str, conf_path: &str, elapsed: Duratio
     println!();
 }
 
-fn print_cron_started_banner(mode: &str, st: &ikb_core::runtime::RuntimeStatus, normalized: Option<&str>) {
+fn print_cron_started_banner(
+    mode: &str,
+    st: &ikb_core::runtime::RuntimeStatus,
+    normalized: Option<&str>,
+) {
     let running_text = if st.running { "执行中" } else { "待机" };
     println!();
     println!("===========================================================");
@@ -91,8 +95,18 @@ fn print_cron_started_banner(mode: &str, st: &ikb_core::runtime::RuntimeStatus, 
     {
         next_run = next.to_rfc3339();
     }
-    println!("下次执行: {}", if next_run.is_empty() { "-" } else { next_run.as_str() });
-    println!("运行状态: {} (cron_running={})", running_text, st.cron_running);
+    println!(
+        "下次执行: {}",
+        if next_run.is_empty() {
+            "-"
+        } else {
+            next_run.as_str()
+        }
+    );
+    println!(
+        "运行状态: {} (cron_running={})",
+        running_text, st.cron_running
+    );
     println!("提示: 可在 WebUI 中停止定时任务；或 Ctrl+C 退出");
     println!("===========================================================");
     println!();
@@ -227,11 +241,16 @@ async fn run(
                         if p.source == ikb_core::session::LoginSource::Cli {
                             println!("[AUTH:登录认证] Logging in using command line parameters");
                         } else if p.source == ikb_core::session::LoginSource::Gateway {
-                            println!("[SYS:网关检测] Using default gateway address: {}", p.base_url);
+                            println!(
+                                "[SYS:网关检测] Using default gateway address: {}",
+                                p.base_url
+                            );
                         }
                     }
                     Err(_) => {
-                        eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
+                        eprintln!(
+                            "[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password"
+                        );
                         return 2;
                     }
                 }
@@ -262,11 +281,17 @@ async fn run(
                 )
                 .await
             {
-                eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                eprintln!(
+                    "[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}",
+                    e
+                );
                 return 1;
             }
 
-            match Arc::clone(&runtime).start_run_once(args.module.to_string()).await {
+            match Arc::clone(&runtime)
+                .start_run_once(args.module.to_string())
+                .await
+            {
                 Ok(started) => {
                     if !started {
                         println!("[TASK:任务状态] Task is already running, ignore start request");
@@ -321,11 +346,16 @@ async fn run(
                         if p.source == ikb_core::session::LoginSource::Cli {
                             println!("[AUTH:登录认证] Logging in using command line parameters");
                         } else if p.source == ikb_core::session::LoginSource::Gateway {
-                            println!("[SYS:网关检测] Using default gateway address: {}", p.base_url);
+                            println!(
+                                "[SYS:网关检测] Using default gateway address: {}",
+                                p.base_url
+                            );
                         }
                     }
                     Err(_) => {
-                        eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
+                        eprintln!(
+                            "[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password"
+                        );
                         return 2;
                     }
                 }
@@ -356,7 +386,10 @@ async fn run(
                 )
                 .await
             {
-                eprintln!("[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}", e);
+                eprintln!(
+                    "[ERR:启动失败] WebUI Server failed to start, port might be occupied: {}",
+                    e
+                );
                 return 1;
             }
 
@@ -416,7 +449,9 @@ async fn run(
             }
             println!("[MODE:运行模式] Clean mode");
             if args.clean_tag.trim() == ikb_core::ikuai::CLEAN_MODE_ALL {
-                println!("[CLEAN:清理范围] Clearing all rules with prefix IKB (includes legacy notes)");
+                println!(
+                    "[CLEAN:清理范围] Clearing all rules with prefix IKB (includes legacy notes)"
+                );
             } else {
                 println!(
                     "[CLEAN:清理范围] Clearing rules with TagName or Name: {}",
@@ -429,13 +464,18 @@ async fn run(
             let cfg_snapshot = { Arc::clone(&*config.lock().await) };
             let clean_tag = args.clean_tag.to_string();
 
-            if let Err(e) = ikb_core::app::run_clean(cfg_snapshot.as_ref(), &args.ikuai_login_info, &clean_tag).await {
+            if let Err(e) =
+                ikb_core::app::run_clean(cfg_snapshot.as_ref(), &args.ikuai_login_info, &clean_tag)
+                    .await
+            {
                 use ikb_core::app::CleanError;
                 use ikb_core::session::LoginParamsError;
 
                 match e {
                     CleanError::LoginParams(LoginParamsError::CliFormat) => {
-                        eprintln!("[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password");
+                        eprintln!(
+                            "[AUTH:登录认证] Command line parameter format error, please use -login http://ip,username,password"
+                        );
                         return 2;
                     }
                     CleanError::LoginParams(other) => {
@@ -449,7 +489,10 @@ async fn run(
                     CleanError::Step { step, source } => {
                         match step {
                             "init_client" => {
-                                eprintln!("[LOGIN:登录失败] Failed to build iKuai client: {}", source);
+                                eprintln!(
+                                    "[LOGIN:登录失败] Failed to build iKuai client: {}",
+                                    source
+                                );
                             }
                             "login" => {
                                 eprintln!("[LOGIN:登录失败] Failed to login to iKuai: {}", source);
@@ -485,7 +528,10 @@ async fn run(
                                 );
                             }
                             _ => {
-                                eprintln!("[CLEAN:清理失败] clean step {} failed: {}", step, source);
+                                eprintln!(
+                                    "[CLEAN:清理失败] clean step {} failed: {}",
+                                    step, source
+                                );
                             }
                         }
                         return 1;
@@ -494,7 +540,12 @@ async fn run(
             }
 
             let conf_path = display_conf_path(&config_path);
-            print_clean_done_banner(&clean_tag, args.clean_tag.trim() == ikb_core::ikuai::CLEAN_MODE_ALL, &conf_path, started_at.elapsed());
+            print_clean_done_banner(
+                &clean_tag,
+                args.clean_tag.trim() == ikb_core::ikuai::CLEAN_MODE_ALL,
+                &conf_path,
+                started_at.elapsed(),
+            );
             0
         }
 
@@ -543,9 +594,15 @@ async fn run_update_once(
     // 更新期间避免长时间持有配置锁：配置只读，拷贝一份用于本次任务。
     // Avoid holding config lock across awaits: clone config for this run.
     let cfg_snapshot = { Arc::clone(&*cfg.lock().await) };
-    ikb_core::update::run_update_by_module(cfg_snapshot.as_ref(), cli_login, module, update_opts, sink)
-        .await
-        .map_err(|e| e.to_string())
+    ikb_core::update::run_update_by_module(
+        cfg_snapshot.as_ref(),
+        cli_login,
+        module,
+        update_opts,
+        sink,
+    )
+    .await
+    .map_err(|e| e.to_string())
 }
 
 async fn run_export_stream_domain_to_txt(

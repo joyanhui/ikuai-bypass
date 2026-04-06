@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::clean::match_clean_tag;
 use super::tag_name::{build_indexed_tag_name, build_tag_name, match_tag_name_filter};
-use super::types::{Ipv6GroupData, IKuaiClient, IKuaiError, FUNC_NAME_ROUTE_OBJECT};
+use super::types::{FUNC_NAME_ROUTE_OBJECT, IKuaiClient, IKuaiError, Ipv6GroupData};
 
 #[derive(Debug, Deserialize)]
 struct RouteObject4 {
@@ -30,7 +30,10 @@ struct DelParam {
     id: String,
 }
 
-pub async fn show_ipv6_group_by_tag_name(api: &IKuaiClient, tag_name: &str) -> Result<Vec<Ipv6GroupData>, IKuaiError> {
+pub async fn show_ipv6_group_by_tag_name(
+    api: &IKuaiClient,
+    tag_name: &str,
+) -> Result<Vec<Ipv6GroupData>, IKuaiError> {
     let param = ShowParam {
         r#type: "total,data".to_string(),
         limit: "0,1000".to_string(),
@@ -66,19 +69,37 @@ pub async fn show_ipv6_group_by_tag_name(api: &IKuaiClient, tag_name: &str) -> R
     Ok(out)
 }
 
-pub async fn show_ipv6_group_by_name(api: &IKuaiClient, name: &str) -> Result<Vec<Ipv6GroupData>, IKuaiError> {
+pub async fn show_ipv6_group_by_name(
+    api: &IKuaiClient,
+    name: &str,
+) -> Result<Vec<Ipv6GroupData>, IKuaiError> {
     show_ipv6_group_by_tag_name(api, name).await
 }
 
-pub async fn add_ipv6_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: i64) -> Result<(), IKuaiError> {
+pub async fn add_ipv6_group(
+    api: &IKuaiClient,
+    tag: &str,
+    addr_pool: &str,
+    index: i64,
+) -> Result<(), IKuaiError> {
     add_ipv6_group_named(api, &build_indexed_tag_name(tag, index), addr_pool).await
 }
 
-pub async fn edit_ipv6_group(api: &IKuaiClient, tag: &str, addr_pool: &str, index: i64, id: i64) -> Result<(), IKuaiError> {
+pub async fn edit_ipv6_group(
+    api: &IKuaiClient,
+    tag: &str,
+    addr_pool: &str,
+    index: i64,
+    id: i64,
+) -> Result<(), IKuaiError> {
     edit_ipv6_group_named(api, &build_indexed_tag_name(tag, index), addr_pool, id).await
 }
 
-pub async fn add_ipv6_group_named(api: &IKuaiClient, group_name: &str, addr_pool: &str) -> Result<(), IKuaiError> {
+pub async fn add_ipv6_group_named(
+    api: &IKuaiClient,
+    group_name: &str,
+    addr_pool: &str,
+) -> Result<(), IKuaiError> {
     let ips: Vec<&str> = addr_pool
         .split(',')
         .map(|s| s.trim())
@@ -138,7 +159,10 @@ pub async fn del_ipv6_group(api: &IKuaiClient, id_csv: &str) -> Result<(), IKuai
     Ok(())
 }
 
-pub async fn get_ipv6_group_map(api: &IKuaiClient, tag: &str) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
+pub async fn get_ipv6_group_map(
+    api: &IKuaiClient,
+    tag: &str,
+) -> Result<std::collections::HashMap<i64, i64>, IKuaiError> {
     let map = get_ipv6_group_map_with_name(api, tag).await?;
     Ok(map.into_iter().map(|(k, (id, _))| (k, id)).collect())
 }
@@ -200,7 +224,10 @@ pub async fn get_ipv6_group_map_with_name(
     Ok(out)
 }
 
-pub async fn del_ikuai_bypass_ipv6_group(api: &IKuaiClient, clean_tag: &str) -> Result<(), IKuaiError> {
+pub async fn del_ikuai_bypass_ipv6_group(
+    api: &IKuaiClient,
+    clean_tag: &str,
+) -> Result<(), IKuaiError> {
     loop {
         let data = show_ipv6_group_by_tag_name(api, "").await?;
         let ids: Vec<String> = data

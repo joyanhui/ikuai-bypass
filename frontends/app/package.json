@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview --host 0.0.0.0 --port 4321",
     "test": "bunx vitest run",
-    "test:ci": "bunx vitest run --reporter=verbose"
+    "test:ci": "bunx vitest run --reporter=verbose",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "astro": "^4.16.0",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/vite": "^4.2.1",
     "@types/js-yaml": "^4.0.9",
     "autoprefixer": "^10.4.27",

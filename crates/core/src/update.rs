@@ -83,8 +83,12 @@ pub async fn run_update_by_module(
         }
         "ii" => {
             sys.info("TASK:任务启动", "Starting hybrid mode: ISP/Domain + IP group");
-            update_ispdomain(cfg, &api, opts, &sink).await;
+            // stream-domain / stream-ipport can depend on freshly synced IP groups,
+            // so combined modes must materialize IP groups before domain rules.
+            // stream-domain / stream-ipport 可能依赖本轮刚同步出的 IP 分组，
+            // 因此组合模式需要先落地 IP 分组，再处理域名类规则。
             update_ipgroup(cfg, &api, opts, &sink).await;
+            update_ispdomain(cfg, &api, opts, &sink).await;
         }
         "ip" => {
             sys.info("TASK:任务启动", "Starting hybrid mode: IPv4 group + IPv6 group");
@@ -96,8 +100,8 @@ pub async fn run_update_by_module(
                 "TASK:任务启动",
                 "Starting full hybrid mode: ISP/Domain + IPv4/v6 group",
             );
-            update_ispdomain(cfg, &api, opts, &sink).await;
             update_ipgroup(cfg, &api, opts, &sink).await;
+            update_ispdomain(cfg, &api, opts, &sink).await;
             update_ipv6group(cfg, &api, opts, &sink).await;
         }
         other => return Err(UpdateError::InvalidModule(other.to_string())),

@@ -24,7 +24,7 @@
 
 另外还提供一条**非默认**的浏览器级 WebUI smoke：
 
-- `apps/integration-tests/run-webui-browser-smoke.sh`：启动长期驻留的 simulator-backed WebUI fixture，再用 Playwright 覆盖 BasicAuth 进入、页面加载、执行一次/停止、配置修改与保存。
+- `apps/integration-tests/run-webui-browser-smoke.sh`：启动长期驻留的 simulator-backed WebUI fixture，再用 Playwright 覆盖 BasicAuth 进入、`ipgroup` 执行一次/停止、`cronAft` 启停、测试连接、远程载入、配置保存。
 
 ## 本地前置条件
 
@@ -130,9 +130,11 @@ bash script/dev.sh cli:dev -- -c apps/integration-tests/manual-cli.yml -r clean 
 - 本地规则文件 fixture server
 - `ikb-cli` 内置 WebUI
 
-启动器会把 `IKB_WEBUI_BASE_URL`、`IKB_WEBUI_USER`、`IKB_WEBUI_PASS`、`IKB_WEBUI_CONFIG_PATH` 等环境变量写给调用方，供 Playwright 直接复用。
+启动器会把 `IKB_WEBUI_BASE_URL`、`IKB_WEBUI_USER`、`IKB_WEBUI_PASS`、`IKB_WEBUI_CONFIG_PATH`、`IKB_WEBUI_REMOTE_CONFIG_URL` 等环境变量写给调用方，供 Playwright 直接复用。
 
 浏览器 smoke 使用 Playwright 的 `httpCredentials` 走真实 BasicAuth challenge，不使用 `http://user:pass@host` 这种会污染 `window.location` 的 URL 凭证写法。
+
+其中 `ipgroup` 浏览器用例为了稳定覆盖“启动后再停止”的真实交互，会使用 fixture server 提供的**延迟响应资源**人为拉长运行窗口；这样无需改动生产逻辑，也不必退回到其他模块绕过 `ipgroup` 的快速完成路径。
 
 ## CI 说明
 

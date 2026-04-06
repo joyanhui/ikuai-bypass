@@ -20,11 +20,15 @@ const DEFAULT_IKUAI_PASSWORD: &str = "admin888";
 const DEFAULT_WEBUI_USER: &str = "webuser";
 const DEFAULT_WEBUI_PASS: &str = "webpass";
 const DEFAULT_READY_TIMEOUT: Duration = Duration::from_secs(30);
+const DEFAULT_IPGROUP_DELAY: Duration = Duration::from_secs(4);
+const REMOTE_TEMPLATE_IKUAI_URL: &str = "http://127.0.0.1:29999";
+const REMOTE_TEMPLATE_CRON: &str = "*/9 * * * * *";
 
 pub struct WebUiFixture {
     artifact_dir: PathBuf,
     config_path: PathBuf,
     webui_base_url: String,
+    remote_config_url: String,
     webui_user: String,
     webui_pass: String,
     cli_stdout_log_path: PathBuf,
@@ -39,6 +43,7 @@ pub struct WebUiFixtureManifest {
     pub artifact_dir: String,
     pub config_path: String,
     pub webui_base_url: String,
+    pub remote_config_url: String,
     pub webui_user: String,
     pub webui_pass: String,
     pub cli_stdout_log_path: String,
@@ -50,6 +55,7 @@ struct FixtureResponse {
     status: u16,
     body: Vec<u8>,
     content_type: &'static str,
+    response_delay: Duration,
 }
 
 struct FixtureServer {
@@ -76,18 +82,21 @@ impl WebUiFixture {
             IKuaiSimulator::start(DEFAULT_IKUAI_USERNAME, DEFAULT_IKUAI_PASSWORD).await?;
         let fixture_server = FixtureServer::start("127.0.0.1", "127.0.0.1")?;
 
-        fixture_server.set_text(
-            "/webui-browser/ipv4.txt",
-            concat!(
-                "198.18.10.1\n",
-                "198.18.10.2\n",
-                "198.18.10.3\n",
-                "198.18.10.4\n",
-                "198.18.10.5\n",
-                "198.18.10.6\n",
-                "198.18.10.7\n",
-                "198.18.10.8\n"
-            ),
+        let ipv4_payload = concat!(
+            "198.18.10.1\n",
+            "198.18.10.2\n",
+            "198.18.10.3\n",
+            "198.18.10.4\n",
+            "198.18.10.5\n",
+            "198.18.10.6\n",
+            "198.18.10.7\n",
+            "198.18.10.8\n"
+        );
+        fixture_server.set_text("/webui-browser/ipv4-fast.txt", ipv4_payload);
+        fixture_server.set_text_with_delay(
+            "/webui-browser/ipv4-delayed.txt",
+            ipv4_payload,
+            DEFAULT_IPGROUP_DELAY,
         );
         fixture_server.set_text(
             "/webui-browser/domains.txt",
@@ -104,6 +113,9 @@ impl WebUiFixture {
         );
 
         let webui_port = reserve_local_port()?;
+        let delayed_ipgroup_url = fixture_server.url("/webui-browser/ipv4-delayed.txt");
+        let fast_ipgroup_url = fixture_server.url("/webui-browser/ipv4-fast.txt");
+        let stream_domain_url = fixture_server.url("/webui-browser/domains.txt");
         let config_text = render_test_config(
             simulator.base_url(),
             DEFAULT_IKUAI_USERNAME,
@@ -116,6 +128,9 @@ impl WebUiFixture {
                     "  user: \"{}\"\n",
                     "  pass: \"{}\"\n",
                     "  cdn-prefix: \"https://cdn.jsdelivr.net/npm\"\n",
+                    "ip-group:\n",
+                    "  - tag: BrowserIp\n",
+                    "    url: \"{}\"\n",
                     "stream-domain:\n",
                     "  - interface: wan1\n",
                     "    src-addr: 192.168.77.10-192.168.77.20\n",
@@ -131,12 +146,58 @@ impl WebUiFixture {
                 webui_port,
                 DEFAULT_WEBUI_USER,
                 DEFAULT_WEBUI_PASS,
-                fixture_server.url("/webui-browser/domains.txt"),
+                delayed_ipgroup_url,
+                stream_domain_url,
             ),
         )
         .replacen("AddWait: 10ms\n", "AddWait: 600ms\n", 1);
         ikb_core::config::Config::load_from_yaml_str(&config_text)
             .map_err(|e| format!("generated browser fixture config is invalid: {e}"))?;
+
+        let remote_config_text = render_test_config(
+            REMOTE_TEMPLATE_IKUAI_URL,
+            DEFAULT_IKUAI_USERNAME,
+            DEFAULT_IKUAI_PASSWORD,
+            &format!(
+                concat!(
+                    "webui:\n",
+                    "  enable: true\n",
+                    "  port: \"{}\"\n",
+                    "  user: \"{}\"\n",
+                    "  pass: \"{}\"\n",
+                    "  cdn-prefix: \"https://cdn.jsdelivr.net/npm\"\n",
+                    "ip-group:\n",
+                    "  - tag: BrowserIp\n",
+                    "    url: \"{}\"\n",
+                    "stream-domain:\n",
+                    "  - interface: wan1\n",
+                    "    src-addr: 192.168.77.10-192.168.77.20\n",
+                    "    src-addr-opt-ipgroup: \"\"\n",
+                    "    url: \"{}\"\n",
+                    "    tag: BrowserDm\n",
+                    "MaxNumberOfOneRecords:\n",
+                    "  Isp: 5000\n",
+                    "  Ipv4: 1\n",
+                    "  Ipv6: 1000\n",
+                    "  Domain: 1\n"
+                ),
+                webui_port,
+                DEFAULT_WEBUI_USER,
+                DEFAULT_WEBUI_PASS,
+                fast_ipgroup_url,
+                stream_domain_url,
+            ),
+        )
+        .replacen(
+            "cron: \"\"\n",
+            format!("cron: \"{}\"\n", REMOTE_TEMPLATE_CRON).as_str(),
+            1,
+        )
+        .replacen("AddWait: 10ms\n", "AddWait: 200ms\n", 1);
+        ikb_core::config::Config::load_from_yaml_str(&remote_config_text)
+            .map_err(|e| format!("generated remote browser fixture config is invalid: {e}"))?;
+        fixture_server.set_text("/webui-browser/remote-config.yml", &remote_config_text);
+        let remote_config_url = fixture_server.url("/webui-browser/remote-config.yml");
 
         let config_path = artifact_dir.join("webui-browser-fixture.yml");
         fs::write(&config_path, &config_text).map_err(|e| {
@@ -163,7 +224,7 @@ impl WebUiFixture {
                 "-r",
                 "cronAft",
                 "-m",
-                "ispdomain",
+                "ipgroup",
             ])
             .stdout(Stdio::from(stdout_log))
             .stderr(Stdio::from(stderr_log))
@@ -188,6 +249,7 @@ impl WebUiFixture {
             artifact_dir,
             config_path,
             webui_base_url,
+            remote_config_url,
             webui_user: DEFAULT_WEBUI_USER.to_string(),
             webui_pass: DEFAULT_WEBUI_PASS.to_string(),
             cli_stdout_log_path: stdout_log_path,
@@ -203,6 +265,7 @@ impl WebUiFixture {
             artifact_dir: self.artifact_dir.display().to_string(),
             config_path: self.config_path.display().to_string(),
             webui_base_url: self.webui_base_url.clone(),
+            remote_config_url: self.remote_config_url.clone(),
             webui_user: self.webui_user.clone(),
             webui_pass: self.webui_pass.clone(),
             cli_stdout_log_path: self.cli_stdout_log_path.display().to_string(),
@@ -217,6 +280,10 @@ impl WebUiFixture {
             ("IKB_WEBUI_USER", manifest.webui_user.as_str()),
             ("IKB_WEBUI_PASS", manifest.webui_pass.as_str()),
             ("IKB_WEBUI_CONFIG_PATH", manifest.config_path.as_str()),
+            (
+                "IKB_WEBUI_REMOTE_CONFIG_URL",
+                manifest.remote_config_url.as_str(),
+            ),
             ("IKB_WEBUI_ARTIFACT_DIR", manifest.artifact_dir.as_str()),
             (
                 "IKB_WEBUI_CLI_STDOUT_LOG",
@@ -261,6 +328,16 @@ impl FixtureResponse {
             status: 200,
             body: body.into(),
             content_type: "text/plain; charset=utf-8",
+            response_delay: Duration::ZERO,
+        }
+    }
+
+    fn ok_with_delay(body: impl Into<Vec<u8>>, response_delay: Duration) -> Self {
+        Self {
+            status: 200,
+            body: body.into(),
+            content_type: "text/plain; charset=utf-8",
+            response_delay,
         }
     }
 
@@ -269,6 +346,7 @@ impl FixtureResponse {
             status: 404,
             body: b"not found\n".to_vec(),
             content_type: "text/plain; charset=utf-8",
+            response_delay: Duration::ZERO,
         }
     }
 }
@@ -321,6 +399,13 @@ impl FixtureServer {
 
     fn set_text(&self, path: &str, body: &str) {
         self.set_response(path, FixtureResponse::ok(body.as_bytes().to_vec()));
+    }
+
+    fn set_text_with_delay(&self, path: &str, body: &str, response_delay: Duration) {
+        self.set_response(
+            path,
+            FixtureResponse::ok_with_delay(body.as_bytes().to_vec(), response_delay),
+        );
     }
 
     fn url(&self, path: &str) -> String {
@@ -545,6 +630,9 @@ fn handle_fixture_connection(
         .get(&path)
         .cloned()
         .unwrap_or_else(FixtureResponse::not_found);
+    if !response.response_delay.is_zero() {
+        thread::sleep(response.response_delay);
+    }
     let header = format!(
         "HTTP/1.1 {} {}\r\nContent-Length: {}\r\nContent-Type: {}\r\nConnection: close\r\n\r\n",
         response.status,

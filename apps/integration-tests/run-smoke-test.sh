@@ -4,8 +4,11 @@ set -euo pipefail
 default_tests=(
   simulator_api_surface_smoke
   rule_sync_update_in_place_smoke
+  chunked_sync_shrink_cleanup_smoke
+  stream_rule_ipgroup_refs_smoke
   safe_before_smoke
   clean_mode_smoke
+  legacy_clean_compat_smoke
   clean_all_smoke
   export_stream_domain_smoke
   cli_modes_smoke

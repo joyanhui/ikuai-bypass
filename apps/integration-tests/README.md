@@ -12,8 +12,11 @@
 当前 smoke 用例覆盖：
 
 - `rule_sync_update_in_place_smoke`：验证 `once -m iip` 可以创建并原地更新核心规则，且 ID 保持稳定。
+- `chunked_sync_shrink_cleanup_smoke`：验证多分片规则在缩容同步后会原地更新首分片并清理冗余分片。
+- `stream_rule_ipgroup_refs_smoke`：验证 `ii` 组合模式首轮同步即可正确解析基于 `ip-group` 对象引用的域名分流与端口分流。
 - `safe_before_smoke`：验证远程规则下载失败时，不会清理已有旧规则。
 - `clean_mode_smoke`：验证 `clean` 必须显式带 `-tag`，且只清理匹配标签的规则，不误删其他标签。
+- `legacy_clean_compat_smoke`：验证 `clean` 对旧版 `IKUAI_BYPASS` 备注规则的兼容清理。
 
 ## 本地前置条件
 

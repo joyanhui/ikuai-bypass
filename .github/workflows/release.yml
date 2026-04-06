@@ -2,10 +2,9 @@ name: Release rust
 
 on:
   push:
-    branches:
-      - main
     tags:
       # Why/为什么: `cargo release`(workspace) 通常会创建多个 crate tag；只监听一个 canonical tag 避免重复发布。
+      # English: `cargo release` may emit multiple crate tags; only the canonical repo tag should publish.
       - "ikuai-bypass-v*"
   workflow_dispatch:
     inputs:
@@ -13,6 +12,14 @@ on:
         description: "发布版本号，例如 v0.1.0 或 v0.1.0-rc1；仅构建不发布时可留空"
         required: false
         type: string
+      trigger_mode:
+        description: "触发模式；手动执行保持 manual，内部自动转发会使用 tag"
+        required: false
+        default: manual
+        type: choice
+        options:
+          - manual
+          - tag
       build_mode:
         description: "构建范围"
         required: true
@@ -46,8 +53,10 @@ permissions:
   packages: write
 
 concurrency:
-  group: release-${{ github.ref || github.run_id }}
-  cancel-in-progress: false
+  # Why/为什么: tag push 与 release-commit trigger 都可能落到同一个 canonical tag；并发组按 ref+build 维度去重。
+  # English: Deduplicate tag-push and release-commit-triggered runs by canonical ref plus build shape.
+  group: release-${{ github.ref_name || github.run_id }}-${{ github.event.inputs.build_mode || 'full' }}-${{ github.event.inputs.build_target || 'cli+gui' }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -59,7 +68,6 @@ jobs:
     name: Resolve Release Meta
     runs-on: ubuntu-latest
     outputs:
-      enabled: ${{ steps.meta.outputs.enabled }}
       version: ${{ steps.meta.outputs.version }}
       tag_name: ${{ steps.meta.outputs.tag_name }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
@@ -95,9 +103,9 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          REF: ${{ github.ref }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_RELEASE_TAG: ${{ github.event.inputs.release_tag || '' }}
+          INPUT_TRIGGER_MODE: ${{ github.event.inputs.trigger_mode || 'manual' }}
           INPUT_PUBLISH_RELEASE: ${{ github.event.inputs.publish_release || 'true' }}
           INPUT_PUSH_DOCKER: ${{ github.event.inputs.push_docker || 'true' }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -153,27 +161,14 @@ jobs:
             printf '%s' "${raw}"
           }
 
-          resolve_release_tag_from_head() {
-            git tag --points-at HEAD --list 'ikuai-bypass-v*' | sed -n '1p'
-          }
-
-          enabled="true"
-
           if [[ "${EVENT_NAME}" == "push" ]]; then
-            if [[ "${REF}" == refs/tags/* ]]; then
-              tag_name="${REF_NAME}"
-            else
-              # Why/为什么: `cargo release --execute` 经常把 release commit 和 tags 一起 push。
-              # GitHub 可能先只给我们 branch push 事件，这里允许从 HEAD 上反查 canonical tag 继续发布。
-              tag_name="$(resolve_release_tag_from_head)"
-              if [[ -z "${tag_name}" ]]; then
-                enabled="false"
-              fi
-            fi
+            tag_name="${REF_NAME}"
+            trigger_mode="tag"
             publish_release="true"
             push_docker="true"
           else
             tag_name="$(canonicalize_tag_name "${INPUT_RELEASE_TAG}")"
+            trigger_mode="${INPUT_TRIGGER_MODE:-manual}"
             publish_release="${INPUT_PUBLISH_RELEASE}"
             push_docker="${INPUT_PUSH_DOCKER}"
 
@@ -187,15 +182,10 @@ jobs:
             fi
           fi
 
-          version=""
-          if [[ "${enabled}" == "true" ]]; then
-            version="$(normalize_version_from_tag "${tag_name}")"
-          fi
+          version="$(normalize_version_from_tag "${tag_name}")"
 
           prerelease="false"
-          if [[ "${enabled}" != "true" ]]; then
-            prerelease="false"
-          elif [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+          if [[ "${trigger_mode}" == "manual" ]]; then
             prerelease="true"
           elif is_prerelease_tag "${tag_name}"; then
             prerelease="true"
@@ -211,13 +201,12 @@ jobs:
             docker_creds_available="true"
           fi
 
-          if [[ "${enabled}" == "true" && "${push_docker}" == "true" && "${docker_creds_available}" != "true" ]]; then
+          if [[ "${push_docker}" == "true" && "${docker_creds_available}" != "true" ]]; then
             echo "Docker credentials are required when push_docker=true" >&2
             exit 1
           fi
 
           {
-            echo "enabled=${enabled}"
             echo "version=${version}"
             echo "tag_name=${tag_name}"
             echo "prerelease=${prerelease}"
@@ -231,7 +220,6 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          ENABLED: ${{ steps.meta.outputs.enabled }}
           INPUT_BUILD_MODE: ${{ github.event.inputs.build_mode || '' }}
           INPUT_BUILD_TARGET: ${{ github.event.inputs.build_target || '' }}
         run: |
@@ -240,34 +228,6 @@ jobs:
           import json
           import os
           import pathlib
-
-          enabled = os.environ.get("ENABLED", "true") == "true"
-
-          if not enabled:
-              outputs = {
-                  "build_mode": "",
-                  "build_target": "",
-                  "cli_matrix": "[]",
-                  "cli_nightly_matrix": "[]",
-                  "bsd_matrix": "[]",
-                  "gui_matrix": "[]",
-                  "gui_android_matrix": "[]",
-                  "gui_ios_matrix": "[]",
-                  "docker_cli_matrix": "[]",
-                  "docker_platforms": "",
-                  "has_cli": "false",
-                  "has_cli_nightly": "false",
-                  "has_bsd": "false",
-                  "has_gui": "false",
-                  "has_gui_desktop": "false",
-                  "has_gui_android": "false",
-                  "has_gui_ios": "false",
-                  "has_linux_amd64_cli": "false",
-              }
-              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-                  for key, value in outputs.items():
-                      fh.write(f"{key}={value}\n")
-              raise SystemExit(0)
 
           event_name = os.environ.get("EVENT_NAME", "")
           if event_name == "push":

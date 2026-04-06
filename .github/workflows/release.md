@@ -4,14 +4,13 @@
 
 ## 1. 触发方式
 
-- 支持 `tag push`
-- 支持 `main` 分支上的 release commit push（兼容 `cargo release --execute` 把 commit 与 tags 一起 push 的场景）
-- 仅支持 `workflow_dispatch`
+- `.github/workflows/release.yml` 仅支持 `tag push` 和 `workflow_dispatch`
+- `.github/workflows/trigger-release.yml` 只监听 `main` 上的版本相关文件变更，用于识别 `cargo release --execute` 产生的 release commit 并转发到 `release.yml`
 - 不包含 `schedule`，不会每日自动构建
 
 ### Tag 触发
 
-- 任意 tag push 都会触发发布流程
+- `ikuai-bypass-v*` tag push 会直接触发 `release.yml`
 - tag 名称直接作为版本号 `version`
 - tag push 时默认：
   - `publish_release=true`
@@ -19,15 +18,26 @@
 
 ### Release Commit Push 触发
 
-- 当 `main` 分支收到 push 时，如果当前 `HEAD` 指向 `ikuai-bypass-v*` canonical tag，也会触发发布流程
-- 这是为了兼容 `cargo release --execute` 将 release commit 与多个 tag 一次性 push 的场景
-- 如果只是普通 `main` 提交，且 `HEAD` 上不存在 `ikuai-bypass-v*`，workflow 会在 `resolve-matrix` 阶段直接跳过
+- `release.yml` 本身不再监听 `main` 普通提交，避免误触发重型构建
+- `trigger-release.yml` 会在 `main` push 后检查两件事：
+  - `HEAD` 提交标题必须等于 `release.toml` 中的 `pre-release-commit-message`
+  - `HEAD` 必须同时指向 `ikuai-bypass-v*` canonical tag
+- 同时它只在 `Cargo.toml` / `Cargo.lock` / `release.toml` 等 release 相关文件发生变更时才会运行
+- 只有同时满足时，才会把 `release.yml` 以该 tag ref 再次 `workflow_dispatch`
+- 如果只是普通 `main` 提交，或者 release commit 还没有对应 canonical tag，则只会在 trigger workflow 内快速跳过
+- 这是为了兼容 `cargo release --execute` 把 release commit 与 tag 一起 push 的场景，同时避免普通提交直接跑发布流水线
+
+### 去重规则
+
+- `release.yml` 的并发组按 `ref + build_mode + build_target` 去重
+- 当 tag push 和 trigger-dispatch 同时命中同一个 canonical tag 时，后来的 run 会取消前一个 run，避免重复发布
 
 ### 手动触发
 
 可选输入参数：
 
 - `release_tag`
+- `trigger_mode`（内部参数，手动执行保持默认 `manual`）
 - `build_mode`
 - `build_target`
 - `publish_release`
@@ -56,7 +66,8 @@
 
 规则如下：
 
-- `workflow_dispatch` 手动执行：GitHub Release 一律标记为 `prerelease`
+- `workflow_dispatch` 且 `trigger_mode=manual`：GitHub Release 一律标记为 `prerelease`
+- tag push，或由 `trigger-release.yml` 以 `trigger_mode=tag` 转发的执行：按 tag 名关键字判断是否为 `prerelease`
 - 命中上述关键字：GitHub Release 标记为 `prerelease`
 - 未命中上述关键字：GitHub Release 视为正式版本
 

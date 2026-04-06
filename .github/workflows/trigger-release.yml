@@ -1,0 +1,113 @@
+name: Trigger Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Cargo.lock"
+      - "Cargo.toml"
+      - "release.toml"
+      - "apps/**/Cargo.toml"
+      - "crates/**/Cargo.toml"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: trigger-release-${{ github.sha || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  trigger-release:
+    name: Trigger Canonical Release Workflow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Resolve release trigger inputs
+        id: release-inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          read_release_commit_message() {
+            sed -n 's/^pre-release-commit-message = "\([^"]*\)"$/\1/p' release.toml | sed -n '1p'
+          }
+
+          resolve_release_tag_from_head() {
+            git tag --points-at HEAD --list 'ikuai-bypass-v*' | sed -n '1p'
+          }
+
+          expected_commit_message="$(read_release_commit_message)"
+          head_commit_subject="$(git log -1 --pretty=%s)"
+          tag_name="$(resolve_release_tag_from_head)"
+
+          if [[ -z "${expected_commit_message}" ]]; then
+            echo "::error::failed to read pre-release-commit-message from release.toml"
+            exit 1
+          fi
+
+          if [[ "${head_commit_subject}" != "${expected_commit_message}" ]]; then
+            echo "::notice::skip release trigger: HEAD subject '${head_commit_subject}' != '${expected_commit_message}'"
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if [[ -z "${tag_name}" ]]; then
+            echo "::notice::skip release trigger: no canonical ikuai-bypass-v* tag points at HEAD"
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          {
+            echo "skip=false"
+            echo "release_tag=${tag_name}"
+            echo "build_mode=full"
+            echo "build_target=cli+gui"
+            echo "publish_release=true"
+            echo "push_docker=true"
+          } >> "${GITHUB_OUTPUT}"
+
+          echo "::notice::resolved cargo-release trigger for tag=${tag_name}"
+
+      - name: Dispatch release workflow
+        if: steps.release-inputs.outputs.skip != 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release-inputs.outputs.release_tag }}
+          BUILD_MODE: ${{ steps.release-inputs.outputs.build_mode }}
+          BUILD_TARGET: ${{ steps.release-inputs.outputs.build_target }}
+          PUBLISH_RELEASE: ${{ steps.release-inputs.outputs.publish_release }}
+          PUSH_DOCKER: ${{ steps.release-inputs.outputs.push_docker }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          payload="$(cat <<JSON
+          {
+            "ref": "${RELEASE_TAG}",
+            "inputs": {
+              "release_tag": "${RELEASE_TAG}",
+              "trigger_mode": "tag",
+              "build_mode": "${BUILD_MODE}",
+              "build_target": "${BUILD_TARGET}",
+              "publish_release": "${PUBLISH_RELEASE}",
+              "push_docker": "${PUSH_DOCKER}"
+            }
+          }
+          JSON
+          )"
+
+          curl -fsSL -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/release.yml/dispatches" \
+            -d "${payload}"
+
+          echo "::notice::dispatched release.yml for ref=${RELEASE_TAG}"

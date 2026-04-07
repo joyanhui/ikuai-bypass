@@ -108,9 +108,7 @@ custom-isp:
 ```
 
 > **提示**：完整配置示例请参考 [config.yml](./config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。
-
-#### 关于 proxy 与 github-proxy 的区别（很重要）
-[wiki](https://github.com/joyanhui/ikuai-bypass/wiki/%E9%85%8D%E7%BD%AE%E9%A1%B9%E4%B8%AD-%E5%85%B3%E4%BA%8E-proxy-%E4%B8%8E-github%E2%80%90proxy-%E7%9A%84%E5%8C%BA%E5%88%AB)
+> 关于 proxy 与 github-proxy 的区别 [wiki](https://github.com/joyanhui/ikuai-bypass/wiki/%E9%85%8D%E7%BD%AE%E9%A1%B9%E4%B8%AD-%E5%85%B3%E4%BA%8E-proxy-%E4%B8%8E-github%E2%80%90proxy-%E7%9A%84%E5%8C%BA%E5%88%AB)
 ### 3. 运行
 
 **GUI 用户**：双击打开应用，在界面里配置即可，无需命令行。

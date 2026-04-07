@@ -102,29 +102,62 @@ async fn clean_all_smoke() -> Result<(), String> {
     ])?;
 
     let api = harness.login_api().await?;
+
     assert!(
-        ikuai::custom_isp::show_custom_isp_by_tag_name(&api, "")
+        ikuai::custom_isp::show_custom_isp_by_tag_name(&api, "AllA")
             .await
-            .map_err(|e| format!("failed to query custom isp after cleanAll: {e}"))?
-            .is_empty()
+            .map_err(|e| format!("failed to query custom isp AllA after cleanAll: {e}"))?
+            .is_empty(),
+        "custom isp AllA should be cleaned"
     );
     assert!(
-        ikuai::stream_domain::show_stream_domain_by_tag_name(&api, "")
+        ikuai::custom_isp::show_custom_isp_by_tag_name(&api, "AllB")
             .await
-            .map_err(|e| format!("failed to query stream-domain after cleanAll: {e}"))?
-            .is_empty()
+            .map_err(|e| format!("failed to query custom isp AllB after cleanAll: {e}"))?
+            .is_empty(),
+        "custom isp AllB should be cleaned"
     );
     assert!(
-        ikuai::ip_group::show_ip_group_by_tag_name(&api, "")
+        ikuai::stream_domain::show_stream_domain_by_tag_name(&api, "AllA")
             .await
-            .map_err(|e| format!("failed to query ip-group after cleanAll: {e}"))?
-            .is_empty()
+            .map_err(|e| format!("failed to query stream-domain AllA after cleanAll: {e}"))?
+            .is_empty(),
+        "stream-domain AllA should be cleaned"
     );
     assert!(
-        ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "")
+        ikuai::stream_domain::show_stream_domain_by_tag_name(&api, "AllB")
             .await
-            .map_err(|e| format!("failed to query stream-ipport after cleanAll: {e}"))?
-            .is_empty()
+            .map_err(|e| format!("failed to query stream-domain AllB after cleanAll: {e}"))?
+            .is_empty(),
+        "stream-domain AllB should be cleaned"
+    );
+    assert!(
+        ikuai::ip_group::show_ip_group_by_tag_name(&api, "AllA")
+            .await
+            .map_err(|e| format!("failed to query ip-group AllA after cleanAll: {e}"))?
+            .is_empty(),
+        "ip-group AllA should be cleaned"
+    );
+    assert!(
+        ikuai::ip_group::show_ip_group_by_tag_name(&api, "AllB")
+            .await
+            .map_err(|e| format!("failed to query ip-group AllB after cleanAll: {e}"))?
+            .is_empty(),
+        "ip-group AllB should be cleaned"
+    );
+    assert!(
+        ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "AllAFlow")
+            .await
+            .map_err(|e| format!("failed to query stream-ipport AllAFlow after cleanAll: {e}"))?
+            .is_empty(),
+        "stream-ipport AllAFlow should be cleaned"
+    );
+    assert!(
+        ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "AllBFlow")
+            .await
+            .map_err(|e| format!("failed to query stream-ipport AllBFlow after cleanAll: {e}"))?
+            .is_empty(),
+        "stream-ipport AllBFlow should be cleaned"
     );
 
     Ok(())

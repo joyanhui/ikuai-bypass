@@ -135,8 +135,12 @@ pub struct StreamIpPortItem {
     pub src_addr: String,
     #[serde(rename = "src-addr-opt-ipgroup", default)]
     pub src_addr_opt_ipgroup: String,
+    #[serde(rename = "src-addr-inv", default)]
+    pub src_addr_inv: i64,
     #[serde(rename = "ip-group", default)]
     pub ip_group: String,
+    #[serde(rename = "dst-addr-inv", default)]
+    pub dst_addr_inv: i64,
     #[serde(rename = "mode")]
     pub mode: i64,
     #[serde(rename = "ifaceband")]
@@ -262,6 +266,14 @@ impl Config {
     }
 
     pub fn apply_defaults(&mut self) {
+        fn normalize_binary_flag(value: i64) -> i64 {
+            if value == 1 {
+                1
+            } else {
+                0
+            }
+        }
+
         // WebUI defaults.
         // WebUI 默认值。
         if self.webui.port.trim().is_empty() {
@@ -293,6 +305,11 @@ impl Config {
             if item.tag.is_empty() {
                 item.tag = item.interface.to_string();
             }
+        }
+
+        for item in &mut self.stream_ipport {
+            item.src_addr_inv = normalize_binary_flag(item.src_addr_inv);
+            item.dst_addr_inv = normalize_binary_flag(item.dst_addr_inv);
         }
 
         // Proxy defaults & normalization.
@@ -691,9 +708,25 @@ impl Config {
             out.push_str("    src-addr-opt-ipgroup: ");
             out.push_str(&yaml_quote(&it.src_addr_opt_ipgroup));
             out.push('\n');
+            out.push_str("    src-addr-inv: ");
+            out.push_str(&it.src_addr_inv.to_string());
+            out.push('\n');
+            if let Some(c) = item.get("src-addr-inv") {
+                out.push_str("    # ");
+                out.push_str(c);
+                out.push('\n');
+            }
             out.push_str("    ip-group: ");
             out.push_str(&yaml_quote(&it.ip_group));
             out.push('\n');
+            out.push_str("    dst-addr-inv: ");
+            out.push_str(&it.dst_addr_inv.to_string());
+            out.push('\n');
+            if let Some(c) = item.get("dst-addr-inv") {
+                out.push_str("    # ");
+                out.push_str(c);
+                out.push('\n');
+            }
             out.push_str("    mode: ");
             out.push_str(&it.mode.to_string());
             out.push('\n');
@@ -825,7 +858,9 @@ pub fn item_comments() -> BTreeMap<String, String> {
         ("tag".to_string(), "规则标识名称 (支持中文，系统自动添加 IKB 前缀)".to_string()),
         ("src-addr".to_string(), "分流源地址 (IP或范围)".to_string()),
         ("src-addr-opt-ipgroup".to_string(), "分流源地址标签(匹配爱快IP分组)，设置后 src-addr 会被忽略；多个名字用逗号分隔".to_string()),
+        ("src-addr-inv".to_string(), "源地址的反向匹配：0-关闭，1-开启".to_string()),
         ("ip-group".to_string(), "关联的IP分组名称，多个名字可以逗号".to_string()),
+        ("dst-addr-inv".to_string(), "目的地址的反向匹配：0-关闭，1-开启".to_string()),
         ("opt-tagname".to_string(), "该条规则的 TagName (可选)".to_string()),
     ])
 }

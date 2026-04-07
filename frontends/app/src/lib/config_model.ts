@@ -54,7 +54,9 @@ export type UiConfig = {
     nexthop: string;
     srcAddr: string;
     srcAddrOptIpGroup: string;
+    srcAddrInv: string;
     ipGroup: string;
+    dstAddrInv: string;
     mode: string;
     ifaceband: string;
   }>;
@@ -141,6 +143,10 @@ function asStr(v: unknown, fallback = ''): string {
   if (typeof v === 'number') return String(v);
   if (v == null) return fallback;
   return String(v);
+}
+
+function asToggleStr(v: unknown): string {
+  return asNum(v, 0) === 1 ? '1' : '0';
 }
 
 function asStringMap(v: unknown): Record<string, string> {
@@ -236,7 +242,9 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; comments: Comme
       nexthop: asStr(item.nexthop),
       srcAddr: asStr(item['src-addr']),
       srcAddrOptIpGroup: asStr(item['src-addr-opt-ipgroup']),
+      srcAddrInv: asToggleStr(item['src-addr-inv']),
       ipGroup: asStr(item['ip-group']),
+      dstAddrInv: asToggleStr(item['dst-addr-inv']),
       mode: asStr(item.mode ?? '0'),
       ifaceband: asStr(item.ifaceband ?? '0'),
     };
@@ -290,7 +298,9 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
       nexthop: i.nexthop,
       'src-addr': i.srcAddr,
       'src-addr-opt-ipgroup': i.srcAddrOptIpGroup,
+      'src-addr-inv': i.srcAddrInv === '1' ? 1 : 0,
       'ip-group': i.ipGroup,
+      'dst-addr-inv': i.dstAddrInv === '1' ? 1 : 0,
       mode: Number(i.mode || 0),
       ifaceband: Number(i.ifaceband || 0),
     })),
@@ -415,7 +425,11 @@ export function yamlDumpWithComments(payload: JsonRecord, comments: CommentMaps)
     out.push('    nexthop: ' + q(asStr(it.nexthop, '')));
     out.push('    src-addr: ' + q(asStr(it['src-addr'], '')));
     out.push('    src-addr-opt-ipgroup: ' + q(asStr(it['src-addr-opt-ipgroup'], '')));
+    out.push('    src-addr-inv: ' + String(asNum(it['src-addr-inv'], 0)));
+    if (item['src-addr-inv']) out.push('    # ' + item['src-addr-inv']);
     out.push('    ip-group: ' + q(asStr(it['ip-group'], '')));
+    out.push('    dst-addr-inv: ' + String(asNum(it['dst-addr-inv'], 0)));
+    if (item['dst-addr-inv']) out.push('    # ' + item['dst-addr-inv']);
     out.push('    mode: ' + String(asNum(it.mode, 0)));
     if (item.mode) out.push('    # ' + item.mode);
     out.push('    ifaceband: ' + String(asNum(it.ifaceband, 0)));

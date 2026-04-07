@@ -123,6 +123,8 @@ async fn stream_rule_ipgroup_refs_smoke() -> Result<(), String> {
     assert_eq!(routes.len(), 1, "expected one stream-ipport rule");
     assert_eq!(csv_items(&routes[0].src_addr), expected_src_names);
     assert_eq!(csv_items(&routes[0].dst_addr), expected_dst_names);
+    assert_eq!(routes[0].src_addr_inv, 0);
+    assert_eq!(routes[0].dst_addr_inv, 0);
 
     Ok(())
 }

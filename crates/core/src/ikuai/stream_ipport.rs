@@ -47,6 +47,10 @@ struct StreamIpPort4 {
     src_addr: AddrBlock,
     #[serde(rename = "dst_addr")]
     dst_addr: AddrBlock,
+    #[serde(rename = "src_addr_inv", default)]
+    src_addr_inv: i64,
+    #[serde(rename = "dst_addr_inv", default)]
+    dst_addr_inv: i64,
     time: TimeBlock,
 }
 
@@ -92,6 +96,8 @@ pub async fn show_stream_ipport_by_tag_name(
             comment: d.comment,
             tag_name: d.tagname,
             interface: d.interface,
+            src_addr_inv: d.src_addr_inv,
+            dst_addr_inv: d.dst_addr_inv,
             nexthop: d.nexthop,
             iface_band: d.iface_band,
             mode: d.mode,
@@ -132,8 +138,10 @@ pub struct StreamIpPortSpec<'a> {
     pub iface: &'a str,
     pub dst_addr: &'a str,
     pub src_addr: &'a str,
+    pub src_addr_inv: i64,
     pub nexthop: &'a str,
     pub tag: &'a str,
+    pub dst_addr_inv: i64,
     pub mode: i64,
     pub iface_band: i64,
 }
@@ -175,6 +183,10 @@ pub async fn add_stream_ipport(
         "protocol": "tcp+udp",
         "src_addr": {"custom": src_custom, "object": src_objects},
         "dst_addr": {"custom": dst_custom, "object": dst_objects},
+        // iKuai uses *_inv numeric flags for inverse matching on address blocks.
+        // 爱快通过 *_inv 数值字段表达源/目的地址块的反向匹配。
+        "src_addr_inv": spec.src_addr_inv,
+        "dst_addr_inv": spec.dst_addr_inv,
         "src_port": {"custom": [], "object": []},
         "dst_port": {"custom": [], "object": []},
         "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
@@ -226,6 +238,10 @@ pub async fn edit_stream_ipport(
         "protocol": "tcp+udp",
         "src_addr": {"custom": src_custom, "object": src_objects},
         "dst_addr": {"custom": dst_custom, "object": dst_objects},
+        // iKuai uses *_inv numeric flags for inverse matching on address blocks.
+        // 爱快通过 *_inv 数值字段表达源/目的地址块的反向匹配。
+        "src_addr_inv": spec.src_addr_inv,
+        "dst_addr_inv": spec.dst_addr_inv,
         "src_port": {"custom": [], "object": []},
         "dst_port": {"custom": [], "object": []},
         "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},

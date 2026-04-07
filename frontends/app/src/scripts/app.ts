@@ -1586,6 +1586,8 @@ const RULE_LIST_META: Record<RuleListKey, {
       { key: 'ipGroup', label: '关联 IP 分组', placeholder: '例如：国内流量' },
       { key: 'srcAddr', label: '源地址', placeholder: '可选，支持单 IP 或范围' },
       { key: 'srcAddrOptIpGroup', label: '源地址 IP 分组', placeholder: '可选，填写已存在分组名' },
+      { key: 'srcAddrInv', label: '源地址反向匹配', type: 'toggle' },
+      { key: 'dstAddrInv', label: '目的地址反向匹配', type: 'toggle' },
       {
         key: 'mode',
         label: '负载模式',
@@ -1796,7 +1798,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
     ipGroup: { tag: '', url: '' },
     ipv6Group: { tag: '', url: '' },
     streamDomain: { interface: 'wan1', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' },
-    streamIpPort: { optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', ipGroup: '', mode: '0', ifaceband: '0' },
+    streamIpPort: { optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', srcAddrInv: '0', ipGroup: '', dstAddrInv: '0', mode: '0', ifaceband: '0' },
   };
   const item = index >= 0 ? list[index] : defaults[listKey];
   if (!item) return;
@@ -1910,7 +1912,9 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
           nexthop: draft.nexthop,
           'src-addr': draft.srcAddr,
           'src-addr-opt-ipgroup': draft.srcAddrOptIpGroup,
+          'src-addr-inv': Number(draft.srcAddrInv || 0),
           'ip-group': draft.ipGroup,
+          'dst-addr-inv': Number(draft.dstAddrInv || 0),
           mode: Number(draft.mode || 0),
           ifaceband: Number(draft.ifaceband || 0),
         },

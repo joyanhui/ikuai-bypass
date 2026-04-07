@@ -48,3 +48,63 @@ stream-domain:
     );
     assert_eq!(cfg.add_wait, Duration::from_secs(0));
 }
+
+#[test]
+fn stream_ipport_addr_inv_defaults_to_zero_when_missing() {
+    let yaml = r#"
+ikuai-url: http://192.168.9.1
+username: admin
+password: pass
+cron: ""
+stream-ipport:
+  - type: "1"
+    opt-tagname: RouteA
+    interface: ""
+    nexthop: 192.168.1.2
+    src-addr: 192.168.1.10-192.168.1.20
+    src-addr-opt-ipgroup: ""
+    ip-group: TagA
+    mode: 0
+    ifaceband: 0
+"#;
+
+    let cfg = Config::load_from_yaml_str(yaml).expect("config should load");
+    let item = cfg
+        .stream_ipport
+        .first()
+        .expect("stream-ipport item should exist");
+
+    assert_eq!(item.src_addr_inv, 0);
+    assert_eq!(item.dst_addr_inv, 0);
+}
+
+#[test]
+fn stream_ipport_addr_inv_is_normalized_to_binary_flags() {
+    let yaml = r#"
+ikuai-url: http://192.168.9.1
+username: admin
+password: pass
+cron: ""
+stream-ipport:
+  - type: "1"
+    opt-tagname: RouteA
+    interface: ""
+    nexthop: 192.168.1.2
+    src-addr: 192.168.1.10-192.168.1.20
+    src-addr-opt-ipgroup: ""
+    src-addr-inv: 2
+    ip-group: TagA
+    dst-addr-inv: -1
+    mode: 0
+    ifaceband: 0
+"#;
+
+    let cfg = Config::load_from_yaml_str(yaml).expect("config should load");
+    let item = cfg
+        .stream_ipport
+        .first()
+        .expect("stream-ipport item should exist");
+
+    assert_eq!(item.src_addr_inv, 0);
+    assert_eq!(item.dst_addr_inv, 0);
+}

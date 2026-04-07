@@ -44,7 +44,9 @@ struct StreamIpPortUpdate<'a> {
     nexthop: &'a str,
     src_addr: &'a str,
     src_addr_opt_ipgroup: &'a str,
+    src_addr_inv: i64,
     ip_group_name: &'a str,
+    dst_addr_inv: i64,
     mode: i64,
     ifaceband: i64,
 }
@@ -321,7 +323,9 @@ async fn update_ipgroup(
             nexthop: &item.nexthop,
             src_addr: &item.src_addr,
             src_addr_opt_ipgroup: &item.src_addr_opt_ipgroup,
+            src_addr_inv: item.src_addr_inv,
             ip_group_name: &item.ip_group,
+            dst_addr_inv: item.dst_addr_inv,
             mode: item.mode,
             ifaceband: item.ifaceband,
         };
@@ -993,8 +997,10 @@ async fn update_stream_ipport(
         iface: input.iface,
         dst_addr: &dst_addr,
         src_addr: &src_addr,
+        src_addr_inv: input.src_addr_inv,
         nexthop: input.nexthop,
         tag: input.tag,
+        dst_addr_inv: input.dst_addr_inv,
         mode: input.mode,
         iface_band: input.ifaceband,
     };

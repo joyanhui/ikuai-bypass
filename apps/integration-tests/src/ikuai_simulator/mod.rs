@@ -124,6 +124,10 @@ struct StreamIpPortRecord {
     src_addr: AddrBlock,
     #[serde(rename = "dst_addr")]
     dst_addr: AddrBlock,
+    #[serde(rename = "src_addr_inv")]
+    src_addr_inv: i64,
+    #[serde(rename = "dst_addr_inv")]
+    dst_addr_inv: i64,
     time: TimeBlock,
 }
 
@@ -451,6 +455,8 @@ fn add_stream_ipport(state: &mut SimulatorState, param: &Value) -> Result<i64, R
         kind: required_i64(param, "type")?,
         src_addr: parse_addr_block(param, "src_addr")?,
         dst_addr: parse_addr_block(param, "dst_addr")?,
+        src_addr_inv: required_i64(param, "src_addr_inv")?,
+        dst_addr_inv: required_i64(param, "dst_addr_inv")?,
         time: parse_time_block(param)?,
     });
     Ok(id)
@@ -474,6 +480,8 @@ fn edit_stream_ipport(state: &mut SimulatorState, param: &Value) -> Result<i64, 
     item.kind = required_i64(param, "type")?;
     item.src_addr = parse_addr_block(param, "src_addr")?;
     item.dst_addr = parse_addr_block(param, "dst_addr")?;
+    item.src_addr_inv = required_i64(param, "src_addr_inv")?;
+    item.dst_addr_inv = required_i64(param, "dst_addr_inv")?;
     item.time = parse_time_block(param)?;
     Ok(id)
 }

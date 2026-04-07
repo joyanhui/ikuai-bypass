@@ -42,7 +42,9 @@ describe('config_model', () => {
       nexthop: '192.168.1.2',
       srcAddr: '192.168.1.10-192.168.1.20',
       srcAddrOptIpGroup: '',
+      srcAddrInv: '1',
       ipGroup: 'TagA',
+      dstAddrInv: '1',
       mode: '0',
       ifaceband: '0',
     });
@@ -58,10 +60,70 @@ describe('config_model', () => {
         nexthop: '192.168.1.2',
         'src-addr': '192.168.1.10-192.168.1.20',
         'src-addr-opt-ipgroup': '',
+        'src-addr-inv': 1,
         'ip-group': 'TagA',
+        'dst-addr-inv': 1,
         mode: 0,
         ifaceband: 0,
       },
     ]);
   });
+
+  it('defaults stream-ipport addr inversion flags to zero', () => {
+    const { cfg } = fromBackendMeta({
+      'stream-ipport': [
+        {
+          'opt-tagname': 'RouteA',
+          type: '1',
+          interface: '',
+          nexthop: '192.168.1.2',
+          'src-addr': '192.168.1.10-192.168.1.20',
+          'src-addr-opt-ipgroup': '',
+          'ip-group': 'TagA',
+          mode: 0,
+          ifaceband: 0,
+        },
+      ],
+    });
+
+    expect(cfg.streamIpPort).toEqual([
+      {
+        optTagName: 'RouteA',
+        type: '1',
+        interface: '',
+        nexthop: '192.168.1.2',
+        srcAddr: '192.168.1.10-192.168.1.20',
+        srcAddrOptIpGroup: '',
+        srcAddrInv: '0',
+        ipGroup: 'TagA',
+        dstAddrInv: '0',
+        mode: '0',
+        ifaceband: '0',
+      },
+    ]);
+  });
+
+  it('normalizes stream-ipport addr inversion flags to binary toggles', () => {
+    const { cfg } = fromBackendMeta({
+      'stream-ipport': [
+        {
+          'opt-tagname': 'RouteA',
+          type: '1',
+          interface: '',
+          nexthop: '192.168.1.2',
+          'src-addr': '192.168.1.10-192.168.1.20',
+          'src-addr-opt-ipgroup': '',
+          'src-addr-inv': 2,
+          'ip-group': 'TagA',
+          'dst-addr-inv': -1,
+          mode: 0,
+          ifaceband: 0,
+        },
+      ],
+    });
+
+    expect(cfg.streamIpPort[0]?.srcAddrInv).toBe('0');
+    expect(cfg.streamIpPort[0]?.dstAddrInv).toBe('0');
+  });
+
 });

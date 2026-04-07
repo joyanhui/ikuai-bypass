@@ -121,6 +121,10 @@ pub struct StreamIpPortData {
     pub week: String,
     pub comment: String,
     pub time: String,
+    #[serde(rename = "src_addr_inv")]
+    pub src_addr_inv: i64,
+    #[serde(rename = "dst_addr_inv")]
+    pub dst_addr_inv: i64,
     pub nexthop: String,
     #[serde(rename = "iface_band")]
     pub iface_band: i64,

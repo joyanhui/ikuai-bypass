@@ -57,7 +57,9 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
                 "    nexthop: 192.168.1.2\n",
                 "    src-addr: 192.168.1.10-192.168.1.20\n",
                 "    src-addr-opt-ipgroup: \"\"\n",
+                "    src-addr-inv: 1\n",
                 "    ip-group: Sync4\n",
+                "    dst-addr-inv: 1\n",
                 "    mode: 0\n",
                 "    ifaceband: 0\n"
             ),
@@ -128,6 +130,8 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
     stream_ipports.sort_by_key(|item| item.id);
     assert_eq!(stream_ipports.len(), 1, "expected one stream-ipport rule");
     assert_eq!(stream_ipports[0].nexthop, "192.168.1.2");
+    assert_eq!(stream_ipports[0].src_addr_inv, 1);
+    assert_eq!(stream_ipports[0].dst_addr_inv, 1);
     let stream_ipport_id = stream_ipports[0].id;
 
     harness
@@ -214,6 +218,8 @@ async fn rule_sync_update_in_place_smoke() -> Result<(), String> {
         "stream-ipport should edit in-place"
     );
     assert_eq!(stream_ipports[0].nexthop, "192.168.1.2");
+    assert_eq!(stream_ipports[0].src_addr_inv, 1);
+    assert_eq!(stream_ipports[0].dst_addr_inv, 1);
 
     Ok(())
 }

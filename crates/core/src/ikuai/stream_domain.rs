@@ -129,6 +129,8 @@ pub async fn add_stream_domain(
         "interface": spec.iface,
         "src_addr": {"custom": src_custom, "object": src_objects},
         "domain": {"custom": domain_list, "object": []},
+        // Keep new remark alnum-only for firmware fields that reject `/` and other symbols.
+        // 新备注仅使用字母数字，兼容部分固件对备注字符集的限制。
         "comment": NEW_COMMENT,
         "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
         "prio": 31
@@ -159,6 +161,8 @@ pub async fn edit_stream_domain(
         "interface": spec.iface,
         "src_addr": {"custom": src_custom, "object": src_objects},
         "domain": {"custom": domain_list, "object": []},
+        // Keep new remark alnum-only for firmware fields that reject `/` and other symbols.
+        // 新备注仅使用字母数字，兼容部分固件对备注字符集的限制。
         "comment": NEW_COMMENT,
         "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
         "prio": 31,

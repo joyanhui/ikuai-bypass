@@ -167,6 +167,8 @@ pub async fn add_stream_ipport(
         "interface": spec.iface,
         "nexthop": spec.nexthop,
         "iface_band": spec.iface_band,
+        // Keep new remark alnum-only for firmware fields that reject `/` and other symbols.
+        // 新备注仅使用字母数字，兼容部分固件对备注字符集的限制。
         "comment": NEW_COMMENT,
         "type": f_type,
         "mode": spec.mode,
@@ -216,6 +218,8 @@ pub async fn edit_stream_ipport(
         "interface": spec.iface,
         "nexthop": spec.nexthop,
         "iface_band": spec.iface_band,
+        // Keep new remark alnum-only for firmware fields that reject `/` and other symbols.
+        // 新备注仅使用字母数字，兼容部分固件对备注字符集的限制。
         "comment": NEW_COMMENT,
         "type": f_type,
         "mode": spec.mode,

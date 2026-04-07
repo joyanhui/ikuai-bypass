@@ -1028,12 +1028,13 @@ async fn update_stream_ipport(
             format!("[1/1] {}: failed: {}", input.tag, e),
         );
         sleep(cfg.add_err_retry_wait).await;
-    } else {
-        stream_logger.success(
-            "UPDATE:更新成功",
-            format!("[1/1] {}: updated successfully", input.tag),
-        );
+        return Err(e.into());
     }
+
+    stream_logger.success(
+        "UPDATE:更新成功",
+        format!("[1/1] {}: updated successfully", input.tag),
+    );
 
     Ok(())
 }

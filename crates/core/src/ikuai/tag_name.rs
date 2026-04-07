@@ -36,7 +36,10 @@ pub fn build_tag_name(raw: &str) -> String {
     if token.is_empty() {
         return NAME_PREFIX_IKB.to_string();
     }
-    format!("{}{}", NAME_PREFIX_IKB, token)
+    truncate_utf8_by_bytes(
+        &format!("{}{}", NAME_PREFIX_IKB, token),
+        MAX_TAG_NAME_LENGTH,
+    )
 }
 
 pub fn build_indexed_tag_name(raw: &str, index: i64) -> String {
@@ -153,4 +156,16 @@ fn strip_ip_group_rand_affix(s: &str) -> &str {
     }
     // ASCII suffix => safe to slice by bytes.
     &s[..n - 3]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::build_tag_name;
+
+    #[test]
+    fn build_tag_name_truncates_to_ikuai_limit() {
+        let tag = build_tag_name("SafeChunkRoute");
+        assert_eq!(tag, "IKBSafeChunkRou");
+        assert_eq!(tag.len(), 15);
+    }
 }

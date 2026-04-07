@@ -1,11 +1,13 @@
-use super::types::{CLEAN_MODE_ALL, COMMENT_IKUAI_BYPASS, NAME_PREFIX_IKB, NEW_COMMENT};
+use super::types::{CLEAN_MODE_ALL, NAME_PREFIX_IKB, managed_comment_markers};
 
 pub fn is_managed(comment: &str, name: &str) -> bool {
     let name = name.trim();
     if name.starts_with(NAME_PREFIX_IKB) {
         return true;
     }
-    comment.contains(NEW_COMMENT) || comment.contains(COMMENT_IKUAI_BYPASS)
+    managed_comment_markers()
+        .into_iter()
+        .any(|marker| comment.contains(marker))
 }
 
 pub fn match_clean_tag(clean_tag: &str, legacy_tag_name: &str, current_tag_name: &str) -> bool {
@@ -30,4 +32,21 @@ pub fn match_clean_tag(clean_tag: &str, legacy_tag_name: &str, current_tag_name:
         return true;
     }
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{is_managed, match_clean_tag};
+
+    #[test]
+    fn recognizes_all_supported_comment_markers() {
+        assert!(is_managed("IkuaiBypass", ""));
+        assert!(is_managed("joyanhui/ikuai-bypass-2", ""));
+        assert!(is_managed("IKUAI_BYPASS_demo", ""));
+    }
+
+    #[test]
+    fn clean_tag_matches_legacy_repo_comment() {
+        assert!(match_clean_tag("demo", "joyanhui/ikuai-bypass-demo", ""));
+    }
 }

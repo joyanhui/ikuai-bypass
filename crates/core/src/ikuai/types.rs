@@ -5,8 +5,16 @@ use serde::{Deserialize, Serialize};
 
 pub const NAME_PREFIX_IKB: &str = "IKB";
 pub const COMMENT_IKUAI_BYPASS: &str = "IKUAI_BYPASS";
-pub const NEW_COMMENT: &str = "joyanhui/ikuai-bypass";
+pub const LEGACY_REPO_COMMENT: &str = "joyanhui/ikuai-bypass";
+pub const NEW_COMMENT: &str = "IkuaiBypass";
 pub const CLEAN_MODE_ALL: &str = "cleanAll";
+
+pub fn managed_comment_markers() -> [&'static str; 3] {
+    // Keep matching historical comment markers during clean/update,
+    // while writing the new alnum-only marker for new records.
+    // 清理/更新时兼容历史备注标记，同时新写入只使用纯字母数字的新备注。
+    [NEW_COMMENT, LEGACY_REPO_COMMENT, COMMENT_IKUAI_BYPASS]
+}
 
 pub const FUNC_NAME_ROUTE_OBJECT: &str = "route_object";
 pub const FUNC_NAME_CUSTOM_ISP: &str = "custom_isp";

@@ -2,7 +2,10 @@ use serde::Serialize;
 
 use super::clean::match_clean_tag;
 use super::tag_name::{build_tag_name, match_tag_name_filter};
-use super::types::{CustomIspData, FUNC_NAME_CUSTOM_ISP, IKuaiClient, IKuaiError, NEW_COMMENT};
+use super::types::{
+    CustomIspData, FUNC_NAME_CUSTOM_ISP, IKuaiClient, IKuaiError, NEW_COMMENT,
+    managed_comment_markers,
+};
 
 #[derive(Debug, Serialize)]
 struct ShowParam {
@@ -129,7 +132,9 @@ fn parse_custom_isp_chunk_index_from_comment(comment: &str) -> Option<i64> {
     if c.is_empty() {
         return None;
     }
-    for prefix in [NEW_COMMENT, super::types::COMMENT_IKUAI_BYPASS] {
+    // New chunks use `IkuaiBypass[-N]`, but update/cleanup must still parse old markers.
+    // 新分片使用 `IkuaiBypass[-N]`，但更新/清理仍需解析旧备注标记。
+    for prefix in managed_comment_markers() {
         if c == prefix {
             return Some(1);
         }
@@ -163,4 +168,29 @@ fn parse_custom_isp_chunk_index_from_name(name: &str, tag: &str) -> Option<i64> 
         return None;
     }
     Some(v)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_custom_isp_chunk_index_from_comment;
+
+    #[test]
+    fn parses_chunk_index_from_all_supported_comment_markers() {
+        assert_eq!(
+            parse_custom_isp_chunk_index_from_comment("IkuaiBypass"),
+            Some(1)
+        );
+        assert_eq!(
+            parse_custom_isp_chunk_index_from_comment("IkuaiBypass-3"),
+            Some(3)
+        );
+        assert_eq!(
+            parse_custom_isp_chunk_index_from_comment("joyanhui/ikuai-bypass-2"),
+            Some(2)
+        );
+        assert_eq!(
+            parse_custom_isp_chunk_index_from_comment("IKUAI_BYPASS_4"),
+            Some(4)
+        );
+    }
 }

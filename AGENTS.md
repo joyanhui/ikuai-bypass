@@ -27,10 +27,10 @@
 ### 1. 规则标识与命名约定
 
 - 名称前缀：`IKB`
-- 统一备注：`joyanhui/ikuai-bypass`
+- 统一备注：`IkuaiBypass`
 - 命名规则：`IKB + tag + 序号`
-- 识别逻辑：名字以 `IKB` 开头或备注包含 `joyanhui/ikuai-bypass`
-- 旧版本兼容：清理模式保留对 `IKUAI_BYPASS` 的兼容清理
+- 识别逻辑：名字以 `IKB` 开头或备注包含 `IkuaiBypass`
+- 旧版本兼容：清理/更新模式保留对 `joyanhui/ikuai-bypass` 与 `IKUAI_BYPASS` 的兼容识别
 
 ### 2. 执行与日志规范
 

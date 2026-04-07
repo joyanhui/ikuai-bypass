@@ -200,7 +200,7 @@ GUI 功能：
 | `cron` | 定时运行 | **最常用**，执行依次更新然后切换到任务计划模式等待定时再次触发 |
 | `cronAft` | 定时运行 | 暂时不执行，直接进入计划任务模式 |
 | `once` | 只运行一次 | 测试配置、手动更新 |
-| `clean` | 清理规则 | 删掉所有规则和分组，或指定的名字/备注适配的规则 |
+| `clean` | 清理规则 | 删掉所有规则和分组，或指定的名字/备注适配的规则（新备注为 `IkuaiBypass`，兼容旧备注 `joyanhui/ikuai-bypass` / `IKUAI_BYPASS`） |
 | `exportDomainSteamToTxt` | 导出域名分流 TXT | 下载 `stream-domain` 的域名列表并导出到 `-exportPath` 目录 |
 ### 分流模式 (`-m`)
 

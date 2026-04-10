@@ -76,7 +76,7 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
     let config_path = harness.write_config("manual-ip-group-refs.yml", &config)?;
     let config_path_str = config_path.to_string_lossy().to_string();
 
-    let output = harness.run_cli_expect_success(&["-c", &config_path_str, "-r", "once", "-m", "ispdomain"])?;
+    let output = harness.run_cli_expect_success(&["-c", &config_path_str, "-r", "once", "-m", "ii"])?;
     let stdout = String::from_utf8_lossy(&output.stdout);
     if stdout.contains("No matching source IP groups found")
         || stdout.contains("No matching destination IP groups found")

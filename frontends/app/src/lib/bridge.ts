@@ -98,10 +98,6 @@ export type ProxyConfig = {
 export type ConfigMeta = {
   conf_path: string;
   raw_yaml?: string;
-  top_level_comments?: Record<string, string>;
-  item_comments?: Record<string, string>;
-  webui_comments?: Record<string, string>;
-  max_number_of_one_records_comments?: Record<string, string>;
   // Backend may include extra keys; allow missing values.
   // 后端可能包含额外字段；这里允许缺省值。
   [k: string]: JsonValue | undefined;
@@ -143,31 +139,29 @@ export const bridge = {
     return await fetchJson<ConfigMeta>('/api/config');
   },
 
-  async saveConfig(payload: Record<string, unknown>, withComments: boolean): Promise<void> {
+  async saveConfig(payload: Record<string, unknown>): Promise<void> {
     if (await isTauriReady()) {
-      await tauriInvoke<void>('save_config_with_comments', {
+      await tauriInvoke<void>('save_config', {
         config: payload,
-        withComments: withComments,
       });
       return;
     }
     await fetchJson('/api/save', {
       method: 'POST',
-      body: JSON.stringify({ ...payload, with_comments: withComments }),
+      body: JSON.stringify(payload),
     });
   },
 
-  async saveRawYaml(yamlText: string, withComments: boolean): Promise<void> {
+  async saveRawYaml(yamlText: string): Promise<void> {
     if (await isTauriReady()) {
       await tauriInvoke<void>('save_raw_yaml', {
         yamlText,
-        withComments,
       });
       return;
     }
     await fetchJson('/api/save-raw', {
       method: 'POST',
-      body: JSON.stringify({ yaml_text: yamlText, with_comments: withComments }),
+      body: JSON.stringify({ yaml_text: yamlText }),
     });
   },
 

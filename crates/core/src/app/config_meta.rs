@@ -1,4 +1,3 @@
-use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use crate::config::Config;
@@ -9,10 +8,6 @@ pub struct ConfigMeta {
     pub config: serde_json::Value,
     pub conf_path: String,
     pub raw_yaml: String,
-    pub top_level_comments: BTreeMap<String, String>,
-    pub item_comments: BTreeMap<String, String>,
-    pub webui_comments: BTreeMap<String, String>,
-    pub max_number_of_one_records_comments: BTreeMap<String, String>,
 }
 
 pub fn build_config_meta(cfg: &Config, config_path: &Path) -> Result<ConfigMeta, String> {
@@ -27,10 +22,6 @@ pub fn build_config_meta(cfg: &Config, config_path: &Path) -> Result<ConfigMeta,
         config,
         conf_path,
         raw_yaml,
-        top_level_comments: crate::config::top_level_comments(),
-        item_comments: crate::config::item_comments(),
-        webui_comments: crate::config::webui_comments(),
-        max_number_of_one_records_comments: crate::config::max_number_of_one_records_comments(),
     })
 }
 

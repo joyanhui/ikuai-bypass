@@ -1,1 +1,7 @@
-初始版本，基于 Rust 重构的 iKuai Bypass，支持 iKuai v4 应用市场安装。
+更多更新日志请参考 https://github.com/joyanhui/ikuai-bypass 
+
+- 备注信息 改为 IkuaiBypass 避免爱快部分模块虽然可以直接使用特殊字符但是爱快的webui不让使用的困扰
+- 支持端口分流配置 的 “反向匹配” #119
+- 修复域名分流和端口分流的ip分组不支持自维护的分组的bug
+#125域名分流和端口分流的
+- 初始版本 基于 Rust 重构的 iKuai Bypass，支持 iKuai v4 应用市场安装。

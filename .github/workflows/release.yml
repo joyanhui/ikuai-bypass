@@ -504,8 +504,17 @@ jobs:
         run: rustup component add rust-src --toolchain nightly
 
       - name: Add nightly target
-        run: rustup +nightly target add ${{ matrix.target }}
-        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          rustup +nightly target add ${{ matrix.target }}
+          target_add_exit="$?"
+          set -e
+          if [ "${target_add_exit}" -ne 0 ]; then
+            # Why/为什么: 低等级 nightly 目标经常没有预编译 std，后续会由 build-std 兜底。
+            # English: Low-tier nightly targets often miss prebuilt std; later build-std covers this.
+            echo "::warning::Nightly target add skipped for ${{ matrix.target }}; continuing with build-std fallback."
+          fi
 
       - name: Install cross
         run: cargo install cross --locked

@@ -1,1 +1,2 @@
 TZ=Asia/Shanghai
+APP_RUN_MODE=ispdomain

@@ -212,9 +212,14 @@ GUI 功能：
 ```bash
 # 运行（会自动创建配置文件）
 docker run -itd --name ikuai-bypass --restart=always \
+  -e APP_RUN_MODE=ispdomain \
   -p 19001:19001 -v ./data:/etc/ikuai-bypass \
   joyanhui/ikuai-bypass:latest
 ```
+
+`APP_RUN_MODE` 用来映射 CLI 的 `-m` 分流模式参数；默认值是 `ispdomain`。可选值：`ispdomain`、`ipgroup`、`ipv6group`、`ii`、`ip`、`iip`。
+
+如果你同时传了容器环境变量 `APP_RUN_MODE` 和命令行 `-m`，则以命令行 `-m` 为准。
 
 启动后：
 1. 用浏览器打开 `http://你的IP:19001`
@@ -224,6 +229,8 @@ docker run -itd --name ikuai-bypass --restart=always \
 ### iKuai v4 应用市场 / ipkg
 
 如果你打算直接在爱快 `高级应用 -> 应用市场 -> 本地安装` 中上传 `.ipkg` 包，安装流程、参数填写和界面截图请直接参考 [PR #118 使用说明](https://github.com/joyanhui/ikuai-bypass/pull/118)。
+
+应用市场安装时也可以通过环境变量 `APP_RUN_MODE` 配置分流模式，界面字段名为“运行模式”，默认值同样是 `ispdomain`。
 
 ### Unraid / 群晖 / 爱快内docker 等部署
 

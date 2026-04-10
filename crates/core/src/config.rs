@@ -267,11 +267,7 @@ impl Config {
 
     pub fn apply_defaults(&mut self) {
         fn normalize_binary_flag(value: i64) -> i64 {
-            if value == 1 {
-                1
-            } else {
-                0
-            }
+            if value == 1 { 1 } else { 0 }
         }
 
         // WebUI defaults.
@@ -320,7 +316,7 @@ impl Config {
         if matches!(self.proxy.mode, ProxyMode::Custom) && self.proxy.url.is_empty() {
             self.proxy.url = "http://127.0.0.1:7890".to_string();
         }
-
+        /* 配置文件应该做为唯一的配置来源
         // Environment variable overrides (for Docker / ipkg deployment).
         // Only override when the env var is set and non-empty, so that
         // config-file-only users are not affected.
@@ -351,6 +347,7 @@ impl Config {
                 self.webui.pass = v.trim().to_string();
             }
         }
+        */
     }
 
     pub fn save_to_path(&self, path: impl AsRef<Path>) -> Result<(), ConfigError> {

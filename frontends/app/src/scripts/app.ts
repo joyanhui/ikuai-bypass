@@ -6,11 +6,6 @@ import { loadJson, saveJson } from '../lib/storage.ts';
 import { getLanguage, initLanguage, t, toggleLanguage } from '../lib/i18n.ts';
 import { BRAND } from '../lib/branding.ts';
 import { removeYamlSeqItem, updateYamlPaths, upsertYamlSeqItem } from '../lib/yaml_ast.ts';
-import type * as MonacoTypes from 'monaco-editor';
-
-type MonacoModule = typeof import('monaco-editor/esm/vs/editor/editor.api');
-type MonacoEditor = MonacoTypes.editor.IStandaloneCodeEditor;
-type YamlLanguageModule = typeof import('monaco-editor/esm/vs/basic-languages/yaml/yaml.js');
 
 // ============================================
 // 全局状态
@@ -31,16 +26,10 @@ const state = {
     listKey: RuleListKey;
     index: number;
   },
-  rawEditor: null as MonacoEditor | null,
   rawEditorTextarea: null as HTMLTextAreaElement | null,
 };
 
-let monaco: MonacoModule | null = null;
-let yamlLanguageModule: YamlLanguageModule | null = null;
-let monacoLoading: Promise<void> | null = null;
-
 const RECONNECT_DELAY = 3000;
-let yamlLanguageRegistered = false;
 const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal', 'aboutModal', 'proxyModal'] as const;
 
 let configMissingDetected = false;
@@ -56,20 +45,21 @@ const getErrorMessage = (err: unknown): string => {
   return tt('error.unknown');
 };
 
+const getRawEditorTextarea = () => {
+  if (state.rawEditorTextarea) return state.rawEditorTextarea;
+  state.rawEditorTextarea = document.getElementById('rawEditorTextarea') as HTMLTextAreaElement | null;
+  return state.rawEditorTextarea;
+};
+
 const getRawEditorValue = () => {
-  if (state.rawEditor) return state.rawEditor.getValue();
-  if (state.rawEditorTextarea) return state.rawEditorTextarea.value;
+  const textarea = getRawEditorTextarea();
+  if (textarea) return textarea.value;
   return '';
 };
 
 const setRawEditorValue = (value: string) => {
-  if (state.rawEditor) {
-    state.rawEditor.setValue(value);
-    return;
-  }
-  if (state.rawEditorTextarea) {
-    state.rawEditorTextarea.value = value;
-  }
+  const textarea = getRawEditorTextarea();
+  if (textarea) textarea.value = value;
 };
 
 const refreshEditorFromRawYaml = () => {
@@ -580,102 +570,6 @@ const setRemoteTemplateTip = (message: string | null) => {
   el.classList.remove('hidden');
 };
 
-const loadMonaco = async () => {
-  if (monaco) return;
-  if (monacoLoading) {
-    await monacoLoading;
-    return;
-  }
-  monacoLoading = (async () => {
-    const [monacoModule, yamlModule, workerModule] = await Promise.all([
-      import('monaco-editor/esm/vs/editor/editor.api'),
-      import('monaco-editor/esm/vs/basic-languages/yaml/yaml.js'),
-      import('monaco-editor/esm/vs/editor/editor.worker?worker'),
-    ]);
-
-    monaco = monacoModule;
-    yamlLanguageModule = yamlModule;
-    const EditorWorker = workerModule.default;
-
-    (globalThis as typeof globalThis & {
-      MonacoEnvironment?: {
-        getWorker: (_workerId: string, _label: string) => Worker;
-      };
-    }).MonacoEnvironment = {
-      getWorker() {
-        return new EditorWorker();
-      },
-    };
-  })();
-
-  try {
-    await monacoLoading;
-  } finally {
-    monacoLoading = null;
-  }
-};
-
-const shouldUseLightweightEditor = () => {
-  // Mobile must not enable Monaco.
-  // 移动端严禁启用 Monaco（性能/内存/触控体验都不适合）。
-  const ua = navigator.userAgent || '';
-  if (/Android|iPhone|iPad|iPod/i.test(ua)) return true;
-  const isCoarsePointer = !!window.matchMedia?.('(pointer: coarse)').matches;
-  const isSmallViewport = !!window.matchMedia?.('(max-width: 900px)').matches;
-  if (isCoarsePointer || isSmallViewport) return true;
-  if (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 4) return true;
-  return false;
-};
-
-const ensureRawEditor = async () => {
-  if (state.rawEditor || state.rawEditorTextarea) return;
-  const container = document.getElementById('rawEditorContainer');
-  if (!container) return;
-
-  if (shouldUseLightweightEditor()) {
-    const textarea = document.createElement('textarea');
-    textarea.className = 'h-[32rem] w-full resize-none bg-transparent p-4 text-sm text-gray-800 outline-none dark:text-gray-100';
-    textarea.spellcheck = false;
-    container.innerHTML = '';
-    container.appendChild(textarea);
-    state.rawEditorTextarea = textarea;
-    return;
-  }
-
-  await loadMonaco();
-  if (!monaco || !yamlLanguageModule) return;
-
-  if (!yamlLanguageRegistered) {
-    monaco.languages.register({ id: 'yaml', extensions: ['.yaml', '.yml'], aliases: ['YAML', 'yaml'] });
-    monaco.languages.setMonarchTokensProvider('yaml', yamlLanguageModule.language);
-    monaco.languages.setLanguageConfiguration('yaml', yamlLanguageModule.conf);
-    yamlLanguageRegistered = true;
-  }
-
-  state.rawEditor = monaco.editor.create(container, {
-    value: '',
-    language: 'yaml',
-    theme: document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs',
-    automaticLayout: true,
-    minimap: { enabled: false },
-    fontSize: 14,
-    lineNumbers: 'on',
-    roundedSelection: false,
-    scrollBeyondLastLine: false,
-    wordWrap: 'on',
-    tabSize: 2,
-    insertSpaces: true,
-    glyphMargin: false,
-    folding: true,
-    padding: { top: 16, bottom: 16 },
-  });
-
-  const model = state.rawEditor.getModel();
-  if (model) {
-    monaco.editor.setModelLanguage(model, 'yaml');
-  }
-};
-
 // ============================================
 // 主题管理
 // ============================================
@@ -731,9 +625,6 @@ const applyTheme = (mode: 'auto' | 'dark' | 'light') => {
     const hint = t('theme.toggle_hint');
     btn.setAttribute('aria-label', `${label} - ${hint}`);
     btn.title = `${label} - ${hint}`;
-  }
-  if (monaco) {
-    monaco.editor.setTheme(useDark ? 'vs-dark' : 'vs');
   }
 };
 
@@ -980,9 +871,8 @@ const initMainTabs = () => {
 };
 
 const applyRawEditorToState = () => {
-  const editor = state.rawEditor;
   const hint = document.getElementById('rawEditorHint');
-  if (!editor && !state.rawEditorTextarea) return true;
+  if (!getRawEditorTextarea()) return true;
 
   try {
     state.rawYaml = getRawEditorValue();
@@ -998,7 +888,7 @@ const applyRawEditorToState = () => {
   }
 };
 
-const updateConfigSubTabUI = async () => {
+const updateConfigSubTabUI = () => {
   document.querySelectorAll<HTMLElement>('.config-sub-tab').forEach((tab) => {
     tab.classList.toggle('active', tab.dataset.configTab === state.selectedConfigTab);
   });
@@ -1006,8 +896,7 @@ const updateConfigSubTabUI = async () => {
     panel.classList.toggle('hidden', panel.dataset.configPanel !== state.selectedConfigTab);
   });
   if (state.selectedConfigTab === 'raw') {
-    await openRawEditor();
-    requestAnimationFrame(() => state.rawEditor?.layout());
+    openRawEditor();
   }
 };
 
@@ -1020,10 +909,10 @@ const initConfigSubTabs = () => {
         return;
       }
       state.selectedConfigTab = nextTab;
-      void updateConfigSubTabUI();
+      updateConfigSubTabUI();
     });
   });
-  void updateConfigSubTabUI();
+  updateConfigSubTabUI();
 };
 
 const initRunModeSelection = () => {
@@ -1951,18 +1840,12 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
   openModal('ruleEditorModal');
 };
 
-const openRawEditor = async () => {
-  await ensureRawEditor();
+const openRawEditor = () => {
   const value = state.rawYaml || yamlDump(toBackendPayload(state.cfg));
   setRawEditorValue(value);
-  if (state.rawEditor) {
-    requestAnimationFrame(() => state.rawEditor?.layout());
-  }
   const hint = document.getElementById('rawEditorHint');
   if (hint) {
-    hint.textContent = state.rawEditorTextarea
-      ? tt('raw.hint.lightweight')
-      : tt('raw.hint.validate');
+    hint.textContent = tt('raw.hint.validate');
   }
 };
 

@@ -234,7 +234,6 @@ const ZH: Dict = {
 
     "raw.title": "YAML 文本编辑",
     "raw.hint.default": "切换回可视化编辑或点击顶部保存时会自动同步。",
-    "raw.hint.lightweight": "轻量模式已启用（移动端/低内存）。保存时会校验 YAML。",
     "raw.hint.validate": "保存时会校验 YAML 结构。",
     "raw.hint.synced": "YAML 已同步到表单。",
     "raw.hint.parse_failed": "YAML 解析失败: {{message}}",
@@ -592,7 +591,6 @@ const EN: Dict = {
 
     "raw.title": "YAML Editor",
     "raw.hint.default": "Switch back to visual editing or click save above to sync automatically.",
-    "raw.hint.lightweight": "Lightweight mode is enabled (mobile / low memory). YAML will be validated when saving.",
     "raw.hint.validate": "YAML structure will be validated when saving.",
     "raw.hint.synced": "YAML synced to the form.",
     "raw.hint.parse_failed": "YAML parse failed: {{message}}",

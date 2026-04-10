@@ -15,7 +15,6 @@
   "dependencies": {
     "astro": "^4.16.0",
     "js-yaml": "^4.1.0",
-    "monaco-editor": "^0.55.1",
     "yaml": "^2.8.2"
   },
   "devDependencies": {

@@ -1,3 +1,0 @@
-interface Navigator {
-  deviceMemory?: number;
-}

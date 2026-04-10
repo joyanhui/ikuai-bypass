@@ -230,11 +230,14 @@ async fn resolve_src_addrs(
             if name.is_empty() {
                 continue;
             }
-            if let Ok(matches) =
-                ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, name).await
-            {
-                resolved.extend(matches);
-            }
+            let matches = ip_group::resolve_rule_reference_ip_group_names(api, name).await?;
+            resolved.extend(matches);
+        }
+        if resolved.is_empty() {
+            return Err(IKuaiError::Api(format!(
+                "no matching source IP groups found for stream-domain reference: {}",
+                src_addr_opt_ipgroup
+            )));
         }
         let objects = resolve_ip_group_objects(api, &resolved).await?;
         return Ok((Vec::new(), objects));

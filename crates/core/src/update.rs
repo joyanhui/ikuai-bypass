@@ -947,8 +947,7 @@ async fn update_stream_ipport(
             if item.is_empty() {
                 continue;
             }
-            let matches =
-                ikuai::ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, item).await?;
+            let matches = ikuai::ip_group::resolve_rule_reference_ip_group_names(api, item).await?;
             dst_groups.extend(matches);
         }
         if dst_groups.is_empty() {
@@ -972,8 +971,7 @@ async fn update_stream_ipport(
             if item.is_empty() {
                 continue;
             }
-            let matches =
-                ikuai::ip_group::get_all_ikuai_bypass_ip_group_names_by_name(api, item).await?;
+            let matches = ikuai::ip_group::resolve_rule_reference_ip_group_names(api, item).await?;
             src_groups.extend(matches);
         }
         if !src_groups.is_empty() {

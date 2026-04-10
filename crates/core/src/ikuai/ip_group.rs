@@ -257,3 +257,55 @@ pub async fn get_all_ikuai_bypass_ip_group_names_by_name(
         .map(|d| d.group_name)
         .collect())
 }
+
+pub async fn resolve_rule_reference_ip_group_names(
+    api: &IKuaiClient,
+    name: &str,
+) -> Result<Vec<String>, IKuaiError> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // Rule references should support exact user-managed names first,
+    // and fall back to expanding managed IKB shards by tag.
+    // 规则引用优先支持精确匹配用户手工维护的分组名，
+    // 若没有精确命中，再回退到按 IKB 标签展开托管分片。
+    let data = show_ip_group_by_tag_name(api, "").await?;
+    let mut exact = Vec::new();
+    let mut exact_seen = std::collections::HashSet::new();
+    let mut managed = Vec::new();
+    let mut managed_seen = std::collections::HashSet::new();
+
+    for d in data {
+        let group_name = d.group_name;
+        let current = group_name.trim();
+        if current == name {
+            if exact_seen.insert(group_name.clone()) {
+                exact.push(group_name);
+            }
+            continue;
+        }
+        if match_tag_name_filter(name, current, &d.comment)
+            && managed_seen.insert(group_name.clone())
+        {
+            managed.push(group_name);
+        }
+    }
+
+    if !exact.is_empty() {
+        return Ok(exact);
+    }
+
+    Ok(managed)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::tag_name::match_tag_name_filter;
+
+    #[test]
+    fn exact_manual_name_should_not_be_treated_as_managed_tag_lookup() {
+        assert!(!match_tag_name_filter("asd", "asd", ""));
+    }
+}

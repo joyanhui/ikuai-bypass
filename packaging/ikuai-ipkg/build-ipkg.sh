@@ -11,7 +11,7 @@
 # 版本号自动从 apps/cli/Cargo.toml 读取（唯一来源），并仅在 staging 渲染 manifest。
 # Version is auto-read from apps/cli/Cargo.toml (single source of truth) and
 # only rendered into the staged manifest.
-# 输出 / Output: ikuai-bypass-x86_64.ipk
+# 输出 / Output: ikuai-bypass-x86_64.ipkg
 
 set -euo pipefail
 
@@ -43,7 +43,7 @@ fi
 
 echo "=== 构建 ikuai-bypass v${VERSION} ipkg (原始版本: ${RAW_VERSION}) ==="
 
-PACKAGE_NAME="ikuai-bypass-x86_64.ipk"
+PACKAGE_NAME="ikuai-bypass-x86_64.ipkg"
 
 # 步骤 0：同步图标 / Step 0: Sync icons from the GUI source icon
 bash "$PROJECT_DIR/apps/gui/scripts/sync-icons.sh" ipkg-only
@@ -111,7 +111,7 @@ docker save ikuai-bypass:ikuai | gzip > "$PACKAGE_STAGE_DIR/docker_image.tar.gz"
 IMAGE_SIZE=$(du -h "$PACKAGE_STAGE_DIR/docker_image.tar.gz" | cut -f1)
 echo "    镜像大小 / Image size: ${IMAGE_SIZE}"
 
-# 步骤 6：打包 ipk / Step 6: Pack ipk
+# 步骤 6：打包 ipkg / Step 6: Pack ipkg
 echo "[6/6] 打包 ipkg..."
 tar -czf "$SCRIPT_DIR/${PACKAGE_NAME}" -C "$STAGE_DIR/package" ikuai-bypass/
 IPKG_SIZE=$(du -h "$SCRIPT_DIR/${PACKAGE_NAME}" | cut -f1)

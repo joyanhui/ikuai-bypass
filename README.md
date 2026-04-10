@@ -84,7 +84,7 @@
 | 服务器/路由器/容器 | CLI 版本 `ikuai-bypass-cli-linux-xxx.zip` |
 | LXC/PVE CT 容器 | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
 | Docker | [joyanhui/ikuai-bypass](https://hub.docker.com/r/joyanhui/ikuai-bypass/tags) |
-| iKuai v4 应用市场 | `ikuai-bypass-x86_64.ipk`，在爱快“高级应用 -> 应用市场 -> 本地安装”上传 |
+| iKuai v4 应用市场 | `ikuai-bypass-x86_64.ipkg`，在爱快“高级应用 -> 应用市场 -> 本地安装”上传 |
 
 > **新手建议**：如果你在电脑上使用，直接下载 GUI 版本（安装包），双击安装即可，无需命令行。
 

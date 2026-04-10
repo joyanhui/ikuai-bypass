@@ -1,5 +1,11 @@
 iKuai Bypass - 智能分流管理工具
 
+使用方法:
+安装后通过 http://<设备IP>:<WebUI端口> 访问管理界面
+默认端口19001 用户名: admin  密码: admin888
+
+项目地址: https://github.com/joyanhui/ikuai-bypass
+
 功能:
 - 自定义运营商 IP 分流 (custom-isp)
 - 域名分流 (stream-domain)
@@ -8,10 +14,3 @@ iKuai Bypass - 智能分流管理工具
 - IPv6 分组管理 (ipv6-group)
 - 内置 WebUI 管理界面
 - Cron 定时自动更新规则
-
-使用方法:
-安装后通过 http://<设备IP>:<WebUI端口> 访问管理界面
-默认用户名: admin  默认密码: admin888
-
-项目地址: https://github.com/joyanhui/ikuai-bypass
-使用说明: https://github.com/joyanhui/ikuai-bypass/wiki/iKuai-v4-%E5%BA%94%E7%94%A8%E5%B8%82%E5%9C%BA-ipkg-%E5%AE%89%E8%A3%85%E8%AF%B4%E6%98%8E

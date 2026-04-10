@@ -16,11 +16,19 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
     let harness = TestHarness::start("manual_ip_group_refs_smoke").await?;
     common::print_failure_hint("manual_ip_group_refs_smoke", harness.artifact_dir());
 
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| format!("failed to read system time: {e}"))?
+        .as_millis()
+        % 100_000;
+    let src_group_name = format!("RefSrc{}", nonce);
+    let dst_group_name = format!("RefDst{}", nonce);
+
     let api = harness.login_api().await?;
-    ikuai::ip_group::add_ip_group_named(&api, "asd", "172.16.1.1,172.16.1.2")
+    ikuai::ip_group::add_ip_group_named(&api, &src_group_name, "172.16.1.1,172.16.1.2")
         .await
         .map_err(|e| format!("failed to seed manual src ip-group: {e}"))?;
-    ikuai::ip_group::add_ip_group_named(&api, "manual-dst", "100.64.0.1,100.64.0.2")
+    ikuai::ip_group::add_ip_group_named(&api, &dst_group_name, "100.64.0.1,100.64.0.2")
         .await
         .map_err(|e| format!("failed to seed manual dst ip-group: {e}"))?;
 
@@ -38,7 +46,7 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
                 "stream-domain:\n",
                 "  - interface: wan1\n",
                 "    src-addr: \"\"\n",
-                "    src-addr-opt-ipgroup: asd\n",
+                "    src-addr-opt-ipgroup: {}\n",
                 "    url: \"{}\"\n",
                 "    tag: ManualDom\n",
                 "stream-ipport:\n",
@@ -47,9 +55,9 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
                 "    interface: \"\"\n",
                 "    nexthop: 192.168.1.2\n",
                 "    src-addr: \"\"\n",
-                "    src-addr-opt-ipgroup: asd\n",
+                "    src-addr-opt-ipgroup: {}\n",
                 "    src-addr-inv: 0\n",
-                "    ip-group: manual-dst\n",
+                "    ip-group: {}\n",
                 "    dst-addr-inv: 0\n",
                 "    mode: 0\n",
                 "    ifaceband: 0\n",
@@ -59,7 +67,10 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
                 "  Ipv6: 1000\n",
                 "  Domain: 5000\n"
             ),
+            src_group_name,
             harness.fixture().url("/manual/domain.txt"),
+            src_group_name,
+            dst_group_name,
         ),
     );
     let config_path = harness.write_config("manual-ip-group-refs.yml", &config)?;
@@ -86,14 +97,14 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
         csv_items(&domains[0].domain),
         vec!["manual.example", "object.example"]
     );
-    assert_eq!(csv_items(&domains[0].src_addr), vec!["asd"]);
+    assert_eq!(csv_items(&domains[0].src_addr), vec![src_group_name.clone()]);
 
     let routes = ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "ManualRoute")
         .await
         .map_err(|e| format!("failed to query manual stream-ipport: {e}"))?;
     assert_eq!(routes.len(), 1, "expected one stream-ipport rule");
-    assert_eq!(csv_items(&routes[0].src_addr), vec!["asd"]);
-    assert_eq!(csv_items(&routes[0].dst_addr), vec!["manual-dst"]);
+    assert_eq!(csv_items(&routes[0].src_addr), vec![src_group_name]);
+    assert_eq!(csv_items(&routes[0].dst_addr), vec![dst_group_name]);
 
     Ok(())
 }

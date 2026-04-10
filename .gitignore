@@ -44,4 +44,6 @@ flake.lock
 packaging/ikuai-ipkg/*.ipk
 packaging/ikuai-ipkg/.stage/
 packaging/ikuai-ipkg/ikuai-bypass/docker_image.tar.gz
+test.yaml
+test.yml
 CLAUDE.md

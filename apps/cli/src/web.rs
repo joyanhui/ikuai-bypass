@@ -77,13 +77,11 @@ struct ConfigResponse {
 struct SaveRequest {
     #[serde(flatten)]
     config: ikb_core::config::Config,
-    with_comments: bool,
 }
 
 #[derive(Debug, Deserialize)]
 struct SaveRawYamlRequest {
     yaml_text: String,
-    with_comments: bool,
 }
 
 pub async fn start_web_server(
@@ -245,10 +243,7 @@ async fn api_diagnostics_report(State(state): State<Arc<AppState>>) -> Response 
 }
 
 async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
-    if let Err(e) = req
-        .config
-        .save_to_path_with_comments(&state.config_path, req.with_comments)
-    {
+    if let Err(e) = req.config.save_to_path(&state.config_path) {
         return (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to save config: {}", e),
@@ -278,7 +273,6 @@ async fn api_save_raw_yaml(
     let cfg = match ikb_core::config::Config::validate_and_save_raw_yaml(
         &req.yaml_text,
         &state.config_path,
-        req.with_comments,
     ) {
         Ok(cfg) => cfg,
         Err(e) => {

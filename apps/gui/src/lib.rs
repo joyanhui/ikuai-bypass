@@ -58,32 +58,10 @@ async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Resul
 }
 
 #[tauri::command]
-async fn save_config_with_comments(
-    state: tauri::State<'_, AppState>,
-    config: Config,
-    with_comments: bool,
-) -> Result<(), String> {
-    {
-        let path_guard = state.config_path.lock().await;
-        if let Err(e) = config.save_to_path_with_comments(&*path_guard, with_comments) {
-            return Err(format!("Failed to save config: {}", e));
-        }
-    }
-    let new_cron = config.cron.to_string();
-    *state.config.lock().await = Arc::new(config);
-    state.runtime.set_defaults(None, Some(new_cron)).await;
-    Ok(())
-}
-
-#[tauri::command]
-async fn save_raw_yaml(
-    state: tauri::State<'_, AppState>,
-    yaml_text: String,
-    with_comments: bool,
-) -> Result<(), String> {
+async fn save_raw_yaml(state: tauri::State<'_, AppState>, yaml_text: String) -> Result<(), String> {
     let cfg = {
         let path_guard = state.config_path.lock().await;
-        Config::validate_and_save_raw_yaml(&yaml_text, &*path_guard, with_comments)
+        Config::validate_and_save_raw_yaml(&yaml_text, &*path_guard)
             .map_err(|e| format!("Failed to save config: {}", e))?
     };
     let new_cron = cfg.cron.to_string();
@@ -290,7 +268,6 @@ pub fn run() {
             get_config,
             get_config_meta,
             save_config,
-            save_config_with_comments,
             save_raw_yaml,
             test_ikuai_login,
             test_github_proxy,

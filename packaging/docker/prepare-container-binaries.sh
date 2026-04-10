@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Why: buildx needs a deterministic docker/bin layout / 为什么：buildx 需要固定的 docker/bin 目录结构才能稳定挑选目标二进制
+# buildx 需要固定的 docker/bin 目录结构才能稳定挑选目标二进制
 
 release_dir="${1:-release}"
 context_dir="${2:-.docker-release/multiarch}"

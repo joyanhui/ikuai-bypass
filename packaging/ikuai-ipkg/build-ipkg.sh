@@ -101,7 +101,7 @@ docker rm "$CID" >/dev/null
 # 步骤 4：用根 Dockerfile 组装最终镜像（DOCKER_BUILDKIT=0 兼容 iKuai Docker 18.09）
 # Step 4: Assemble final image with root Dockerfile (DOCKER_BUILDKIT=0 for iKuai compat)
 echo "[4/6] 组装 Docker 镜像..."
-cp "$PROJECT_DIR/Dockerfile" "$PROJECT_DIR/docker-entrypoint.sh" "$PROJECT_DIR/config.yml" "$STAGE_DIR/"
+cp "$PROJECT_DIR/Dockerfile" "$PROJECT_DIR/packaging/docker/docker-entrypoint.sh" "$PROJECT_DIR/config.yml" "$STAGE_DIR/"
 cd "$STAGE_DIR"
 DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM=linux/amd64 -t ikuai-bypass:ikuai .
 

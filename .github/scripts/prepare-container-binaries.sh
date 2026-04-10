@@ -14,7 +14,7 @@ source "${script_dir}/arch-helpers.sh"
 rm -rf "${context_dir}"
 mkdir -p "${context_dir}/docker/frontends/app" "${context_dir}/docker/bin"
 
-cp Dockerfile docker-entrypoint.sh config.yml "${context_dir}/"
+cp Dockerfile packaging/docker/docker-entrypoint.sh config.yml "${context_dir}/"
 cp -R frontends/app/dist "${context_dir}/docker/frontends/app/dist"
 chmod +x "${context_dir}/docker-entrypoint.sh"
 

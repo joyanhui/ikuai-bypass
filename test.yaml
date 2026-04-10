@@ -1,0 +1,73 @@
+ikuai-url: http://10.10.10.1
+username: admin
+password: P1111
+cron: 0 7 * * *
+AddErrRetryWait: 10s
+AddWait: 1s
+github-proxy: https://gh-proxy.com/
+proxy:
+  mode: smart
+  url: http://127.0.0.1:7890
+  user: ''
+  pass: ''
+custom-isp:
+  - tag: 国内IP列表
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
+  - tag: telegram
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
+  - tag: google
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt
+stream-domain:
+  - interface: wan2
+    src-addr: ''
+    src-addr-opt-ipgroup: "IKBasd"
+    url: https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/gfw.txt
+    tag: gfw
+  - interface: wan2
+    src-addr: ''
+    src-addr-opt-ipgroup: "IKBasd"
+    url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/bypass-domain-list.txt
+    tag: MyBypass
+  - interface: wan1
+    src-addr: ''
+    src-addr-opt-ipgroup: "IKBasd"
+    url: https://raw.githubusercontent.com/joyanhui/ikuai-bypass/main/private/direct-domain-list.txt
+    tag: MyDirect
+ip-group:
+  - tag: 国内
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
+  - tag: Telegram
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt
+ipv6-group:
+  - tag: 国内v6
+    url: https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cn.txt
+stream-ipport:
+  - opt-tagname: 国内流量
+    type: '0'
+    interface: wan1
+    nexthop: ''
+    src-addr: ''
+    src-addr-opt-ipgroup: ''
+    ip-group: 国内
+    mode: 0
+    ifaceband: 0
+  - opt-tagname: 负责分流到下一跳
+    type: '1'
+    interface: ''
+    nexthop: 10.11.11.11
+    src-addr: ''
+    src-addr-opt-ipgroup: "IKBasd"
+    ip-group: Telegram
+    mode: 0
+    ifaceband: 0
+webui:
+  port: '19001'
+  user: admin
+  pass: p1111
+  enable: true
+  cdn-prefix: https://cdn.jsdelivr.net/npm
+MaxNumberOfOneRecords:
+  Isp: 5000
+  Ipv4: 2450
+  Ipv6: 1600
+  Domain: 3000

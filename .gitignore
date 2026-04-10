@@ -41,7 +41,7 @@ frontends/app/src/env.d.ts
 **/dist/
 /dist/
 flake.lock
-packaging/ikuai-ipkg/*.ipkg
+packaging/ikuai-ipkg/*.ipk
 packaging/ikuai-ipkg/.stage/
 packaging/ikuai-ipkg/ikuai-bypass/docker_image.tar.gz
 CLAUDE.md

@@ -1371,9 +1371,14 @@ jobs:
           # 1. Prepare directory layout expected by packaging/docker/Dockerfile
           stage=".ipkg-stage"
           ipkg_dir="packaging/ikuai-ipkg"
+          package_stage="${stage}/package/ikuai-bypass"
+          manifest_template="${ipkg_dir}/ikuai-bypass/manifest.template.json"
+          render_manifest_script="${ipkg_dir}/render-manifest.sh"
           bash apps/gui/scripts/sync-icons.sh ipkg-only
           rm -rf "${stage}"
-          mkdir -p "${stage}/docker/bin/linux-amd64" "${stage}/docker/frontends/app"
+          mkdir -p "${stage}/docker/bin/linux-amd64" "${stage}/docker/frontends/app" "${package_stage}"
+          cp -R "${ipkg_dir}/ikuai-bypass/." "${package_stage}/"
+          rm -f "${package_stage}/manifest.template.json" "${package_stage}/docker_image.tar.gz"
 
           zipball="$(find release -maxdepth 1 -type f -name 'ikuai-bypass-cli-linux-x86_64.zip' | head -1)"
           test -n "${zipball}"
@@ -1391,8 +1396,8 @@ jobs:
           DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM=linux/amd64 -t ikuai-bypass:ikuai .
           cd ..
 
-          # 3. 同步版本号并导出镜像
-          # 3. Sync version and export image
+          # 3. 渲染 manifest.json 并导出镜像到打包暂存目录
+          # 3. Render manifest.json and export the image into the package staging dir
           ipkg_version="$(normalize_ipkg_version "${VERSION}")"
           if [[ ! "${ipkg_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             ipkg_version="$(read_cli_semver)"
@@ -1401,16 +1406,13 @@ jobs:
             echo "Invalid ipkg version: ${ipkg_version}" >&2
             exit 1
           fi
-          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"${ipkg_version}\"/" "${ipkg_dir}/ikuai-bypass/manifest.json"
-          docker save ikuai-bypass:ikuai | gzip > "${ipkg_dir}/ikuai-bypass/docker_image.tar.gz"
+          bash "${render_manifest_script}" "${manifest_template}" "${package_stage}/manifest.json" "${ipkg_version}"
+          docker save ikuai-bypass:ikuai | gzip > "${package_stage}/docker_image.tar.gz"
 
           # 4. 打包 ipk（文件名按架构固定，版本仅保留在 manifest.json）
           # 4. Pack ipk (architecture-based filename; version stays in manifest.json)
           ipkg_name="ikuai-bypass-x86_64.ipk"
-          cd "${ipkg_dir}"
-          tar -czf "${ipkg_name}" ikuai-bypass/
-          rm -f ikuai-bypass/docker_image.tar.gz
-          cp "${ipkg_name}" ../../release/
+          tar -czf "release/${ipkg_name}" -C "${stage}/package" ikuai-bypass/
           echo "ipkg_name=${ipkg_name}" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v6

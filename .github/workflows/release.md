@@ -254,13 +254,15 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 版本规则：
 
 - ipk 的最终文件名按架构固定为 `ikuai-bypass-x86_64.ipk`，不包含版本号
-- `manifest.json` 内的版本仍会对 semver 预发布后缀做归一化，例如 `4.4.100-alpha9.2` 会写成 `4.4.100`
-- 如果 workflow 的发布版本号不是 semver（例如 `manual-build-*` / `manual-release-*`），会回退读取 `apps/cli/Cargo.toml` 的版本并继续归一化，确保 `manifest.json` 始终是 `X.Y.Z`
+- 仓库内只保留 `manifest.template.json` 模板，最终 `manifest.json` 会在打包 staging 目录中渲染，避免 CI 或本地脚本原地改写源码树
+- 渲染后的 `manifest.json` 版本仍会对 semver 预发布后缀做归一化，例如 `4.4.100-alpha9.2` 会写成 `4.4.100`
+- 如果 workflow 的发布版本号不是 semver（例如 `manual-build-*` / `manual-release-*`），会回退读取 `apps/cli/Cargo.toml` 的版本并继续归一化，确保最终 `manifest.json` 始终是 `X.Y.Z`
 
 实现位置：
 
 - `packaging/ikuai-ipkg/`
 - `packaging/ikuai-ipkg/build-ipkg.sh`
+- `packaging/ikuai-ipkg/render-manifest.sh`
 
 ### OpenWrt LuCI
 
@@ -327,6 +329,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - `.github/scripts/arch-helpers.sh`
 - `packaging/docker/prepare-container-binaries.sh`
 - `packaging/ikuai-ipkg/build-ipkg.sh`
+- `packaging/ikuai-ipkg/render-manifest.sh`
 - `packaging/openwrt-luci/build-openwrt-luci-package.sh`
 - `packaging/openwrt-luci/luci-app-ikuai-bypass/`
 

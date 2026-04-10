@@ -8,15 +8,20 @@
 # containers first, then assembles the final image. In CI, pre-built
 # artifacts from build-cli / build-frontend can be used directly.
 #
-# 版本号自动从 apps/cli/Cargo.toml 读取（唯一来源）
-# Version is auto-read from apps/cli/Cargo.toml (single source of truth)
+# 版本号自动从 apps/cli/Cargo.toml 读取（唯一来源），并仅在 staging 渲染 manifest。
+# Version is auto-read from apps/cli/Cargo.toml (single source of truth) and
+# only rendered into the staged manifest.
 # 输出 / Output: ikuai-bypass-x86_64.ipk
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 STAGE_DIR="$SCRIPT_DIR/.stage"
+PACKAGE_TEMPLATE_DIR="$SCRIPT_DIR/ikuai-bypass"
+PACKAGE_STAGE_DIR="$STAGE_DIR/package/ikuai-bypass"
+MANIFEST_TEMPLATE="$PACKAGE_TEMPLATE_DIR/manifest.template.json"
+RENDER_MANIFEST_SCRIPT="$SCRIPT_DIR/render-manifest.sh"
 
 normalize_ipkg_version() {
   local raw="${1:-}"
@@ -43,13 +48,19 @@ PACKAGE_NAME="ikuai-bypass-x86_64.ipk"
 # 步骤 0：同步图标 / Step 0: Sync icons from the GUI source icon
 bash "$PROJECT_DIR/apps/gui/scripts/sync-icons.sh" ipkg-only
 
-# 步骤 1：同步版本号到 manifest.json / Step 1: Sync version to manifest.json
-echo "[1/6] 同步版本号到 manifest.json..."
-sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"${VERSION}\"/" "$SCRIPT_DIR/ikuai-bypass/manifest.json"
+# 步骤 1：准备暂存目录并渲染 manifest.json / Step 1: Prepare staging and render manifest.json
+echo "[1/6] 准备暂存目录并渲染 manifest.json..."
+
+# Why/为什么: 最终 ipkg 需要成品 manifest.json，但源码树只保留模板，避免本地/CI 把仓库改脏。
+# English: The final ipkg needs a real manifest.json, while the repo keeps a template to avoid dirtying the tree.
+rm -rf "$STAGE_DIR"
+mkdir -p "$STAGE_DIR/docker/bin/linux-amd64" "$STAGE_DIR/docker/frontends/app" "$PACKAGE_STAGE_DIR"
+cp -R "$PACKAGE_TEMPLATE_DIR/." "$PACKAGE_STAGE_DIR/"
+rm -f "$PACKAGE_STAGE_DIR/manifest.template.json" "$PACKAGE_STAGE_DIR/docker_image.tar.gz"
+bash "$RENDER_MANIFEST_SCRIPT" "$MANIFEST_TEMPLATE" "$PACKAGE_STAGE_DIR/manifest.json" "$VERSION"
 
 # 准备暂存目录（模拟根 Dockerfile 所需的目录结构）
 # Prepare staging dir (mirror the layout root Dockerfile expects)
-rm -rf "$STAGE_DIR" && mkdir -p "$STAGE_DIR/docker/bin/linux-amd64" "$STAGE_DIR/docker/frontends/app"
 
 # 步骤 2：编译前端（临时容器）/ Step 2: Build frontend in temp container
 echo "[2/6] 构建前端..."
@@ -96,19 +107,17 @@ DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM=linux/amd64 -t ikuai-b
 
 # 步骤 5：导出镜像为离线安装包 / Step 5: Export image as offline package
 echo "[5/6] 导出 Docker 镜像..."
-docker save ikuai-bypass:ikuai | gzip > "$SCRIPT_DIR/ikuai-bypass/docker_image.tar.gz"
-IMAGE_SIZE=$(du -h "$SCRIPT_DIR/ikuai-bypass/docker_image.tar.gz" | cut -f1)
+docker save ikuai-bypass:ikuai | gzip > "$PACKAGE_STAGE_DIR/docker_image.tar.gz"
+IMAGE_SIZE=$(du -h "$PACKAGE_STAGE_DIR/docker_image.tar.gz" | cut -f1)
 echo "    镜像大小 / Image size: ${IMAGE_SIZE}"
 
 # 步骤 6：打包 ipk / Step 6: Pack ipk
 echo "[6/6] 打包 ipkg..."
-cd "$SCRIPT_DIR"
-tar -czf "${PACKAGE_NAME}" ikuai-bypass/
-IPKG_SIZE=$(du -h "${PACKAGE_NAME}" | cut -f1)
+tar -czf "$SCRIPT_DIR/${PACKAGE_NAME}" -C "$STAGE_DIR/package" ikuai-bypass/
+IPKG_SIZE=$(du -h "$SCRIPT_DIR/${PACKAGE_NAME}" | cut -f1)
 
 # 清理临时文件 / Clean up
 rm -rf "$STAGE_DIR"
-rm -f "$SCRIPT_DIR/ikuai-bypass/docker_image.tar.gz"
 
 echo ""
 echo "=== 完成 / Done ==="

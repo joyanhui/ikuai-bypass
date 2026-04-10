@@ -1,6 +1,6 @@
 {
     "name": "ikuai-bypass",
-    "version": "4.4.101",
+    "version": "__IKB_IPKG_VERSION__",
     "display_name": "iKuai Bypass",
     "image": "ikuai-bypass:ikuai",
     "description": "iKuai 智能分流管理工具，支持自定义运营商IP分流、域名分流、端口分流、IPv6分组等，内置 WebUI 和定时任务",

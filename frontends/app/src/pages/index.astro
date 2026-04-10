@@ -136,19 +136,19 @@ import '../styles/global.css';
                 </div>
                 <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4" id="runModeGrid">
                   <button class="run-mode-chip active" data-run-mode="once">
-                    <span class="block text-base font-semibold">once</span>
+                    <span class="block text-base font-semibold" data-i18n="runtime.runmode.once_code">once</span>
                     <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.once_desc">执行一次</span>
                   </button>
                   <button class="run-mode-chip" data-run-mode="cron">
-                    <span class="block text-base font-semibold">cron</span>
+                    <span class="block text-base font-semibold" data-i18n="runtime.runmode.cron_code">cron</span>
                     <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.cron_desc">先执行后定时</span>
                   </button>
                   <button class="run-mode-chip" data-run-mode="cronAft">
-                    <span class="block text-base font-semibold">cronAft</span>
+                    <span class="block text-base font-semibold" data-i18n="runtime.runmode.cronaft_code">cronAft</span>
                     <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.cronaft_desc">直接定时</span>
                   </button>
                   <button class="run-mode-chip" data-run-mode="clean">
-                    <span class="block text-base font-semibold">clean</span>
+                    <span class="block text-base font-semibold" data-i18n="runtime.runmode.clean_code">clean</span>
                     <span class="mt-1 block text-sm text-gray-500 dark:text-gray-400" data-i18n="runtime.runmode.clean_desc">清理模式</span>
                   </button>
                 </div>
@@ -292,7 +292,7 @@ import '../styles/global.css';
                               <input id="cfgAddWait" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="1s" />
                             </div>
                             <div class="md:col-span-2">
-                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400">Cron</label>
+                              <label class="mb-1.5 block text-sm text-gray-500 dark:text-gray-400" data-i18n="cron.label">Cron</label>
                               <input id="cfgCronInline" type="text" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white" placeholder="0 7 * * *" />
                             </div>
                           </div>
@@ -560,8 +560,8 @@ import '../styles/global.css';
       <div id="ruleEditorContent" class="absolute inset-x-4 top-24 bottom-8 mx-auto max-w-4xl translate-y-6 overflow-hidden rounded-3xl bg-gray-50 shadow-2xl transition-transform dark:bg-gray-950">
         <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div>
-            <h2 id="ruleEditorTitle" class="text-lg font-bold text-gray-900 dark:text-white">编辑规则</h2>
-            <p id="ruleEditorSubtitle" class="text-sm text-gray-500 dark:text-gray-400">查看并修改当前规则内容。</p>
+            <h2 id="ruleEditorTitle" class="text-lg font-bold text-gray-900 dark:text-white" data-i18n="rule.editor.initial_title">编辑规则</h2>
+            <p id="ruleEditorSubtitle" class="text-sm text-gray-500 dark:text-gray-400" data-i18n="rule.editor.initial_subtitle">查看并修改当前规则内容。</p>
           </div>
           <button id="btnCloseRuleEditor" class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700" aria-label="关闭" data-i18n-aria-label="common.close" data-i18n-title="common.close">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

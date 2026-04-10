@@ -48,9 +48,6 @@ fn print_webui_banner(port: &str, conf_path: &str, auth_user: &str) {
     println!("-----------------------------------------------------------");
     if !auth_enabled {
         println!("警告: 当前未启用 BasicAuth，WebUI 将对局域网完全开放");
-        println!(
-            "警告: /api/config 会返回包含密码的配置内容；/api/save 可写入配置；/api/runtime/clean 可清理规则"
-        );
         println!("提示: 建议在配置文件中设置 webui.user/webui.pass 启用 BasicAuth");
     }
     println!("提示: 停止定时任务后，计划任务将不会再按 Cron 自动执行");
@@ -71,12 +68,6 @@ struct ConfigResponse {
     #[serde(flatten)]
     meta: ikb_core::app::ConfigMeta,
     exe_path: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct SaveRequest {
-    #[serde(flatten)]
-    config: ikb_core::config::Config,
 }
 
 #[derive(Debug, Deserialize)]
@@ -101,7 +92,6 @@ pub async fn start_web_server(
     let api = Router::new()
         .route("/api/config", get(api_config))
         .route("/api/diagnostics/report", get(api_diagnostics_report))
-        .route("/api/save", post(api_save))
         .route("/api/save-raw", post(api_save_raw_yaml))
         .route("/api/remote/fetch", post(api_remote_fetch))
         .route("/api/test/ikuai-login", post(api_test_ikuai_login))
@@ -238,30 +228,6 @@ async fn api_diagnostics_report(State(state): State<Arc<AppState>>) -> Response 
         StatusCode::OK,
         [(header::CACHE_CONTROL, "no-store")],
         Json(report),
-    )
-        .into_response()
-}
-
-async fn api_save(State(state): State<Arc<AppState>>, Json(req): Json<SaveRequest>) -> Response {
-    if let Err(e) = req.config.save_to_path(&state.config_path) {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to save config: {}", e),
-        )
-            .into_response();
-    }
-
-    let new_cron = req.config.cron.to_string();
-    {
-        let mut current = state.config.lock().await;
-        *current = Arc::new(req.config);
-    }
-    state.runtime.set_defaults(None, Some(new_cron)).await;
-
-    (
-        StatusCode::OK,
-        [(header::CONTENT_TYPE, "application/json")],
-        r#"{"status":"success","message":"Configuration saved successfully"}"#,
     )
         .into_response()
 }

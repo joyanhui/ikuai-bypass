@@ -53,7 +53,7 @@ const getErrorMessage = (err: unknown): string => {
     const value = (err as { message?: unknown }).message;
     if (typeof value === 'string') return value;
   }
-  return getLanguage() === 'en' ? 'Unknown error' : '未知错误';
+  return tt('error.unknown');
 };
 
 const getRawEditorValue = () => {
@@ -2281,7 +2281,7 @@ const loadBackend = async () => {
     
     // 更新副标题
     const subtitle = document.getElementById('subtitle');
-    if (subtitle) subtitle.textContent = (await bridge.isTauriReady()) ? 'Tauri App' : 'WebUI';
+    if (subtitle) subtitle.textContent = (await bridge.isTauriReady()) ? tt('about.runtime.tauri') : tt('about.runtime.web');
 
     // 配置文件缺失/为空时，提示用户通过远程载入模板初始化。
     // When config is missing/empty, guide user to load a template remotely.
@@ -2310,7 +2310,7 @@ const initLanguageToggle = () => {
 
   const refresh = () => {
     const lang = getLanguage();
-    btn.textContent = lang === 'en' ? 'EN' : '中';
+    btn.textContent = lang === 'en' ? tt('lang.short_en') : tt('lang.short_zh');
     const hint = t('lang.toggle_hint');
     const title = lang === 'en' ? `${t('lang.en')} - ${hint}` : `${t('lang.zh')} - ${hint}`;
     btn.title = title;

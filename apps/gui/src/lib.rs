@@ -5,12 +5,6 @@ use ikb_core::config::Config;
 use ikb_core::runtime::RuntimeService;
 use tauri::{Emitter, Manager};
 
-#[tauri::command]
-async fn get_config(state: tauri::State<'_, AppState>) -> Result<serde_json::Value, String> {
-    let cfg = state.config.lock().await;
-    serde_json::to_value(cfg.as_ref()).map_err(|e| format!("Failed to encode config: {}", e))
-}
-
 type ConfigMeta = ikb_core::app::ConfigMeta;
 type TestResult = ikb_core::app::TestResult;
 type TestIkuaiLoginReq = ikb_core::app::TestIkuaiLoginRequest;
@@ -40,21 +34,6 @@ async fn get_config_meta(state: tauri::State<'_, AppState>) -> Result<ConfigMeta
     let cfg_snapshot = { Arc::clone(&*state.config.lock().await) };
     let path_guard = state.config_path.lock().await;
     ikb_core::app::build_config_meta(cfg_snapshot.as_ref(), &path_guard)
-}
-
-#[tauri::command]
-async fn save_config(state: tauri::State<'_, AppState>, config: Config) -> Result<(), String> {
-    {
-        let path_guard = state.config_path.lock().await;
-        if let Err(e) = config.save_to_path(&*path_guard) {
-            return Err(format!("Failed to save config: {}", e));
-        }
-    }
-
-    let new_cron = config.cron.to_string();
-    *state.config.lock().await = Arc::new(config);
-    state.runtime.set_defaults(None, Some(new_cron)).await;
-    Ok(())
 }
 
 #[tauri::command]
@@ -265,9 +244,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            get_config,
             get_config_meta,
-            save_config,
             save_raw_yaml,
             test_ikuai_login,
             test_github_proxy,

@@ -139,19 +139,6 @@ export const bridge = {
     return await fetchJson<ConfigMeta>('/api/config');
   },
 
-  async saveConfig(payload: Record<string, unknown>): Promise<void> {
-    if (await isTauriReady()) {
-      await tauriInvoke<void>('save_config', {
-        config: payload,
-      });
-      return;
-    }
-    await fetchJson('/api/save', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-  },
-
   async saveRawYaml(yamlText: string): Promise<void> {
     if (await isTauriReady()) {
       await tauriInvoke<void>('save_raw_yaml', {

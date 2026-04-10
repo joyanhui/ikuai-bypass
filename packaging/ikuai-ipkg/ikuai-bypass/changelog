@@ -1,7 +1,32 @@
-更多更新日志请参考 https://github.com/joyanhui/ikuai-bypass 
 
-- 备注信息 改为 IkuaiBypass 避免爱快部分模块虽然可以直接使用特殊字符但是爱快的webui不让使用的困扰
-- 支持端口分流配置 的 “反向匹配” #119
-- 修复域名分流和端口分流的ip分组不支持自维护的分组的bug
-#125域名分流和端口分流的
-- 初始版本 基于 Rust 重构的 iKuai Bypass，支持 iKuai v4 应用市场安装。
+iKuai Bypass - 智能分流管理工具
+
+使用方法:
+安装后通过 http://<设备IP>:<WebUI端口> 访问管理界面
+默认端口19001 用户名: admin  密码: admin888
+默认运行模式为: ispdomain（运营商+域名分流模式）
+
+可选运行模式:
+- ispdomain: 运营商+域名分流（默认，推荐）
+- ipgroup: IPv4分组模式
+- ipv6group: IPv6分组模式
+- ii: 运营商和域名分流+IPv4分组混合模式
+- ip: IPv4 + IPv6 分组
+- iip: 完整混合模式 ips+domain+ipv4+ipv6
+
+
+功能:
+- 自定义运营商 IP 分流 (custom-isp)
+- 域名分流 (stream-domain)
+- 端口分流 (stream-ipport)
+- IP 分组管理 (ip-group)
+- IPv6 分组管理 (ipv6-group)
+- 内置 WebUI 管理界面
+- Cron 定时自动更新规则
+
+
+
+更新日志请参考 https://github.com/joyanhui/ikuai-bypass  发布信息
+
+
+

@@ -91,7 +91,7 @@ test.describe('WebUI 浏览器 smoke', () => {
     await expect(page.locator('#cfgIkuaiUrl')).toHaveValue(remoteTemplateIkuaiUrl);
     await expect(page.locator('#cfgCronInline')).toHaveValue(remoteTemplateCron);
 
-    await page.locator('#btnSaveWithComments').click();
+    await page.locator('#btnSaveConfig').click();
     await expect(page.locator('#toastText')).toContainText('配置已保存', {
       timeout: 10_000,
     });

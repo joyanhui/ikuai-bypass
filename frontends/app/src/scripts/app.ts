@@ -1,6 +1,6 @@
 import { bridge } from '../lib/bridge.ts';
 import type { RuntimeStatus } from '../lib/bridge.ts';
-import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDumpWithComments, yamlParse } from '../lib/config_model.ts';
+import { defaultUiConfig, fromBackendMeta, toBackendPayload, yamlDump, yamlParse } from '../lib/config_model.ts';
 import type { UiConfig } from '../lib/config_model.ts';
 import { loadJson, saveJson } from '../lib/storage.ts';
 import { getLanguage, initLanguage, t, toggleLanguage } from '../lib/i18n.ts';
@@ -17,7 +17,6 @@ type YamlLanguageModule = typeof import('monaco-editor/esm/vs/basic-languages/ya
 // ============================================
 const state = {
   cfg: defaultUiConfig(),
-  comments: { top: {}, item: {}, webui: {}, maxNumberOfOneRecords: {} },
   rawYaml: '',
   confPath: '',
   selectedModule: 'ispdomain',
@@ -85,9 +84,6 @@ const applyStateFromRawYaml = () => {
   const doc = yamlParse(state.rawYaml);
   const parsed = fromBackendMeta(doc);
   state.cfg = parsed.cfg;
-  if (Object.keys(parsed.comments.top).length > 0) {
-    state.comments = parsed.comments;
-  }
 };
 
 // ============================================
@@ -107,6 +103,8 @@ const showToast = (message: string, duration = 2000) => {
     toast.classList.remove('opacity-100', 'translate-y-0');
   }, duration);
 };
+
+const tt = (key: string, vars?: Record<string, string | number>) => t(key, vars);
 
 // ============================================
 // GitHub Proxy (ghproxy) 快速选择
@@ -178,16 +176,18 @@ const mountGhProxyQuickPick = (inputId: string, containerId: string) => {
     return btn;
   };
 
-  proxies.forEach((p) => wrap.appendChild(mkTag(p)));
+  proxies.forEach((p) => {
+    wrap.appendChild(mkTag(p));
+  });
 
   const help = document.createElement('button');
   help.type = 'button';
   help.className =
     'ml-1 flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 bg-white/70 text-xs font-bold text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800';
   help.textContent = '?';
-  help.title = '获取更多可用 ghproxy 站点';
+  help.title = tt('ghproxy.help_title');
   help.addEventListener('click', () => {
-    showToast('提示：可用 Bing/Google 搜索关键词 ghproxy 获取更多可用站点', 3200);
+    showToast(tt('toast.ghproxy_help'), 3200);
   });
   wrap.appendChild(help);
 
@@ -195,29 +195,29 @@ const mountGhProxyQuickPick = (inputId: string, containerId: string) => {
   testBtn.type = 'button';
   testBtn.className =
     'flex h-8 items-center justify-center rounded-full border border-gray-200 bg-white/70 px-3 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 dark:hover:bg-gray-800';
-  testBtn.textContent = '测试';
-  testBtn.title = '测试该 GitHub Proxy 是否可用';
+  testBtn.textContent = tt('ghproxy.test');
+  testBtn.title = tt('ghproxy.test_title');
   testBtn.addEventListener('click', async () => {
     const proxy = input.value.trim();
     if (!proxy) {
-      showToast('请先填写 GitHub Proxy 地址', 2600);
+      showToast(tt('toast.ghproxy_need_url'), 2600);
       return;
     }
     const old = testBtn.textContent;
     testBtn.disabled = true;
-    testBtn.textContent = '测试中...';
+    testBtn.textContent = tt('common.testing');
     try {
       const r = await bridge.testGithubProxy(proxy);
       if (r.ok) {
-        showToast('GitHub Proxy 可用');
+        showToast(tt('toast.ghproxy_available'));
       } else {
-        showToast('GitHub Proxy 不可用: ' + (r.message || 'unknown error'), 3600);
+        showToast(tt('toast.ghproxy_unavailable', { message: r.message || 'unknown error' }), 3600);
       }
     } catch (err) {
-      showToast('测试失败: ' + getErrorMessage(err), 3600);
+      showToast(tt('toast.test_failed', { message: getErrorMessage(err) }), 3600);
     } finally {
       testBtn.disabled = false;
-      testBtn.textContent = old || '测试';
+      testBtn.textContent = old || tt('ghproxy.test');
     }
   });
   wrap.appendChild(testBtn);
@@ -344,16 +344,16 @@ const setAboutDiagHint = (text: string) => {
 
 const describeProxyForUpdateHint = (): string => {
   const mode = state.cfg.proxy.mode;
-  if (mode === 'system') return getLanguage() === 'en' ? 'Use system' : '跟随系统';
+  if (mode === 'system') return tt('proxy.mode_desc.system');
   if (mode === 'custom') {
     const url = (state.cfg.proxy.url || '').trim();
-    if (!url) return getLanguage() === 'en' ? 'Manual' : '手动设置';
-    return getLanguage() === 'en' ? `Manual: ${url}` : `手动设置: ${url}`;
+    if (!url) return tt('proxy.mode_desc.manual');
+    return tt('proxy.mode_desc.manual_with_url', { url });
   }
   // smart
   const url = (state.cfg.proxy.url || '').trim();
-  if (!url) return getLanguage() === 'en' ? 'Smart (update check uses system)' : '智能推荐（检查更新跟随系统）';
-  return getLanguage() === 'en' ? `Smart (update check uses manual: ${url})` : `智能推荐（检查更新走手动设置: ${url}）`;
+  if (!url) return tt('proxy.mode_desc.smart_system');
+  return tt('proxy.mode_desc.smart_manual', { url });
 };
 
 const pickLatestRelease = (releases: GithubRelease[], prerelease: boolean): GithubRelease | null => {
@@ -418,7 +418,7 @@ const runDiagnosticsFromAboutModal = async () => {
     if (ta) ta.value = text || '';
     setAboutDiagHint(t('about.diag.hint.ok'));
     if (copyBtn) copyBtn.disabled = !text;
-    if (text) showToast('诊断报告已生成');
+    if (text) showToast(tt('toast.diag_generated'));
   } catch (err) {
     const base = t('about.diag.hint.failed');
     setAboutDiagHint(`${base}${err ? `: ${getErrorMessage(err)}` : ''}`);
@@ -465,15 +465,15 @@ const initAboutModal = () => {
     const ta = document.getElementById('aboutDiagText') as HTMLTextAreaElement | null;
     const text = (ta?.value || '').trim();
     if (!text) {
-      showToast('诊断报告为空');
+      showToast(tt('toast.diag_empty'));
       return;
     }
     try {
       await navigator.clipboard.writeText(text);
-      showToast('已复制诊断报告');
+      showToast(tt('toast.diag_copied'));
     } catch (err) {
       console.warn('[IKB] Failed to copy diagnostics', err);
-      showToast('复制失败');
+      showToast(tt('toast.copy_failed'));
     }
   });
 };
@@ -497,8 +497,7 @@ const initProxyModal = () => {
   document.getElementById('btnCloseProxy')?.addEventListener('click', close);
   document.getElementById('btnCloseProxyBottom')?.addEventListener('click', close);
 
-  document.getElementById('btnSaveProxyWithComments')?.addEventListener('click', () => void saveConfig(true));
-  document.getElementById('btnSaveProxyNoComments')?.addEventListener('click', () => void saveConfig(false));
+  document.getElementById('btnSaveProxy')?.addEventListener('click', () => void saveConfig());
 };
 
 // ============================================
@@ -522,10 +521,10 @@ const syncStopCronModalFromStatus = (st: RuntimeStatus | null) => {
   if (hintEl) {
     if (st?.running) {
       hintEl.textContent =
-        '当前任务正在执行中。本操作仅停止定时任务，不会中断当前执行；停止后计划任务将不会再按 Cron 自动执行。若要立刻切换到 once / clean，请先在主界面点击“停止执行”中断当前任务。';
+        tt('cron_stop.hint.running');
     } else {
       hintEl.textContent =
-        '停止后可能会导致计划任务不会再执行。停止后你可以切换到 once / clean 模式执行；如需再次启动定时任务，请选择 cron 或 cronAft 模式并点击启动。';
+        tt('cron_stop.hint.idle');
     }
   }
 };
@@ -537,7 +536,7 @@ const openStopCronModal = async () => {
     syncStopCronModalFromStatus(st);
     openModal('stopCronModal');
   } catch (err) {
-    showToast('无法获取运行状态: ' + getErrorMessage(err), 3200);
+    showToast(tt('toast.runtime_status_failed', { message: getErrorMessage(err) }), 3200);
   }
 };
 
@@ -553,7 +552,7 @@ const initStopCronModal = () => {
     if (!confirmBtn) return;
     const old = confirmBtn.textContent;
     confirmBtn.disabled = true;
-    confirmBtn.textContent = getLanguage() === 'en' ? 'Stopping...' : '停止中...';
+    confirmBtn.textContent = tt('cron_stop.stopping');
     try {
       await bridge.runtimeCronStop();
       state.isCronRunning = false;
@@ -561,10 +560,10 @@ const initStopCronModal = () => {
       close();
       void updateStatus();
     } catch (err) {
-      showToast('停止失败: ' + getErrorMessage(err), 3200);
+      showToast(tt('toast.stop_failed', { message: getErrorMessage(err) }), 3200);
     } finally {
       confirmBtn.disabled = false;
-      confirmBtn.textContent = old || '停止定时任务';
+      confirmBtn.textContent = old || tt('cron_stop.confirm');
     }
   });
 };
@@ -988,13 +987,13 @@ const applyRawEditorToState = () => {
   try {
     state.rawYaml = getRawEditorValue();
     applyStateFromRawYaml();
-    if (hint) hint.textContent = 'YAML 已同步到表单。';
+    if (hint) hint.textContent = tt('raw.hint.synced');
     bindConfigFields();
     renderCmd();
     return true;
   } catch (err) {
-    if (hint) hint.textContent = `YAML 解析失败: ${getErrorMessage(err)}`;
-    showToast('请先修正 YAML');
+    if (hint) hint.textContent = tt('raw.hint.parse_failed', { message: getErrorMessage(err) });
+    showToast(tt('toast.yaml_fix_first'));
     return false;
   }
 };
@@ -1054,7 +1053,9 @@ const initModuleSelection = () => {
         showToast(t('toast.need_stop_first'));
         return;
       }
-      grid.querySelectorAll('.module-chip').forEach(c => c.classList.remove('active'));
+      grid.querySelectorAll('.module-chip').forEach((c) => {
+        c.classList.remove('active');
+      });
       chip.classList.add('active');
       state.selectedModule = chip.getAttribute('data-module') || 'ispdomain';
     });
@@ -1086,49 +1087,49 @@ const initQuickActions = () => {
         }
         showToast(t('toast.clean_running'));
         await bridge.runtimeClean(cleanTag);
-        showToast('清理完成');
+        showToast(tt('toast.clean_done'));
         return;
       }
 
       if (state.selectedRunMode === 'once') {
-        showToast('正在启动...');
+        showToast(tt('toast.starting'));
         const started = await bridge.runtimeRunOnce(state.selectedModule);
         if (started) {
           state.isRunning = true;
-          setRunningPreview(`正在执行模块: ${state.selectedModule}`);
-          showToast('任务已启动');
+          setRunningPreview(tt('status.sub.running_module', { module: state.selectedModule }));
+          showToast(tt('toast.task_started'));
         } else {
           state.isRunning = true;
-          showToast('任务已在运行中');
+          showToast(tt('toast.task_already_running'));
         }
         return;
       }
 
       const expr = (document.getElementById('cronInput') as HTMLInputElement | null)?.value || state.cfg.cron;
       if (!expr.trim()) {
-        showToast('请先设置 Cron 表达式');
+        showToast(tt('toast.cron_required'));
         return;
       }
 
       if (state.selectedRunMode === 'cron') {
-        showToast('正在执行并启动定时...');
+        showToast(tt('toast.cron_starting'));
         await bridge.runtimeRunOnce(state.selectedModule);
         await bridge.runtimeCronStart(expr, state.selectedModule);
         // started=false means the task is already running.
         // started=false 表示任务已在运行。
         state.isRunning = true;
         state.isCronRunning = true;
-        setRunningPreview(`正在执行模块: ${state.selectedModule}`);
-        showToast('已进入 cron 模式');
+        setRunningPreview(tt('status.sub.running_module', { module: state.selectedModule }));
+        showToast(tt('toast.entered_cron'));
         return;
       }
 
       await bridge.runtimeCronStart(expr, state.selectedModule);
       state.isCronRunning = true;
       updateCronButton();
-      showToast('已进入 cronAft 模式');
+      showToast(tt('toast.entered_cronaft'));
     } catch (err) {
-      showToast('启动失败: ' + getErrorMessage(err));
+      showToast(tt('toast.start_failed', { message: getErrorMessage(err) }));
     }
   });
 
@@ -1162,8 +1163,12 @@ const syncProxyModeUi = () => {
     el.classList.toggle('opacity-60', !enabled);
   };
 
-  ['cfgProxyUrl', 'cfgProxyUser', 'cfgProxyPass'].forEach((id) => setInputEnabled(id, showHttp));
-  ['cfgGhProxy'].forEach((id) => setInputEnabled(id, showGh));
+  ['cfgProxyUrl', 'cfgProxyUser', 'cfgProxyPass'].forEach((id) => {
+    setInputEnabled(id, showHttp);
+  });
+  ['cfgGhProxy'].forEach((id) => {
+    setInputEnabled(id, showGh);
+  });
 };
 
 const initBasicConfigAccordion = () => {
@@ -1227,39 +1232,39 @@ const initConfigModal = () => {
     const btn = document.getElementById('btnTestIkuaiLogin') as HTMLButtonElement | null;
 
     if (!url || !user || !pass) {
-      showToast('请填写路由器地址/用户名/密码', 2600);
-      if (hint) hint.textContent = '请先补全连接信息';
+      showToast(tt('toast.ikuai_fill_required'), 2600);
+      if (hint) hint.textContent = tt('hint.ikuai_fill_required');
       return;
     }
 
     if (btn) {
       btn.disabled = true;
-      btn.textContent = '测试中...';
+      btn.textContent = tt('common.testing');
     }
-    if (hint) hint.textContent = '正在测试...';
+    if (hint) hint.textContent = tt('hint.ikuai_testing');
 
     try {
       const r = await bridge.testIkuaiLogin(url, user, pass);
       if (r.ok) {
-        showToast('连接成功');
-        if (hint) hint.textContent = '连接成功';
+        showToast(tt('toast.ikuai_connected'));
+        if (hint) hint.textContent = tt('hint.ikuai_connected');
       } else {
-        showToast('连接失败: ' + (r.message || 'unknown error'), 3600);
-        if (hint) hint.textContent = '连接失败';
+        showToast(tt('toast.ikuai_connect_failed', { message: r.message || 'unknown error' }), 3600);
+        if (hint) hint.textContent = tt('hint.ikuai_connect_failed');
       }
     } catch (err) {
-      showToast('测试失败: ' + getErrorMessage(err), 3600);
-      if (hint) hint.textContent = '测试失败';
+      showToast(tt('toast.test_failed', { message: getErrorMessage(err) }), 3600);
+      if (hint) hint.textContent = tt('hint.ikuai_connect_failed');
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = '测试连接';
+        btn.textContent = tt('config.test_connection');
       }
     }
   });
 
   document.getElementById('btnOpenRemoteConfig')?.addEventListener('click', () => {
-    setRemoteTemplateTip(configMissingDetected ? '检测到当前配置缺失/为空，建议通过远程载入模板初始化，然后修改 iKuai 连接信息并保存。' : null);
+    setRemoteTemplateTip(configMissingDetected ? tt('remote.template_tip.missing') : null);
     openModal('remoteConfigModal');
   });
   document.getElementById('btnCloseRemoteConfig')?.addEventListener('click', () => {
@@ -1278,11 +1283,10 @@ const initConfigModal = () => {
     const input = document.getElementById('remoteUrl') as HTMLInputElement | null;
     if (input) input.value = def;
     saveJson('ikb_remote_url', def);
-    showToast('已恢复默认地址');
+    showToast(tt('toast.remote_reset'));
   });
   
-  document.getElementById('btnSaveNoComments')?.addEventListener('click', () => saveConfig(false));
-  document.getElementById('btnSaveWithComments')?.addEventListener('click', () => saveConfig(true));
+  document.getElementById('btnSaveConfig')?.addEventListener('click', () => saveConfig());
 
   const liveSyncIds = [
     'cfgIkuaiUrl',
@@ -1462,7 +1466,7 @@ const commitBasicConfigToRawYaml = () => {
   refreshEditorFromRawYaml();
 };
 
-const saveConfig = async (withComments: boolean) => {
+const saveConfig = async () => {
   try {
     if (state.selectedConfigTab === 'raw' && !applyRawEditorToState()) {
       return;
@@ -1470,11 +1474,11 @@ const saveConfig = async (withComments: boolean) => {
     if (state.selectedConfigTab === 'visual') {
       commitBasicConfigToRawYaml();
     }
-    await bridge.saveRawYaml(state.rawYaml, withComments);
-    showToast(withComments ? '配置已保存(带注释)' : '配置已保存');
+    await bridge.saveRawYaml(state.rawYaml);
+    showToast(tt('toast.config_saved'));
     await loadBackend();
   } catch (err) {
-    showToast('保存失败: ' + getErrorMessage(err), 3200);
+    showToast(tt('toast.save_failed', { message: getErrorMessage(err) }), 3200);
   }
 };
 
@@ -1484,11 +1488,11 @@ const loadRemoteConfig = async () => {
   const url = input?.value.trim() || '';
 
   if (!url) {
-    if (hint) hint.textContent = '请输入 URL';
+    if (hint) hint.textContent = tt('remote.hint.empty_url');
     return;
   }
 
-  if (hint) hint.textContent = '正在加载...';
+  if (hint) hint.textContent = tt('remote.hint.loading');
 
   try {
     const text = await bridge.fetchRemoteConfig(url, state.cfg.proxy, state.cfg.githubProxy);
@@ -1498,12 +1502,12 @@ const loadRemoteConfig = async () => {
     renderCmd();
     refreshEditorFromRawYaml();
     saveJson('ikb_remote_url', url);
-    if (hint) hint.textContent = '加载成功';
+    if (hint) hint.textContent = tt('remote.hint.success');
     setRemoteTemplateTip(null);
-    showToast('远程配置已加载');
+    showToast(tt('toast.remote_loaded'));
   } catch (err) {
-    if (hint) hint.textContent = '加载失败: ' + getErrorMessage(err);
-    showToast('加载失败');
+    if (hint) hint.textContent = tt('remote.hint.failed', { message: getErrorMessage(err) });
+    showToast(tt('toast.load_failed'));
   }
 };
 
@@ -1538,71 +1542,71 @@ const RULE_LIST_META: Record<RuleListKey, {
   fields: RuleField[];
 }> = {
   customIsp: {
-    title: '自定义运营商',
+    title: tt('rule.list.custom_isp'),
     fields: [
-      { key: 'tag', label: '标签', placeholder: '例如：telegram' },
-      { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+      { key: 'tag', label: tt('rule.field.tag'), placeholder: tt('rule.placeholder.telegram') },
+      { key: 'url', label: tt('rule.field.url'), placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
     ],
   },
   ipGroup: {
-    title: 'IPv4 分组',
+    title: tt('rule.list.ipv4_group'),
     fields: [
-      { key: 'tag', label: '标签', placeholder: '例如：国内' },
-      { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+      { key: 'tag', label: tt('rule.field.tag'), placeholder: tt('rule.placeholder.domestic') },
+      { key: 'url', label: tt('rule.field.url'), placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
     ],
   },
   ipv6Group: {
-    title: 'IPv6 分组',
+    title: tt('rule.list.ipv6_group'),
     fields: [
-      { key: 'tag', label: '标签', placeholder: '例如：国内v6' },
-      { key: 'url', label: '订阅地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+      { key: 'tag', label: tt('rule.field.tag'), placeholder: tt('rule.placeholder.domestic_v6') },
+      { key: 'url', label: tt('rule.field.url'), placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
     ],
   },
   streamDomain: {
-    title: '域名分流',
+    title: tt('rule.list.domain_routing'),
     fields: [
-      { key: 'tag', label: '标签', placeholder: '例如：gfw' },
-      { key: 'interface', label: '出站接口', placeholder: '例如：wan2' },
-      { key: 'srcAddr', label: '源地址', placeholder: '可选，支持单 IP 或范围' },
-      { key: 'srcAddrOptIpGroup', label: '源地址 IP 分组', placeholder: '可选，填写已存在分组名' },
-      { key: 'url', label: '域名列表地址', placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
+      { key: 'tag', label: tt('rule.field.tag'), placeholder: tt('rule.placeholder.gfw') },
+      { key: 'interface', label: tt('rule.field.interface'), placeholder: tt('rule.placeholder.interface') },
+      { key: 'srcAddr', label: tt('rule.field.src_addr'), placeholder: tt('rule.placeholder.src_addr') },
+      { key: 'srcAddrOptIpGroup', label: tt('rule.field.src_ip_group'), placeholder: tt('rule.placeholder.src_ip_group') },
+      { key: 'url', label: tt('rule.field.domain_url'), placeholder: 'https://raw.githubusercontent.com/...', fullRow: true },
     ],
   },
   streamIpPort: {
-    title: 'IP / 端口分流',
+    title: tt('rule.list.ip_port_routing'),
     fields: [
-      { key: 'optTagName', label: '规则名称', placeholder: '可选，用于识别这条规则' },
+      { key: 'optTagName', label: tt('rule.field.rule_name'), placeholder: tt('rule.placeholder.rule_name') },
       {
         key: 'type',
-        label: '分流类型',
+        label: tt('rule.field.type'),
         type: 'select',
         options: [
-          { value: '0', label: '0 - 外网线路' },
-          { value: '1', label: '1 - 下一跳网关' },
+          { value: '0', label: tt('rule.option.type.wan') },
+          { value: '1', label: tt('rule.option.type.nexthop') },
         ],
       },
-      { key: 'interface', label: '接口', placeholder: 'type=0 时填写，例如：wan1' },
-      { key: 'nexthop', label: '下一跳', placeholder: 'type=1 时填写，例如：192.168.1.2' },
-      { key: 'ipGroup', label: '关联 IP 分组', placeholder: '例如：国内流量' },
-      { key: 'srcAddr', label: '源地址', placeholder: '可选，支持单 IP 或范围' },
-      { key: 'srcAddrOptIpGroup', label: '源地址 IP 分组', placeholder: '可选，填写已存在分组名' },
-      { key: 'srcAddrInv', label: '源地址反向匹配', type: 'toggle' },
-      { key: 'dstAddrInv', label: '目的地址反向匹配', type: 'toggle' },
+      { key: 'interface', label: tt('rule.field.interface'), placeholder: tt('rule.placeholder.interface_type0') },
+      { key: 'nexthop', label: tt('rule.field.nexthop'), placeholder: tt('rule.placeholder.nexthop') },
+      { key: 'ipGroup', label: tt('rule.field.ip_group'), placeholder: tt('rule.placeholder.ip_group') },
+      { key: 'srcAddr', label: tt('rule.field.src_addr'), placeholder: tt('rule.placeholder.src_addr') },
+      { key: 'srcAddrOptIpGroup', label: tt('rule.field.src_ip_group'), placeholder: tt('rule.placeholder.src_ip_group') },
+      { key: 'srcAddrInv', label: tt('rule.field.src_addr_inv'), type: 'toggle' },
+      { key: 'dstAddrInv', label: tt('rule.field.dst_addr_inv'), type: 'toggle' },
       {
         key: 'mode',
-        label: '负载模式',
+        label: tt('rule.field.mode'),
         type: 'select',
         fullRow: true,
         options: [
-          { value: '0', label: '0 - 新建连接数' },
-          { value: '1', label: '1 - 源IP' },
-          { value: '2', label: '2 - 源IP+源端口' },
-          { value: '3', label: '3 - 源IP+目的IP' },
-          { value: '4', label: '4 - 源IP+目的IP+目的端口' },
-          { value: '5', label: '5 - 主备模式' },
+          { value: '0', label: tt('rule.option.mode.0') },
+          { value: '1', label: tt('rule.option.mode.1') },
+          { value: '2', label: tt('rule.option.mode.2') },
+          { value: '3', label: tt('rule.option.mode.3') },
+          { value: '4', label: tt('rule.option.mode.4') },
+          { value: '5', label: tt('rule.option.mode.5') },
         ],
       },
-      { key: 'ifaceband', label: '线路绑定', type: 'toggle', fullRow: true },
+      { key: 'ifaceband', label: tt('rule.field.ifaceband'), type: 'toggle', fullRow: true },
     ],
   },
 };
@@ -1645,15 +1649,15 @@ const getRulePrimaryText = (listKey: RuleListKey, item: AnyRuleItem) => {
 const getRuleSecondaryText = (listKey: RuleListKey, item: AnyRuleItem) => {
   switch (listKey) {
     case 'customIsp':
-      return '自定义运营商';
+      return tt('rule.list.custom_isp');
     case 'ipGroup':
-      return 'IPv4 分组';
+      return tt('rule.list.ipv4_group');
     case 'ipv6Group':
-      return 'IPv6 分组';
+      return tt('rule.list.ipv6_group');
     case 'streamDomain':
-      return `接口 ${(item as RuleItemByKey['streamDomain']).interface || '--'}`;
+      return tt('rule.subtitle.interface', { value: (item as RuleItemByKey['streamDomain']).interface || '--' });
     case 'streamIpPort':
-      return (item as RuleItemByKey['streamIpPort']).type === '1' ? '下一跳网关' : '外网线路';
+      return (item as RuleItemByKey['streamIpPort']).type === '1' ? tt('rule.subtitle.nexthop') : tt('rule.subtitle.wan');
   }
 };
 
@@ -1667,15 +1671,15 @@ const getRuleMetaItems = (listKey: RuleListKey, item: AnyRuleItem): RuleMetaItem
       {
         const it = item as RuleItemByKey['streamDomain'];
       return [
-        { label: '源地址/分组', value: it.srcAddrOptIpGroup || it.srcAddr || '--' },
+        { label: tt('rule.meta.source'), value: it.srcAddrOptIpGroup || it.srcAddr || '--' },
       ];
       }
     case 'streamIpPort':
       {
         const it = item as RuleItemByKey['streamIpPort'];
       return [
-        { label: '目标', value: it.type === '1' ? (it.nexthop || '--') : (it.interface || '--') },
-        { label: '源地址/分组', value: it.srcAddrOptIpGroup || it.srcAddr || '--' },
+        { label: tt('rule.meta.target'), value: it.type === '1' ? (it.nexthop || '--') : (it.interface || '--') },
+        { label: tt('rule.meta.source'), value: it.srcAddrOptIpGroup || it.srcAddr || '--' },
       ];
       }
   }
@@ -1697,7 +1701,7 @@ const createRuleList = <K extends RuleListKey>(listKey: K) => {
   const meta = RULE_LIST_META[listKey];
   const list = getRuleList(listKey);
   if (list.length === 0) {
-    return createEmptyState(`暂无${meta.title}数据`);
+    return createEmptyState(tt('rule.empty', { title: meta.title }));
   }
 
   const wrap = document.createElement('div');
@@ -1750,19 +1754,19 @@ const createRuleList = <K extends RuleListKey>(listKey: K) => {
     const viewBtn = document.createElement('button');
     viewBtn.type = 'button';
     viewBtn.className = 'rule-inline-btn';
-    viewBtn.textContent = '查看';
+    viewBtn.textContent = tt('common.view');
     viewBtn.addEventListener('click', () => openRuleEditor(listKey, index, true));
 
     const editBtn = document.createElement('button');
     editBtn.type = 'button';
     editBtn.className = 'rule-inline-btn rule-inline-btn-primary';
-    editBtn.textContent = '修改';
+    editBtn.textContent = tt('common.edit');
     editBtn.addEventListener('click', () => openRuleEditor(listKey, index, false));
 
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.className = 'rule-inline-btn rule-inline-btn-danger';
-    deleteBtn.textContent = '删除';
+    deleteBtn.textContent = tt('common.delete');
     deleteBtn.addEventListener('click', () => {
       const pathMap: Record<RuleListKey, string> = {
         customIsp: 'custom-isp',
@@ -1774,7 +1778,7 @@ const createRuleList = <K extends RuleListKey>(listKey: K) => {
       state.rawYaml = removeYamlSeqItem(state.rawYaml, [pathMap[listKey]], index);
       applyStateFromRawYaml();
       bindConfigFields();
-      showToast('规则已删除');
+      showToast(tt('toast.rule_deleted'));
     });
 
     actions.appendChild(viewBtn);
@@ -1813,8 +1817,8 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
   const delBtn = document.getElementById('btnDeleteRuleFromModal') as HTMLButtonElement | null;
 
   if (!form) return;
-  if (title) title.textContent = `${readonly ? '查看' : index >= 0 ? '编辑' : '新增'}${meta.title}`;
-  if (subtitle) subtitle.textContent = readonly ? '当前规则的只读视图。' : '修改后会直接写回 YAML。';
+  if (title) title.textContent = readonly ? tt('rule.editor.title.view', { title: meta.title }) : index >= 0 ? tt('rule.editor.title.edit', { title: meta.title }) : tt('rule.editor.title.create', { title: meta.title });
+  if (subtitle) subtitle.textContent = readonly ? tt('rule.editor.subtitle.readonly') : tt('rule.editor.subtitle.edit');
   if (saveBtn) saveBtn.classList.toggle('hidden', readonly);
   if (delBtn) delBtn.classList.toggle('hidden', readonly);
 
@@ -1850,7 +1854,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
       row.className = 'flex items-center justify-between rounded-2xl border border-gray-200/70 bg-white/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/60';
       const text = document.createElement('span');
       text.className = 'text-sm text-gray-700 dark:text-gray-300';
-      text.textContent = draft[field.key] === '1' ? '已开启' : '已关闭';
+      text.textContent = draft[field.key] === '1' ? tt('common.enabled') : tt('common.disabled');
       const toggle = document.createElement('label');
       toggle.className = 'toggle-switch';
       const input = document.createElement('input');
@@ -1860,7 +1864,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
       input.addEventListener('change', (e) => {
         const checked = (e.target as HTMLInputElement).checked;
         draft[field.key] = checked ? '1' : '0';
-        text.textContent = checked ? '已开启' : '已关闭';
+        text.textContent = checked ? tt('common.enabled') : tt('common.disabled');
       });
       const slider = document.createElement('span');
       slider.className = 'toggle-slider';
@@ -1923,7 +1927,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
       applyStateFromRawYaml();
       bindConfigFields();
       closeModal('ruleEditorModal');
-      showToast('规则已更新');
+      showToast(tt('toast.rule_updated'));
     };
   }
 
@@ -1940,7 +1944,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
       applyStateFromRawYaml();
       bindConfigFields();
       closeModal('ruleEditorModal');
-      showToast('规则已删除');
+      showToast(tt('toast.rule_deleted'));
     };
   }
 
@@ -1949,7 +1953,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
 
 const openRawEditor = async () => {
   await ensureRawEditor();
-  const value = state.rawYaml || yamlDumpWithComments(toBackendPayload(state.cfg), state.comments);
+  const value = state.rawYaml || yamlDump(toBackendPayload(state.cfg));
   setRawEditorValue(value);
   if (state.rawEditor) {
     requestAnimationFrame(() => state.rawEditor?.layout());
@@ -1957,8 +1961,8 @@ const openRawEditor = async () => {
   const hint = document.getElementById('rawEditorHint');
   if (hint) {
     hint.textContent = state.rawEditorTextarea
-      ? '轻量模式已启用（移动端/低内存）。保存时会校验 YAML。'
-      : '保存时会校验 YAML 结构。';
+      ? tt('raw.hint.lightweight')
+      : tt('raw.hint.validate');
   }
 };
 
@@ -1968,7 +1972,7 @@ const renderCustomIspList = () => {
   
   container.innerHTML = '';
   if (state.cfg.customIsp.length === 0) {
-    container.appendChild(createEmptyState('暂无自定义运营商规则'));
+    container.appendChild(createEmptyState(tt('rule.empty.custom_isp')));
     return;
   }
   container.appendChild(createRuleList('customIsp'));
@@ -1980,7 +1984,7 @@ const renderIpGroupList = () => {
   
   container.innerHTML = '';
   if (state.cfg.ipGroup.length === 0) {
-    container.appendChild(createEmptyState('暂无 IPv4 分组规则'));
+    container.appendChild(createEmptyState(tt('rule.empty.ipv4_group')));
     return;
   }
   
@@ -1993,7 +1997,7 @@ const renderIpv6GroupList = () => {
   
   container.innerHTML = '';
   if (state.cfg.ipv6Group.length === 0) {
-    container.appendChild(createEmptyState('暂无 IPv6 分组规则'));
+    container.appendChild(createEmptyState(tt('rule.empty.ipv6_group')));
     return;
   }
   
@@ -2006,7 +2010,7 @@ const renderStreamDomainList = () => {
   
   container.innerHTML = '';
   if (state.cfg.streamDomain.length === 0) {
-    container.appendChild(createEmptyState('暂无域名分流规则'));
+    container.appendChild(createEmptyState(tt('rule.empty.domain_routing')));
     return;
   }
   
@@ -2019,7 +2023,7 @@ const renderStreamIpPortList = () => {
   
   container.innerHTML = '';
   if (state.cfg.streamIpPort.length === 0) {
-    container.appendChild(createEmptyState('暂无 IP/端口分流规则'));
+    container.appendChild(createEmptyState(tt('rule.empty.ip_port_routing')));
     return;
   }
   
@@ -2045,7 +2049,9 @@ const initCmdModal = () => {
   // 随机后缀切换
   document.querySelectorAll('.cmd-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.cmd-toggle').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.cmd-toggle').forEach((b) => {
+        b.classList.remove('active');
+      });
       btn.classList.add('active');
       renderCmd();
       persistCmdSettings();
@@ -2057,10 +2063,10 @@ const initCmdModal = () => {
     const cmd = document.getElementById('cmdOut')?.textContent || '';
     try {
       await navigator.clipboard.writeText(cmd);
-      showToast('命令已复制');
+      showToast(tt('toast.cmd_copied'));
     } catch (err) {
       console.warn('[IKB] Failed to copy command', err);
-      showToast('复制失败');
+      showToast(tt('toast.copy_failed'));
     }
   });
   
@@ -2168,11 +2174,11 @@ type CmdPreset = {
 const savePreset = async () => {
   const presets: CmdPreset[] = loadJson('ikb_cmd_presets', []);
   if (presets.length >= 5) {
-    showToast('最多保存 5 个预设');
+    showToast(tt('toast.preset_limit'));
     return;
   }
   
-  const name = prompt('预设名称:', `预设 ${presets.length + 1}`);
+  const name = prompt(tt('preset.prompt_name'), tt('preset.default_name', { index: presets.length + 1 }));
   if (!name) return;
   
   const getValue = (id: string) => {
@@ -2195,7 +2201,7 @@ const savePreset = async () => {
   
   saveJson('ikb_cmd_presets', presets);
   renderPresets();
-  showToast('预设已保存');
+  showToast(tt('toast.preset_saved'));
 };
 
 const renderPresets = () => {
@@ -2205,7 +2211,7 @@ const renderPresets = () => {
   const presets: CmdPreset[] = loadJson('ikb_cmd_presets', []);
   
   if (presets.length === 0) {
-    container.innerHTML = '<div class="text-sm text-gray-400 italic">暂无预设</div>';
+    container.innerHTML = `<div class="text-sm text-gray-400 italic">${tt('cmd.presets.empty')}</div>`;
     return;
   }
   
@@ -2216,8 +2222,8 @@ const renderPresets = () => {
     div.innerHTML = `
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${preset.name}</span>
       <div class="flex gap-2">
-        <button class="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1" data-load="${index}">加载</button>
-        <button class="text-xs text-red-500 font-medium px-2 py-1" data-del="${index}">删除</button>
+        <button class="text-xs text-primary-600 dark:text-primary-400 font-medium px-2 py-1" data-load="${index}">${tt('common.load')}</button>
+        <button class="text-xs text-red-500 font-medium px-2 py-1" data-del="${index}">${tt('common.delete')}</button>
       </div>
     `;
     
@@ -2237,14 +2243,14 @@ const renderPresets = () => {
       });
       
       renderCmd();
-      showToast('预设已加载');
+      showToast(tt('toast.preset_loaded'));
     });
     
     div.querySelector('[data-del]')?.addEventListener('click', () => {
       presets.splice(index, 1);
       saveJson('ikb_cmd_presets', presets);
       renderPresets();
-      showToast('预设已删除');
+      showToast(tt('toast.preset_deleted'));
     });
     
     container.appendChild(div);
@@ -2263,9 +2269,8 @@ const loadBackend = async () => {
     const parsed = fromBackendMeta(meta);
     
     state.cfg = parsed.cfg;
-    state.comments = parsed.comments;
     state.confPath = parsed.confPath;
-    state.rawYaml = rawYamlFromBackend || yamlDumpWithComments(toBackendPayload(parsed.cfg), parsed.comments);
+    state.rawYaml = rawYamlFromBackend || yamlDump(toBackendPayload(parsed.cfg));
     applyStateFromRawYaml();
     bindConfigFields();
     renderCmd();
@@ -2282,7 +2287,7 @@ const loadBackend = async () => {
     // When config is missing/empty, guide user to load a template remotely.
     if (configMissingDetected && (await bridge.isTauriReady()) && !configMissingPrompted) {
       configMissingPrompted = true;
-      setRemoteTemplateTip('检测到配置文件不存在或为空，是否通过远程配置载入一个模板？载入后请修改 iKuai 地址/用户名/密码，并点击保存配置。');
+      setRemoteTemplateTip(tt('remote.template_tip.init'));
       const remoteUrlInput = document.getElementById('remoteUrl') as HTMLInputElement | null;
       if (remoteUrlInput && !remoteUrlInput.value.trim()) {
         remoteUrlInput.value = DEFAULT_REMOTE_TEMPLATE_URL;
@@ -2292,7 +2297,7 @@ const loadBackend = async () => {
     }
     
   } catch (err) {
-    showToast('加载配置失败: ' + getErrorMessage(err));
+    showToast(tt('toast.load_config_failed', { message: getErrorMessage(err) }));
   }
 };
 
@@ -2335,6 +2340,10 @@ const initLanguageToggle = () => {
     if (aboutModal && !aboutModal.classList.contains('hidden')) {
       void syncAboutModalInfo();
     }
+
+    syncStopCronModalFromStatus(state.lastRuntimeStatus);
+    renderPresets();
+    bindConfigFields();
   });
 };
 
@@ -2374,7 +2383,7 @@ const init = async () => {
     await loadBackend();
   } catch (err) {
     console.warn('[IKB] loadBackend failed, UI remains usable', err);
-    showToast('配置加载失败，请检查连接');
+    showToast(tt('toast.load_config_failed_simple'));
   }
 
   // Tauri App branding
@@ -2418,5 +2427,5 @@ const init = async () => {
 // 启动应用
 init().catch((err) => {
   console.error(err);
-  showToast('初始化失败: ' + getErrorMessage(err));
+  showToast(tt('toast.init_failed', { message: getErrorMessage(err) }));
 });

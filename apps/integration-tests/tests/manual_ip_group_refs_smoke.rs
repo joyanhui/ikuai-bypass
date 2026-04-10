@@ -76,7 +76,8 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
     let config_path = harness.write_config("manual-ip-group-refs.yml", &config)?;
     let config_path_str = config_path.to_string_lossy().to_string();
 
-    let output = harness.run_cli_expect_success(&["-c", &config_path_str, "-r", "once", "-m", "ii"])?;
+    let output =
+        harness.run_cli_expect_success(&["-c", &config_path_str, "-r", "once", "-m", "ii"])?;
     let stdout = String::from_utf8_lossy(&output.stdout);
     if stdout.contains("No matching source IP groups found")
         || stdout.contains("No matching destination IP groups found")
@@ -97,7 +98,10 @@ async fn manual_ip_group_refs_smoke() -> Result<(), String> {
         csv_items(&domains[0].domain),
         vec!["manual.example", "object.example"]
     );
-    assert_eq!(csv_items(&domains[0].src_addr), vec![src_group_name.clone()]);
+    assert_eq!(
+        csv_items(&domains[0].src_addr),
+        vec![src_group_name.clone()]
+    );
 
     let routes = ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "ManualRoute")
         .await

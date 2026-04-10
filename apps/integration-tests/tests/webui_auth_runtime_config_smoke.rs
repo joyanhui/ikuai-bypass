@@ -125,7 +125,6 @@ async fn webui_auth_runtime_config_smoke() -> Result<(), String> {
         auth,
         &json!({
             "yaml_text": updated_yaml,
-            "with_comments": true,
         }),
     )
     .await?;

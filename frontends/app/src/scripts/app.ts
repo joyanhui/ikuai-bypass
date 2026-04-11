@@ -34,6 +34,7 @@ const MODAL_IDS = ['remoteConfigModal', 'ruleEditorModal', 'stopCronModal', 'abo
 
 let configMissingDetected = false;
 let configMissingPrompted = false;
+let remoteInitialUrl = '';
 
 const getErrorMessage = (err: unknown): string => {
   if (typeof err === 'string') return err;
@@ -576,6 +577,23 @@ const setRemoteTemplateTip = (message: string | null) => {
   el.classList.remove('hidden');
 };
 
+const getRemoteUrlInput = () => {
+  return document.getElementById('remoteUrl') as HTMLInputElement | null;
+};
+
+const syncRemoteResetButton = () => {
+  const input = getRemoteUrlInput();
+  const btn = document.getElementById('btnResetRemote');
+  if (!btn || !input) return;
+  const changed = input.value.trim() !== remoteInitialUrl.trim();
+  btn.classList.toggle('hidden', !changed);
+};
+
+const captureRemoteInitialUrl = () => {
+  remoteInitialUrl = getRemoteUrlInput()?.value.trim() || '';
+  syncRemoteResetButton();
+};
+
 const useEmbeddedDefaultConfig = async () => {
   const hint = document.getElementById('remoteHint');
   if (hint) hint.textContent = tt('remote.hint.loading');
@@ -588,7 +606,8 @@ const useEmbeddedDefaultConfig = async () => {
     refreshEditorFromRawYaml();
     setRemoteTemplateTip(null);
     if (hint) hint.textContent = tt('remote.hint.default_success');
-    showToast(tt('toast.default_config_loaded'));
+    closeModal('remoteConfigModal');
+    showToast(tt('toast.default_config_loaded'), 4200);
   } catch (err) {
     if (hint) hint.textContent = tt('remote.hint.failed', { message: getErrorMessage(err) });
     showToast(tt('toast.load_failed'));
@@ -604,11 +623,12 @@ const applyRemoteGhProxyPrefix = (prefix: string) => {
   }, raw);
   const base = stripped || DEFAULT_REMOTE_TEMPLATE_URL;
   input.value = `${prefix}${base}`;
-  showToast(tt('toast.remote_prefix_applied'));
+  syncRemoteResetButton();
+  showToast(tt('toast.remote_prefix_applied'), 3600);
 };
 
 const openRemoteGhProxySearch = () => {
-  window.open('https://cn.bing.com/search?q=gh+proxy', '_blank', 'noopener,noreferrer');
+  showToast(tt('toast.ghproxy_help'), 4200);
 };
 
 // ============================================
@@ -1195,6 +1215,9 @@ const initConfigModal = () => {
 
   document.getElementById('btnOpenRemoteConfig')?.addEventListener('click', () => {
     setRemoteTemplateTip(configMissingDetected ? tt('remote.template_tip.missing') : null);
+    const hint = document.getElementById('remoteHint');
+    if (hint) hint.textContent = '';
+    captureRemoteInitialUrl();
     openModal('remoteConfigModal');
   });
   document.getElementById('btnCloseRemoteConfig')?.addEventListener('click', () => {
@@ -1209,10 +1232,9 @@ const initConfigModal = () => {
   document.getElementById('btnCancelRuleEditor')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('ruleEditorBackdrop')?.addEventListener('click', () => closeModal('ruleEditorModal'));
   document.getElementById('btnResetRemote')?.addEventListener('click', () => {
-    const def = DEFAULT_REMOTE_TEMPLATE_URL;
-    const input = document.getElementById('remoteUrl') as HTMLInputElement | null;
-    if (input) input.value = def;
-    saveJson('ikb_remote_url', def);
+    const input = getRemoteUrlInput();
+    if (input) input.value = remoteInitialUrl;
+    syncRemoteResetButton();
     showToast(tt('toast.remote_reset'));
   });
   document.getElementById('btnUseDefaultConfig')?.addEventListener('click', () => {
@@ -1228,6 +1250,7 @@ const initConfigModal = () => {
     applyRemoteGhProxyPrefix('https://gh.xmly.dev/');
   });
   document.getElementById('btnRemoteGhProxySearch')?.addEventListener('click', openRemoteGhProxySearch);
+  document.getElementById('remoteUrl')?.addEventListener('input', syncRemoteResetButton);
 
   document.getElementById('btnSaveConfig')?.addEventListener('click', () => saveConfig());
 
@@ -1337,6 +1360,7 @@ const bindConfigFields = () => {
   // 远程 URL
   const savedUrl = loadJson('ikb_remote_url', DEFAULT_REMOTE_TEMPLATE_URL);
   setValue('remoteUrl', savedUrl);
+  syncRemoteResetButton();
   
   // 渲染列表
   renderCustomIspList();
@@ -1439,15 +1463,16 @@ const loadRemoteConfig = async () => {
 
   try {
     const text = await bridge.fetchRemoteConfig(url, state.cfg.proxy, state.cfg.githubProxy);
+    saveJson('ikb_remote_url', url);
     state.rawYaml = text;
     applyStateFromRawYaml();
     bindConfigFields();
     renderCmd();
     refreshEditorFromRawYaml();
-    saveJson('ikb_remote_url', url);
     if (hint) hint.textContent = tt('remote.hint.success');
     setRemoteTemplateTip(null);
-    showToast(tt('toast.remote_loaded'));
+    closeModal('remoteConfigModal');
+    showToast(tt('toast.remote_loaded'), 4200);
   } catch (err) {
     if (hint) hint.textContent = tt('remote.hint.failed', { message: getErrorMessage(err) });
     showToast(tt('toast.load_failed'));
@@ -2230,6 +2255,7 @@ const loadBackend = async () => {
         remoteUrlInput.value = DEFAULT_REMOTE_TEMPLATE_URL;
       }
 
+      captureRemoteInitialUrl();
       openModal('remoteConfigModal');
     }
     

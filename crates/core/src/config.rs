@@ -72,7 +72,9 @@ mod duration_compat {
 #[derive(Debug, Error)]
 pub enum ConfigError {
     #[error("read config failed: {0}")]
-    ReadFailed(#[from] std::io::Error),
+    ReadFailed(std::io::Error),
+    #[error("write config failed: {0}")]
+    WriteFailed(std::io::Error),
     #[error("parse yaml failed: {0}")]
     ParseFailed(#[from] serde_yaml::Error),
     #[error("security violation: file extension must be .yml or .yaml")]
@@ -259,7 +261,7 @@ impl Config {
     }
 
     pub fn load_from_path(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
-        let raw = fs::read_to_string(path)?;
+        let raw = fs::read_to_string(path).map_err(ConfigError::ReadFailed)?;
         Self::load_from_yaml_str(&raw)
     }
 
@@ -349,25 +351,8 @@ impl Config {
     }
 
     pub fn save_to_path(&self, path: impl AsRef<Path>) -> Result<(), ConfigError> {
-        validate_save_path(path.as_ref())?;
         let data = serde_yaml::to_string(self)?;
-
-        #[cfg(unix)]
-        {
-            use std::io::Write;
-            use std::os::unix::fs::OpenOptionsExt;
-            let mut options = fs::OpenOptions::new();
-            options.create(true).truncate(true).write(true).mode(0o600);
-            let mut f = options.open(path)?;
-            f.write_all(data.as_bytes())?;
-            Ok(())
-        }
-
-        #[cfg(not(unix))]
-        {
-            fs::write(path, data)?;
-            Ok(())
-        }
+        write_config_file(path.as_ref(), data.as_bytes())
     }
 
     pub fn validate_and_save_raw_yaml(
@@ -375,26 +360,40 @@ impl Config {
         path: impl AsRef<Path>,
     ) -> Result<Self, ConfigError> {
         let cfg = Self::load_from_yaml_str(raw)?;
-        validate_save_path(path.as_ref())?;
-        let data = raw.to_string();
-
-        #[cfg(unix)]
-        {
-            use std::io::Write;
-            use std::os::unix::fs::OpenOptionsExt;
-            let mut options = fs::OpenOptions::new();
-            options.create(true).truncate(true).write(true).mode(0o600);
-            let mut f = options.open(path)?;
-            f.write_all(data.as_bytes())?;
-            Ok(cfg)
-        }
-
-        #[cfg(not(unix))]
-        {
-            fs::write(path, data)?;
-            Ok(cfg)
-        }
+        write_config_file(path.as_ref(), raw.as_bytes())?;
+        Ok(cfg)
     }
+}
+
+fn write_config_file(path: &Path, data: &[u8]) -> Result<(), ConfigError> {
+    validate_save_path(path)?;
+    ensure_parent_dir(path)?;
+
+    #[cfg(unix)]
+    {
+        use std::io::Write;
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut options = fs::OpenOptions::new();
+        options.create(true).truncate(true).write(true).mode(0o600);
+        let mut f = options.open(path).map_err(ConfigError::WriteFailed)?;
+        f.write_all(data).map_err(ConfigError::WriteFailed)?;
+        Ok(())
+    }
+
+    #[cfg(not(unix))]
+    {
+        fs::write(path, data).map_err(ConfigError::WriteFailed)?;
+        Ok(())
+    }
+}
+
+fn ensure_parent_dir(path: &Path) -> Result<(), ConfigError> {
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        fs::create_dir_all(parent).map_err(ConfigError::WriteFailed)?;
+    }
+    Ok(())
 }
 
 pub fn validate_save_path(path: &Path) -> Result<(), ConfigError> {

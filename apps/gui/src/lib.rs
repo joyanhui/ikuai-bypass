@@ -154,6 +154,28 @@ pub struct AppState {
     config_path: Arc<tokio::sync::Mutex<PathBuf>>,
 }
 
+fn resolve_gui_config_path<R: tauri::Runtime>(app: &tauri::App<R>) -> PathBuf {
+    if cfg!(target_os = "android") || cfg!(target_os = "ios") {
+        let path = app.path();
+        let base_dir = path
+            .app_config_dir()
+            .or_else(|_| path.app_data_dir())
+            .or_else(|_| path.app_local_data_dir())
+            .unwrap_or_else(|_| std::env::temp_dir().join("ikuai-bypass"));
+        return base_dir.join("config.yml");
+    }
+
+    ikb_core::paths::default_config_path()
+}
+
+fn ensure_config_parent_dir(config_path: &std::path::Path) {
+    if let Some(parent) = config_path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        let _ = std::fs::create_dir_all(parent);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let fallback_config_path = ikb_core::paths::default_config_path();
@@ -197,21 +219,10 @@ pub fn run() {
             config_path: Arc::new(tokio::sync::Mutex::new(fallback_config_path)),
         })
         .setup(move |app| {
-            // 移动端使用 Tauri 提供的 app_config_dir；桌面端沿用 ikb_core 路径逻辑
-            // Mobile: use Tauri's app_config_dir; Desktop: use ikb_core's platform path
-            let is_mobile = cfg!(target_os = "android") || cfg!(target_os = "ios");
-            let config_path = if is_mobile {
-                let dir = app
-                    .path()
-                    .app_config_dir()
-                    .unwrap_or_else(|_| PathBuf::from("."));
-                if !dir.exists() {
-                    let _ = std::fs::create_dir_all(&dir);
-                }
-                dir.join("config.yml")
-            } else {
-                ikb_core::paths::default_config_path()
-            };
+            // 移动端必须坚持使用应用沙箱目录，避免 fallback 到不可预期的 cwd。
+            // Mobile must stay inside app-managed sandbox paths instead of falling back to cwd.
+            let config_path = resolve_gui_config_path(app);
+            ensure_config_parent_dir(&config_path);
 
             let state = app.state::<AppState>();
             {

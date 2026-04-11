@@ -754,12 +754,8 @@ jobs:
           cfg = json.loads(path.read_text())
           build = cfg.setdefault("build", {})
           build["beforeBuildCommand"] = ""
-          workspace = os.environ.get("GITHUB_WORKSPACE", "")
-          if workspace:
-              build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
           bundle["active"] = os.environ.get("BUNDLE_ACTIVE", "true").lower() == "true"
-          bundle["icon"] = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.ci.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -915,21 +911,16 @@ jobs:
           cfg = json.loads(path.read_text())
           build = cfg.setdefault("build", {})
           build["beforeBuildCommand"] = ""
-          workspace = os.environ.get("GITHUB_WORKSPACE", "")
-          if workspace:
-              build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
-          bundle = cfg.setdefault("bundle", {})
-          bundle["icon"] = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.android.conf.json").write_text(json.dumps(cfg))
           PY
 
-      - name: Initialize Android project if missing
+      - name: Recreate Android project
         working-directory: apps/gui
         shell: bash
         run: |
-          if [ ! -d "gen/android" ]; then
-            cargo tauri android init --ci
-          fi
+          set -euo pipefail
+          rm -rf gen/android
+          cargo tauri android init --ci --config tauri.android.conf.json
 
       - name: Build Android APK
         working-directory: apps/gui
@@ -1132,13 +1123,9 @@ jobs:
           cfg = json.loads(path.read_text())
           build = cfg.setdefault("build", {})
           build["beforeBuildCommand"] = ""
-          workspace = os.environ.get("GITHUB_WORKSPACE", "")
-          if workspace:
-              build["frontendDist"] = str(pathlib.Path(workspace) / "frontends" / "app" / "dist")
           bundle = cfg.setdefault("bundle", {})
           bundle_ios = bundle.setdefault("iOS", {})
           bundle_ios["developmentTeam"] = "0000000000"
-          bundle["icon"] = ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico", "icons/icon.icns"]
           pathlib.Path("tauri.ios.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -1148,7 +1135,7 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf gen/apple
-          cargo tauri ios init --ci
+          cargo tauri ios init --ci --config tauri.ios.conf.json
 
       - name: Build iOS artifact
         working-directory: apps/gui

@@ -2,7 +2,7 @@
   description = "iKuai Bypass development shell (Rust 主线版本)";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-24.11";
+    nixpkgs.url = "nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -18,6 +18,21 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+
+        playwrightRuntimeLibs = [
+          pkgs.nspr
+          pkgs.nss
+          pkgs.cups
+          pkgs.expat
+          pkgs.xorg.libxcb
+          pkgs.xorg.libXcomposite
+          pkgs.xorg.libXdamage
+          pkgs.libgbm
+          pkgs.systemd
+          pkgs.alsa-lib
+        ];
+
+        playwrightLibraryPath = pkgs.lib.makeLibraryPath playwrightRuntimeLibs;
 
         bootstrapReleaseTools = pkgs.writeShellScriptBin "ikb-bootstrap-release-tools" ''
           set -euo pipefail
@@ -65,11 +80,23 @@
             dbus
             xdg-utils
             patchelf
+            chromium
+
+            nspr
+            nss
+            cups
+            expat
+            xorg.libxcb
+            xorg.libXcomposite
+            xorg.libXdamage
+            libgbm
+            alsa-lib
 
             # Rust 工具链
             rustup
             rustc
             cargo
+            cargo-release
             rust-analyzer
             cargo-nextest
             cargo-edit
@@ -93,20 +120,23 @@
             # Rust 编译优化
             RUSTC_WRAPPER = "sccache";
             SCCACHE_CACHE_SIZE = "10G";
-            SCCACHE_DIR = "$HOME/.cache/sccache";
             CARGO_BUILD_JOBS = "16";
             RUSTFLAGS = "-C link-arg=-fuse-ld=mold";
-            RUSTUP_HOME = "$HOME/.rustup";
-            CARGO_HOME = "$HOME/.cargo";
-            RUSTUP_DIST_SERVER = "https://rsproxy.cn";
-            RUSTUP_UPDATE_ROOT = "https://rsproxy.cn/rustup";
 
             # Clang
             LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
+            PLAYWRIGHT_LD_LIBRARY_PATH = playwrightLibraryPath;
           };
 
           shellHook = ''
-            export PATH="$HOME/.bun/bin:$CARGO_HOME/bin:$PATH"
+            export CARGO_HOME="$HOME/.cargo"
+            export SCCACHE_DIR="$HOME/.cache/sccache"
+            export PATH="$HOME/.bun/bin:$PATH:$CARGO_HOME/bin"
+            if [ -n "$LD_LIBRARY_PATH" ]; then
+              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
+            else
+              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH"
+            fi
             export XDG_DATA_DIRS="${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS"
 
             mkdir -p \
@@ -123,8 +153,6 @@
               apps/gui/        - Tauri v2 GUI
 
             首次使用:
-              rustup default stable
-              rustup component add rustfmt clippy
               ikb-bootstrap-release-tools  # 安装 tauri-cli, cross 等
 
             常用命令:

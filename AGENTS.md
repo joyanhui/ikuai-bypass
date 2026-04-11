@@ -21,6 +21,7 @@
 - 本地进行集成测试时，默认优先使用 KVM/QEMU 真机链路，用于验证和模拟器的行为差异
 - 如果本地没有 `qemu-system-x86_64` / `qemu-img` / `/dev/kvm`，允许通过 `IKB_TEST_IKUAI_URL` 连接开发者显式指定的爱快地址继续跑集成测试
 - 本地 KVM 默认镜像优先使用仓库内 `.github/ikuai.qcow2.7z` 解压得到的 `.github/ikuai.qcow2`，除非开发者自己通过环境变量覆盖
+- `webui` 浏览器 smoke 本地验证必须基于 `nix develop`，先预编译 `ikb-webui-fixture`，再以二进制路径运行 `apps/integration-tests/run-webui-browser-smoke.sh`。
 
 ## 核心业务逻辑
 

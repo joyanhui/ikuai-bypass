@@ -30,3 +30,18 @@ qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm 
   -nic user,model=e1000,mac=B0:48:32:04:AC:44
 
 lsof -ti:19000,19001,19021,19222 | xargs kill -9 2>/dev/null
+
+qemu-system-x86_64 \
+  -M q35,usb=on,acpi=on,hpet=off \
+  -m 6G \
+  -cpu host,hv_relaxed,hv_frequencies,hv_vpindex,hv_ipi,hv_tlbflush,hv_spinlocks=0x1fff,hv_synic,hv_runtime,hv_time,hv_stimer,hv_vapic \
+  -smp cores=4 \
+  -accel kvm \
+  -drive if=pflash,format=raw,readonly=on,file=/home/y/myworkspace/os-joyanhui/script/kvm/OVMF.fd \
+  -drive if=pflash,format=raw,file=/home/y/myworkspace/os-joyanhui/script/kvm/OVMF_VARS.fd \
+  -drive file=/mnt_auto/autofs/NVME_NTFS/win10.vhd,media=disk,format=vpc \
+  -boot order=c \
+  -device usb-tablet \
+  -device qxl-vga,vgamem_mb=1024 \
+  -nic user,model=e1000 \
+  -monitor stdio

@@ -213,7 +213,8 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 ### Desktop GUI
 
-- Windows GUI：`ikuai-bypass-gui-windows-x86_64.zip`
+- Windows GUI：`ikuai-bypass-gui-windows-x86_64.exe.zip`
+- Windows GUI UPX：`ikuai-bypass-gui-windows-x86_64.exe.upx.zip`
 - Linux AppImage：`ikuai-bypass-gui-linux-x86_64.AppImage`
 - macOS DMG：`ikuai-bypass-gui-macos-x86_64.dmg`
 - macOS DMG：`ikuai-bypass-gui-macos-aarch64.dmg`
@@ -228,7 +229,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 规则说明：
 
 - `apk`、`AppImage`、`dmg`、`ipa` 直接以原生格式发布，不再额外打包为 zip
-- 文件名不包含 `.upx`
+- Windows GUI 额外产出 `.exe.upx.zip`，其余平台文件名不包含 `.upx`
 
 ## 8. 附加产物规则
 

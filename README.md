@@ -76,7 +76,7 @@
 
 | 你的系统 | 推荐下载 |
 | :--- | :--- |
-| Windows 桌面 | `ikuai-bypass-gui-windows-x86_64.zip` 解压即可 |
+| Windows 桌面 | `ikuai-bypass-gui-windows-x86_64.exe.zip` 解压即可 |
 | macOS 桌面 | `ikuai-bypass-gui-macos-aarch64.dmg`（M芯片）或 `x86_64.dmg`（Intel） |
 | Linux 桌面 | `.AppImage`  |
 | Android 手机 | `.apk` |

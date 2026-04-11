@@ -111,7 +111,20 @@ ikb_cli_zip_name() {
 
 ikb_gui_zip_name() {
   local target="${1:-}"
+  if [[ "$(ikb_release_os "${target}")" == "windows" ]]; then
+    printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}").exe.zip"
+    return
+  fi
   printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}").zip"
+}
+
+ikb_gui_upx_zip_name() {
+  local target="${1:-}"
+  if [[ "$(ikb_release_os "${target}")" == "windows" ]]; then
+    printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}").exe.upx.zip"
+    return
+  fi
+  printf '%s\n' "ikuai-bypass-gui-$(ikb_release_suffix "${target}").upx.zip"
 }
 
 ikb_cli_native_name() {

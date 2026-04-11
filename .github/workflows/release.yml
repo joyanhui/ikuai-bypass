@@ -739,6 +739,19 @@ jobs:
         with:
           tool: tauri-cli@2
 
+      - name: Install UPX on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = '4.2.4'
+          $archive = Join-Path $env:RUNNER_TEMP 'upx.zip'
+          $extractDir = Join-Path $env:RUNNER_TEMP 'upx'
+          Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v$version/upx-$version-win64.zip" -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $extractDir -Force
+          $binDir = Get-ChildItem $extractDir -Directory | Select-Object -First 1
+          $binDir.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & (Join-Path $binDir.FullName 'upx.exe') --version
+
       - name: Prepare Tauri CI config
         working-directory: apps/gui
         shell: bash
@@ -749,9 +762,15 @@ jobs:
           import json
           import os
           import pathlib
+          import re
 
           path = pathlib.Path("tauri.conf.json")
           cfg = json.loads(path.read_text())
+          cargo_toml = pathlib.Path("Cargo.toml").read_text(encoding="utf-8")
+          version_match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', cargo_toml, re.MULTILINE)
+          if version_match is None:
+              raise SystemExit("missing package version in Cargo.toml")
+          cfg["version"] = version_match.group(1)
           build = cfg.setdefault("build", {})
           build["beforeBuildCommand"] = ""
           bundle = cfg.setdefault("bundle", {})
@@ -785,6 +804,7 @@ jobs:
           source .github/scripts/arch-helpers.sh
           mkdir -p release
           export zip_name="$(ikb_gui_zip_name "${TARGET}")"
+          export upx_zip_name="$(ikb_gui_upx_zip_name "${TARGET}")"
           export dmg_name="$(ikb_gui_native_name "${TARGET}" ".dmg")"
           export appimage_name="$(ikb_gui_native_name "${TARGET}" ".AppImage")"
           python <<'PY'
@@ -792,12 +812,14 @@ jobs:
           import os
           import pathlib
           import shutil
+          import subprocess
           import zipfile
 
           release_dir = pathlib.Path("release")
           target = os.environ["TARGET"]
           pattern = os.environ["PATTERN"]
           zip_name = os.environ["zip_name"]
+          upx_zip_name = os.environ["upx_zip_name"]
           dmg_name = os.environ["dmg_name"]
           appimage_name = os.environ["appimage_name"]
 
@@ -816,9 +838,31 @@ jobs:
           found = []
           for item in patterns:
               found.extend(glob.glob(item, recursive=True))
-          found = [pathlib.Path(item) for item in found if pathlib.Path(item).is_file()]
+          found = list(dict.fromkeys(pathlib.Path(item) for item in found if pathlib.Path(item).is_file()))
           if not found:
               raise SystemExit(f"no bundle matched: {patterns}")
+
+          def package_binary(src: pathlib.Path, package_name: str, compress_with_upx: bool = False) -> None:
+              stage = release_dir / f"{package_name}.stage"
+              if stage.exists():
+                  shutil.rmtree(stage)
+              stage.mkdir(parents=True)
+              dst_name = "ikuai-bypass.exe" if "windows" in target else src.name
+              dst = stage / dst_name
+              shutil.copy2(src, dst)
+              if compress_with_upx:
+                  upx_bin = shutil.which("upx")
+                  if not upx_bin:
+                      raise SystemExit("upx not found in PATH")
+                  subprocess.run([upx_bin, "-9", "-q", str(dst)], check=True)
+
+              out = release_dir / package_name
+              if out.exists():
+                  out.unlink()
+              with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
+                  for path in stage.rglob("*"):
+                      zf.write(path, path.relative_to(stage))
+              shutil.rmtree(stage)
 
           for src in found:
               suffix = src.suffix.lower()
@@ -829,25 +873,26 @@ jobs:
                   shutil.copy2(src, release_dir / dmg_name)
                   continue
 
-              stage = release_dir / f"{zip_name}.stage"
-              if stage.exists():
-                  shutil.rmtree(stage)
-              stage.mkdir(parents=True)
-              dst_name = "ikuai-bypass.exe" if "windows" in target else src.name
-              shutil.copy2(src, stage / dst_name)
-
-              out = release_dir / zip_name
-              if out.exists():
-                  out.unlink()
-              with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=5) as zf:
-                  for path in stage.rglob("*"):
-                      zf.write(path, path.relative_to(stage))
+              package_binary(src, zip_name)
+              if "windows" in target:
+                  package_binary(src, upx_zip_name, compress_with_upx=True)
           PY
 
       - uses: actions/upload-artifact@v6
         with:
           name: gui-${{ matrix.label }}
           path: release/*
+
+      - name: Verify Windows GUI archive names
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+          source .github/scripts/arch-helpers.sh
+          test -f "release/$(ikb_gui_zip_name "${TARGET}")"
+          test -f "release/$(ikb_gui_upx_zip_name "${TARGET}")"
 
   build-gui-android:
     name: GUI Android ${{ matrix.label }}
@@ -904,13 +949,28 @@ jobs:
         run: |
           python <<'PY'
           import json
-          import os
           import pathlib
+          import re
 
           path = pathlib.Path("tauri.conf.json")
           cfg = json.loads(path.read_text())
+          cargo_toml = pathlib.Path("Cargo.toml").read_text(encoding="utf-8")
+          version_match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', cargo_toml, re.MULTILINE)
+          if version_match is None:
+              raise SystemExit("missing package version in Cargo.toml")
+          version = version_match.group(1)
+          cfg["version"] = version
           build = cfg.setdefault("build", {})
           build["beforeBuildCommand"] = ""
+          bundle = cfg.setdefault("bundle", {})
+          android = bundle.setdefault("android", {})
+          semver_match = re.match(r'^(\d+)\.(\d+)\.(\d+)', version)
+          if semver_match is not None:
+              android["versionCode"] = (
+                  int(semver_match.group(1)) * 1_000_000
+                  + int(semver_match.group(2)) * 1_000
+                  + int(semver_match.group(3))
+              )
           pathlib.Path("tauri.android.conf.json").write_text(json.dumps(cfg))
           PY
 
@@ -921,6 +981,49 @@ jobs:
           set -euo pipefail
           rm -rf gen/android
           cargo tauri android init --ci --config tauri.android.conf.json
+
+      - name: Verify Android generated version metadata
+        working-directory: apps/gui
+        shell: bash
+        run: |
+          python <<'PY'
+          import pathlib
+          import re
+
+          cargo_toml = pathlib.Path("Cargo.toml").read_text(encoding="utf-8")
+          version_match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', cargo_toml, re.MULTILINE)
+          if version_match is None:
+              raise SystemExit("missing package version in Cargo.toml")
+          version = version_match.group(1)
+          semver_match = re.match(r'^(\d+)\.(\d+)\.(\d+)', version)
+          if semver_match is None:
+              raise SystemExit(f"unsupported semver: {version}")
+          version_code = (
+              int(semver_match.group(1)) * 1_000_000
+              + int(semver_match.group(2)) * 1_000
+              + int(semver_match.group(3))
+          )
+
+          files = [
+              path for path in pathlib.Path("gen/android").rglob("*")
+              if path.is_file() and path.suffix in {".gradle", ".kts", ".properties"}
+          ]
+          matched_version = []
+          matched_code = []
+          for path in files:
+              text = path.read_text(encoding="utf-8", errors="ignore")
+              if version in text:
+                  matched_version.append(path.as_posix())
+              if str(version_code) in text:
+                  matched_code.append(path.as_posix())
+
+          if not matched_version:
+              raise SystemExit(f"android versionName/version metadata not updated to {version}")
+          if not matched_code:
+              raise SystemExit(f"android versionCode metadata not updated to {version_code}")
+
+          print(f"Android version metadata OK: version={version}, versionCode={version_code}")
+          PY
 
       - name: Build Android APK
         working-directory: apps/gui
@@ -1116,11 +1219,16 @@ jobs:
         run: |
           python <<'PY'
           import json
-          import os
           import pathlib
+          import re
 
           path = pathlib.Path("tauri.conf.json")
           cfg = json.loads(path.read_text())
+          cargo_toml = pathlib.Path("Cargo.toml").read_text(encoding="utf-8")
+          version_match = re.search(r'^version\s*=\s*"([^"]+)"\s*$', cargo_toml, re.MULTILINE)
+          if version_match is None:
+              raise SystemExit("missing package version in Cargo.toml")
+          cfg["version"] = version_match.group(1)
           build = cfg.setdefault("build", {})
           build["beforeBuildCommand"] = ""
           bundle = cfg.setdefault("bundle", {})

@@ -21,6 +21,7 @@ fn tauri_invoke_handler_includes_runtime_commands() {
         "runtime_clean",
         "runtime_tail_logs",
         "get_config_meta",
+        "get_embedded_default_config",
         "save_raw_yaml",
         "fetch_remote_config",
         "fetch_github_releases",

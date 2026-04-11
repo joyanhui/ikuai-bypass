@@ -91,6 +91,7 @@ pub async fn start_web_server(
 
     let api = Router::new()
         .route("/api/config", get(api_config))
+        .route("/api/config/default", get(api_default_config))
         .route("/api/diagnostics/report", get(api_diagnostics_report))
         .route("/api/save-raw", post(api_save_raw_yaml))
         .route("/api/remote/fetch", post(api_remote_fetch))
@@ -208,6 +209,18 @@ async fn api_config(State(state): State<Arc<AppState>>) -> Response {
         StatusCode::OK,
         [(header::CACHE_CONTROL, "no-store")],
         Json(resp),
+    )
+        .into_response()
+}
+
+async fn api_default_config(State(_state): State<Arc<AppState>>) -> Response {
+    (
+        StatusCode::OK,
+        [
+            (header::CACHE_CONTROL, "no-store"),
+            (header::CONTENT_TYPE, "text/plain; charset=utf-8"),
+        ],
+        ikb_core::config::Config::embedded_default_yaml().to_string(),
     )
         .into_response()
 }

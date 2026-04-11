@@ -6,6 +6,9 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+const EMBEDDED_DEFAULT_CONFIG_YAML: &str =
+    include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../config.yml"));
+
 mod duration_compat {
     use std::fmt;
     use std::time::Duration;
@@ -254,6 +257,21 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn embedded_default_yaml() -> &'static str {
+        EMBEDDED_DEFAULT_CONFIG_YAML
+    }
+
+    pub fn load_embedded_default() -> Result<Self, ConfigError> {
+        Self::load_from_yaml_str(Self::embedded_default_yaml())
+    }
+
+    pub fn write_embedded_default_to_path(path: impl AsRef<Path>) -> Result<Self, ConfigError> {
+        let raw = Self::embedded_default_yaml();
+        let cfg = Self::load_from_yaml_str(raw)?;
+        write_config_file(path.as_ref(), raw.as_bytes())?;
+        Ok(cfg)
+    }
+
     pub fn load_from_yaml_str(raw: &str) -> Result<Self, ConfigError> {
         let mut cfg: Config = serde_yaml::from_str(raw)?;
         cfg.apply_defaults();

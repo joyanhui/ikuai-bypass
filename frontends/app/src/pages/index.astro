@@ -552,9 +552,20 @@ import '../styles/global.css';
               远程载入会使用当前代理模式（custom/system/smart）进行下载。
             </div>
 
+            <div class="mt-4 rounded-2xl bg-white/60 p-4 dark:bg-gray-800/30">
+              <div class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200" data-i18n="remote.ghproxy_title">元地址数据库</div>
+              <div class="flex flex-wrap gap-2">
+                <button id="btnRemoteGhProxyCom" type="button" class="rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">https://gh-proxy.com/</button>
+                <button id="btnRemoteGhProxyNet" type="button" class="rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">https://ghproxy.net/</button>
+                <button id="btnRemoteGhXmly" type="button" class="rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">https://gh.xmly.dev/</button>
+                <button id="btnRemoteGhProxySearch" type="button" class="rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-50 dark:border-gray-700 dark:text-primary-300 dark:hover:bg-gray-800" data-i18n="remote.ghproxy_search">bing搜索更多</button>
+              </div>
+            </div>
+
             <div class="mt-3 flex gap-2">
-              <button id="btnLoadRemote" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700" data-i18n="remote.btn_load">加载</button>
-              <button id="btnResetRemote" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="remote.btn_default">默认</button>
+              <button id="btnLoadRemote" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-700" data-i18n="remote.btn_load">加载远程配置文件</button>
+              <button id="btnResetRemote" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="remote.btn_reset">重置</button>
+              <button id="btnUseDefaultConfig" class="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" data-i18n="remote.btn_use_default">使用默认配置</button>
             </div>
             <p id="remoteHint" class="mt-2 text-xs text-gray-500"></p>
           </div>

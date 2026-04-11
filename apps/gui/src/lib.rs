@@ -128,6 +128,11 @@ async fn fetch_remote_config(
 }
 
 #[tauri::command]
+async fn get_embedded_default_config() -> Result<String, String> {
+    Ok(ikb_core::config::Config::embedded_default_yaml().to_string())
+}
+
+#[tauri::command]
 async fn fetch_github_releases(
     proxy: ikb_core::config::ProxyConfig,
 ) -> Result<Vec<GithubRelease>, String> {
@@ -267,6 +272,7 @@ pub fn run() {
             runtime_clean,
             runtime_tail_logs,
             fetch_remote_config,
+            get_embedded_default_config,
             fetch_github_releases,
             diagnostics_report,
         ])

@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = resolve(new URL('..', import.meta.url).pathname)
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const inputPath = resolve(root, 'tauri.conf.json')
 const outputArg = process.argv[2] || 'tauri.mobile.generated.conf.json'
 const outputPath = resolve(root, outputArg)

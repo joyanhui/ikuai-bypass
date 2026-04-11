@@ -1,11 +1,34 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const root = resolve(new URL('..', import.meta.url).pathname)
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const metadataPath = resolve(root, 'mobile-version.generated.json')
 const metadata = existsSync(metadataPath)
   ? JSON.parse(readFileSync(metadataPath, 'utf8'))
   : null
+
+function upsertJavaProperties(content, entries) {
+  const lines = content ? content.split(/\r?\n/) : []
+  const out = []
+  const pending = new Map(Object.entries(entries).filter(([, value]) => value != null))
+
+  for (const line of lines) {
+    const match = line.match(/^\s*([^#!][^=:#\s]*)\s*[=:].*$/)
+    if (match && pending.has(match[1])) {
+      out.push(`${match[1]}=${pending.get(match[1])}`)
+      pending.delete(match[1])
+    } else if (line.length > 0 || out.length > 0) {
+      out.push(line)
+    }
+  }
+
+  for (const [key, value] of pending) {
+    out.push(`${key}=${value}`)
+  }
+
+  return out.join('\n').replace(/\n*$/, '\n')
+}
 
 function patchFileIfExists(filePath, transform) {
   if (!existsSync(filePath)) return
@@ -27,6 +50,20 @@ for (const gradleFile of androidGradleFiles) {
     .replace(/versionName\s+"[^"]*"/g, metadata?.semverVersion ? `versionName "${metadata.semverVersion}"` : '$&')
     .replace(/versionCode\s*=\s*\d+/g, metadata?.versionCode ? `versionCode = ${metadata.versionCode}` : '$&')
     .replace(/versionCode\s+\d+/g, metadata?.versionCode ? `versionCode ${metadata.versionCode}` : '$&'))
+}
+
+const androidTauriProperties = resolve(root, 'gen/android/app/tauri.properties')
+if (metadata?.semverVersion || metadata?.versionCode) {
+  const original = existsSync(androidTauriProperties)
+    ? readFileSync(androidTauriProperties, 'utf8')
+    : ''
+  const updated = upsertJavaProperties(original, {
+    'tauri.android.versionName': metadata?.semverVersion,
+    'tauri.android.versionCode': metadata?.versionCode,
+  })
+  if (updated !== original) {
+    writeFileSync(androidTauriProperties, updated)
+  }
 }
 
 const androidIconSource = resolve(root, 'icons/android')

@@ -1,4 +1,5 @@
 use std::io::IsTerminal;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -67,6 +68,50 @@ fn print_export_done_banner(export_path: &str, conf_path: &str, elapsed: Duratio
     println!("耗时: {:.3}s", secs);
     println!("===========================================================");
     println!();
+}
+
+fn ensure_config_exists_or_prompt_create(config_path: &PathBuf) {
+    if config_path.is_file() {
+        return;
+    }
+
+    let display_path = display_conf_path(config_path);
+    println!(
+        "[CONF:配置文件不存在] 指定的配置文件路径 {} 不存在，是否创建，输入y创建，输入其他字符禁止启动",
+        display_path
+    );
+
+    if !std::io::stdin().is_terminal() {
+        eprintln!("[CONF:配置读取] 非交互终端，已禁止启动");
+        std::process::exit(1);
+    }
+
+    print!("> ");
+    if let Err(e) = io::stdout().flush() {
+        eprintln!("[CONF:配置读取] 输出提示失败: {}", e);
+        std::process::exit(1);
+    }
+
+    let mut input = String::new();
+    if let Err(e) = io::stdin().read_line(&mut input) {
+        eprintln!("[CONF:配置读取] 读取输入失败: {}", e);
+        std::process::exit(1);
+    }
+
+    if input.trim() != "y" {
+        eprintln!("[CONF:配置读取] 已取消创建配置文件，程序未启动");
+        std::process::exit(1);
+    }
+
+    match ikb_core::config::Config::write_embedded_default_to_path(config_path) {
+        Ok(_) => {
+            println!("[CONF:配置文件创建] 已创建默认配置文件: {}", display_path);
+        }
+        Err(e) => {
+            eprintln!("[CONF:配置读取] 创建默认配置文件失败: {}", e);
+            std::process::exit(1);
+        }
+    }
 }
 
 fn print_cron_started_banner(
@@ -146,6 +191,8 @@ fn main() {
         .config_path
         .take()
         .unwrap_or_else(ikb_core::paths::default_config_path);
+
+    ensure_config_exists_or_prompt_create(&config_path);
 
     println!(
         "[START:启动程序] Run mode: {}, Config path: '{}'",

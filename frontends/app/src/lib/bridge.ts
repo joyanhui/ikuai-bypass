@@ -139,6 +139,18 @@ export const bridge = {
     return await fetchJson<ConfigMeta>('/api/config');
   },
 
+  async getEmbeddedDefaultConfig(): Promise<string> {
+    if (await isTauriReady()) return await tauriInvoke<string>('get_embedded_default_config');
+    const r = await fetch('/api/config/default', {
+      headers: {
+        'content-type': 'text/plain',
+      },
+    });
+    const text = await r.text().catch(() => '');
+    if (!r.ok) throw new Error(text || 'HTTP ' + r.status + ' ' + r.statusText);
+    return text;
+  },
+
   async saveRawYaml(yamlText: string): Promise<void> {
     if (await isTauriReady()) {
       await tauriInvoke<void>('save_raw_yaml', {

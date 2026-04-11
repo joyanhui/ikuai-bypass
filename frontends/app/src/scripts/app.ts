@@ -111,6 +111,12 @@ const COMMON_GITHUB_PROXIES = [
   'https://ghproxy.wujiyan.cc/',
 ] as const;
 
+const REMOTE_GHPROXY_PREFIXES = [
+  'https://gh-proxy.com/',
+  'https://ghproxy.net/',
+  'https://gh.xmly.dev/',
+] as const;
+
 const ghProxyPickerRefresh = new Map<string, () => void>();
 
 const normalizeGhProxy = (proxy: string): string => {
@@ -568,6 +574,41 @@ const setRemoteTemplateTip = (message: string | null) => {
   }
   el.textContent = message;
   el.classList.remove('hidden');
+};
+
+const useEmbeddedDefaultConfig = async () => {
+  const hint = document.getElementById('remoteHint');
+  if (hint) hint.textContent = tt('remote.hint.loading');
+  try {
+    const text = await bridge.getEmbeddedDefaultConfig();
+    state.rawYaml = text;
+    applyStateFromRawYaml();
+    bindConfigFields();
+    renderCmd();
+    refreshEditorFromRawYaml();
+    setRemoteTemplateTip(null);
+    if (hint) hint.textContent = tt('remote.hint.default_success');
+    showToast(tt('toast.default_config_loaded'));
+  } catch (err) {
+    if (hint) hint.textContent = tt('remote.hint.failed', { message: getErrorMessage(err) });
+    showToast(tt('toast.load_failed'));
+  }
+};
+
+const applyRemoteGhProxyPrefix = (prefix: string) => {
+  const input = document.getElementById('remoteUrl') as HTMLInputElement | null;
+  if (!input) return;
+  const raw = input.value.trim();
+  const stripped = REMOTE_GHPROXY_PREFIXES.reduce((current, item) => {
+    return current.startsWith(item) ? current.slice(item.length) : current;
+  }, raw);
+  const base = stripped || DEFAULT_REMOTE_TEMPLATE_URL;
+  input.value = `${prefix}${base}`;
+  showToast(tt('toast.remote_prefix_applied'));
+};
+
+const openRemoteGhProxySearch = () => {
+  window.open('https://cn.bing.com/search?q=gh+proxy', '_blank', 'noopener,noreferrer');
 };
 
 // ============================================
@@ -1174,7 +1215,20 @@ const initConfigModal = () => {
     saveJson('ikb_remote_url', def);
     showToast(tt('toast.remote_reset'));
   });
-  
+  document.getElementById('btnUseDefaultConfig')?.addEventListener('click', () => {
+    void useEmbeddedDefaultConfig();
+  });
+  document.getElementById('btnRemoteGhProxyCom')?.addEventListener('click', () => {
+    applyRemoteGhProxyPrefix('https://gh-proxy.com/');
+  });
+  document.getElementById('btnRemoteGhProxyNet')?.addEventListener('click', () => {
+    applyRemoteGhProxyPrefix('https://ghproxy.net/');
+  });
+  document.getElementById('btnRemoteGhXmly')?.addEventListener('click', () => {
+    applyRemoteGhProxyPrefix('https://gh.xmly.dev/');
+  });
+  document.getElementById('btnRemoteGhProxySearch')?.addEventListener('click', openRemoteGhProxySearch);
+
   document.getElementById('btnSaveConfig')?.addEventListener('click', () => saveConfig());
 
   const liveSyncIds = [

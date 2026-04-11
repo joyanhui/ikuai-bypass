@@ -758,7 +758,7 @@ jobs:
           path.write_text(json.dumps(cfg))
           PY
 
-      - name: Build GUI bundle
+      - name: Build GUI app
         working-directory: apps/gui
         shell: bash
         env:
@@ -785,7 +785,6 @@ jobs:
           mkdir -p release
           export zip_name="$(ikb_gui_zip_name "${TARGET}")"
           export dmg_name="$(ikb_gui_native_name "${TARGET}" ".dmg")"
-          export appimage_name="$(ikb_gui_native_name "${TARGET}" ".AppImage")"
           python <<'PY'
           import glob
           import os
@@ -798,7 +797,6 @@ jobs:
           pattern = os.environ["PATTERN"]
           zip_name = os.environ["zip_name"]
           dmg_name = os.environ["dmg_name"]
-          appimage_name = os.environ["appimage_name"]
 
           patterns = [pattern]
           if pattern.startswith("target/release/"):
@@ -824,7 +822,7 @@ jobs:
               if stage.exists():
                   shutil.rmtree(stage)
               stage.mkdir(parents=True)
-              dst_name = "ikuai-bypass.exe" if "windows" in target else src.name
+              dst_name = "ikuai-bypass.exe" if "windows" in target else "ikuai-bypass"
               dst = stage / dst_name
               shutil.copy2(src, dst)
 
@@ -838,9 +836,6 @@ jobs:
 
           for src in found:
               suffix = src.suffix.lower()
-              if suffix == ".appimage":
-                  shutil.copy2(src, release_dir / appimage_name)
-                  continue
               if suffix == ".dmg":
                   shutil.copy2(src, release_dir / dmg_name)
                   continue

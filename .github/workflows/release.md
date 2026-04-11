@@ -156,7 +156,7 @@ Docker 镜像标签始终包含：
 
 `minimal`：
 
-- `linux-x86_64-appimage`
+- `linux-x86_64`
 
 `full` 额外包含：
 
@@ -214,7 +214,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 ### Desktop GUI
 
 - Windows GUI：`ikuai-bypass-gui-windows-x86_64.exe.zip`
-- Linux AppImage：`ikuai-bypass-gui-linux-x86_64.AppImage`
+- Linux GUI：`ikuai-bypass-gui-linux-x86_64.zip`
 - macOS DMG：`ikuai-bypass-gui-macos-x86_64.dmg`
 - macOS DMG：`ikuai-bypass-gui-macos-aarch64.dmg`
 
@@ -227,7 +227,9 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 规则说明：
 
-- `apk`、`AppImage`、`dmg`、`ipa` 直接以原生格式发布，不再额外打包为 zip
+- `apk`、`dmg`、`ipa` 直接以原生格式发布，不再额外打包为 zip
+- Windows GUI 与 Linux GUI 以 zip 发布
+- Linux GUI zip 内的可执行文件统一命名为 `ikuai-bypass`
 
 ## 8. 附加产物规则
 

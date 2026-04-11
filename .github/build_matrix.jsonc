@@ -157,12 +157,12 @@
   // GUI targets / GUI 发布目标
   "gui": [
     {
-      "label": "linux-x86_64-appimage",
+      "label": "linux-x86_64",
       "runner": "ubuntu-22.04",
       "target": "x86_64-unknown-linux-gnu",
-      "bundle_args": "--bundles appimage",
-      "bundle_active": true,
-      "collect_pattern": "target/release/bundle/**/*.AppImage",
+      "bundle_args": "",
+      "bundle_active": false,
+      "collect_pattern": "target/release/ikb-app",
       "mode": ["minimal", "full"]
     },
     {

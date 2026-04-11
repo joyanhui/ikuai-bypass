@@ -39,30 +39,33 @@ function patchFileIfExists(filePath, transform) {
   }
 }
 
-const androidGradleFiles = [
-  resolve(root, 'gen/android/app/build.gradle.kts'),
-  resolve(root, 'gen/android/app/build.gradle'),
-]
+const androidAppRoot = resolve(root, 'gen/android/app')
+if (existsSync(androidAppRoot)) {
+  const androidGradleFiles = [
+    resolve(androidAppRoot, 'build.gradle.kts'),
+    resolve(androidAppRoot, 'build.gradle'),
+  ]
 
-for (const gradleFile of androidGradleFiles) {
-  patchFileIfExists(gradleFile, (content) => content
-    .replace(/versionName\s*=\s*"[^"]*"/g, metadata?.semverVersion ? `versionName = "${metadata.semverVersion}"` : '$&')
-    .replace(/versionName\s+"[^"]*"/g, metadata?.semverVersion ? `versionName "${metadata.semverVersion}"` : '$&')
-    .replace(/versionCode\s*=\s*\d+/g, metadata?.versionCode ? `versionCode = ${metadata.versionCode}` : '$&')
-    .replace(/versionCode\s+\d+/g, metadata?.versionCode ? `versionCode ${metadata.versionCode}` : '$&'))
-}
+  for (const gradleFile of androidGradleFiles) {
+    patchFileIfExists(gradleFile, (content) => content
+      .replace(/versionName\s*=\s*"[^"]*"/g, metadata?.semverVersion ? `versionName = "${metadata.semverVersion}"` : '$&')
+      .replace(/versionName\s+"[^"]*"/g, metadata?.semverVersion ? `versionName "${metadata.semverVersion}"` : '$&')
+      .replace(/versionCode\s*=\s*\d+/g, metadata?.versionCode ? `versionCode = ${metadata.versionCode}` : '$&')
+      .replace(/versionCode\s+\d+/g, metadata?.versionCode ? `versionCode ${metadata.versionCode}` : '$&'))
+  }
 
-const androidTauriProperties = resolve(root, 'gen/android/app/tauri.properties')
-if (metadata?.semverVersion || metadata?.versionCode) {
-  const original = existsSync(androidTauriProperties)
-    ? readFileSync(androidTauriProperties, 'utf8')
-    : ''
-  const updated = upsertJavaProperties(original, {
-    'tauri.android.versionName': metadata?.semverVersion,
-    'tauri.android.versionCode': metadata?.versionCode,
-  })
-  if (updated !== original) {
-    writeFileSync(androidTauriProperties, updated)
+  const androidTauriProperties = resolve(androidAppRoot, 'tauri.properties')
+  if (metadata?.semverVersion || metadata?.versionCode) {
+    const original = existsSync(androidTauriProperties)
+      ? readFileSync(androidTauriProperties, 'utf8')
+      : ''
+    const updated = upsertJavaProperties(original, {
+      'tauri.android.versionName': metadata?.semverVersion,
+      'tauri.android.versionCode': metadata?.versionCode,
+    })
+    if (updated !== original) {
+      writeFileSync(androidTauriProperties, updated)
+    }
   }
 }
 

@@ -45,6 +45,7 @@ describe('config_model', () => {
       srcAddrInv: '1',
       ipGroup: 'TagA',
       dstAddrInv: '1',
+      prio: '5',
       mode: '0',
       ifaceband: '0',
     });
@@ -63,6 +64,7 @@ describe('config_model', () => {
         'src-addr-inv': 1,
         'ip-group': 'TagA',
         'dst-addr-inv': 1,
+        prio: 5,
         mode: 0,
         ifaceband: 0,
       },
@@ -80,6 +82,7 @@ describe('config_model', () => {
           'src-addr': '192.168.1.10-192.168.1.20',
           'src-addr-opt-ipgroup': '',
           'ip-group': 'TagA',
+          prio: 0,
           mode: 0,
           ifaceband: 0,
         },
@@ -97,6 +100,7 @@ describe('config_model', () => {
         srcAddrInv: '0',
         ipGroup: 'TagA',
         dstAddrInv: '0',
+        prio: '0',
         mode: '0',
         ifaceband: '0',
       },
@@ -124,6 +128,28 @@ describe('config_model', () => {
 
     expect(cfg.streamIpPort[0]?.srcAddrInv).toBe('0');
     expect(cfg.streamIpPort[0]?.dstAddrInv).toBe('0');
+    expect(cfg.streamIpPort[0]?.prio).toBe('0');
+  });
+
+  it('loads stream-ipport prio from backend meta', () => {
+    const { cfg } = fromBackendMeta({
+      'stream-ipport': [
+        {
+          'opt-tagname': 'RouteA',
+          type: '1',
+          interface: '',
+          nexthop: '192.168.1.2',
+          'src-addr': '192.168.1.10-192.168.1.20',
+          'src-addr-opt-ipgroup': '',
+          'ip-group': 'TagA',
+          prio: 63,
+          mode: 0,
+          ifaceband: 0,
+        },
+      ],
+    });
+
+    expect(cfg.streamIpPort[0]?.prio).toBe('63');
   });
 
 });

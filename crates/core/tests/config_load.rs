@@ -76,6 +76,7 @@ stream-ipport:
 
     assert_eq!(item.src_addr_inv, 0);
     assert_eq!(item.dst_addr_inv, 0);
+    assert_eq!(item.prio, 0);
 }
 
 #[test]
@@ -107,4 +108,33 @@ stream-ipport:
 
     assert_eq!(item.src_addr_inv, 0);
     assert_eq!(item.dst_addr_inv, 0);
+}
+
+#[test]
+fn stream_ipport_prio_is_loaded_when_configured() {
+    let yaml = r#"
+ikuai-url: http://192.168.9.1
+username: admin
+password: pass
+cron: ""
+stream-ipport:
+  - type: "1"
+    opt-tagname: RouteA
+    interface: ""
+    nexthop: 192.168.1.2
+    src-addr: 192.168.1.10-192.168.1.20
+    src-addr-opt-ipgroup: ""
+    ip-group: TagA
+    prio: 63
+    mode: 0
+    ifaceband: 0
+"#;
+
+    let cfg = Config::load_from_yaml_str(yaml).expect("config should load");
+    let item = cfg
+        .stream_ipport
+        .first()
+        .expect("stream-ipport item should exist");
+
+    assert_eq!(item.prio, 63);
 }

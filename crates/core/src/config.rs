@@ -144,6 +144,8 @@ pub struct StreamIpPortItem {
     pub ip_group: String,
     #[serde(rename = "dst-addr-inv", default)]
     pub dst_addr_inv: i64,
+    #[serde(rename = "prio", default)]
+    pub prio: i64,
     #[serde(rename = "mode")]
     pub mode: i64,
     #[serde(rename = "ifaceband")]

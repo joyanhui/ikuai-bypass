@@ -83,7 +83,7 @@ test.describe('WebUI 浏览器 smoke', () => {
     await expect(page.locator('#remoteHint')).toContainText('加载成功', {
       timeout: 10_000,
     });
-    await expect(page.locator('#toastText')).toContainText('远程配置已加载', {
+    await expect(page.locator('#toastText')).toContainText('远程配置已导入', {
       timeout: 10_000,
     });
     await page.locator('#btnCloseRemoteConfig').click();
@@ -91,12 +91,33 @@ test.describe('WebUI 浏览器 smoke', () => {
     await expect(page.locator('#cfgIkuaiUrl')).toHaveValue(remoteTemplateIkuaiUrl);
     await expect(page.locator('#cfgCronInline')).toHaveValue(remoteTemplateCron);
 
+    await page.locator('#addStreamIpPort').click();
+    await expect(page.locator('#ruleEditorTitle')).toContainText('端口分流');
+    await page
+      .locator('label', { has: page.locator('span', { hasText: '规则名称' }) })
+      .locator('input')
+      .fill('WebUiPrio');
+    await page
+      .locator('label', { has: page.locator('span', { hasText: '关联 IP 分组' }) })
+      .locator('input')
+      .fill('WebUiFlow');
+    await page
+      .locator('label', { has: page.locator('span', { hasText: '优先级' }) })
+      .locator('input')
+      .fill('63');
+    await page.locator('#btnSaveRuleEditor').click();
+    await expect(page.locator('#toastText')).toContainText('规则已更新', {
+      timeout: 10_000,
+    });
+
     await page.locator('#btnSaveConfig').click();
     await expect(page.locator('#toastText')).toContainText('配置已保存', {
       timeout: 10_000,
     });
     await expect.poll(readConfigText).toContain(remoteTemplateIkuaiUrl);
     await expect.poll(readConfigText).toContain(remoteTemplateCron);
+    await expect.poll(readConfigText).toContain('opt-tagname: WebUiPrio');
+    await expect.poll(readConfigText).toContain('prio: 63');
   });
 });
 

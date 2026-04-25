@@ -142,6 +142,7 @@ pub struct StreamIpPortSpec<'a> {
     pub nexthop: &'a str,
     pub tag: &'a str,
     pub dst_addr_inv: i64,
+    pub prio: i64,
     pub mode: i64,
     pub iface_band: i64,
 }
@@ -190,7 +191,7 @@ pub async fn add_stream_ipport(
         "src_port": {"custom": [], "object": []},
         "dst_port": {"custom": [], "object": []},
         "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
-        "prio": 0,
+        "prio": spec.prio,
         "area_code": "",
         "dst_type": ""
     });
@@ -245,7 +246,7 @@ pub async fn edit_stream_ipport(
         "src_port": {"custom": [], "object": []},
         "dst_port": {"custom": [], "object": []},
         "time": {"custom": [{"type":"weekly","weekdays":"1234567","start_time":"00:00","end_time":"23:59","comment":""}], "object": []},
-        "prio": 0,
+        "prio": spec.prio,
         "area_code": "",
         "dst_type": "",
         "id": id

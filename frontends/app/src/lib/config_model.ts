@@ -57,6 +57,7 @@ export type UiConfig = {
     srcAddrInv: string;
     ipGroup: string;
     dstAddrInv: string;
+    prio: string;
     mode: string;
     ifaceband: string;
   }>;
@@ -215,6 +216,7 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; confPath: strin
       srcAddrInv: asToggleStr(item['src-addr-inv']),
       ipGroup: asStr(item['ip-group']),
       dstAddrInv: asToggleStr(item['dst-addr-inv']),
+      prio: asStr(item.prio ?? '0'),
       mode: asStr(item.mode ?? '0'),
       ifaceband: asStr(item.ifaceband ?? '0'),
     };
@@ -271,6 +273,7 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
       'src-addr-inv': i.srcAddrInv === '1' ? 1 : 0,
       'ip-group': i.ipGroup,
       'dst-addr-inv': i.dstAddrInv === '1' ? 1 : 0,
+      prio: Number(i.prio || 0),
       mode: Number(i.mode || 0),
       ifaceband: Number(i.ifaceband || 0),
     })),

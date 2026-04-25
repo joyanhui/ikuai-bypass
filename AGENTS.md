@@ -13,6 +13,7 @@
 - `frontends/app/`：Bun + Astro 单页前端
 - `apps/gui/`：Tauri v2 后端
 - `config.yml`：示例配置
+- `api-docs/`: 爱快4.x api抓包记录
 - `golang_archive/`：Go 版本归档，除非用户明确要求，否则不要把新功能继续做进归档目录
 
 ## 集成测试约定

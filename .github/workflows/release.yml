@@ -1304,6 +1304,8 @@ jobs:
           usesh: true
           run: |
             set -euo pipefail
+            pkg bootstrap -f
+            pkg update -f
             pkg install -y bash curl gcc gmake pkgconf perl5
             export PATH="/usr/local/bin:${PATH}"
             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal

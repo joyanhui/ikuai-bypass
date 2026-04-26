@@ -1,46 +1,98 @@
----
 name: Bug 反馈
-about: 提交问题帮助改进项目
-title: '[Bug] '
-labels: ''
-assignees: ''
+description: 提交问题帮助改进项目
+title: "[Bug] "
+labels: []
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先确认这是 **ikuai-bypass 本身的 Bug**。
 
----
+        - 爱快使用问题、网络拓扑问题、Linux/Docker 使用问题，请移步 Discussions：
+          https://github.com/joyanhui/ikuai-bypass/discussions
+        - 如果是建议或功能需求，请描述使用场景和预期行为，并移步到 Discussions 区。
+        - 必须提供清晰的复现步骤；无复现步骤且难以理解的 issue 会被直接关闭。
 
-==============================================================================
+        如果觉得项目有帮助，请点亮 ⭐ Star 支持作者。
 
-必须提供复现步骤，至少提供有用的配置文件和运行日志片段 便于定位问题。
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: 问题描述
+      description: 请清晰描述你遇到的问题和实际表现。
+      placeholder: 描述问题现象、报错信息、预期行为等。
+    validations:
+      required: true
 
-如果能描述清楚问题，也可以不提供配置文件和日志。
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: 复现步骤
+      description: 必填，请按步骤描述如何稳定复现该问题。
+      placeholder: |
+        1. 使用什么配置启动
+        2. 执行了什么操作
+        3. 出现了什么结果
+    validations:
+      required: true
 
-无复现步骤且难以被理解的issue 会被直接关闭。
+  - type: dropdown
+    id: runtime-entry
+    attributes:
+      label: 问题出现位置
+      description: 问题出现在 ikuai-bypass 的哪个入口？
+      options:
+        - CLI
+        - GUI
+        - WebUI
+        - 不确定
+    validations:
+      required: true
 
-==============================================================================
-如果你在使用 WebUI / GUI：请在「关于」里点击「一键诊断 -> 生成报告」，把生成的诊断报告（已自动脱敏）粘贴到这里，也能会提升定位效率。
-==============================================================================
+  - type: input
+    id: startup-args
+    attributes:
+      label: 启动命令参数
+      description: 请填写你实际使用的启动命令或参数。
+      placeholder: 例如：ikuai-bypass -c config.yml -tag home
+    validations:
+      required: true
 
-## 下面是issue正文
+  - type: input
+    id: ikb-version
+    attributes:
+      label: ikuai-bypass 版本号
+      placeholder: 例如：v4.4.104
+    validations:
+      required: true
 
-### 问题描述 
+  - type: input
+    id: ikuai-version
+    attributes:
+      label: 爱快路由器版本号
+      placeholder: 例如：3.7.20 Build20260101
+    validations:
+      required: true
 
-请清晰描述遇到的问题。            如果觉得项目有帮助，请点亮 ⭐ Star 支持作者。
+  - type: textarea
+    id: config-file
+    attributes:
+      label: 配置文件
+      description: 必填，请粘贴完整可复现配置。该字段会自动以代码块方式渲染。
+      placeholder: |
+        请粘贴 config.yml 完整内容，并去掉敏感信息。
+      render: yaml
+    validations:
+      required: true
 
-### 复现步骤
-
-必填!!!!!!!!
-
-### 运行环境 
- - 问题出现在ikuai-bypass cli还是gui：【      】 
- - 启动命令参数用的什么：【   】  
- - ikuai-bypass是否是最新版本：【     】
-### 相关日志和配置文件
-
-可以使用代码片段粘贴，也可以截图。
-
-```bash
-
-```
-
-### **约束**
-- 爱快使用问题 或者 网络拓扑问题，或者Linux/docker使用问题，请移步 https://github.com/joyanhui/ikuai-bypass/discussions 尽量维持 issue区整洁。
-- 如果是建议或者功能需求请描述使用场景和预期行为，并移步到Discussions区。
+  - type: textarea
+    id: runtime-logs
+    attributes:
+      label: 运行日志
+      description: 必填，请粘贴能定位问题的运行日志。该字段会自动以代码块方式渲染。
+      placeholder: |
+        请粘贴关键日志片段。
+      render: text
+    validations:
+      required: true

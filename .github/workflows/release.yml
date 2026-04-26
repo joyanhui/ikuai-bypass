@@ -1304,7 +1304,7 @@ jobs:
           usesh: true
           run: |
             set -euo pipefail
-            pkg bootstrap -f
+            env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
             pkg update -f
             pkg install -y bash curl gcc gmake pkgconf perl5
             export PATH="/usr/local/bin:${PATH}"

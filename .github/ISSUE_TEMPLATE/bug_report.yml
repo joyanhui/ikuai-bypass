@@ -111,3 +111,11 @@ body:
       render: text
     validations:
       required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 补充信息
+      description: 如有必要，请补充截图、报错弹窗、网络拓扑、控制台输出或其他有助于定位问题的信息。
+      placeholder: |
+        可以补充截图说明、更多日志、相关现象或其他上下文。

@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: "🐛 报告 Bug (Report a Bug)"
-    url: https://github.com/joyanhui/ikuai-bypass/issues/new?template=bug_report.md
+    url: https://github.com/joyanhui/ikuai-bypass/issues/new?template=bug_report.yml
     about: "发现功能异常或崩溃？请在此提交，我们将优先处理影响稳定性的问题。"
   - name: "💡 功能建议 (Feature Request)"
     url: https://github.com/joyanhui/ikuai-bypass/discussions/new?category=ideas

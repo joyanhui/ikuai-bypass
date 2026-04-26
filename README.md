@@ -8,7 +8,9 @@
 提供两种安装方式：
 - GUI：图形化桌面和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端
 - CLI：命令行，可以完全不使用图形界面完成所有功能，也有一个可选的基于浏览器的web界面。适合 Nas AIO PVE Docker 等部署使用。
-> **提示1**：爱快v3.7x请使用 ，请使用[v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。旧版本go代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),新版本使用rust+tauri构建,因分支替换之前fork本仓库的可能需要重新操作。ikuai-bypass老用户升级v4.4.x版本请阅读[update‐to‐v4.4.10x](https://github.com/joyanhui/ikuai-bypass/wiki/v4.4.13%E2%80%90update%E2%80%90to%E2%80%90v4.4.10x)
+
+> **提示1**：爱快v3.7x请使用 [ikuai-bypass v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。旧版本go代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),ikuai-bypass v4.4以后的版本版本使用rust+tauri构建,因分支替换之前fork本仓库的可能需要重新操作。ikuai-bypass老用户升级v4.4.x版本请阅读[update‐to‐v4.4.10x](https://github.com/joyanhui/ikuai-bypass/wiki/v4.4.13%E2%80%90update%E2%80%90to%E2%80%90v4.4.10x)
+
 > **提示2**：爱快4官方尚处于beta阶段：不稳定，且api变更频繁，自身也可能存在bug，请谨慎升级，目前ikuai-bypass兼容的爱快的最新版本是 ![爱快4](https://img.shields.io/badge/%E7%88%B1%E5%BF%AB4.0-120_beta-brightgreen?style=for-the-badge)
 
 > 如果这个项目对你有帮助，请点个 Star！star数是作者唯一的维护动力。
@@ -40,7 +42,7 @@
 
 <details>
 <summary>点击这里展开查看详细图文说明</summary>
-<img src="golang_archive/assets/img.png"  alt="自定义运营商分流模式拓扑图">
+<img src="https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/v4.4.13/assets/img.png"  alt="自定义运营商分流模式拓扑图">
 </details>
 
 ### 2. IP 分组与端口分流模式 (传统模式)
@@ -273,6 +275,7 @@ docker run -itd --name ikuai-bypass --restart=always \
    <img alt="Star History Chart" src="https://api.star-history.com/image?repos=joyanhui/ikuai-bypass&type=date&legend=top-left" />
  </picture>
 </a>
+
 ## 交流与反馈
 
 - 交流讨论：[GitHub Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) 或 恩山无线论坛 或 [Telegram 电报群](https://t.me/+cosAS1HgFOtlMTc1)

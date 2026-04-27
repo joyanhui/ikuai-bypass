@@ -105,6 +105,10 @@ test.describe('WebUI 浏览器 smoke', () => {
       .locator('label', { has: page.locator('span', { hasText: '优先级' }) })
       .locator('input')
       .fill('63');
+    await page
+      .locator('label', { has: page.locator('span', { hasText: '负载模式' }) })
+      .locator('select')
+      .selectOption('6');
     await page.locator('#btnSaveRuleEditor').click();
     await expect(page.locator('#toastText')).toContainText('规则已更新', {
       timeout: 10_000,
@@ -118,6 +122,9 @@ test.describe('WebUI 浏览器 smoke', () => {
     await expect.poll(readConfigText).toContain(remoteTemplateCron);
     await expect.poll(readConfigText).toContain('opt-tagname: WebUiPrio');
     await expect.poll(readConfigText).toContain('prio: 63');
+    await expect.poll(readConfigText).toContain('mode: 6');
+    await expect.poll(readConfigText).not.toContain('主备模式');
+    await expect.poll(readConfigText).not.toContain('Primary / Backup');
   });
 });
 

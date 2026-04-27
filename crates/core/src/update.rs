@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::config::Config;
 use crate::ikuai;
 use crate::logger::{LogSink, Logger};
+use crate::net::{self, NetConfig, ProxyChoice};
 use crate::session::{LoginParamsError, resolve_login_params};
 
 #[derive(Debug, Clone, Default)]
@@ -388,13 +389,13 @@ async fn http_get(
     sink: &LogSink,
     original_url: &str,
 ) -> Result<Vec<u8>, UpdateError> {
-    let net = crate::net::NetConfig::from_config(cfg);
-    let plan = crate::net::plan_rule_fetch(&net, original_url);
+    let net = NetConfig::from_config(cfg);
+    let plan = net::plan_rule_fetch(&net, original_url);
     let http_logger = Logger::new("HTTP:资源下载", Arc::clone(sink));
     let via = match plan.proxy {
-        crate::net::ProxyChoice::Direct => "直连",
-        crate::net::ProxyChoice::System => "系统代理",
-        crate::net::ProxyChoice::Custom => "自定义代理",
+        ProxyChoice::Direct => "直连",
+        ProxyChoice::System => "系统代理",
+        ProxyChoice::Custom => "自定义代理",
     };
     let gh = if plan.used_github_proxy {
         " (ghproxy)"
@@ -411,7 +412,7 @@ async fn http_get(
     let builder = reqwest::Client::builder()
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(120));
-    let client = crate::net::apply_proxy_choice(builder, &net, plan.proxy)
+    let client = net::apply_proxy_choice(builder, &net, plan.proxy)
         .map_err(|e| UpdateError::Download(e.to_string()))?
         .build()
         .map_err(|e| UpdateError::Download(e.to_string()))?;

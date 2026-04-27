@@ -46,7 +46,7 @@ describe('config_model', () => {
       ipGroup: 'TagA',
       dstAddrInv: '1',
       prio: '5',
-      mode: '0',
+      mode: 6,
       ifaceband: '0',
     });
 
@@ -65,7 +65,7 @@ describe('config_model', () => {
         'ip-group': 'TagA',
         'dst-addr-inv': 1,
         prio: 5,
-        mode: 0,
+        mode: 6,
         ifaceband: 0,
       },
     ]);
@@ -101,7 +101,7 @@ describe('config_model', () => {
         ipGroup: 'TagA',
         dstAddrInv: '0',
         prio: '0',
-        mode: '0',
+        mode: 0,
         ifaceband: '0',
       },
     ]);
@@ -143,13 +143,53 @@ describe('config_model', () => {
           'src-addr-opt-ipgroup': '',
           'ip-group': 'TagA',
           prio: 63,
-          mode: 0,
+          mode: 6,
           ifaceband: 0,
         },
       ],
     });
 
     expect(cfg.streamIpPort[0]?.prio).toBe('63');
+    expect(cfg.streamIpPort[0]?.mode).toBe(6);
+  });
+
+  it('roundtrips stream-ipport mode as numeric enum value', () => {
+    const { cfg } = fromBackendMeta({
+      'stream-ipport': [
+        {
+          'opt-tagname': 'RouteA',
+          type: '1',
+          interface: '',
+          nexthop: '192.168.1.2',
+          'src-addr': '192.168.1.10-192.168.1.20',
+          'src-addr-opt-ipgroup': '',
+          'src-addr-inv': 1,
+          'ip-group': 'TagA',
+          'dst-addr-inv': 0,
+          prio: 63,
+          mode: 6,
+          ifaceband: 0,
+        },
+      ],
+    });
+
+    expect(cfg.streamIpPort[0]?.mode).toBe(6);
+    expect(toBackendPayload(cfg)['stream-ipport']).toEqual([
+      {
+        'opt-tagname': 'RouteA',
+        type: '1',
+        interface: '',
+        nexthop: '192.168.1.2',
+        'src-addr': '192.168.1.10-192.168.1.20',
+        'src-addr-opt-ipgroup': '',
+        'src-addr-inv': 1,
+        'ip-group': 'TagA',
+        'dst-addr-inv': 0,
+        prio: 63,
+        mode: 6,
+        ifaceband: 0,
+      },
+    ]);
   });
 
 });

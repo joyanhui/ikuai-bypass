@@ -58,7 +58,7 @@ export type UiConfig = {
     ipGroup: string;
     dstAddrInv: string;
     prio: string;
-    mode: string;
+    mode: number;
     ifaceband: string;
   }>;
 };
@@ -204,7 +204,7 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; confPath: strin
       tag: asStr(item.tag),
     };
   });
-  cfg.streamIpPort = asArray(metaObj['stream-ipport']).map((i) => {
+  cfg.streamIpPort = asArray(metaObj['stream-ipport']).map<UiConfig['streamIpPort'][number]>((i) => {
     const item = asRecord(i);
     return {
       optTagName: asStr(item['opt-tagname']),
@@ -217,7 +217,7 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; confPath: strin
       ipGroup: asStr(item['ip-group']),
       dstAddrInv: asToggleStr(item['dst-addr-inv']),
       prio: asStr(item.prio ?? '0'),
-      mode: asStr(item.mode ?? '0'),
+      mode: asNum(item.mode, 0),
       ifaceband: asStr(item.ifaceband ?? '0'),
     };
   });
@@ -274,7 +274,7 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
       'ip-group': i.ipGroup,
       'dst-addr-inv': i.dstAddrInv === '1' ? 1 : 0,
       prio: Number(i.prio || 0),
-      mode: Number(i.mode || 0),
+      mode: i.mode,
       ifaceband: Number(i.ifaceband || 0),
     })),
   };

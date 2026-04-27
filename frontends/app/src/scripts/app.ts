@@ -1500,7 +1500,7 @@ type RuleItemByKey = {
 };
 
 type RuleListKey = keyof RuleItemByKey;
-type RuleDraft = Record<string, string>;
+type RuleDraft = Record<string, string | number>;
 type RuleMetaItem = { label: string; value: string };
 
 type AnyRuleItem = RuleItemByKey[RuleListKey];
@@ -1771,7 +1771,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
     ipGroup: { tag: '', url: '' },
     ipv6Group: { tag: '', url: '' },
     streamDomain: { interface: 'wan1', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' },
-    streamIpPort: { optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', srcAddrInv: '0', ipGroup: '', dstAddrInv: '0', prio: '0', mode: '0', ifaceband: '0' },
+    streamIpPort: { optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', srcAddrInv: '0', ipGroup: '', dstAddrInv: '0', prio: '0', mode: 0, ifaceband: '0' },
   };
   const item = index >= 0 ? list[index] : defaults[listKey];
   if (!item) return;
@@ -1813,9 +1813,10 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
         opt.textContent = option.label;
         select.appendChild(opt);
       });
-      select.value = draft[field.key] || '';
+      select.value = String(draft[field.key] ?? '');
       select.addEventListener('change', (e) => {
-        draft[field.key] = (e.target as HTMLSelectElement).value;
+        const value = (e.target as HTMLSelectElement).value;
+        draft[field.key] = field.key === 'mode' ? Number(value || 0) : value;
       });
       fieldWrap.appendChild(select);
     } else if (field.type === 'toggle') {
@@ -1847,7 +1848,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
       input.type = 'text';
       input.className = 'rule-input';
       input.placeholder = field.placeholder || '';
-      input.value = draft[field.key] || '';
+      input.value = String(draft[field.key] ?? '');
       input.readOnly = readonly;
       input.addEventListener('input', (e) => {
         draft[field.key] = (e.target as HTMLInputElement).value;
@@ -1889,7 +1890,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
           'ip-group': draft.ipGroup,
           'dst-addr-inv': Number(draft.dstAddrInv || 0),
           prio: Number(draft.prio || 0),
-          mode: Number(draft.mode || 0),
+          mode: typeof draft.mode === 'number' ? draft.mode : Number(draft.mode || 0),
           ifaceband: Number(draft.ifaceband || 0),
         },
       };

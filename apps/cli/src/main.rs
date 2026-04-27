@@ -118,6 +118,7 @@ fn print_cron_started_banner(
     mode: &str,
     st: &ikb_core::runtime::RuntimeStatus,
     normalized: Option<&str>,
+    webui_port: Option<&str>,
 ) {
     let running_text = if st.running { "执行中" } else { "待机" };
     println!();
@@ -152,6 +153,9 @@ fn print_cron_started_banner(
         "运行状态: {} (cron_running={})",
         running_text, st.cron_running
     );
+    if let Some(port) = webui_port {
+        println!("WebUI: http://127.0.0.1:{}", port);
+    }
     println!("提示: 可在 WebUI 中停止定时任务；或 Ctrl+C 退出");
     println!("===========================================================");
     println!();
@@ -324,7 +328,7 @@ async fn run(
                     Arc::clone(&config),
                     Arc::clone(&runtime),
                     args.ikuai_login_info.to_string(),
-                    webui_port,
+                    webui_port.clone(),
                 )
                 .await
             {
@@ -368,7 +372,12 @@ async fn run(
 
                 let norm = normalize_cron_expr(&cron_expr).ok();
                 let st = runtime.status();
-                print_cron_started_banner("cron", &st, norm.as_deref());
+                print_cron_started_banner(
+                    "cron",
+                    &st,
+                    norm.as_deref(),
+                    webui_enable.then_some(webui_port.as_str()),
+                );
             }
 
             // 若未启用 WebUI，cron 为空时直接退出，避免无意义常驻。
@@ -429,7 +438,7 @@ async fn run(
                     Arc::clone(&config),
                     Arc::clone(&runtime),
                     args.ikuai_login_info.to_string(),
-                    webui_port,
+                    webui_port.clone(),
                 )
                 .await
             {
@@ -453,7 +462,12 @@ async fn run(
 
                 let norm = normalize_cron_expr(&cron_expr).ok();
                 let st = runtime.status();
-                print_cron_started_banner("cronAft", &st, norm.as_deref());
+                print_cron_started_banner(
+                    "cronAft",
+                    &st,
+                    norm.as_deref(),
+                    webui_enable.then_some(webui_port.as_str()),
+                );
             }
 
             if !webui_enable && cron_expr.trim().is_empty() {

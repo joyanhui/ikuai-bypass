@@ -13,6 +13,7 @@ mod duration_compat {
     use std::fmt;
     use std::time::Duration;
 
+    use humantime_serde::re::humantime;
     use serde::de;
     use serde::{Deserializer, Serializer};
 

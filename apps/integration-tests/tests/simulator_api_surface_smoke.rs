@@ -96,7 +96,7 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
             tag: "SimRoute",
             dst_addr_inv: 1,
             prio: 5,
-            mode: 0,
+            mode: 6,
             iface_band: 0,
         },
     )
@@ -106,6 +106,7 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
         .await
         .map_err(|e| format!("stream_ipport show failed: {e}"))?;
     let sip_id = sip_rows[0].id;
+    assert_eq!(sip_rows[0].mode, 6, "stream_ipport add should preserve mode=6");
     ikuai::stream_ipport::edit_stream_ipport(
         &api,
         ikuai::stream_ipport::StreamIpPortSpec {
@@ -118,13 +119,17 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
             tag: "SimRoute",
             dst_addr_inv: 0,
             prio: 9,
-            mode: 0,
+            mode: 6,
             iface_band: 0,
         },
         sip_id,
     )
     .await
     .map_err(|e| format!("stream_ipport edit failed: {e}"))?;
+    let sip_rows = ikuai::stream_ipport::show_stream_ipport_by_tag_name(&api, "SimRoute")
+        .await
+        .map_err(|e| format!("stream_ipport show after edit failed: {e}"))?;
+    assert_eq!(sip_rows[0].mode, 6, "stream_ipport edit should preserve mode=6");
 
     ikuai::stream_ipport::del_stream_ipport(&api, &sip_id.to_string())
         .await

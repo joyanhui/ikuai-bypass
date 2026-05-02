@@ -241,20 +241,23 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 
 ### iKuai v4 ipkg
 
-当 stable CLI 中包含 `linux-amd64` 时构建：
+当 stable CLI 中包含以下目标时，分别构建对应 ipkg：
 
-- `ikuai-bypass-x86_64.ipkg`
+- `linux-amd64` -> `ikuai-bypass-x86_64.ipkg`
+- `linux-arm64` -> `ikuai-bypass-aarch64.ipkg`
 
 触发与依赖规则：
 
-- `build-ipkg` 仅在 `has_linux_amd64_cli=true` 时执行
-- `build-ipkg` 依赖 `build-cli` 的 `cli-linux-amd64` artifact
+- `build-ipkg` 仅在 `has_ipkg_cli=true` 时执行
+- `build-ipkg` 依赖 `resolve-matrix.outputs.ipkg_matrix` 中列出的 `cli-linux-amd64` / `cli-linux-arm64` artifact
 - `build-ipkg` 依赖 `build-frontend` 的 `frontend-dist` artifact，因为 ipkg 内置 WebUI 静态文件
-- 为了满足上面的依赖，`build-frontend` 在 `has_gui=true`、`push_docker=true` 或 `has_linux_amd64_cli=true` 任一条件满足时都会执行
+- 为了满足上面的依赖，`build-frontend` 在 `has_gui=true`、`push_docker=true` 或 `has_ipkg_cli=true` 任一条件满足时都会执行
+- `linux-amd64` 继续沿用 `DOCKER_BUILDKIT=0 docker build`，保持现有 iKuai Docker 18.09 兼容路径
+- `linux-arm64` 使用 `docker buildx build --platform linux/arm64 --load` 配合 QEMU 生成真实 arm64 镜像，再通过 `docker save` 导出到 ipkg
 
 版本规则：
 
-- ipkg 的最终文件名按架构固定为 `ikuai-bypass-x86_64.ipkg`，不包含版本号
+- ipkg 的最终文件名按架构固定，例如 `ikuai-bypass-x86_64.ipkg`、`ikuai-bypass-aarch64.ipkg`，不包含版本号
 - 仓库内只保留 `manifest.template.json` 模板，最终 `manifest.json` 会在打包 staging 目录中渲染，避免 CI 或本地脚本原地改写源码树
 - 渲染后的 `manifest.json` 版本仍会对 semver 预发布后缀做归一化，例如 `4.4.100-alpha9.2` 会写成 `4.4.100`
 - 如果 workflow 的发布版本号不是 semver（例如 `manual-build-*` / `manual-release-*`），会回退读取 `apps/cli/Cargo.toml` 的版本并继续归一化，确保最终 `manifest.json` 始终是 `X.Y.Z`

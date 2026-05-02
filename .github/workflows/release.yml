@@ -84,6 +84,7 @@ jobs:
       gui_android_matrix: ${{ steps.matrix.outputs.gui_android_matrix }}
       gui_ios_matrix: ${{ steps.matrix.outputs.gui_ios_matrix }}
       docker_cli_matrix: ${{ steps.matrix.outputs.docker_cli_matrix }}
+      ipkg_matrix: ${{ steps.matrix.outputs.ipkg_matrix }}
       docker_platforms: ${{ steps.matrix.outputs.docker_platforms }}
       has_cli: ${{ steps.matrix.outputs.has_cli }}
       has_cli_nightly: ${{ steps.matrix.outputs.has_cli_nightly }}
@@ -93,6 +94,7 @@ jobs:
       has_gui_android: ${{ steps.matrix.outputs.has_gui_android }}
       has_gui_ios: ${{ steps.matrix.outputs.has_gui_ios }}
       has_linux_amd64_cli: ${{ steps.matrix.outputs.has_linux_amd64_cli }}
+      has_ipkg_cli: ${{ steps.matrix.outputs.has_ipkg_cli }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -261,8 +263,10 @@ jobs:
               bsd = []
 
           docker_cli = [item for item in cli if item.get("docker_platform")]
+          ipkg_cli = [item for item in cli if item["label"] in {"linux-amd64", "linux-arm64"}]
           docker_platforms = ",".join(item["docker_platform"] for item in docker_cli)
           has_linux_amd64_cli = any(item["label"] == "linux-amd64" for item in cli)
+          has_ipkg_cli = bool(ipkg_cli)
 
           outputs = {
               "build_mode": build_mode,
@@ -274,6 +278,7 @@ jobs:
               "gui_android_matrix": json.dumps(gui_android, separators=(",", ":")),
               "gui_ios_matrix": json.dumps(gui_ios, separators=(",", ":")),
               "docker_cli_matrix": json.dumps(docker_cli, separators=(",", ":")),
+              "ipkg_matrix": json.dumps(ipkg_cli, separators=(",", ":")),
               "docker_platforms": docker_platforms,
               "has_cli": str(bool(cli or cli_nightly or bsd)).lower(),
               "has_cli_nightly": str(bool(cli_nightly)).lower(),
@@ -283,6 +288,7 @@ jobs:
               "has_gui_android": str(bool(gui_android)).lower(),
               "has_gui_ios": str(bool(gui_ios)).lower(),
               "has_linux_amd64_cli": str(has_linux_amd64_cli).lower(),
+              "has_ipkg_cli": str(has_ipkg_cli).lower(),
           }
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
@@ -313,7 +319,7 @@ jobs:
   build-frontend:
     name: Build Frontend Dist
     needs: resolve-matrix
-    if: needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true' || needs.resolve-matrix.outputs.has_linux_amd64_cli == 'true'
+    if: needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true' || needs.resolve-matrix.outputs.has_ipkg_cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -1365,14 +1371,15 @@ jobs:
       - resolve-matrix
       - build-cli
       - build-frontend
-    if: needs.resolve-matrix.outputs.has_linux_amd64_cli == 'true'
+    if: needs.resolve-matrix.outputs.has_ipkg_cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v6
         with:
-          name: cli-linux-amd64
+          pattern: cli-linux-*
+          merge-multiple: true
           path: release
 
       - uses: actions/download-artifact@v6
@@ -1380,10 +1387,15 @@ jobs:
           name: frontend-dist
           path: frontends/app/dist
 
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
       - name: Build ipkg
         shell: bash
         env:
           VERSION: ${{ needs.resolve-matrix.outputs.version }}
+          IPKG_CLI_JSON: ${{ needs.resolve-matrix.outputs.ipkg_matrix }}
         run: |
           set -euo pipefail
           source .github/scripts/arch-helpers.sh
@@ -1403,37 +1415,8 @@ jobs:
             normalize_ipkg_version "${raw}"
           }
 
-          # 1. 准备 packaging/docker/Dockerfile 所需的目录结构
-          # 1. Prepare directory layout expected by packaging/docker/Dockerfile
-          stage=".ipkg-stage"
-          ipkg_dir="packaging/ikuai-ipkg"
-          package_stage="${stage}/package/ikuai-bypass"
-          manifest_template="${ipkg_dir}/ikuai-bypass/manifest.template.json"
-          render_manifest_script="${ipkg_dir}/render-manifest.sh"
-          bash apps/gui/scripts/sync-icons.sh ipkg-only
-          rm -rf "${stage}"
-          mkdir -p "${stage}/docker/bin/linux-amd64" "${stage}/docker/frontends/app" "${package_stage}"
-          cp -R "${ipkg_dir}/ikuai-bypass/." "${package_stage}/"
-          rm -f "${package_stage}/manifest.template.json" "${package_stage}/docker_image.tar.gz"
-
-          zipball="$(find release -maxdepth 1 -type f -name 'ikuai-bypass-cli-linux-x86_64.zip' | head -1)"
-          test -n "${zipball}"
-          unzip -q "${zipball}" -d "${stage}/unpack"
-          cp "${stage}/unpack/ikuai-bypass" "${stage}/docker/bin/linux-amd64/ikuai-bypass"
-          chmod +x "${stage}/docker/bin/linux-amd64/ikuai-bypass"
-          rm -rf "${stage}/unpack"
-
-          cp -R frontends/app/dist "${stage}/docker/frontends/app/dist"
-          cp packaging/docker/Dockerfile packaging/docker/docker-entrypoint.sh config.yml "${stage}/"
-
-          # 2. 用 packaging/docker/Dockerfile 构建单架构镜像（DOCKER_BUILDKIT=0 兼容 iKuai Docker 18.09）
-          # 2. Build single-arch image with packaging/docker/Dockerfile (DOCKER_BUILDKIT=0 for iKuai compat)
-          cd "${stage}"
-          DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM=linux/amd64 -t ikuai-bypass:ikuai .
-          cd ..
-
-          # 3. 渲染 manifest.json 并导出镜像到打包暂存目录
-          # 3. Render manifest.json and export the image into the package staging dir
+          # 1. 先统一准备 manifest 版本号，再按目标架构逐个构建 ipkg。
+          # 1. Resolve the manifest version once, then build each target ipkg sequentially.
           ipkg_version="$(normalize_ipkg_version "${VERSION}")"
           if [[ ! "${ipkg_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             ipkg_version="$(read_cli_semver)"
@@ -1442,14 +1425,64 @@ jobs:
             echo "Invalid ipkg version: ${ipkg_version}" >&2
             exit 1
           fi
-          bash "${render_manifest_script}" "${manifest_template}" "${package_stage}/manifest.json" "${ipkg_version}"
-          docker save ikuai-bypass:ikuai | gzip > "${package_stage}/docker_image.tar.gz"
 
-          # 4. 打包 ipkg（文件名按架构固定，版本仅保留在 manifest.json）
-          # 4. Pack ipkg (architecture-based filename; version stays in manifest.json)
-          ipkg_name="ikuai-bypass-x86_64.ipkg"
-          tar -czf "release/${ipkg_name}" -C "${stage}/package" ikuai-bypass/
-          echo "ipkg_name=${ipkg_name}" >> "$GITHUB_ENV"
+          ipkg_dir="packaging/ikuai-ipkg"
+          manifest_template="${ipkg_dir}/ikuai-bypass/manifest.template.json"
+          render_manifest_script="${ipkg_dir}/render-manifest.sh"
+
+          # Why/为什么: iKuai 应用市场最终是一包一镜像，amd64 和 arm64 需要分别导出，避免把错误架构的 ELF 塞进宿主镜像元数据。
+          # English: iKuai installs one image per package, so amd64 and arm64 must be exported separately to keep image metadata aligned with the embedded ELF.
+          jq -c '.[]' <<<"${IPKG_CLI_JSON}" | while IFS= read -r item; do
+            target="$(jq -r '.target' <<<"${item}")"
+            label="$(jq -r '.label' <<<"${item}")"
+            docker_platform="$(jq -r '.docker_platform' <<<"${item}")"
+            zipball_name="$(ikb_cli_zip_name "${target}")"
+            ipkg_name="$(ikb_ipkg_name "${target}")"
+            image_tag="ikuai-bypass:ipkg-${label}"
+            stage=".ipkg-stage-${label}"
+            package_stage="${stage}/package/ikuai-bypass"
+
+            bash apps/gui/scripts/sync-icons.sh ipkg-only
+            rm -rf "${stage}"
+            mkdir -p "${stage}/docker/bin/${label}" "${stage}/docker/frontends/app" "${package_stage}"
+            cp -R "${ipkg_dir}/ikuai-bypass/." "${package_stage}/"
+            rm -f "${package_stage}/manifest.template.json" "${package_stage}/docker_image.tar.gz"
+
+            zipball="$(find release -maxdepth 1 -type f -name "${zipball_name}" | head -1)"
+            test -n "${zipball}"
+            unzip -q "${zipball}" -d "${stage}/unpack"
+            cp "${stage}/unpack/ikuai-bypass" "${stage}/docker/bin/${label}/ikuai-bypass"
+            chmod +x "${stage}/docker/bin/${label}/ikuai-bypass"
+            rm -rf "${stage}/unpack"
+
+            cp -R frontends/app/dist "${stage}/docker/frontends/app/dist"
+            cp packaging/docker/Dockerfile packaging/docker/docker-entrypoint.sh config.yml "${stage}/"
+
+            # 2. 组装目标架构镜像。amd64 保持现有 classic builder 路径，arm64 用 buildx+qemu 产出真实镜像后再导出。
+            # 2. Assemble the target-arch image. Keep the existing classic builder path for amd64, and use buildx+qemu for arm64 before exporting.
+            cd "${stage}"
+            if [[ "${docker_platform}" == "linux/amd64" ]]; then
+              DOCKER_BUILDKIT=0 docker build --build-arg TARGETPLATFORM="${docker_platform}" -t "${image_tag}" .
+            else
+              docker buildx build \
+                --platform "${docker_platform}" \
+                --build-arg TARGETPLATFORM="${docker_platform}" \
+                --load \
+                -t "${image_tag}" \
+                .
+            fi
+            cd ..
+
+            # 3. 渲染 manifest.json，并把目标架构镜像导出到该架构的 ipkg 暂存目录。
+            # 3. Render manifest.json and export the target-arch image into that package staging dir.
+            bash "${render_manifest_script}" "${manifest_template}" "${package_stage}/manifest.json" "${ipkg_version}"
+            docker save "${image_tag}" | gzip > "${package_stage}/docker_image.tar.gz"
+
+            # 4. 打包 ipkg（文件名按架构固定，版本仅保留在 manifest.json）。
+            # 4. Pack ipkg (architecture-based filename; version stays in manifest.json).
+            tar -czf "release/${ipkg_name}" -C "${stage}/package" ikuai-bypass/
+            rm -rf "${stage}"
+          done
 
       - uses: actions/upload-artifact@v6
         with:

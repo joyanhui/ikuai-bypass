@@ -133,3 +133,8 @@ ikb_gui_native_name() {
 ikb_luci_base() {
   printf '%s\n' "ikuai-bypass-luci-openwrt-all"
 }
+
+ikb_ipkg_name() {
+  local target="${1:-}"
+  printf '%s\n' "ikuai-bypass-$(ikb_release_arch "${target}").ipkg"
+}

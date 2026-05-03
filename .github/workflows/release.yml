@@ -1152,6 +1152,43 @@ jobs:
         with:
           tool: tauri-cli@2
 
+      - name: Prepare iOS native dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          unset HOMEBREW_PREFIX HOMEBREW_CELLAR HOMEBREW_REPOSITORY
+          unset HOMEBREW_NO_AUTO_UPDATE HOMEBREW_NO_INSTALL_FROM_API
+
+          brew_bin=""
+          if [ -x /opt/homebrew/bin/brew ]; then
+            brew_bin="/opt/homebrew/bin/brew"
+          elif [ -x /usr/local/bin/brew ]; then
+            brew_bin="/usr/local/bin/brew"
+          else
+            brew_bin="$(command -v brew)"
+          fi
+          test -n "${brew_bin}"
+
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            if [ "$(uname -m)" = "arm64" ]; then
+              arch -arm64 "${brew_bin}" install xcodegen
+            else
+              "${brew_bin}" install xcodegen
+            fi
+          fi
+
+          ruby_user_bin="$(ruby -e 'require "rubygems"; print Gem.user_dir')/bin"
+          echo "${ruby_user_bin}" >> "${GITHUB_PATH}"
+          echo "$(dirname "${brew_bin}")" >> "${GITHUB_PATH}"
+
+          if ! command -v pod >/dev/null 2>&1; then
+            gem install --user-install cocoapods --no-document
+          fi
+
+          export PATH="${ruby_user_bin}:$(dirname "${brew_bin}"):${PATH}"
+          xcodegen --version
+          pod --version
+
       - name: Prepare Tauri iOS config
         working-directory: apps/gui
         shell: bash

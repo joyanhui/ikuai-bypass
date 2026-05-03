@@ -1169,13 +1169,16 @@ jobs:
           fi
           test -n "${brew_bin}"
 
-          if ! command -v xcodegen >/dev/null 2>&1; then
-            if [ "$(uname -m)" = "arm64" ]; then
-              arch -arm64 "${brew_bin}" install xcodegen
-            else
-              "${brew_bin}" install xcodegen
-            fi
+          brew_install=("${brew_bin}" install)
+          if [ "$(uname -m)" = "arm64" ]; then
+            brew_install=(arch -arm64 "${brew_bin}" install)
           fi
+
+          for formula in xcodegen libimobiledevice; do
+            if ! "${brew_bin}" list --versions "${formula}" >/dev/null 2>&1; then
+              "${brew_install[@]}" "${formula}"
+            fi
+          done
 
           ruby_user_bin="$(ruby -e 'require "rubygems"; print Gem.user_dir')/bin"
           echo "${ruby_user_bin}" >> "${GITHUB_PATH}"
@@ -1187,6 +1190,7 @@ jobs:
 
           export PATH="${ruby_user_bin}:$(dirname "${brew_bin}"):${PATH}"
           xcodegen --version
+          idevice_id --version
           pod --version
 
       - name: Prepare Tauri iOS config

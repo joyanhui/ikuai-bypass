@@ -184,6 +184,11 @@ Docker 镜像标签始终包含：
 
 - `ios-aarch64`
 
+说明：
+
+- CI 会显式准备 CocoaPods，避免依赖 runner 上不稳定的 Homebrew 状态
+- 最终产物默认是未签名 `.app` 打包得到的 `.ipa`，用于分发存档而不是直接上架 App Store
+
 ## 7. 最终发布文件命名
 
 GitHub Actions 内部 artifact 名仅用于 job 间传递：

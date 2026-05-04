@@ -161,6 +161,9 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 			if (message === 'Failed to parse GitHub API response') {
 				return '解析 GitHub API 响应失败';
 			}
+			if (message === 'No compatible LuCI JSON module is available') {
+				return '当前 LuCI 环境缺少兼容的 JSON 模块';
+			}
 			if (message === 'Current OpenWrt architecture is not supported by published CLI assets') {
 				return '当前 OpenWrt 架构没有对应的已发布 CLI 资产';
 			}

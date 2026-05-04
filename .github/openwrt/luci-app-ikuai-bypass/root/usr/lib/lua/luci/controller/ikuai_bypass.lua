@@ -2,10 +2,12 @@ module("luci.controller.ikuai_bypass", package.seeall)
 
 local fs = require "nixio.fs"
 local http = require "luci.http"
-local json = require "luci.jsonc"
 local util = require "luci.util"
 
 local helper_script = "/usr/libexec/ikuai-bypass-openwrt"
+local json_codec = false
+local encode_json_value
+local load_json_codec
 
 function index()
 	if not fs.access(helper_script) then
@@ -35,9 +37,134 @@ local function normalize_channel(raw)
 end
 
 local function json_response(status_code, payload)
+	local encoded = nil
+	local codec = nil
+
 	http.status(status_code)
 	http.prepare_content("application/json")
-	http.write(json.stringify(payload) or "{}")
+
+	codec = load_json_codec()
+	if codec then
+		encoded = codec.stringify(payload)
+	end
+
+	http.write(encoded or encode_json_value(payload))
+end
+
+local function escape_json_string(value)
+	return (value:gsub('[%z\1-\31\\"]', function(ch)
+		if ch == '"' then
+			return '\\"'
+		elseif ch == "\\" then
+			return "\\\\"
+		elseif ch == "\b" then
+			return "\\b"
+		elseif ch == "\f" then
+			return "\\f"
+		elseif ch == "\n" then
+			return "\\n"
+		elseif ch == "\r" then
+			return "\\r"
+		elseif ch == "\t" then
+			return "\\t"
+		end
+
+		return string.format("\\u%04x", ch:byte())
+	end))
+end
+
+local function is_json_array(value)
+	local count = 0
+	local max_index = 0
+
+	for key in pairs(value) do
+		if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then
+			return false, 0
+		end
+
+		if key > max_index then
+			max_index = key
+		end
+		count = count + 1
+	end
+
+	return max_index == count, max_index
+end
+
+encode_json_value = function(value)
+	local kind = type(value)
+
+	if kind == "nil" then
+		return "null"
+	end
+
+	if kind == "string" then
+		return '"' .. escape_json_string(value) .. '"'
+	end
+
+	if kind == "number" then
+		if value ~= value or value == math.huge or value == -math.huge then
+			return "null"
+		end
+		return tostring(value)
+	end
+
+	if kind == "boolean" then
+		return value and "true" or "false"
+	end
+
+	if kind ~= "table" then
+		return "null"
+	end
+
+	local array_like, max_index = is_json_array(value)
+	local out = {}
+
+	if array_like then
+		for i = 1, max_index do
+			out[#out + 1] = encode_json_value(value[i])
+		end
+		return "[" .. table.concat(out, ",") .. "]"
+	end
+
+	for key, item in pairs(value) do
+		out[#out + 1] = encode_json_value(tostring(key)) .. ":" .. encode_json_value(item)
+	end
+
+	return "{" .. table.concat(out, ",") .. "}"
+end
+
+load_json_codec = function()
+	if json_codec ~= false then
+		return json_codec
+	end
+
+	local ok, codec = pcall(require, "luci.jsonc")
+	if ok and type(codec) == "table"
+		and type(codec.parse) == "function"
+		and type(codec.stringify) == "function"
+	then
+		json_codec = {
+			parse = codec.parse,
+			stringify = codec.stringify,
+		}
+		return json_codec
+	end
+
+	ok, codec = pcall(require, "luci.json")
+	if ok and type(codec) == "table"
+		and type(codec.decode) == "function"
+		and type(codec.encode) == "function"
+	then
+		json_codec = {
+			parse = codec.decode,
+			stringify = codec.encode,
+		}
+		return json_codec
+	end
+
+	json_codec = nil
+	return nil
 end
 
 local function parse_key_value_lines(text)
@@ -111,7 +238,12 @@ local function fetch_releases()
 		return nil, err
 	end
 
-	local decoded = json.parse(output)
+	local codec = load_json_codec()
+	if not codec then
+		return nil, "No compatible LuCI JSON module is available"
+	end
+
+	local decoded = codec.parse(output)
 	if type(decoded) ~= "table" then
 		return nil, "Failed to parse GitHub API response"
 	end

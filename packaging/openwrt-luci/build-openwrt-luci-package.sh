@@ -15,6 +15,7 @@ artifact_base="$5"
 
 template_root="${repo_root}/packaging/openwrt-luci/luci-app-ikuai-bypass"
 stage_root="$(mktemp -d)"
+postinstall_script="${stage_root}/postinstall.sh"
 
 cleanup() {
   rm -rf "${stage_root}"
@@ -24,10 +25,9 @@ trap cleanup EXIT
 
 mkdir -p "${stage_root}/pkgroot"
 cp -R "${template_root}/root/." "${stage_root}/pkgroot/"
+install -m 0755 "${template_root}/scripts/postinstall.sh" "${postinstall_script}"
 
-chmod 0755 \
-  "${stage_root}/pkgroot/usr/libexec/ikuai-bypass-openwrt" \
-  "${template_root}/scripts/postinstall.sh"
+chmod 0755 "${stage_root}/pkgroot/usr/libexec/ikuai-bypass-openwrt"
 
 nfpm_config="${stage_root}/nfpm-luci-app-ikuai-bypass.yaml"
 cat > "${nfpm_config}" <<EOF
@@ -43,6 +43,7 @@ homepage: https://github.com/joyanhui/ikuai-bypass
 license: MIT
 depends:
   - luci-base
+  - luci-lib-jsonc
   - ca-bundle
   - uclient-fetch
   - unzip
@@ -51,7 +52,7 @@ contents:
     dst: /
     type: tree
 scripts:
-  postinstall: ${template_root}/scripts/postinstall.sh
+  postinstall: ${postinstall_script}
 EOF
 
 mkdir -p "${output_dir}"

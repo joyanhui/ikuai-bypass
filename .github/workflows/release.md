@@ -284,6 +284,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - `build-openwrt-luci` 仅在 `has_cli=true` 时执行
 - LuCI 包固定为 `Architecture: all`
 - LuCI 包本身不内置 `ikuai-bypass` CLI 二进制，因此是一个通用跨架构包
+- LuCI 包运行依赖显式包含 `luci-lib-jsonc`，同时 controller 对 `luci.jsonc` / `luci.json` 做兼容回退，避免缺模块时把整个 LuCI dispatcher 一起打挂
 - LuCI 页面运行时通过 GitHub API 查询 `joyanhui/ikuai-bypass` releases，并按当前 OpenWrt 路由器架构匹配 `ikuai-bypass-cli-linux-*.zip`
 - 页面语言按浏览器语言自动切换，`zh-*` 显示中文，其余显示英文，且不依赖 LuCI 语言包
 - 页面支持在 stable（`prerelease=false`）与 prerelease（`prerelease=true`）之间切换

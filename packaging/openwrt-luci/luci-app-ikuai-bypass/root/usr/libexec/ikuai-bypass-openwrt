@@ -255,10 +255,10 @@ install_release() {
 	[ "$asset_name" = "$expected_asset" ] || fail "Asset name does not match the detected router architecture"
 	validate_release_download "$url" "$tag" "$asset_name" || fail "Unexpected GitHub release download URL"
 	command_exists unzip || fail "The unzip package is required before installing the CLI archive"
-	command_exists install || fail "The install command is not available on this router"
 
+	tmp_binary=""
 	tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t ikb-install)"
-	trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
+	trap 'rm -rf "$tmp_dir"; [ -z "${tmp_binary:-}" ] || rm -f "$tmp_binary"' EXIT HUP INT TERM
 
 	archive_path="${tmp_dir}/${asset_name}"
 	unpack_dir="${tmp_dir}/unpack"
@@ -268,14 +268,35 @@ install_release() {
 	unzip -qo "$archive_path" -d "$unpack_dir" >/dev/null 2>&1 || fail "Failed to extract the CLI archive"
 	[ -f "${unpack_dir}/ikuai-bypass" ] || fail "The downloaded archive does not contain the ikuai-bypass binary"
 
-	install -d "$(dirname "$BINARY_PATH")"
-	install -m 0755 "${unpack_dir}/ikuai-bypass" "$BINARY_PATH" || fail "Failed to install the CLI binary"
+	# Why/为什么: OpenWrt 24.10 BusyBox 默认不再提供 install applet，强行安装 coreutils-install 会破坏系统，
+	# 因此改用 BusyBox 自带的 mkdir/cp/chmod/mv 完成安装，避免依赖 install 命令。
+	# English: BusyBox on OpenWrt 24.10 ships no `install` applet, and pulling in coreutils-install can brick the
+	# router, so deploy the binary with the always-available mkdir/cp/chmod/mv instead of `install`.
+	binary_dir="${BINARY_PATH%/*}"
+	tmp_binary="${binary_dir}/.ikuai-bypass.$$"
+	mkdir -p "$binary_dir" || fail "Failed to prepare CLI install directory"
+	rm -f "$tmp_binary" >/dev/null 2>&1 || true
+	cp "${unpack_dir}/ikuai-bypass" "$tmp_binary" || {
+		rm -f "$tmp_binary" >/dev/null 2>&1 || true
+		fail "Failed to install the CLI binary"
+	}
+	chmod 0755 "$tmp_binary" || {
+		rm -f "$tmp_binary" >/dev/null 2>&1 || true
+		fail "Failed to set permissions on the CLI binary"
+	}
+	mv -f "$tmp_binary" "$BINARY_PATH" || {
+		rm -f "$tmp_binary" >/dev/null 2>&1 || true
+		fail "Failed to replace the CLI binary"
+	}
+	tmp_binary=""
 
 	config_sample_output=""
 	if [ -f "${unpack_dir}/config.yml" ]; then
-		install -d "$CONFIG_DIR"
-		install -m 0644 "${unpack_dir}/config.yml" "$CONFIG_SAMPLE_PATH" >/dev/null 2>&1 || true
-		config_sample_output="$CONFIG_SAMPLE_PATH"
+		mkdir -p "$CONFIG_DIR"
+		if cp "${unpack_dir}/config.yml" "$CONFIG_SAMPLE_PATH" >/dev/null 2>&1; then
+			chmod 0644 "$CONFIG_SAMPLE_PATH" >/dev/null 2>&1 || true
+			config_sample_output="$CONFIG_SAMPLE_PATH"
+		fi
 	fi
 
 	version="$(current_binary_version)"

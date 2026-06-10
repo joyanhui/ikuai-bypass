@@ -25,7 +25,8 @@ trap cleanup EXIT
 
 mkdir -p "${stage_root}/pkgroot"
 cp -R "${template_root}/root/." "${stage_root}/pkgroot/"
-install -m 0755 "${template_root}/scripts/postinstall.sh" "${postinstall_script}"
+cp "${template_root}/scripts/postinstall.sh" "${postinstall_script}"
+chmod 0755 "${postinstall_script}"
 
 chmod 0755 "${stage_root}/pkgroot/usr/libexec/ikuai-bypass-openwrt"
 

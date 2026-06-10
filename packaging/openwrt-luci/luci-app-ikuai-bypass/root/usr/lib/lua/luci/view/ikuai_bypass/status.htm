@@ -194,6 +194,15 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 			if (message === 'Failed to install the CLI binary') {
 				return '安装 CLI 二进制文件失败';
 			}
+			if (message === 'Failed to prepare CLI install directory') {
+				return '准备 CLI 安装目录失败';
+			}
+			if (message === 'Failed to set permissions on the CLI binary') {
+				return '设置 CLI 二进制文件权限失败';
+			}
+			if (message === 'Failed to replace the CLI binary') {
+				return '替换 CLI 二进制文件失败';
+			}
 			if (message === 'Asset name does not match the detected router architecture') {
 				return '资产名称与当前识别到的路由器架构不匹配';
 			}

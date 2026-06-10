@@ -45,3 +45,19 @@ qemu-system-x86_64 \
   -device qxl-vga,vgamem_mb=1024 \
   -nic user,model=e1000 \
   -monitor stdio
+
+
+#  25.12-SNAPSHOT  6.12.92 arch: x64
+
+wget -c -O ~/Downloads/op-kvm-x64.vmdk.zip https://dl.openwrt.ai/releases/25.12/targets/x86/64/kwrt-06.10.2026-x86-64-generic-squashfs-combined.vmdk.zip
+
+qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm \
+  -drive file=/home/y/Downloads/kwrt-06.10.2026-x86-64-generic-squashfs-combined.vmdk,format=vmdk,if=virtio \
+  -device usb-tablet -device VGA,vgamem_mb=256 -monitor stdio \
+  -nic tap,ifname=tap0,script=no,downscript=no,model=e1000,mac=98:6A:5E:44:11:11 \
+  -nic user,model=e1000,mac=A4:99:14:44:22:22 
+# host tap0 add a ip addr
+sudo ip addr add 10.0.0.2/24 dev tap0
+sudo ip link set tap0 up
+
+# http://10.0.0.1/cgi-bin/luci/

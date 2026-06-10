@@ -289,6 +289,7 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - 页面语言按浏览器语言自动切换，`zh-*` 显示中文，其余显示英文，且不依赖 LuCI 语言包
 - 页面支持在 stable（`prerelease=false`）与 prerelease（`prerelease=true`）之间切换
 - 点击安装后，由路由器本机下载对应 release asset，解压并安装到 `/usr/bin/ikuai-bypass`
+- 安装过程只依赖 OpenWrt BusyBox 常见的 `mkdir` / `cp` / `chmod` / `mv`，不得要求安装 `coreutils-install`
 - 若 release archive 内包含 `config.yml`，会额外落地到 `/etc/ikuai-bypass/config.yml.example`
 
 实现位置：

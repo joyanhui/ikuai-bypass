@@ -24,38 +24,10 @@
 
 本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。
 
-### 1. 自定义运营商分流模式 (推荐)
+- **自定义运营商分流模式（推荐）**：旁路由作为 iKuai 的"虚拟运营商"，由 iKuai 内核级调度。旁路由宕机不影响普通流量，终端无需更改网关配置，稳定性极高。
+- **IP 分组与端口分流模式**：将 IP 列表同步到 iKuai 的 IP 分组，通过端口分流将流量指向旁路由。配置简单，旁路由宕机时被分流设备无法上网。
 
-**适用场景：** 追求极致稳定性、网络自愈、终端无感分流。（需要多网卡或能添加虚拟网卡）
-
-**实现逻辑：**
-这种模式下，iKuai 将 旁路由（通常是openwrt）视为一个"虚拟的上级运营商"。
-1. 链路设计：旁路由 作为 iKuai 的下级设备接收流量，处理后再将出口流量"绕回"给 iKuai 的 WAN 口。
-2. 规则同步：本工具将目标 IP 列表导入 iKuai 的"自定义运营商"。iKuai 会认为这些 IP 属于该"虚拟运营商"，从而将流量转发给 旁路由。
-
-**核心优势：**
-- 极高可靠性：旁路由 宕机只会导致被分流的流量中断，普通流量依然通过主线直连，不会全家断网。
-- 配置无感：终端设备无需更改网关配置，完全由 iKuai 在内核层级完成调度。
-- 性能优异：直连速度最快，旁路仅处理特定流量。
-
-**参考文档**：[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。
-
-<details>
-<summary>点击这里展开查看详细图文说明</summary>
-<img src="https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/v4.4.13/assets/img.png"  alt="自定义运营商分流模式拓扑图">
-</details>
-
-### 2. IP 分组与端口分流模式 (传统模式)
-
-**适用场景：** 简单的旁路由方案，逻辑直接。
-
-**实现逻辑：**
-1. IP 分组：本工具将订阅的 IP 列表同步到 iKuai 的"IP 分组"中。
-2. 策略路由：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组的流量，将其"下一跳网关"指向 旁路由 的 IP。
-
-**特点**：配置简单直接，旁路由 宕机时匹配到该分组的规则将无法上网。
-
-**参考文档**：[实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7) 或 [恩山y2kji的教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)。
+[查看完整文档](docs/router-mode.md)
 
 ---
 
@@ -76,62 +48,51 @@
 
 从 [Releases](https://github.com/joyanhui/ikuai-bypass/releases) 下载适合你系统的版本。
 
-**选哪个版本？**
-
-| 你的系统 | 推荐下载 |
+| 场景 | 推荐下载 |
 | :--- | :--- |
-| Windows 桌面 | `ikuai-bypass-gui-windows-x86_64.exe.zip` 解压即可 |
+| Windows 桌面 | `ikuai-bypass-gui-windows-x86_64.exe.zip` |
 | macOS 桌面 | `ikuai-bypass-gui-macos-aarch64.dmg`（M芯片）或 `x86_64.dmg`（Intel） |
-| Linux 桌面 | `ikuai-bypass-gui-linux-x86_64.zip` 解压后运行（需系统已安装 WebKitGTK/GTK3） |
-| Android 手机 | `.apk` |
-| iOS 手机 | `.ipa`（仅支持自签名或越狱设备） |
-| 服务器/路由器/容器 | CLI 版本 `ikuai-bypass-cli-linux-xxx.zip` |
-| LXC/PVE CT 容器 | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
-| Docker | [joyanhui/ikuai-bypass](https://hub.docker.com/r/joyanhui/ikuai-bypass/tags) |
-| iKuai v4 应用市场 | `ikuai-bypass-x86_64.ipkg`，在爱快“高级应用 -> 应用市场 -> 本地安装”上传 |
+| Linux 桌面 | `ikuai-bypass-gui-linux-x86_64.zip`（需 WebKitGTK/GTK3） |
+| Android | `.apk` |
+| iOS | `.ipa`（仅支持自签名或越狱） |
+| 服务器/NAS/Docker | CLI `ikuai-bypass-cli-linux-xxx.zip` |
+| LXC/PVE CT | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
+| Docker | `joyanhui/ikuai-bypass` |
+| iKuai v4 应用市场 | `.ipkg` 文件，在"高级应用→应用市场→本地安装"上传 |
 
-> **新手建议**：如果你在电脑上使用，直接下载 GUI 版本即可；Windows / Linux 解压后运行，macOS 打开 DMG 安装，无需命令行。
+> **新手建议**：电脑用户直接下载 GUI 版本，解压/安装即可，无需命令行。
 
 ### 2. 配置
 
-编辑 `config.yml` 文件，填写以下基本信息：
+编辑 `config.yml` 文件：
 
 ```yaml
-# 爱快路由器地址和登录信息
-ikuai-url: http://192.168.9.1   # 改成你的爱快地址
-username: admin                   # 登录用户名
-password: your_password           # 登录密码
-
-# 定时更新（每天早上7点）
+ikuai-url: http://192.168.9.1
+username: admin
+password: your_password
 cron: "0 7 * * *"
-
-# 要同步的规则列表
 custom-isp:
   - tag: "国内IP"
     url: "https://example.com/cn-ip.txt"
 ```
 
-> **提示**：完整配置示例请参考 [config.yml](./config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。
-> 关于 proxy 与 github-proxy 的区别 [查看文档](https://joyanhui.github.io/ikuai-bypass/proxy-vs-github-proxy-guide)
+> **提示**：完整配置示例参考 [config.yml](./config.yml)。GUI 版本可在界面直接配置。关于 proxy 与 github-proxy 的区别 [查看文档](https://joyanhui.github.io/ikuai-bypass/proxy-vs-github-proxy-guide)
+
 ### 3. 运行
 
-**GUI 用户**：双击打开应用，在界面里配置即可，无需命令行。
+**GUI 用户**：双击打开应用，界面配置即可。
 
 **CLI 用户**：
-
 ```bash
-# 最常用：定时自动更新（推荐）
-./ikuai-bypass -r cron -c ./config.yml
-# 只运行一次就退出
-./ikuai-bypass -r once -c ./config.yml
-# 导出域名分流列表到 TXT（不连接 iKuai，仅用于调试/人工导入）
-./ikuai-bypass -r exportDomainSteamToTxt -c ./config.yml -exportPath /tmp
-# 清理所有规则（慎用）
-./ikuai-bypass -r clean -tag cleanAll -c ./config.yml
-
-# WebUI：cron / cronAft 启动后，若配置中启用 WebUI（webui.enable=true），
-# 可直接访问 http://你的IP:19001 查看状态、修改配置、停止定时任务
+./ikuai-bypass -r cron -c ./config.yml                  # 定时自动更新（推荐）
+./ikuai-bypass -r once -c ./config.yml                   # 单次运行
+./ikuai-bypass -r exportDomainSteamToTxt -c ./config.yml -exportPath /tmp  # 导出域名分流列表
+./ikuai-bypass -r clean -tag cleanAll -c ./config.yml    # 清理所有规则
 ```
+
+WebUI：cron 模式启动后访问 `http://你的IP:19001`
+
+[查看完整文档](docs/quickstart.md)
 
 ---
 
@@ -139,27 +100,13 @@ custom-isp:
 
 ### WebUI（网页管理界面）
 
-CLI版本在使用计划任务模式启动后用可用浏览器访问 `http://你的IP:19001` 就能看到管理界面，可以在网页上：
-- 修改配置
-- 手动触发更新
-- 查看运行日志
-- 一键诊断（生成脱敏报告，便于反馈问题）
-
-默认端口 `19001`，可以在配置文件里修改。
+CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可管理：修改配置、手动触发更新、查看日志、一键诊断。默认端口 `19001`，可在配置文件中修改。
 
 ### GUI（桌面/手机应用）
 
-如果你不想折腾命令行，直接下载 GUI 版本：
-- 桌面版：Windows / macOS / Linux，下载对应包后运行即可
-- 手机版：Android 直接安装 APK；iOS 仅支持自签名或越狱用户
+无需命令行，下载对应平台版本直接运行。桌面版支持 Windows / macOS / Linux；手机版支持 Android（APK）和 iOS（需自签名或越狱）。Linux 需已安装 `WebKitGTK` 和 `GTK3`。支持一键运行/停止和实时日志查看。
 
-Linux 桌面版补充说明：需要系统已安装 `WebKitGTK` 和 `GTK3` 运行库；如果启动时报缺少动态库、白屏或图形初始化失败，先安装对应发行版的软件包再运行。
-
-GUI 功能：
-- 一键运行/停止
-- 实时查看日志
-
-> 懒人首选 GUI，不用记参数。
+[查看完整文档](docs/webui-gui.md)
 
 ---
 
@@ -203,48 +150,13 @@ GUI 功能：
 
 ## 部署方案
 
-### 手机和电脑桌面用户（推荐新手）
-只要选对正确格式的包就可以，过于简单，教程掠过
-### 服务器 / 命令行版本
+- **桌面用户**：下载对应 GUI 版本直接运行即可
+- **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/golang_archive/example/script/AddOpenwrtService.sh)
+- **Docker**：`docker run -itd --name ikuai-bypass --restart=always -e APP_RUN_MODE=ispdomain -p 19001:19001 -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest`，启动后在网页界面配置
+- **iKuai v4 应用市场**：上传 `.ipkg` 包安装，[PR #118 使用说明](https://github.com/joyanhui/ikuai-bypass/pull/118)
+- **Unraid / 群晖**：Docker 套件中搜索 `joyanhui/ikuai-bypass`，映射端口和配置目录
 
-下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。
-
-**OpenWrt 用户**：可以参考这个[服务脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/golang_archive/example/script/AddOpenwrtService.sh)
-
-### Docker 用户
-
-适合 NAS、群晖、或者喜欢用容器的用户，详见下方 Docker 章节。 注意：docker镜像为 `joyanhui/ikuai-bypass` 其他docker可能是本项目的fork或者网友自治版。
-
-```bash
-# 运行（会自动创建配置文件）
-docker run -itd --name ikuai-bypass --restart=always \
-  -e APP_RUN_MODE=ispdomain \
-  -p 19001:19001 -v ./data:/etc/ikuai-bypass \
-  joyanhui/ikuai-bypass:latest
-```
-
-`APP_RUN_MODE` 用来映射 CLI 的 `-m` 分流模式参数；默认值是 `ispdomain`。可选值：`ispdomain`、`ipgroup`、`ipv6group`、`ii`、`ip`、`iip`。
-
-如果你同时传了容器环境变量 `APP_RUN_MODE` 和命令行 `-m`，则以命令行 `-m` 为准。
-
-启动后：
-1. 用浏览器打开 `http://你的IP:19001`
-2. 在网页界面里配置爱快地址和登录信息
-3. 点击"运行一次"测试，成功后开启定时任务
-
-### iKuai v4 应用市场 / ipkg
-
-如果你打算直接在爱快 `高级应用 -> 应用市场 -> 本地安装` 中上传 `.ipkg` 包，安装流程、参数填写和界面截图请直接参考 [PR #118 使用说明](https://github.com/joyanhui/ikuai-bypass/pull/118)。
-
-应用市场安装时也可以通过环境变量 `APP_RUN_MODE` 配置分流模式，界面字段名为“运行模式”，默认值同样是 `ispdomain`。
-
-### Unraid / 群晖 / 爱快内docker 等部署
-
-在群晖的 Docker 套件里：
-1. 搜索 `joyanhui/ikuai-bypass` 并下载
-2. 创建容器，映射端口 `19001`
-3. 映射一个文件夹到 `/etc/ikuai-bypass` 存放配置
-4. 启动后访问网页界面配置
+[查看完整文档](docs/deployment.md)
 
 ---
 

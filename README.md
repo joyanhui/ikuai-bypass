@@ -27,7 +27,7 @@
 - **自定义运营商分流模式（推荐）**：旁路由作为 iKuai 的"虚拟运营商"，由 iKuai 内核级调度。旁路由宕机不影响普通流量，终端无需更改网关配置，稳定性极高。
 - **IP 分组与端口分流模式**：将 IP 列表同步到 iKuai 的 IP 分组，通过端口分流将流量指向旁路由。配置简单，旁路由宕机时被分流设备无法上网。
 
-[查看完整文档](docs/router-mode.md)
+[查看分流模式完整文档](docs/router-mode.md)
 
 ---
 
@@ -92,7 +92,7 @@ custom-isp:
 
 WebUI：cron 模式启动后访问 `http://你的IP:19001`
 
-[查看完整文档](docs/quickstart.md)
+[查看快速上手完整文档](docs/quickstart.md)
 
 ---
 
@@ -106,7 +106,7 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 
 无需命令行，下载对应平台版本直接运行。桌面版支持 Windows / macOS / Linux；手机版支持 Android（APK）和 iOS（需自签名或越狱）。Linux 需已安装 `WebKitGTK` 和 `GTK3`。支持一键运行/停止和实时日志查看。
 
-[查看完整文档](docs/webui-gui.md)
+[查看 WebUI 与 GUI 完整文档](docs/webui-gui.md)
 
 ---
 
@@ -156,7 +156,7 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 - **iKuai v4 应用市场**：上传 `.ipkg` 包安装，[PR #118 使用说明](https://github.com/joyanhui/ikuai-bypass/pull/118)
 - **Unraid / 群晖**：Docker 套件中搜索 `joyanhui/ikuai-bypass`，映射端口和配置目录
 
-[查看完整文档](docs/deployment.md)
+[查看部署方案完整文档](docs/deployment.md)
 
 ---
 

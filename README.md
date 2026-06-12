@@ -9,7 +9,7 @@
 - GUI：图形化桌面和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端
 - CLI：命令行，可以完全不使用图形界面完成所有功能，也有一个可选的基于浏览器的web界面。适合 Nas AIO PVE Docker 等部署使用。
 
-> **提示1**：爱快v3.7x请使用 [ikuai-bypass v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。旧版本go代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),ikuai-bypass v4.4以后的版本版本使用rust+tauri构建,因分支替换之前fork本仓库的可能需要重新操作。ikuai-bypass老用户升级v4.4.x版本请阅读[update‐to‐v4.4.10x](https://github.com/joyanhui/ikuai-bypass/wiki/v4.4.13%E2%80%90update%E2%80%90to%E2%80%90v4.4.10x)
+> **提示1**：爱快v3.7x请使用 [ikuai-bypass v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。旧版本go代码已归档到分支[v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13),ikuai-bypass v4.4以后的版本版本使用rust+tauri构建,因分支替换之前fork本仓库的可能需要重新操作。ikuai-bypass老用户升级v4.4.x版本请阅读[update‐to‐v4.4.10x](https://joyanhui.github.io/ikuai-bypass/v4.4.13-update-to-v4.4.10x)
 
 > **提示2**：爱快4官方尚处于beta阶段：不稳定，且api变更频繁，自身也可能存在bug，请谨慎升级，目前ikuai-bypass兼容的爱快的最新版本是 ![爱快4](https://img.shields.io/badge/%E7%88%B1%E5%BF%AB4.0-120_beta-brightgreen?style=for-the-badge)
 
@@ -112,7 +112,7 @@ custom-isp:
 ```
 
 > **提示**：完整配置示例请参考 [config.yml](./config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。
-> 关于 proxy 与 github-proxy 的区别 [wiki](https://github.com/joyanhui/ikuai-bypass/wiki/%E9%85%8D%E7%BD%AE%E9%A1%B9%E4%B8%AD-%E5%85%B3%E4%BA%8E-proxy-%E4%B8%8E-github%E2%80%90proxy-%E7%9A%84%E5%8C%BA%E5%88%AB)
+> 关于 proxy 与 github-proxy 的区别 [查看文档](https://joyanhui.github.io/ikuai-bypass/proxy-vs-github-proxy-guide)
 ### 3. 运行
 
 **GUI 用户**：双击打开应用，在界面里配置即可，无需命令行。

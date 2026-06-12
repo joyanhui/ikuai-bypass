@@ -55,7 +55,7 @@
 | Linux 桌面 | `ikuai-bypass-gui-linux-x86_64.zip`（需 WebKitGTK/GTK3） |
 | Android | `.apk` |
 | iOS | `.ipa`（仅支持自签名或越狱） |
-| 服务器/NAS/Docker | CLI `ikuai-bypass-cli-linux-xxx.zip` |
+| Linux/NAS/Docker | CLI `ikuai-bypass-cli-linux-xxx.zip` |
 | LXC/PVE CT | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
 | Docker | `joyanhui/ikuai-bypass` |
 | iKuai v4 应用市场 | `.ipkg` 文件，在"高级应用→应用市场→本地安装"上传 |
@@ -150,8 +150,8 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 
 ## 部署方案
 
-- **桌面用户**：下载对应 GUI 版本直接运行即可
-- **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/golang_archive/example/script/AddOpenwrtService.sh)
+- **桌面用户/手机用户**：下载对应 GUI 版本直接运行即可
+- **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本](docs/openwrt-service-install.md)
 - **Docker**：`docker run -itd --name ikuai-bypass --restart=always -e APP_RUN_MODE=ispdomain -p 19001:19001 -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest`，启动后在网页界面配置
 - **iKuai v4 应用市场**：上传 `.ipkg` 包安装，[PR #118 使用说明](https://github.com/joyanhui/ikuai-bypass/pull/118)
 - **Unraid / 群晖**：Docker 套件中搜索 `joyanhui/ikuai-bypass`，映射端口和配置目录

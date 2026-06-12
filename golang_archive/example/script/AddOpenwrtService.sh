@@ -1,6 +1,7 @@
 #!/bin/sh
+# 新版本文档 请参考 https://joyanhui.github.io/ikuai-bypass/openwrt-service-install  
 # Test passed under openwrt5.15.137 x64 在openwrt 5.15.137 x64 测试通过
-# 下面的脚本只支持ash sh bash zsh 不兼容fishshell 
+# 下面的脚本只支持ash sh bash zsh 不兼容fish nu
 # 更新或者下载最新版到 /opt/注意修改版本号CPU架构以及路径  =================================== start
 # 最好逐行运行
 # opkg update

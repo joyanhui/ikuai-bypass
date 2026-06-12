@@ -290,6 +290,8 @@ GitHub Actions 内部 artifact 名仅用于 job 间传递：
 - 页面支持在 stable（`prerelease=false`）与 prerelease（`prerelease=true`）之间切换
 - 点击安装后，由路由器本机下载对应 release asset，解压并安装到 `/usr/bin/ikuai-bypass`
 - 安装过程只依赖 OpenWrt BusyBox 常见的 `mkdir` / `cp` / `chmod` / `mv`，不得要求安装 `coreutils-install`
+- 安装时支持可选的 GitHub Proxy 前缀（ghproxy），用户在页面上填入 ghproxy 地址后，下载 URL 会拼接为 `<ghproxy>/https://github.com/.../download/<tag>/<asset>`，方便国内网络环境
+- 查询成功后的安装请求不再二次请求 GitHub API，直接由 tag + asset_name 构造下载地址
 - 若 release archive 内包含 `config.yml`，会额外落地到 `/etc/ikuai-bypass/config.yml.example`
 
 实现位置：

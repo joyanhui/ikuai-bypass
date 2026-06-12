@@ -55,9 +55,11 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 				installingLatest: 'Downloading and installing the matching CLI archive on this router...',
 				installCompleted: 'Install completed.',
 				unsupportedRouterWarn: 'This router architecture is not mapped to a published iKuai Bypass CLI asset yet.',
-				missingUnzip: 'Missing unzip'
-			},
-			zh: {
+				missingUnzip: 'Missing unzip',
+				ghproxyLabel: 'GitHub Proxy URL',
+				ghproxyPlaceholder: 'https://gh-proxy.com/'
+		},
+		zh: {
 				introHtml: '正式版表示 GitHub 发布项的 <code>prerelease=false</code>，预发布版表示 <code>prerelease=true</code>。该包本身不内置任何 CLI 二进制，只有在你点击安装时才会按当前路由器架构下载并安装匹配的 CLI。',
 				routerStatusTitle: '路由器状态',
 				supportStatusLabel: '支持状态',
@@ -104,7 +106,9 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 				installingLatest: '正在本机下载并安装与当前路由器架构匹配的 CLI 压缩包...',
 				installCompleted: '安装已完成。',
 				unsupportedRouterWarn: '当前路由器架构还没有映射到已发布的 iKuai Bypass CLI 资产。',
-				missingUnzip: '缺少 unzip'
+				missingUnzip: '缺少 unzip',
+				ghproxyLabel: 'GitHub 代理地址',
+				ghproxyPlaceholder: 'https://gh-proxy.com/'
 			}
 		};
 
@@ -381,6 +385,22 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 			return node ? node.value : "stable";
 		}
 
+		function ghproxyValue() {
+			var node = el("ikb-ghproxy");
+			return node ? node.value.trim() : "";
+		}
+
+		function loadGhproxy() {
+			var node = el("ikb-ghproxy");
+			if (node) {
+				node.value = localStorage.getItem("ikb-ghproxy") || "";
+			}
+		}
+
+		function saveGhproxy() {
+			localStorage.setItem("ikb-ghproxy", ghproxyValue());
+		}
+
 		function updateButtons() {
 			var checkButton = el("ikb-check-button");
 			var installButton = el("ikb-install-button");
@@ -474,7 +494,7 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 
 		window.ikbCheckLatest = function() {
 			withBusy(t("checkingLatest"), function(done) {
-				request("GET", endpoints.latest, { channel: channelValue() }, function(err, data) {
+				request("GET", endpoints.latest, { channel: channelValue(), ghproxy: ghproxyValue() }, function(err, data) {
 					done();
 					if (err) {
 						renderLatest(null);
@@ -493,8 +513,14 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 		};
 
 		window.ikbInstallLatest = function() {
+			saveGhproxy();
 			withBusy(t("installingLatest"), function(done) {
-				request("POST", endpoints.install, { channel: channelValue() }, function(err, data) {
+				var params = { channel: channelValue(), ghproxy: ghproxyValue() };
+				if (state.latest) {
+					params.tag = state.latest.tag_name;
+					params.asset = state.latest.asset_name;
+				}
+				request("POST", endpoints.install, params, function(err, data) {
 					done();
 					if (err) {
 						if (data && data.status) {
@@ -521,6 +547,7 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 		document.addEventListener("DOMContentLoaded", function() {
 			applyTranslations();
 			primeDynamicPlaceholders();
+			loadGhproxy();
 			setMessage("info", t("preparingState"));
 			loadStatus();
 			window.ikbCheckLatest();
@@ -634,6 +661,14 @@ local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "i
 		</select>
 		<input id="ikb-check-button" class="btn cbi-button" type="button" value="Check Latest" data-i18n-value="checkLatestButton" onclick="ikbCheckLatest()" />
 		<input id="ikb-install-button" class="btn cbi-button cbi-button-apply" type="button" value="Download And Install" data-i18n-value="installButton" onclick="ikbInstallLatest()" />
+	</div>
+	<div class="table" style="margin-bottom: 1rem;">
+		<div class="tr">
+			<div class="td left" width="33%" data-i18n="ghproxyLabel">GitHub Proxy URL</div>
+			<div class="td left">
+				<input id="ikb-ghproxy" class="cbi-input-text" type="text" placeholder="https://gh-proxy.com/" data-i18n-value="ghproxyPlaceholder" style="width:100%;box-sizing:border-box" />
+			</div>
+		</div>
 	</div>
 	<div class="table">
 		<div class="tr">

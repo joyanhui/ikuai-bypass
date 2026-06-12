@@ -345,29 +345,47 @@ end
 
 function action_install()
 	local channel = normalize_channel(http.formvalue("channel"))
-	local resolved, err, status_meta, status_code = resolve_release(channel)
-	if not resolved then
-		return json_response(status_code or 404, {
-			ok = false,
-			message = err,
-			channel = channel,
-			status = status_meta,
-		})
+	local ghproxy = trim(http.formvalue("ghproxy"))
+	local tag = trim(http.formvalue("tag"))
+	local asset = trim(http.formvalue("asset"))
+
+	local install_tag, install_asset, install_page_url
+
+	if tag ~= "" and asset ~= "" then
+		install_tag = tag
+		install_asset = asset
+		install_page_url = "https://github.com/joyanhui/ikuai-bypass/releases/tag/" .. tag
+	else
+		local resolved, err, status_meta, status_code = resolve_release(channel)
+		if not resolved then
+			return json_response(status_code or 404, {
+				ok = false,
+				message = err,
+				channel = channel,
+				status = status_meta,
+			})
+		end
+		install_tag = resolved.release.tag_name
+		install_asset = resolved.release.asset_name
+		install_page_url = resolved.release.html_url
 	end
 
-	local output, run_err = run_helper({
-		"install",
-		resolved.release.download_url,
-		resolved.release.tag_name,
-		resolved.release.asset_name,
-	})
+	local args = {"install", install_tag, install_asset}
+	if ghproxy ~= "" then
+		table.insert(args, ghproxy)
+	end
+
+	local output, run_err = run_helper(args)
 	if not output then
 		return json_response(502, {
 			ok = false,
 			message = run_err,
 			channel = channel,
-			release = resolved.release,
-			status = resolved.status,
+			release = {
+				tag_name = install_tag,
+				asset_name = install_asset,
+				html_url = install_page_url,
+			},
 		})
 	end
 
@@ -377,8 +395,11 @@ function action_install()
 			ok = false,
 			message = meta.message or "Install failed",
 			channel = channel,
-			release = resolved.release,
-			status = resolved.status,
+			release = {
+				tag_name = install_tag,
+				asset_name = install_asset,
+				html_url = install_page_url,
+			},
 		})
 	end
 
@@ -387,14 +408,18 @@ function action_install()
 		ok = true,
 		message = meta.message or "Install completed",
 		channel = channel,
-		release = resolved.release,
+		release = {
+			tag_name = install_tag,
+			asset_name = install_asset,
+			html_url = install_page_url,
+		},
 		install = {
-			binary_path = meta.binary_path or resolved.status.binary_path,
+			binary_path = meta.binary_path or "",
 			binary_version = meta.binary_version or "",
 			config_sample_path = meta.config_sample_path or "",
 			installed_at = meta.installed_at or "",
 		},
-		status = refreshed_status or resolved.status,
+		status = refreshed_status,
 		status_warning = status_err,
 	})
 end

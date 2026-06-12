@@ -242,18 +242,27 @@ validate_release_download() {
 }
 
 install_release() {
-	url="${1-}"
-	tag="${2-}"
-	asset_name="${3-}"
+	tag="${1-}"
+	asset_name="${2-}"
+	ghproxy="${3-}"
 
-	[ -n "$url" ] || fail "Missing download URL"
 	[ -n "$tag" ] || fail "Missing release tag"
 	[ -n "$asset_name" ] || fail "Missing asset name"
 
 	expected_asset="$(detect_asset_name 2>/dev/null || true)"
 	[ -n "$expected_asset" ] || fail "Current OpenWrt architecture is not supported by published CLI assets"
 	[ "$asset_name" = "$expected_asset" ] || fail "Asset name does not match the detected router architecture"
-	validate_release_download "$url" "$tag" "$asset_name" || fail "Unexpected GitHub release download URL"
+
+	canonical_url="https://github.com/joyanhui/ikuai-bypass/releases/download/${tag}/${asset_name}"
+	validate_release_download "$canonical_url" "$tag" "$asset_name" || fail "Unexpected GitHub release download URL"
+
+	if [ -n "$ghproxy" ]; then
+		ghproxy="$(printf '%s' "$ghproxy" | sed 's,/*$,,')"
+		download_url="${ghproxy}/${canonical_url}"
+	else
+		download_url="$canonical_url"
+	fi
+
 	command_exists unzip || fail "The unzip package is required before installing the CLI archive"
 
 	tmp_binary=""
@@ -264,7 +273,7 @@ install_release() {
 	unpack_dir="${tmp_dir}/unpack"
 	mkdir -p "$unpack_dir"
 
-	download_to_path "$url" "$archive_path"
+	download_to_path "$download_url" "$archive_path"
 	unzip -qo "$archive_path" -d "$unpack_dir" >/dev/null 2>&1 || fail "Failed to extract the CLI archive"
 	[ -f "${unpack_dir}/ikuai-bypass" ] || fail "The downloaded archive does not contain the ikuai-bypass binary"
 

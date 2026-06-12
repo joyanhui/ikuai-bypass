@@ -26,4 +26,4 @@ GitHub API 查询新版优先使用自定义代理。
 
 github-proxy：ghproxy URL 前缀重写，仅对 raw.githubusercontent.com / github.com 生效，主要用于"规则文件下载加速"。它不是网络层代理。
 
-> **提示**：完整配置示例请参考 [config.yml](../config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。
+> **提示**：完整配置示例请参考 [config.yml](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。

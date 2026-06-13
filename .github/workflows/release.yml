@@ -319,7 +319,7 @@ jobs:
   build-frontend:
     name: Build Frontend Dist
     needs: resolve-matrix
-    if: needs.resolve-matrix.outputs.has_cli == 'true' || needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true' || needs.resolve-matrix.outputs.has_ipkg_cli == 'true'
+    if: needs.resolve-matrix.outputs.has_cli == 'true' || needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -1423,7 +1423,6 @@ jobs:
     needs:
       - resolve-matrix
       - build-cli
-      - build-frontend
     if: needs.resolve-matrix.outputs.has_ipkg_cli == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -1434,11 +1433,6 @@ jobs:
           pattern: cli-linux-*
           merge-multiple: true
           path: release
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: frontend-dist
-          path: frontends/app/dist
 
       - uses: docker/setup-qemu-action@v3
 
@@ -1497,7 +1491,7 @@ jobs:
 
             bash apps/gui/scripts/sync-icons.sh ipkg-only
             rm -rf "${stage}"
-            mkdir -p "${stage}/docker/bin/${label}" "${stage}/docker/frontends/app" "${package_stage}"
+            mkdir -p "${stage}/docker/bin/${label}" "${package_stage}"
             cp -R "${ipkg_dir}/ikuai-bypass/." "${package_stage}/"
             rm -f "${package_stage}/manifest.template.json" "${package_stage}/docker_image.tar.gz"
 
@@ -1508,7 +1502,6 @@ jobs:
             chmod +x "${stage}/docker/bin/${label}/ikuai-bypass"
             rm -rf "${stage}/unpack"
 
-            cp -R frontends/app/dist "${stage}/docker/frontends/app/dist"
             cp packaging/docker/Dockerfile packaging/docker/docker-entrypoint.sh config.yml "${stage}/"
 
             # 2. 组装目标架构镜像。amd64 保持现有 classic builder 路径，arm64 用 buildx+qemu 产出真实镜像后再导出。

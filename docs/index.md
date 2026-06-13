@@ -1,5 +1,7 @@
 **iKuai Bypass** 是爱快路由器专用的分流规则自动同步工具。
 
+[![Download](https://img.shields.io/badge/Download-%E4%B8%8B%E8%BD%BD%20Release-blue?style=for-the-badge&logo=github)](https://github.com/joyanhui/ikuai-bypass/releases)
+
 [GitHub](https://github.com/joyanhui/ikuai-bypass) — [Releases](https://github.com/joyanhui/ikuai-bypass/releases) — [README](https://github.com/joyanhui/ikuai-bypass/blob/main/README.md)
 
 > **版本注意**：爱快 v3.7x 请用 [v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。爱快 4.x 尚处于 beta 且 API 频繁变更。旧版 Go 已归档至 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)，老用户升级前请先阅读[升级说明](v4.4.13-update-to-v4.4.10x)。如果本项目对你有帮助，请点个 Star！

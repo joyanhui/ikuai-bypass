@@ -6,13 +6,12 @@ use axum::extract::State;
 use axum::http::{StatusCode, header};
 use axum::middleware::Next;
 use axum::response::sse::{Event, Sse};
-use axum::response::{Html, IntoResponse, Response};
+use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
-use tower_http::services::ServeDir;
 
 use ikb_core::runtime::RuntimeService;
 
@@ -110,26 +109,14 @@ pub async fn start_web_server(
         .route("/api/runtime/logs", get(api_runtime_logs))
         .route("/api/runtime/logs/stream", get(api_runtime_logs_stream));
 
-    let dist = find_frontend_dist_dir();
-    let app = if let Some(dist) = dist {
-        Router::new()
-            .merge(api)
-            .fallback_service(ServeDir::new(dist))
-            .layer(axum::middleware::from_fn_with_state(
-                Arc::clone(&state),
-                basic_auth,
-            ))
-            .with_state(Arc::clone(&state))
-    } else {
-        Router::new()
-            .route("/", get(index))
-            .merge(api)
-            .layer(axum::middleware::from_fn_with_state(
-                Arc::clone(&state),
-                basic_auth,
-            ))
-            .with_state(Arc::clone(&state))
-    };
+    let app = Router::new()
+        .merge(api)
+        .fallback(crate::embedded::handler)
+        .layer(axum::middleware::from_fn_with_state(
+            Arc::clone(&state),
+            basic_auth,
+        ))
+        .with_state(Arc::clone(&state));
 
     let addr = format!("0.0.0.0:{}", port);
     let listener = tokio::net::TcpListener::bind(&addr)
@@ -146,48 +133,6 @@ pub async fn start_web_server(
     let conf_path = display_conf_path(&state.config_path);
     print_webui_banner(&port, &conf_path, &auth_user);
     Ok(())
-}
-
-fn find_frontend_dist_dir() -> Option<std::path::PathBuf> {
-    fn valid(p: &std::path::Path) -> bool {
-        p.join("index.html").is_file()
-    }
-
-    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
-    if let Ok(cwd) = std::env::current_dir() {
-        candidates.push(cwd.join("frontends/app/dist"));
-        candidates.push(cwd.join("./frontends/app/dist"));
-        // Legacy paths (pre-restructure)
-        candidates.push(cwd.join("app/frontend/dist"));
-        candidates.push(cwd.join("./app/frontend/dist"));
-    }
-
-    if let Ok(exe) = std::env::current_exe()
-        && let Some(exe_dir) = exe.parent()
-    {
-        candidates.push(exe_dir.join("../frontends/app/dist"));
-        candidates.push(exe_dir.join("../../frontends/app/dist"));
-        // Legacy paths (pre-restructure)
-        candidates.push(exe_dir.join("../app/frontend/dist"));
-        candidates.push(exe_dir.join("../../app/frontend/dist"));
-
-        for ancestor in exe_dir.ancestors().take(8) {
-            candidates.push(ancestor.join("frontends/app/dist"));
-            candidates.push(ancestor.join("app/frontend/dist"));
-        }
-    }
-
-    candidates.push(std::path::PathBuf::from("frontends/app/dist"));
-    candidates.push(std::path::PathBuf::from("./frontends/app/dist"));
-    // Legacy paths (pre-restructure)
-    candidates.push(std::path::PathBuf::from("app/frontend/dist"));
-    candidates.push(std::path::PathBuf::from("./app/frontend/dist"));
-
-    candidates.into_iter().find(|p| valid(p))
-}
-
-async fn index() -> Html<&'static str> {
-    Html("<html><body><h1>iKuai Bypass WebUI (Rust)</h1></body></html>")
 }
 
 async fn api_config(State(state): State<Arc<AppState>>) -> Response {

@@ -12,10 +12,9 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "${repo_root}/.github/scripts/arch-helpers.sh"
 
 rm -rf "${context_dir}"
-mkdir -p "${context_dir}/docker/frontends/app" "${context_dir}/docker/bin"
+mkdir -p "${context_dir}/docker/bin"
 
 cp "${repo_root}/packaging/docker/Dockerfile" "${repo_root}/packaging/docker/docker-entrypoint.sh" "${repo_root}/config.yml" "${context_dir}/"
-cp -R "${repo_root}/frontends/app/dist" "${context_dir}/docker/frontends/app/dist"
 chmod +x "${context_dir}/docker-entrypoint.sh"
 
 while IFS= read -r item; do

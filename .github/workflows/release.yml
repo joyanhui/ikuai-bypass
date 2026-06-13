@@ -319,7 +319,7 @@ jobs:
   build-frontend:
     name: Build Frontend Dist
     needs: resolve-matrix
-    if: needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true' || needs.resolve-matrix.outputs.has_ipkg_cli == 'true'
+    if: needs.resolve-matrix.outputs.has_cli == 'true' || needs.resolve-matrix.outputs.has_gui == 'true' || needs.resolve-matrix.outputs.push_docker == 'true' || needs.resolve-matrix.outputs.has_ipkg_cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -395,6 +395,7 @@ jobs:
     needs:
       - resolve-matrix
       - verify-cli
+      - build-frontend
     if: needs.resolve-matrix.outputs.has_cli == 'true'
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -405,6 +406,11 @@ jobs:
       CARGO_TARGET_DIR: target-cli-${{ matrix.label }}
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
 
       - uses: actions/setup-python@v6
         with:
@@ -487,6 +493,7 @@ jobs:
     needs:
       - resolve-matrix
       - verify-cli
+      - build-frontend
     if: needs.resolve-matrix.outputs.has_cli_nightly == 'true'
     runs-on: ${{ matrix.runner }}
     continue-on-error: true
@@ -498,6 +505,11 @@ jobs:
       CARGO_TARGET_DIR: target-cli-nightly-${{ matrix.label }}
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
 
       - uses: actions/setup-python@v6
         with:
@@ -1582,16 +1594,10 @@ jobs:
     needs:
       - resolve-matrix
       - build-cli
-      - build-frontend
     if: needs.resolve-matrix.outputs.push_docker == 'true' && needs.resolve-matrix.outputs.docker_creds_available == 'true' && needs.resolve-matrix.outputs.docker_platforms != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
-      - uses: actions/download-artifact@v6
-        with:
-          name: frontend-dist
-          path: frontends/app/dist
 
       - uses: actions/download-artifact@v6
         with:

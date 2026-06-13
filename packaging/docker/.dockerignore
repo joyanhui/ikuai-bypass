@@ -8,7 +8,6 @@ target
 **/target
 node_modules
 **/node_modules
-frontends/app/dist
 frontends/app/.astro
 frontends/app/.bun-install
 frontends/app/.bun-tmp

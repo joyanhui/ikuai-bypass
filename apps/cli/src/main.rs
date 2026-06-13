@@ -16,6 +16,7 @@ use ikb_core::runtime::RuntimeService;
 use chrono::Local;
 use cron::Schedule;
 
+mod embedded;
 mod web;
 
 fn display_conf_path(p: &PathBuf) -> String {

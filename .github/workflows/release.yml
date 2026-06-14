@@ -792,11 +792,27 @@ jobs:
           BUNDLE_ACTIVE: ${{ matrix.bundle_active }}
         run: |
           set -euo pipefail
-          if [ "${BUNDLE_ACTIVE}" = "true" ] && [ -n "${BUNDLE_ARGS}" ]; then
-            cargo tauri build --target "${TARGET}" ${BUNDLE_ARGS} --config tauri.ci.conf.json
-          else
-            cargo tauri build --target "${TARGET}" --config tauri.ci.conf.json
-          fi
+          for attempt in 1 2 3; do
+            echo "::group::GUI Build Attempt ${attempt}/3"
+            if [ "${BUNDLE_ACTIVE}" = "true" ] && [ -n "${BUNDLE_ARGS}" ]; then
+              if cargo tauri build --target "${TARGET}" ${BUNDLE_ARGS} --config tauri.ci.conf.json; then
+                echo "::notice::GUI Build succeeded on attempt ${attempt}"
+                echo "::endgroup::"
+                break
+              fi
+            else
+              if cargo tauri build --target "${TARGET}" --config tauri.ci.conf.json; then
+                echo "::notice::GUI Build succeeded on attempt ${attempt}"
+                echo "::endgroup::"
+                break
+              fi
+            fi
+            echo "::endgroup::"
+            if [ "${attempt}" -lt 3 ]; then
+              echo "::warning::GUI Build attempt ${attempt} failed, retrying in 30s..."
+              sleep 30
+            fi
+          done
 
       - name: Collect GUI artifacts
         shell: bash

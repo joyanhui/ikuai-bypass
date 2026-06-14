@@ -1,7 +1,6 @@
 ---
-title: iKuai ipkg 安装
-parent: 📦 部署
-nav_order: 3
+title: 爱快应用市场 ipkg 安装
+nav_order: 8
 ---
 ## iKuai v4 应用市场 ipkg 安装说明
 

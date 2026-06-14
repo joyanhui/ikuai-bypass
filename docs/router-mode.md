@@ -1,7 +1,6 @@
 ---
-title: 分流模式解析
-parent: 🚀 入门
-nav_order: 2
+title: 分流模式：运营商 vs IP 分组
+nav_order: 4
 ---
 # 爱快两种分流模式解析
 

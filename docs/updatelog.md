@@ -1,7 +1,6 @@
 ---
-title: 更新日志
-parent: 📖 参考
-nav_order: 1
+title: 更新日志：版本历史
+nav_order: 9
 ---
 # 更新日志
 

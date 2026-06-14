@@ -1,7 +1,6 @@
 ---
-title: 部署方案总览
-parent: 📦 部署
-nav_order: 1
+title: Docker / CLI / LXC 部署
+nav_order: 6
 ---
 # 部署方案
 

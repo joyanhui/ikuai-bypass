@@ -1,7 +1,6 @@
 ---
-title: 快速上手
-parent: 🚀 入门
-nav_order: 1
+title: 下载、配置与 CLI 运行
+nav_order: 3
 ---
 # 快速上手
 

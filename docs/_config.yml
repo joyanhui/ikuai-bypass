@@ -5,5 +5,3 @@ url: https://joyanhui.github.io
 remote_theme: just-the-docs/just-the-docs
 
 search_enabled: true
-
-footer_content: "感谢 <a href=\"https://github.com/ztc1997/ikuai-bypass/\">ztc1997</a> 的初始版本思路，以及所有 PR 贡献者。"

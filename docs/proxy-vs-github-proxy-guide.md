@@ -1,7 +1,6 @@
 ---
-title: Proxy 说明
-parent: 📖 参考
-nav_order: 3
+title: Proxy 与 ghproxy 配置
+nav_order: 11
 ---
 ## 配置项中 关于 proxy 与 github-proxy 的区别
 

@@ -1,7 +1,6 @@
 ---
-title: OpenWRT 服务安装
-parent: 📦 部署
-nav_order: 2
+title: OpenWRT 系统服务安装
+nav_order: 7
 ---
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 

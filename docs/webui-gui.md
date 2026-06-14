@@ -1,7 +1,6 @@
 ---
-title: WebUI 与 GUI
-parent: 🚀 入门
-nav_order: 3
+title: WebUI 与 GUI 可视化操作
+nav_order: 5
 ---
 # WebUI 与 GUI
 

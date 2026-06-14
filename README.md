@@ -13,6 +13,7 @@
 > 如果本项目对你有帮助，请点个 Star！[![更新日志](https://img.shields.io/badge/更新日志-Changelog-blue?style=for-the-badge)](docs/updatelog.md)
 
 ---
+<img src="screenshot/index.gif" alt="">
 
 ## 快速导航
 

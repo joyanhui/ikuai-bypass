@@ -1,3 +1,8 @@
+---
+---
+
+{% include nav.html %}
+
 # WebUI 与 GUI
 
 ### WebUI（网页管理界面）
@@ -23,3 +28,5 @@ GUI 功能：
 - 实时查看日志
 
 > 懒人首选 GUI，不用记参数。
+
+{% include footer.html %}

@@ -2,9 +2,7 @@
 layout: default
 ---
 
-[**首页**](#) · [GitHub 仓库](https://github.com/joyanhui/ikuai-bypass) · [下载 Release](https://github.com/joyanhui/ikuai-bypass/releases) · [更新日志](updatelog.md) · [常见问题](https://github.com/joyanhui/ikuai-bypass/discussions)
-
----
+{% include nav.html %}
 
 # iKuai Bypass
 
@@ -40,8 +38,4 @@ layout: default
 - [proxy 与 github-proxy 的区别](proxy-vs-github-proxy-guide) — 两种代理配置说明
 - [注意事项](https://github.com/joyanhui/ikuai-bypass/blob/main/README.md#注意事项) — 规则命名、清理安全、端口配置
 
----
-
-💬 [Discussions](https://github.com/joyanhui/ikuai-bypass/discussions) · [Telegram](https://t.me/+cosAS1HgFOtlMTc1) · 🐛 [Issues](https://github.com/joyanhui/ikuai-bypass/issues) · [⭐ Star](https://github.com/joyanhui/ikuai-bypass)
-
-致谢：感谢 [ztc1997](https://github.com/ztc1997/ikuai-bypass/) 的初始版本思路，以及所有 PR 贡献者。欢迎 PR，Rust/TS 代码须遵循零 Clone、零隐式 Panic、零 Any 原则。
+{% include footer.html %}

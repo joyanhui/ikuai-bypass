@@ -1,3 +1,8 @@
+---
+---
+
+{% include nav.html %}
+
 # 快速上手
 
 ### 1. 下载
@@ -59,4 +64,6 @@ custom-isp:
 
 # WebUI：cron / cronAft 启动后，若配置中启用 WebUI（webui.enable=true），
 # 可直接访问 http://你的IP:19001 查看状态、修改配置、停止定时任务
+
+{% include footer.html %}
 ```

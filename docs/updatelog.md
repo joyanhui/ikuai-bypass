@@ -6,17 +6,13 @@ nav_order: 9999
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
 
-## v4.4.106-alpha.3 (2026-06-14)
+## v4.4.106 (2026-06-15)
 
 - 修复 CLI 版本未能嵌入 WebUI 静态编译结果的 bug [#142](https://github.com/joyanhui/ikuai-bypass/issues/142)
-
-## v4.4.105-alpha
-
 - 修复 OpenWRT LuCI 对 `install` 命令的依赖 [#138](https://github.com/joyanhui/ikuai-bypass/issues/138)
 - 增加 arm64 版本爱快 ipkg 插件支持
 - iOS 端优化
-- 其他代码清理
-
+- 增加对爱快≥ 4.0.210 端口分流的主备模式说明文案和默认值[aaa2c3c](https://github.com/joyanhui/ikuai-bypass/commit/aaa2c3c0b9d6d06086b2fc1b3558210327c8b2fd)
 ## v4.4.104 (2026-04-27)
 
 - 针对爱快 v4.0.210beta 端口分流 mode:5 被弃用改为 6 的兼容性修复 [#130](https://github.com/joyanhui/ikuai-bypass/issues/130)
@@ -28,7 +24,7 @@ nav_order: 9999
 - 完善远程加载配置文件的模态框，增加使用嵌入的 YAML 配置文件功能，增加直接使用 ghproxy 下载功能
 - CLI 模式下增加自动创建配置文件能力（配置文件不存在时询问是否创建），GUI 模式在远程下载配置文件界面也有此功能
 
-## v4.4.102
+## v4.4.102 (2026-04-11)
 
 - YAML 编辑器简化为直接使用多行输入框
 - 修复 Windows 的 GUI 版本无法显示内置页面（提示页面未找到）的 bug [#127](https://github.com/joyanhui/ikuai-bypass/issues/127)

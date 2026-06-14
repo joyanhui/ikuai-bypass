@@ -5,6 +5,8 @@
 **iKuai Bypass** 是一款爱快路由器专用的分流规则自动同步工具。它可以自动从网上下载 IP/域名列表并同步到你的路由器，让你的流量自动走正确的线路。比如：主流网站和国内ip流量通过光猫直连、特殊流量走旁路由，无需手动配置每一条规则。
 并可以灵活控制内网每台设备的流量并可适配爱快ACL规则。
 
+[![更新日志](https://img.shields.io/badge/更新日志-Changelog-blue?style=for-the-badge)](docs/updatelog.md)
+
 提供两种安装方式：
 - GUI：图形化桌面和手机 App，支持 Windows / macOS / Linux 桌面端和 Android / iOS 移动端
 - CLI：命令行，可以完全不使用图形界面完成所有功能，也有一个可选的基于浏览器的web界面。适合 Nas AIO PVE Docker 等部署使用。

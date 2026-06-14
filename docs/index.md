@@ -23,7 +23,7 @@ permalink: /
 - [快速上手](quickstart.md) — 下载、配置、运行定时任务
 - [爱快两种分流模式解析](router-mode.md) — 自定义运营商 / IP 分组模式
 - [WebUI 与 GUI](webui-gui.md) — 网页管理界面与桌面/手机 App
-- [CLI 参数说明](https://github.com/joyanhui/ikuai-bypass/blob/main/README.md#cli-参数说明) — 命令行参数、运行模式、分流模式
+- [CLI 参数说明](cli-params.md) — 命令行参数、运行模式、分流模式
 
 ## 📦 部署
 

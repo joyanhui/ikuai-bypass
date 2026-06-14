@@ -7,7 +7,6 @@ nav_order: 7
 ### 环境要求
 
 - OpenWRT x64 / ARM / MIPS 等架构（Linux 内核 5.4+ 测试通过）
-- `ash` / `bash` / `zsh`（不兼容 `fish`）
 - 已安装 `unzip` 和 `wget`：
 
 ```sh
@@ -33,13 +32,14 @@ case "$(uname -m)" in
   riscv64)          ARCH="riscv64gc" ;;
   *)                echo "不支持的架构: $(uname -m)"; exit 1 ;;
 esac
+echo ${ARCH}
 
 # 设置版本（可从 Releases 页面查看最新 tag）
 # 自动获取最新版本（需 opkg install jq）：
 # IKB_VERSION=$(wget -qO- https://api.github.com/repos/joyanhui/ikuai-bypass/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
 # 手动指定版本：
 IKB_VERSION="4.4.105-alpha.5"
-
+# 创建目录 可以使用其他目录 需要sudo/root权限
 mkdir -p /opt/ && cd /opt/
 wget "${GhProxy}https://github.com/joyanhui/ikuai-bypass/releases/download/${IKB_VERSION}/ikuai-bypass-cli-linux-${ARCH}.zip"
 unzip ikuai-bypass-cli-linux-${ARCH}.zip && rm -f ikuai-bypass-cli-linux-${ARCH}.zip
@@ -60,7 +60,7 @@ chmod +x /opt/ikuai-bypass
 ```
 
 ### 三、创建开机服务
-
+> 也使用其他方式，这里用最简的init.d方式。如果是systemd致畸性复制下面内容 粘贴给ai获取systemd写法
 ```sh
 cat > /etc/init.d/ikuai-bypass << 'EOF'
 #!/bin/sh /etc/rc.common
@@ -113,12 +113,5 @@ rm -f /opt/ikuai-bypass.yml
 
 ### 六、参数说明
 
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| `-c` | 配置文件路径 | `config.yml` |
-| `-r` | 运行模式：`once`/`cron`/`cronAft`/`clean` | `cron` |
-| `-m` | 更新模块：`ispdomain` 等 | `ispdomain` |
-| `--tag` | 清理模式目标标签 | - |
-
-> **提示**：`-r cron` = 立即执行一次 + 按 cron 定时；`-r cronAft` = 仅定时模式，不立即执行。
+完整的 CLI 参数说明请查看 [CLI 参数说明](cli-params.md)。
 

@@ -10,7 +10,7 @@ nav_order: 6
 
 下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。
 
-**OpenWrt 用户**：可以参考这个[服务脚本](https://github.com/joyanhui/ikuai-bypass/blob/main/golang_archive/example/script/AddOpenwrtService.sh)
+**OpenWrt 用户**：可以参考这个[openwrt安装文档](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html)
 
 ### Docker 用户
 

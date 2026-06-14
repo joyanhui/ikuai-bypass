@@ -1,6 +1,6 @@
 ---
 title: 更新日志：版本历史
-nav_order: 9
+nav_order: 9999
 ---
 # 更新日志
 

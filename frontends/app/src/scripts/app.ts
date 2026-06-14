@@ -1573,6 +1573,7 @@ const RULE_LIST_META: Record<RuleListKey, {
           { value: '3', label: tt('rule.option.mode.3') },
           { value: '4', label: tt('rule.option.mode.4') },
           { value: '5', label: tt('rule.option.mode.5') },
+          { value: '6', label: tt('rule.option.mode.6') },
         ],
       },
       { key: 'ifaceband', label: tt('rule.field.ifaceband'), type: 'toggle', fullRow: true },

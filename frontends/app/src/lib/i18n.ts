@@ -308,7 +308,8 @@ const ZH: Dict = {
     "rule.option.mode.2": "2 - 源IP+源端口",
     "rule.option.mode.3": "3 - 源IP+目的IP",
     "rule.option.mode.4": "4 - 源IP+目的IP+目的端口",
-    "rule.option.mode.5": "5 - 主备模式",
+    "rule.option.mode.5": "5 - 主备模式 (仅 ≤ 4.0.120)",
+    "rule.option.mode.6": "6 - 主备模式 (≥ 4.0.210)",
 
     "toast.ghproxy_help": "使用bing或google搜索关键词 ghproxy",
     "toast.ghproxy_need_url": "请先填写 GitHub Proxy 地址",
@@ -672,7 +673,8 @@ const EN: Dict = {
     "rule.option.mode.2": "2 - Source IP + Source Port",
     "rule.option.mode.3": "3 - Source IP + Destination IP",
     "rule.option.mode.4": "4 - Source IP + Destination IP + Destination Port",
-    "rule.option.mode.5": "5 - Primary / Backup",
+    "rule.option.mode.5": "5 - Primary / Backup (≤ 4.0.120 only)",
+    "rule.option.mode.6": "6 - Primary / Backup (≥ 4.0.210)",
 
     "toast.ghproxy_help": "Search the keyword ghproxy on Bing or Google",
     "toast.ghproxy_need_url": "Please enter a GitHub Proxy URL first",

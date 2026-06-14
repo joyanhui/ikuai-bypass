@@ -18,14 +18,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-frontend:
+    name: Build Frontend Dist
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        working-directory: frontends/app
+        run: bun install --frozen-lockfile
+
+      - name: Build frontend dist
+        working-directory: frontends/app
+        run: bun run build
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
+
   cli-core-unit:
     name: CLI Core Unit
+    needs: build-frontend
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -46,6 +76,7 @@ jobs:
 
   cli-smoke:
     name: CLI Smoke (${{ matrix.test_name }})
+    needs: build-frontend
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -66,6 +97,11 @@ jobs:
       IKB_TEST_ARTIFACT_ROOT: ${{ github.workspace }}/apps/integration-tests/.artifacts
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
 
       - uses: dtolnay/rust-toolchain@stable
 

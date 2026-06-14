@@ -298,11 +298,18 @@ jobs:
 
   verify-cli:
     name: Verify CLI Source
-    needs: resolve-matrix
+    needs:
+      - resolve-matrix
+      - build-frontend
     if: needs.resolve-matrix.outputs.has_cli == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -1345,6 +1352,7 @@ jobs:
     needs:
       - resolve-matrix
       - verify-cli
+      - build-frontend
     if: needs.resolve-matrix.outputs.has_bsd == 'true'
     runs-on: ubuntu-latest
     strategy:
@@ -1355,6 +1363,11 @@ jobs:
       CARGO_TARGET_DIR: target-bsd-${{ matrix.label }}
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: frontend-dist
+          path: frontends/app/dist
 
       - name: Build in FreeBSD VM
         if: matrix.vm_os == 'freebsd'

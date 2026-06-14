@@ -1,8 +1,8 @@
 ---
+title: 部署方案总览
+parent: 📦 部署
+nav_order: 1
 ---
-
-{% include nav.html %}
-
 # 部署方案
 
 ### 手机和电脑桌面用户（推荐新手）
@@ -48,4 +48,3 @@ docker run -itd --name ikuai-bypass --restart=always \
 3. 映射一个文件夹到 `/etc/ikuai-bypass` 存放配置
 4. 启动后访问网页界面配置
 
-{% include footer.html %}

@@ -1,8 +1,8 @@
 ---
+title: WebUI 与 GUI
+parent: 🚀 入门
+nav_order: 3
 ---
-
-{% include nav.html %}
-
 # WebUI 与 GUI
 
 ### WebUI（网页管理界面）
@@ -29,4 +29,3 @@ GUI 功能：
 
 > 懒人首选 GUI，不用记参数。
 
-{% include footer.html %}

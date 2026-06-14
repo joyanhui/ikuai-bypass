@@ -1,8 +1,8 @@
 ---
-layout: default
+title: iKuai Bypass
+nav_order: 1
+permalink: /
 ---
-
-{% include nav.html %}
 
 # iKuai Bypass
 
@@ -37,5 +37,3 @@ layout: default
 - [配置详解与升级指南](v4.4.13-update-to-v4.4.10x) — 配置文件、参数说明、v4.4.13→v4.4.10x 升级
 - [proxy 与 github-proxy 的区别](proxy-vs-github-proxy-guide) — 两种代理配置说明
 - [注意事项](https://github.com/joyanhui/ikuai-bypass/blob/main/README.md#注意事项) — 规则命名、清理安全、端口配置
-
-{% include footer.html %}

@@ -1,8 +1,8 @@
 ---
+title: Proxy 说明
+parent: 📖 参考
+nav_order: 3
 ---
-
-{% include nav.html %}
-
 ## 配置项中 关于 proxy 与 github-proxy 的区别
 
 ```yaml
@@ -33,4 +33,3 @@ github-proxy：ghproxy URL 前缀重写，仅对 raw.githubusercontent.com / git
 
 > **提示**：完整配置示例请参考 [config.yml](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。
 
-{% include footer.html %}

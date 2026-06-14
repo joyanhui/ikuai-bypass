@@ -1,8 +1,8 @@
 ---
+title: OpenWRT 服务安装
+parent: 📦 部署
+nav_order: 2
 ---
-
-{% include nav.html %}
-
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 
 ### 环境要求
@@ -123,4 +123,3 @@ rm -f /opt/ikuai-bypass.yml
 
 > **提示**：`-r cron` = 立即执行一次 + 按 cron 定时；`-r cronAft` = 仅定时模式，不立即执行。
 
-{% include footer.html %}

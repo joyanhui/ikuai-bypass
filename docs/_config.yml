@@ -1,7 +1,9 @@
-title: ikuai-bypass
+title: iKuai Bypass
 description: 爱快路由分流工具 — iKuai Bypass
 baseurl: /ikuai-bypass
 url: https://joyanhui.github.io
-remote_theme: pages-themes/cayman@v0.2.0
-plugins:
-  - jekyll-remote-theme
+remote_theme: just-the-docs/just-the-docs
+
+search_enabled: true
+
+footer_content: "感谢 <a href=\"https://github.com/ztc1997/ikuai-bypass/\">ztc1997</a> 的初始版本思路，以及所有 PR 贡献者。"

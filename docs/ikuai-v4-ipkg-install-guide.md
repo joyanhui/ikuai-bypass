@@ -1,8 +1,8 @@
 ---
+title: iKuai ipkg 安装
+parent: 📦 部署
+nav_order: 3
 ---
-
-{% include nav.html %}
-
 ## iKuai v4 应用市场 ipkg 安装说明
 
 1. 打开 <https://github.com/joyanhui/ikuai-bypass/releases> 选择一个版本 下载对应的 ipkg 包
@@ -11,4 +11,3 @@
 
 注意：目前仅支持 x86_64 架构的爱快路由器，其他架构看有无需求待定。
 
-{% include footer.html %}

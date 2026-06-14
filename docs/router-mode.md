@@ -1,8 +1,8 @@
 ---
+title: 分流模式解析
+parent: 🚀 入门
+nav_order: 2
 ---
-
-{% include nav.html %}
-
 # 爱快两种分流模式解析
 
 本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。
@@ -40,4 +40,3 @@
 
 **参考文档**：[实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7) 或 [恩山y2kji的教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)。
 
-{% include footer.html %}

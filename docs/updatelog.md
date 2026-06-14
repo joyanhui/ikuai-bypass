@@ -1,8 +1,8 @@
 ---
+title: 更新日志
+parent: 📖 参考
+nav_order: 1
 ---
-
-{% include nav.html %}
-
 # 更新日志
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
@@ -51,4 +51,3 @@
 - 提供 PVE LXC/CT 部署方式（`ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz`）
 - 支持爱快 v4.0 应用市场 ipkg 安装
 
-{% include footer.html %}

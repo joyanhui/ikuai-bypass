@@ -1,0 +1,37 @@
+{
+  "id": "com.fileuni.ikuai-bypass",
+  "name": "iKuai Bypass",
+  "version": "4.4.106",
+  "summary": "iKuai router bypass tool",
+  "description": "流控域名、IP分组、IPv6分组、端口映射规则管理器。",
+  "author": "joyanhui",
+  "runtime": {
+    "kind": "process",
+    "program": "bin/ikuai-bypass",
+    "args": [],
+    "cwd": ".",
+    "env": { "PORT": "39135" },
+    "base_url": "http://127.0.0.1:39135"
+  },
+  "permissions": ["auth-read", "network"],
+  "tags": ["network", "router", "ikuai"],
+  "ui": { "root": "ui", "mount_path": "/" },
+  "download_urls": [
+    {
+      "url": "https://github.com/joyanhui/ikuai-bypass/releases/download/v4.4.106/ikuai-bypass-linux-amd64.tar.gz",
+      "filename": "ikb-package.tar.gz"
+    }
+  ],
+  "setup_steps": [
+    { "action": "extract", "source": "ikb-package.tar.gz", "dest": "./", "strip_components": 1 },
+    { "action": "move", "source": "ikuai-bypass", "dest": "bin/ikuai-bypass" },
+    { "action": "chmod", "source": "bin/ikuai-bypass", "mode": "0755" },
+    { "action": "symlink", "source": "bin/ikuai-bypass", "dest": "bin/ikb" },
+    { "action": "move", "source": "config.yml", "dest": "config/config.yml" },
+    { "action": "move", "source": "ui", "dest": "ui" }
+  ],
+  "update_steps": [
+    { "action": "remove", "source": "bin/old-migration-tool" },
+    { "action": "remove", "source": "data/legacy-cache.db" }
+  ]
+}

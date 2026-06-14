@@ -12,7 +12,7 @@ permalink: /
 [![GitHub](https://img.shields.io/badge/GitHub-仓库-brightgreen?style=for-the-badge&logo=github)](https://github.com/joyanhui/ikuai-bypass)
 [![更新日志](https://img.shields.io/badge/更新日志-Changelog-orange?style=for-the-badge)](updatelog.md)
 
-> **版本注意**：爱快 v3.7x 请用 [v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)。爱快 4.x 尚处于 beta 且 API 频繁变更。旧版 Go 已归档至 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)，老用户升级前请先阅读[升级说明](v4.4.13-update-to-v4.4.10x)。如果本项目对你有帮助，请点个 Star！
+> **版本注意**：爱快 v3.7x 请用 [v4.2.0](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.2.0)（[注意事项](v4.2.x-notes)）。爱快 4.x 尚处于 beta 且 API 频繁变更。旧版 Go 已归档至 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)，老用户升级前请先阅读[升级说明](v4.4.13-update-to-v4.4.10x)。如果本项目对你有帮助，请点个 Star！
 >
 > **DNS 分流建议**：可搭配 [ADGuard Home 规则](https://github.com/joyanhui/adguardhome-rules) 自建 DNS 分流解析。
 
@@ -37,3 +37,4 @@ permalink: /
 - [配置详解与升级指南](v4.4.13-update-to-v4.4.10x) — 配置文件、参数说明、v4.4.13→v4.4.10x 升级
 - [proxy 与 github-proxy 的区别](proxy-vs-github-proxy-guide) — 两种代理配置说明
 - [注意事项](https://github.com/joyanhui/ikuai-bypass/blob/main/README.md#注意事项) — 规则命名、清理安全、端口配置
+- [v4.2.x 注意事项](v4.2.x-notes) — v4.2.x 兼容性与 WebUI 配置说明

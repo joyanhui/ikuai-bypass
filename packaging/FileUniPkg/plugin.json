@@ -1,0 +1,163 @@
+{
+  "id": "com.fileuni.ikuai-bypass",
+  "name": "iKuai Bypass",
+  "version": "4.4.106",
+  "summary": "iKuai router bypass tool",
+  "description": "Flow control domain name, IP grouping, IPv6 grouping, port mapping rule manager for iKuai routers.",
+  "author": "joyanhui",
+  "runtime": {
+    "kind": "process",
+    "program": "bin/ikuai-bypass",
+    "args": [],
+    "cwd": ".",
+    "env": {
+      "PORT": "39135"
+    },
+    "base_url": "http://127.0.0.1:39135"
+  },
+  "permissions": [
+    "auth-read",
+    "network"
+  ],
+  "tags": [
+    "network",
+    "router",
+    "ikuai"
+  ],
+  "ui": {
+    "root": "ui/index.html",
+    "mount_path": "/bypass",
+    "sandboxed": true
+  },
+  "market": {
+    "keywords": ["network", "router", "ikuai", "bypass"],
+    "screenshots": [],
+    "homepage_url": "https://github.com/joyanhui/ikuai-bypass",
+    "repository_url": "https://github.com/joyanhui/ikuai-bypass"
+  },
+  "homepage_url": "https://github.com/joyanhui/ikuai-bypass",
+  "repository_url": "https://github.com/joyanhui/ikuai-bypass",
+  "checksum_sha256": null,
+  "install_commands": [
+    {
+      "action": "download",
+      "url": "https://github.com/joyanhui/ikuai-bypass/releases/download/v4.4.106/ikuai-bypass-linux-amd64.tar.gz",
+      "dest": ".download/ikb-package.tar.gz"
+    },
+    {
+      "action": "extract",
+      "source": ".download/ikb-package.tar.gz",
+      "dest": ".download",
+      "strip_components": 1
+    },
+    {
+      "action": "move",
+      "source": ".download/ikuai-bypass",
+      "dest": "bin/ikuai-bypass"
+    },
+    {
+      "action": "chmod",
+      "dest": "bin/ikuai-bypass",
+      "mode": "755"
+    },
+    {
+      "action": "symlink",
+      "dest": "bin/ikb",
+      "symlink_target": "bin/ikuai-bypass"
+    },
+    {
+      "action": "move",
+      "source": ".download/config.yml",
+      "dest": "config/config.yml"
+    },
+    {
+      "action": "move",
+      "source": ".download/ui",
+      "dest": "ui"
+    },
+    {
+      "action": "remove",
+      "dest": ".download"
+    }
+  ],
+  "upgrade_commands": [
+    {
+      "action": "download",
+      "url": "https://github.com/joyanhui/ikuai-bypass/releases/download/v4.4.106/ikuai-bypass-linux-amd64.tar.gz",
+      "dest": ".download/ikb-package.tar.gz"
+    },
+    {
+      "action": "extract",
+      "source": ".download/ikb-package.tar.gz",
+      "dest": ".download",
+      "strip_components": 1
+    },
+    {
+      "action": "move",
+      "source": ".download/ikuai-bypass",
+      "dest": "bin/ikuai-bypass"
+    },
+    {
+      "action": "chmod",
+      "dest": "bin/ikuai-bypass",
+      "mode": "755"
+    },
+    {
+      "action": "remove",
+      "dest": "bin/old-migration-tool"
+    },
+    {
+      "action": "remove",
+      "dest": "data/legacy-cache.db"
+    },
+    {
+      "action": "remove",
+      "dest": ".download"
+    }
+  ],
+  "uninstall_commands": [
+    {
+      "action": "remove",
+      "dest": "data"
+    },
+    {
+      "action": "remove",
+      "dest": "bin/ikb"
+    }
+  ],
+  "config_schema": {
+    "type": "object",
+    "required": ["base_url", "username", "password"],
+    "properties": {
+      "base_url": {
+        "type": "string",
+        "pattern": "^https?://.+",
+        "description": "iKuai router base URL"
+      },
+      "username": {
+        "type": "string",
+        "description": "iKuai router admin username"
+      },
+      "password": {
+        "type": "string",
+        "description": "iKuai router admin password"
+      },
+      "interval_minutes": {
+        "type": "integer",
+        "default": 60,
+        "minimum": 1,
+        "description": "Sync interval in minutes"
+      },
+      "tag": {
+        "type": "string",
+        "default": "IKB",
+        "description": "Rule name prefix tag"
+      },
+      "cleanup_mode": {
+        "type": "boolean",
+        "default": false,
+        "description": "Enable cleanup mode"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+# iKuai Bypass configuration
+# See https://github.com/joyanhui/ikuai-bypass for documentation
+
+base_url: "http://192.168.1.1"
+username: "admin"
+password: "admin"
+
+# Update interval in minutes
+interval_minutes: 60
+
+# Rule name prefix
+tag: "IKB"
+
+# Cleanup mode: remove all IKB-managed rules
+cleanup_mode: false
+
+# Stream domains
+# stream_domains:
+#   - example.com
+
+# Stream IP groups
+# stream_ip_groups:
+#   - 10.0.0.0/8

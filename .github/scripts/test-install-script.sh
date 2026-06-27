@@ -156,7 +156,7 @@ run_kvm_openwrt_test() {
     local OPENWRT_VERSION="${IKB_OPENWRT_VERSION:-24.10.0}"
     local WORK_DIR="/tmp/ikb-openwrt-kvm"
     local SSH_PORT=2222
-    local SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+    local SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o LogLevel=ERROR"
     local QEMU_PID=""
     local REPO_ROOT
 
@@ -180,7 +180,7 @@ run_kvm_openwrt_test() {
     # ── 1. Install host deps ──
     echo "--- [1/7] Install dependencies ---"
     sudo apt-get update -qq
-    sudo apt-get install -y -qq qemu-system-x86 sshpass
+    sudo apt-get install -y -qq qemu-system-x86 sshpass qemu-utils
 
     # ── 2. Download & extract OpenWrt image ──
     echo "--- [2/7] Download OpenWrt ${OPENWRT_VERSION} ---"
@@ -191,34 +191,49 @@ run_kvm_openwrt_test() {
     gunzip -f "${IMG_FILE}.img.gz" || true
     popd > /dev/null 2>&1 || true
 
-    # ── 3. Boot QEMU with raw image (no convert, no pre-config needed) ──
-    echo "--- [3/7] Boot VM ---"
+    # ── 3. Pre-configure image (password + network) ──
+    echo "--- [3/7] Prepare image ---"
     local SERIAL_LOG="${WORK_DIR}/serial.log"
+    # dropbear rejects empty passwords, set to "admin"
+    local ROOT_PW_HASH
+    ROOT_PW_HASH="$(openssl passwd -1 admin 2>/dev/null)" || ROOT_PW_HASH='$1$01234567$ABCDEFabcdef0123456789abcdef'  # fallback
+    # QEMU slirp assigns 10.0.2.0/24 via DHCP; change LAN from static to dhcp
+    sudo modprobe nbd max_part=16 2>/dev/null || true
+    sudo qemu-nbd -c /dev/nbd0 "${WORK_DIR}/${IMG_FILE}.img" --format=raw 2>/dev/null || true
+    sleep 1
+    sudo mount /dev/nbd0p2 /mnt 2>/dev/null || true
+    sudo sed -i "s|^root:[^:]*:|root:${ROOT_PW_HASH}:|" /mnt/etc/shadow
+    sudo sed -i "s/option proto 'static'/option proto 'dhcp'/" /mnt/etc/config/network
+    sudo sed -i "/option ipaddr/d; /option netmask/d; /option ip6assign/d" /mnt/etc/config/network
+    sudo umount /mnt 2>/dev/null; sudo qemu-nbd -d /dev/nbd0 2>/dev/null; sleep 1
+
+    # ── 4. Boot QEMU with raw image ──
+    echo "--- [4/7] Boot VM ---"
     qemu-system-x86_64 -M q35 -m 1G -accel kvm -cpu host \
         -drive file="${WORK_DIR}/${IMG_FILE}.img",format=raw,if=virtio \
         -nic user,hostfwd=tcp::${SSH_PORT}-:22,model=e1000 \
         -display none -serial file:"${SERIAL_LOG}" > /dev/null 2>&1 &
     QEMU_PID=$!
 
-    # ── 4. Wait for SSH (default OpenWrt has empty root password) ──
-    echo "--- [4/7] Wait SSH (max 120s) ---"
+    # ── 5. Wait for SSH (root password set to "admin") ──
+    echo "--- [5/7] Wait SSH (max 120s) ---"
     local SSH_OK=""
     for i in $(seq 1 60); do
         grep -q "Kernel panic" "${SERIAL_LOG}" 2>/dev/null && { trap '' EXIT; tail -5 "${SERIAL_LOG}"; cleanup_kvm 1; }
-        if sshpass -p "" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 "echo OK" 2>/dev/null | grep -q OK; then
+        if sshpass -p "admin" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 "echo OK" 2>/dev/null | grep -q OK; then
             echo "SSH ready ~$((i*2))s"; SSH_OK=1; break
         fi
         sleep 2
     done
     [ -n "${SSH_OK}" ] || { trap '' EXIT; echo "SSH timeout"; tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
 
-    # ── 5. Copy install script & run tests ──
-    echo "--- [5/7] Copy install script ---"
-    sshpass -p "" scp ${SSH_OPTS} -P ${SSH_PORT} \
+    # ── 6. Copy install script & run tests ──
+    echo "--- [6/7] Copy install script ---"
+    sshpass -p "admin" scp ${SSH_OPTS} -O -P ${SSH_PORT} \
         "${REPO_ROOT}/docs/install.sh" "${REPO_ROOT}/docs/install-file" root@127.0.0.1:/tmp/
 
-    echo "--- [6/7] Run tests ---"
-    sshpass -p "" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 sh -s << 'REMOTE_TEST'
+    echo "--- [7/7] Run tests ---"
+    sshpass -p "admin" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 sh -s << 'REMOTE_TEST'
 set -e
 PASS=0; FAIL=0
 INSTALL_DIR="/opt/ikuai-bypass"; BIN_PATH="${INSTALL_DIR}/ikuai-bypass"

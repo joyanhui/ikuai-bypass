@@ -3,12 +3,22 @@
 # ikuai-bypass 安装脚本 — 共享函数库
 # ──────────────────────────────────────
 
-# 默认路径
+# 默认路径 / Default paths
+SERVICE_NAME="ikuai-bypass"
 INSTALL_DIR="/opt/ikuai-bypass"
 BIN_PATH="${INSTALL_DIR}/ikuai-bypass"
 CONFIG_PATH="${INSTALL_DIR}/config.yml"
 VERSION_FILE="${INSTALL_DIR}/.version"
-SERVICE_NAME="ikuai-bypass"
+LOG_PATH="/dev/null"
+
+# ── 根据系统配置路径 / Configure OS-specific paths ──
+configure_paths() {
+    INSTALL_DIR="/opt/ikuai-bypass"
+    BIN_PATH="${INSTALL_DIR}/ikuai-bypass"
+    CONFIG_PATH="${INSTALL_DIR}/config.yml"
+    VERSION_FILE="${INSTALL_DIR}/.version"
+    LOG_PATH="/dev/null"
+}
 
 # ── 架构检测 / Arch detection ──
 detect_arch() {
@@ -24,8 +34,32 @@ detect_arch() {
         aarch64|arm64)
             printf "aarch64"
             ;;
-        armv7*|armv7l)
+        armv5*|arm926*)
+            printf "arm5"
+            ;;
+        armv6*|arm1176*)
+            printf "arm6"
+            ;;
+        armv7*|armv7l|armhf*)
             printf "arm7"
+            ;;
+        mips64el*)
+            printf "mips64le"
+            ;;
+        mips64*)
+            printf "mips64"
+            ;;
+        mipsel*|mipsle*)
+            printf "mipsle"
+            ;;
+        mips*)
+            printf "mips"
+            ;;
+        riscv64*)
+            printf "riscv64gc"
+            ;;
+        ppc64le*|powerpc64le*)
+            printf "ppc64le"
             ;;
         *)
             printf "unsupported:%s" "${umachine}"
@@ -54,6 +88,7 @@ check_root() {
         print_msg "ERR_ROOT"
         exit 1
     }
+    return 0
 }
 
 # ── 工具命令检测 / Ensure tool command ──
@@ -62,17 +97,35 @@ ensure_cmd() {
     local pkg="${2:-$1}"
     if ! command -v "${cmd}" >/dev/null 2>&1; then
         if command -v apt >/dev/null 2>&1; then
-            apt-get update -qq && apt-get install -y -qq "${pkg}"
+            apt-get update -qq && apt-get install -y -qq "${pkg}" ca-certificates
         elif command -v pacman >/dev/null 2>&1; then
             pacman -Sy --noconfirm "${pkg}"
         elif command -v opkg >/dev/null 2>&1; then
-            opkg update >/dev/null 2>&1 && opkg install "${pkg}"
+            opkg update >/dev/null 2>&1 && opkg install "${pkg}" ca-bundle
         fi
         if ! command -v "${cmd}" >/dev/null 2>&1; then
             print_msg "ERR_CMD" "${cmd}"
             exit 1
         fi
     fi
+}
+
+# ── 安装基础依赖 / Install required dependencies ──
+ensure_base_deps() {
+    ensure_cmd curl curl
+    ensure_cmd unzip unzip
+}
+
+# ── 写文件到 overlay 前先落盘到 /tmp / Stage writes through /tmp for overlay safety ──
+install_file_atomic() {
+    local src="$1"
+    local dst="$2"
+    local mode="${3:-0644}"
+    local tmp="/tmp/ikuai-bypass-install.$$.$(basename "${dst}")"
+    mkdir -p "$(dirname "${dst}")"
+    cp "${src}" "${tmp}"
+    chmod "${mode}" "${tmp}" 2>/dev/null || true
+    mv "${tmp}" "${dst}"
 }
 
 # ── 进程检查 / Check process ──
@@ -275,19 +328,21 @@ install_app() {
     fi
 
     url="https://github.com/joyanhui/ikuai-bypass/releases/download/ikuai-bypass-v${version}/ikuai-bypass-cli-linux-${arch}.zip"
-    zip_file="/tmp/ikuai-bypass-${arch}.zip"
+    tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t ikb-install)"
+    zip_file="${tmp_dir}/ikuai-bypass-${arch}.zip"
+    unpack_dir="${tmp_dir}/unpack"
 
     print_msg "MSG_DOWNLOADING" "ikuai-bypass-cli-linux-${arch}.zip"
     if command -v curl >/dev/null 2>&1; then
         curl -fsSL -o "${zip_file}" "${url}" || {
             print_msg "MSG_DOWNLOAD_FAIL" "${url}"
-            rm -f "${zip_file}"
+            rm -rf "${tmp_dir}"
             return 1
         }
     elif command -v wget >/dev/null 2>&1; then
         wget -qO "${zip_file}" "${url}" || {
             print_msg "MSG_DOWNLOAD_FAIL" "${url}"
-            rm -f "${zip_file}"
+            rm -rf "${tmp_dir}"
             return 1
         }
     else
@@ -296,34 +351,46 @@ install_app() {
     fi
 
     print_msg "MSG_EXTRACTING"
-    mkdir -p "${INSTALL_DIR}"
+    mkdir -p "${unpack_dir}"
 
     if command -v unzip >/dev/null 2>&1; then
-        unzip -qo "${zip_file}" -d "${INSTALL_DIR}"
+        unzip -qo "${zip_file}" -d "${unpack_dir}"
     else
         if command -v python3 >/dev/null 2>&1; then
             python3 -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" \
-                "${zip_file}" "${INSTALL_DIR}"
+                "${zip_file}" "${unpack_dir}"
         elif command -v python >/dev/null 2>&1; then
             python -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" \
-                "${zip_file}" "${INSTALL_DIR}"
+                "${zip_file}" "${unpack_dir}"
         else
             print_msg "ERR_CMD" "unzip"
-            rm -f "${zip_file}"
+            rm -rf "${tmp_dir}"
             return 1
         fi
     fi
-    rm -f "${zip_file}"
+
+    if [ ! -f "${unpack_dir}/ikuai-bypass" ]; then
+        print_msg "MSG_DOWNLOAD_FAIL" "Archive does not contain ikuai-bypass"
+        rm -rf "${tmp_dir}"
+        return 1
+    fi
+
+    install_file_atomic "${unpack_dir}/ikuai-bypass" "${BIN_PATH}" 0755
 
     chmod +x "${BIN_PATH}"
 
     # 如果 config.yml 不存在，从 sample 复制
     if [ ! -f "${CONFIG_PATH}" ]; then
-        cp "${INSTALL_DIR}/config.yml" "${CONFIG_PATH}" 2>/dev/null || true
+        if [ -f "${unpack_dir}/config.yml" ]; then
+            install_file_atomic "${unpack_dir}/config.yml" "${CONFIG_PATH}" 0644
+        fi
     fi
 
     # 写入版本
-    printf "%s" "${version}" > "${VERSION_FILE}"
+    mkdir -p "$(dirname "${VERSION_FILE}")"
+    printf "%s" "${version}" > "/tmp/ikuai-bypass-version.$$"
+    mv "/tmp/ikuai-bypass-version.$$" "${VERSION_FILE}"
+    rm -rf "${tmp_dir}"
 
     print_msg "MSG_INSTALL_OK"
     return 0
@@ -485,8 +552,8 @@ view_log() {
             ;;
         openwrt)
             print_msg "MSG_LOG_HINT"
-            if [ -f /tmp/ikuai-bypass.log ]; then
-                tail -f /tmp/ikuai-bypass.log 2>/dev/null
+            if [ "${LOG_PATH}" != "/dev/null" ] && [ -f "${LOG_PATH}" ]; then
+                tail -f "${LOG_PATH}" 2>/dev/null
             else
                 print_msg "MSG_NO_LOG"
             fi
@@ -514,23 +581,37 @@ uninstall_app() {
             ;;
     esac
 
-    # 删除二进制、版本文件和 README
-    rm -f "${BIN_PATH}"
-    rm -f "${VERSION_FILE}"
-    rm -f "${INSTALL_DIR}/README.md"
+    if [ "${IKB_UNINSTALL_SERVICE_ONLY:-0}" = "1" ]; then
+        print_msg "MSG_KEEP_CONF"
+        print_msg "MSG_UNINSTALL_DONE"
+        return 0
+    fi
 
-    # 询问是否删除配置
-    print_msg "MSG_UNINSTALL_CONF"
-    read < /dev/tty rm_conf
-    case "${rm_conf}" in
-        y|Y|yes|YES)
-            rm -f "${CONFIG_PATH}"
-            print_msg "MSG_RM_ALL"
-            ;;
-        *)
-            print_msg "MSG_KEEP_CONF"
-            ;;
-    esac
+    if [ "${IKB_UNINSTALL_REMOVE_CONFIG:-0}" = "1" ]; then
+        rm -rf "${INSTALL_DIR}"
+        print_msg "MSG_RM_ALL"
+    elif [ "${IKB_NONINTERACTIVE:-0}" = "1" ]; then
+        rm -f "${BIN_PATH}"
+        rm -f "${VERSION_FILE}"
+        rm -f "${INSTALL_DIR}/README.md"
+        print_msg "MSG_KEEP_CONF"
+    else
+        # 询问是否删除配置
+        print_msg "MSG_UNINSTALL_CONF"
+        read < /dev/tty rm_conf
+        case "${rm_conf}" in
+            y|Y|yes|YES)
+                rm -rf "${INSTALL_DIR}"
+                print_msg "MSG_RM_ALL"
+                ;;
+            *)
+                rm -f "${BIN_PATH}"
+                rm -f "${VERSION_FILE}"
+                rm -f "${INSTALL_DIR}/README.md"
+                print_msg "MSG_KEEP_CONF"
+                ;;
+        esac
+    fi
 
     # 如果目录为空则删除
     rmdir "${INSTALL_DIR}" 2>/dev/null || true
@@ -547,12 +628,126 @@ install_service_file() {
     case "${os_type}" in
         debian|arch)
             mkdir -p /etc/systemd/system
-            cp "${src_dir}/install-file/ikuai-bypass.service" "/etc/systemd/system/${SERVICE_NAME}.service"
+            if [ -f "${src_dir}/install-file/ikuai-bypass.service" ]; then
+                install_file_atomic "${src_dir}/install-file/ikuai-bypass.service" "/etc/systemd/system/${SERVICE_NAME}.service" 0644
+            else
+                write_systemd_service "/etc/systemd/system/${SERVICE_NAME}.service"
+            fi
             systemctl daemon-reload 2>/dev/null || true
             ;;
         openwrt)
-            cp "${src_dir}/install-file/ikuai-bypass.initd" "/etc/init.d/${SERVICE_NAME}"
-            chmod +x "/etc/init.d/${SERVICE_NAME}"
+            if [ -f "${src_dir}/install-file/ikuai-bypass.initd" ]; then
+                install_file_atomic "${src_dir}/install-file/ikuai-bypass.initd" "/etc/init.d/${SERVICE_NAME}" 0755
+            else
+                write_openwrt_init "/etc/init.d/${SERVICE_NAME}"
+            fi
+            ;;
+    esac
+}
+
+write_openwrt_init() {
+    local dst="$1"
+    local tmp="/tmp/ikuai-bypass-init.$$"
+    cat > "${tmp}" <<EOF
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=10
+
+start() {
+    ${BIN_PATH} -r cronAft -c ${CONFIG_PATH} > /dev/null 2>&1 &
+}
+
+stop() {
+    killall -q -9 ikuai-bypass 2>/dev/null
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+EOF
+    install_file_atomic "${tmp}" "${dst}" 0755
+    rm -f "${tmp}"
+}
+
+write_systemd_service() {
+    local dst="$1"
+    local tmp="/tmp/ikuai-bypass-service.$$"
+    cat > "${tmp}" <<EOF
+[Unit]
+Description=iKuai Bypass CLI Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=${BIN_PATH} -r cron -c ${CONFIG_PATH}
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    install_file_atomic "${tmp}" "${dst}" 0644
+    rm -f "${tmp}"
+}
+
+print_status_kv() {
+    printf 'binary_path=%s\n' "${BIN_PATH}"
+    if [ -x "${BIN_PATH}" ]; then
+        printf 'binary_exists=1\n'
+        printf 'binary_version=%s\n' "$("${BIN_PATH}" --version 2>/dev/null | sed -n '1p' || true)"
+    else
+        printf 'binary_exists=0\n'
+        printf 'binary_version=\n'
+    fi
+    printf 'config_path=%s\n' "${CONFIG_PATH}"
+    [ -f "${CONFIG_PATH}" ] && printf 'config_exists=1\n' || printf 'config_exists=0\n'
+    if [ -f "/etc/init.d/${SERVICE_NAME}" ] || [ -f "/etc/systemd/system/${SERVICE_NAME}.service" ]; then
+        printf 'service_installed=1\n'
+    else
+        printf 'service_installed=0\n'
+    fi
+    check_process && printf 'running=1\n' || printf 'running=0\n'
+    [ -f "${VERSION_FILE}" ] && printf 'version=%s\n' "$(cat "${VERSION_FILE}")" || printf 'version=\n'
+    printf 'arch=%s\n' "$(detect_arch 2>/dev/null || true)"
+}
+
+run_action() {
+    local action="${1:-}"
+    local version="${2:-}"
+    IKB_NONINTERACTIVE=1
+    export IKB_NONINTERACTIVE
+    case "${action}" in
+        install)
+            ensure_base_deps
+            if install_app "${version}"; then install_service_file; enable_autostart; start_service; fi
+            ;;
+        update)
+            ensure_base_deps
+            if install_app "${version}"; then install_service_file; restart_service; fi
+            ;;
+        uninstall)
+            case "${2:-}" in
+                --remove-config|--full) IKB_UNINSTALL_REMOVE_CONFIG=1; export IKB_UNINSTALL_REMOVE_CONFIG ;;
+                --service-only) IKB_UNINSTALL_SERVICE_ONLY=1; export IKB_UNINSTALL_SERVICE_ONLY ;;
+            esac
+            uninstall_app
+            ;;
+        start) start_service ;;
+        stop) stop_service ;;
+        restart) restart_service ;;
+        enable) enable_autostart ;;
+        disable) disable_autostart ;;
+        status|inspect) print_status_kv ;;
+        log)
+            if [ "${LOG_PATH}" != "/dev/null" ] && [ -f "${LOG_PATH}" ]; then tail -n 80 "${LOG_PATH}"; else print_msg "MSG_NO_LOG"; fi
+            ;;
+        *)
+            printf 'Unsupported action: %s\n' "${action}"
+            return 2
             ;;
     esac
 }

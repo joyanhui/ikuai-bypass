@@ -105,6 +105,7 @@ run_ubuntu_test() {
     start_service; sleep 2
     assert_true "Process running after start" check_process
     status_service > /dev/null 2>&1 && pass "status_service runs without error"
+    IKB_INSTALL_BASE_URL="file://${WORK_DIR}" sh ./install.sh status | grep -q "binary_path=" && pass "non-interactive status works" || fail "non-interactive status failed"
     stop_service; sleep 2
     assert_false "Process stopped" check_process
 
@@ -244,6 +245,7 @@ fail() { echo "  ✗ $1"; FAIL=$((FAIL + 1)); exit 1; }
 
 echo "[setup] Installing deps..."; opkg update || true; opkg install curl unzip 2>&1 || true
 cd /tmp; LANG_CHOICE=1; . ./install-file/common.sh
+configure_paths openwrt
 
 echo ""; echo "── Test 1/9: OS / Arch ──"
 case "$(detect_os)" in openwrt) pass "OK: openwrt";; *) fail "OS mismatch";; esac
@@ -262,11 +264,8 @@ install_app "${VER}"
 echo ""; echo "── Test 4/9: Service file ──"
 install_service_file /tmp
 [ -f "${SERVICE_FILE}" ] && pass "Init.d exists" || fail "Init.d missing"
-local _sum_cmd="sha256sum"
-command -v sha256sum >/dev/null 2>&1 || _sum_cmd="md5sum"
-local _tmpl=$(${_sum_cmd} /tmp/install-file/ikuai-bypass.initd 2>/dev/null | cut -d' ' -f1)
-local _inst=$(${_sum_cmd} "${SERVICE_FILE}" 2>/dev/null | cut -d' ' -f1)
-[ -n "${_tmpl}" ] && [ "${_tmpl}" = "${_inst}" ] && pass "Content matches" || fail "Content mismatch (${_sum_cmd})"
+grep -q "/opt/ikuai-bypass/ikuai-bypass" "${SERVICE_FILE}" && pass "Init.d uses /opt binary path" || fail "Init.d binary path mismatch"
+grep -q "/opt/ikuai-bypass/config.yml" "${SERVICE_FILE}" && pass "Init.d uses /opt config path" || fail "Init.d config path mismatch"
 
 echo ""; echo "── Test 5/9: enable + start + stop ──"
 "${SERVICE_FILE}" enable && pass "Enabled" || fail "Enable failed"
@@ -281,17 +280,17 @@ echo ""; echo "── Test 6/9: disable ──"
 [ -L /etc/rc.d/S99ikuai-bypass ] && echo "  WARN: symlink persists" || pass "rc.d symlink removed"
 
 echo ""; echo "── Test 7/9: Uninstall (keep config) ──"
-rm -f "${BIN_PATH}" "${VERSION_FILE}" "${SERVICE_FILE}"
-[ -f "${BIN_PATH}" ] && fail "Binary residue" || pass "Binary removed"
+IKB_UNINSTALL_SERVICE_ONLY=1 uninstall_app
+[ -f "${SERVICE_FILE}" ] && fail "Service residue" || pass "Service removed"
+[ -f "${BIN_PATH}" ] && pass "Binary preserved" || fail "Binary lost"
 [ -f "${CONFIG_PATH}" ] && pass "Config preserved" || fail "Config lost"
 
 echo ""; echo "── Test 8/9: Reinstall + Uninstall (delete all) ──"
 install_app "${VER}"; install_service_file /tmp; [ -f "${BIN_PATH}" ] && pass "Re-installed" || fail "Re-install failed"
-rm -f "${BIN_PATH}" "${VERSION_FILE}" "${CONFIG_PATH}" "${INSTALL_DIR}/README.md" "${SERVICE_FILE}"
-rmdir "${INSTALL_DIR}" 2>/dev/null || true
+IKB_UNINSTALL_REMOVE_CONFIG=1 uninstall_app
 [ -f "${BIN_PATH}" ] && fail "Binary residue" || pass "Binary removed"
 [ -f "${CONFIG_PATH}" ] && fail "Config residue" || pass "Config removed"
-[ -d "${INSTALL_DIR}" ] && fail "Dir residue" || pass "Dir cleaned"
+[ -d "${INSTALL_DIR}" ] && fail "Install dir residue" || pass "Install dir cleaned"
 
 echo ""; echo "── Test 9/9: Process residue ──"
 IKB_PID="$(pidof ikuai-bypass 2>/dev/null || true)"; [ -n "${IKB_PID}" ] && kill "${IKB_PID}" 2>/dev/null || true; sleep 1

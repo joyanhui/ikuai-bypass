@@ -7,12 +7,16 @@ on:
     paths:
       - "docs/install.sh"
       - "docs/install-file/**"
+      - "packaging/openwrt-luci/**"
+      - "dev-docs/openwrt-luci-ipk构建和说明.md"
       - ".github/scripts/test-install-script.sh"
       - ".github/workflows/test-install-script.yml"
   pull_request:
     paths:
       - "docs/install.sh"
       - "docs/install-file/**"
+      - "packaging/openwrt-luci/**"
+      - "dev-docs/openwrt-luci-ipk构建和说明.md"
       - ".github/scripts/test-install-script.sh"
       - ".github/workflows/test-install-script.yml"
   workflow_dispatch:

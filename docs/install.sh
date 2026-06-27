@@ -7,31 +7,55 @@
 
 set -e
 
+REMOTE_BASE_URL="${IKB_INSTALL_BASE_URL:-https://joyanhui.github.io/ikuai-bypass}"
+NONINTERACTIVE=0
+[ "$#" -gt 0 ] && NONINTERACTIVE=1
+
 # ──────────────────────────────────────
 # 语言选择 / Language selection
 # ──────────────────────────────────────
-LANG_CHOICE=""
-# clear
-printf "Please select your language / 请选择语言:\n"
-printf "1. English\n"
-printf "2. 中文\n"
-printf "[1-2]: "
-read < /dev/tty LANG_CHOICE
+LANG_CHOICE="${LANG_CHOICE:-}"
+if [ "${NONINTERACTIVE}" = "1" ]; then
+    LANG_CHOICE="${LANG_CHOICE:-1}"
+else
+    # clear
+    printf "Please select your language / 请选择语言:\n"
+    printf "1. English\n"
+    printf "2. 中文\n"
+    printf "[1-2]: "
+    read < /dev/tty LANG_CHOICE
 
-case "${LANG_CHOICE}" in
-    1|2) ;;
-    *)
-        printf "Invalid choice / 无效选择\n"
-        exit 1
-        ;;
-esac
+    case "${LANG_CHOICE}" in
+        1|2) ;;
+        *)
+            printf "Invalid choice / 无效选择\n"
+            exit 1
+            ;;
+    esac
+fi
 
 # ──────────────────────────────────────
 # 加载函数库 / Load library
 # ──────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck source=install-file/common.sh
-. "${SCRIPT_DIR}/install-file/common.sh"
+SCRIPT_DIR="$(cd "$(dirname "$0")" 2>/dev/null && pwd 2>/dev/null || printf '.')"
+COMMON_PATH="${SCRIPT_DIR}/install-file/common.sh"
+if [ -f "${COMMON_PATH}" ]; then
+    # shellcheck source=install-file/common.sh
+    . "${COMMON_PATH}"
+else
+    COMMON_TMP="$(mktemp 2>/dev/null || printf '/tmp/ikuai-bypass-common.%s' "$$")"
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL -o "${COMMON_TMP}" "${REMOTE_BASE_URL}/install-file/common.sh"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO "${COMMON_TMP}" "${REMOTE_BASE_URL}/install-file/common.sh"
+    else
+        printf "curl or wget is required to load install helpers\n" >&2
+        exit 1
+    fi
+    # shellcheck source=/dev/null
+    . "${COMMON_TMP}"
+    rm -f "${COMMON_TMP}"
+fi
 
 # ──────────────────────────────────────
 # 前置检查 / Pre-checks
@@ -59,12 +83,19 @@ case "${ARCH}" in
         ;;
 esac
 
+configure_paths "${OS_TYPE}"
+
+if [ "${NONINTERACTIVE}" = "1" ]; then
+    check_root
+    run_action "$@"
+    exit $?
+fi
+
 # ──────────────────────────────────────
 # 函数：安装 / Install
 # ──────────────────────────────────────
 menu_install() {
-    ensure_cmd curl || ensure_cmd wget
-    ensure_cmd unzip
+    ensure_base_deps
 
     print_msg "MSG_VERSION_INPUT"
     read < /dev/tty input_version
@@ -79,8 +110,7 @@ menu_install() {
 # 函数：更新 / Update
 # ──────────────────────────────────────
 menu_update() {
-    ensure_cmd curl || ensure_cmd wget
-    ensure_cmd unzip
+    ensure_base_deps
 
     local current_ver=""
     [ -f "${VERSION_FILE}" ] && current_ver="$(cat "${VERSION_FILE}")"

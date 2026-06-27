@@ -28,6 +28,10 @@
 
 `docs/install.sh` 一键安装脚本的 CI 测试覆盖 Ubuntu (systemd) 和 OpenWrt (KVM QEMU) 两种环境，验证 OS/arch 检测、版本获取、下载安装、服务文件注册、enable/start/stop/disable 生命周期、保留/删除配置卸载以及进程残留清理。
 
+## OpenWrt LuCI IPK
+
+OpenWrt LuCI IPK 的说明和构建细节参考 `dev-docs/openwrt-luci-ipk构建和说明.md`。
+
 ## 核心业务逻辑
 
 ### 1. 规则标识与命名约定

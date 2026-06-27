@@ -7,6 +7,11 @@
 
 set -e
 
+# 非 root 时自动通过 sudo 提权
+if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+    exec sudo bash "$(realpath "$0")" "$@"
+fi
+
 MODE="${1:-ubuntu}"
 PASS=0
 FAIL=0
@@ -28,7 +33,6 @@ assert_false() {
 #  MODE: ubuntu — native systemd test
 # ═══════════════════════════════════════════════
 run_ubuntu_test() {
-    local cleanup
     cleanup() {
         local p
         for p in $(pidof ikuai-bypass 2>/dev/null || pgrep ikuai-bypass 2>/dev/null || true); do
@@ -206,6 +210,9 @@ run_kvm_openwrt_test() {
     PWD_HASH="$(openssl passwd -1 "${ROOT_PASSWORD}" 2>/dev/null || python3 -c "import crypt; print(crypt.crypt('${ROOT_PASSWORD}', crypt.mksalt(crypt.METHOD_MD5)))")"
     sudo sed -i "s|^root:[^:]*|root:${PWD_HASH}|" "${NBD_MNT}/etc/shadow"
     sudo sed -i 's/option Interface.*//' "${NBD_MNT}/etc/config/dropbear" 2>/dev/null || true
+    # 确保 VM 内有 DNS，否则 get_latest_version 和 curl 无法解析
+    echo "nameserver 1.1.1.1" | sudo tee -a "${NBD_MNT}/etc/resolv.conf" >/dev/null
+    echo "nameserver 8.8.8.8" | sudo tee -a "${NBD_MNT}/etc/resolv.conf" >/dev/null
     sudo umount "${NBD_MNT}"; sudo qemu-nbd -d /dev/nbd0; rm -rf "${NBD_MNT}"
     echo "Image pre-configured"
 
@@ -253,7 +260,7 @@ SERVICE_FILE="/etc/init.d/ikuai-bypass"
 pass() { echo "  ✓ $1"; PASS=$((PASS + 1)); }
 fail() { echo "  ✗ $1"; FAIL=$((FAIL + 1)); exit 1; }
 
-echo "[setup] Installing deps..."; opkg update > /dev/null 2>&1; opkg install curl unzip > /dev/null 2>&1
+echo "[setup] Installing deps..."; opkg update > /dev/null 2>&1; opkg install curl unzip coreutils-sha256sum > /dev/null 2>&1
 cd /tmp; LANG_CHOICE=1; . ./install-file/common.sh
 
 echo ""; echo "── Test 1/9: OS / Arch ──"
@@ -301,7 +308,7 @@ rmdir "${INSTALL_DIR}" 2>/dev/null || true
 [ -d "${INSTALL_DIR}" ] && fail "Dir residue" || pass "Dir cleaned"
 
 echo ""; echo "── Test 9/9: Process residue ──"
-killall -q ikuai-bypass 2>/dev/null || true; sleep 1
+local IKB_PID; IKB_PID="$(pidof ikuai-bypass 2>/dev/null || true)"; [ -n "${IKB_PID}" ] && kill "${IKB_PID}" 2>/dev/null || true; sleep 1
 check_process && fail "Process residue" || pass "No residue"
 
 echo ""; echo "═══════════════════════════════════════"

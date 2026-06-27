@@ -151,14 +151,13 @@ run_ubuntu_test() {
 #  MODE: kvm-openwrt — KVM-based OpenWrt test
 # ═══════════════════════════════════════════════
 run_kvm_openwrt_test() {
-    set -euo pipefail
+    set -eo pipefail
 
     # ── KVM config ──
     local OPENWRT_VERSION="${IKB_OPENWRT_VERSION:-24.10.0}"
     local WORK_DIR="/tmp/ikb-openwrt-kvm"
     local SSH_PORT=2222
     local ROOT_PASSWORD="ikbtest123"
-    local BOOT_TIMEOUT=120
     local SSH_TIMEOUT=90
     local SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
     local QEMU_PID=""
@@ -167,9 +166,9 @@ run_kvm_openwrt_test() {
     REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
     cleanup_kvm() {
+        trap '' EXIT  # prevent recursive cleanup when calling exit inside the trap
         local ec=${1:-$?}
         echo ""; echo "=== Cleanup ==="
-        # QEMU_PID may be unbound when EXIT trap fires before it is assigned (set -e early exit)
         if [ -n "${QEMU_PID-}" ] && kill -0 "${QEMU_PID-}" 2>/dev/null; then
             kill "${QEMU_PID-}" 2>/dev/null || true; wait "${QEMU_PID-}" 2>/dev/null || true
         fi
@@ -228,27 +227,19 @@ run_kvm_openwrt_test() {
         > "${QEMU_LOG}" 2>&1 &
     QEMU_PID=$!; echo "QEMU PID: ${QEMU_PID}"
 
-    # ── 5. Wait for boot ──
-    echo "--- [5/8] Wait for boot (up to ${BOOT_TIMEOUT}s) ---"
-    local BOOT_OK=0
-    for i in $(seq 1 ${BOOT_TIMEOUT}); do
-        grep -q " login:" "${SERIAL_LOG}" 2>/dev/null && { BOOT_OK=1; echo "Boot after ~${i}s"; break; }
-        grep -q "Kernel panic" "${SERIAL_LOG}" 2>/dev/null && { tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
-        sleep 1
-    done
-    [ "${BOOT_OK}" -eq 1 ] || { echo "Boot timeout"; tail -50 "${SERIAL_LOG}"; cleanup_kvm 1; }
-
-    # ── 6. Wait for SSH ──
-    echo "--- [6/8] Wait for SSH (up to ${SSH_TIMEOUT}s) ---"
+    # ── 5. Wait for SSH (OpenWrt serial console needs Enter for login prompt,
+    #       but dropbear is ready ~15-20s after boot; skip boot prompt, go direct to SSH)
+    echo "--- [5/8] Wait for SSH (up to ${SSH_TIMEOUT}s) ---"
     local SSH_OK=0
     for i in $(seq 1 ${SSH_TIMEOUT}); do
+        grep -q "Kernel panic" "${SERIAL_LOG}" 2>/dev/null && { trap '' EXIT; tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
         sshpass -p "${ROOT_PASSWORD}" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 "echo SSH_READY" 2>/dev/null | grep -q SSH_READY && { SSH_OK=1; echo "SSH after ~${i}s"; break; }
         sleep 2
     done
-    [ "${SSH_OK}" -eq 1 ] || { echo "SSH timeout"; tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
+    [ "${SSH_OK}" -eq 1 ] || { trap '' EXIT; echo "SSH timeout"; tail -50 "${SERIAL_LOG}"; cleanup_kvm 1; }
 
-    # ── 7. Run tests via SSH ──
-    echo ""; echo "--- [7/8] Run install script tests via SSH ---"
+    # ── 6. Run tests via SSH ──
+    echo ""; echo "--- [6/8] Run install script tests via SSH ---"
     sshpass -p "${ROOT_PASSWORD}" scp ${SSH_OPTS} -P ${SSH_PORT} \
         -r "${REPO_ROOT}/docs/install.sh" "${REPO_ROOT}/docs/install-file" root@127.0.0.1:/tmp/ 2>&1
 
@@ -324,11 +315,11 @@ REMOTE_TEST
 
     local TEST_EXIT=$?
 
-    # ── 8. Collect logs ──
-    echo ""; echo "--- [8/8] Collect logs ---"
+    # ── 7. Collect logs ──
+    echo ""; echo "--- [7/8] Collect logs ---"
     [ -f "${SERIAL_LOG}" ] && echo "Serial log: $(wc -c < "${SERIAL_LOG}") bytes" && echo "--- tail 30 ---" && tail -30 "${SERIAL_LOG}"
 
-    popd > /dev/null
+    popd > /dev/null 2>&1 || true
     echo "Exit code: ${TEST_EXIT}"
     exit ${TEST_EXIT}
 }

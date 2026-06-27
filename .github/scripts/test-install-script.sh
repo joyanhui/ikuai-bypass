@@ -169,12 +169,13 @@ run_kvm_openwrt_test() {
     cleanup_kvm() {
         local ec=${1:-$?}
         echo ""; echo "=== Cleanup ==="
-        if [ -n "${QEMU_PID}" ] && kill -0 "${QEMU_PID}" 2>/dev/null; then
-            kill "${QEMU_PID}" 2>/dev/null || true; wait "${QEMU_PID}" 2>/dev/null || true
+        # QEMU_PID may be unbound when EXIT trap fires before it is assigned (set -e early exit)
+        if [ -n "${QEMU_PID-}" ] && kill -0 "${QEMU_PID-}" 2>/dev/null; then
+            kill "${QEMU_PID-}" 2>/dev/null || true; wait "${QEMU_PID-}" 2>/dev/null || true
         fi
         pkill -f "qemu-system-x86.*openwrt" 2>/dev/null || true
         sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
-        sleep 1; rm -rf "${WORK_DIR}"
+        sleep 1; rm -rf "${WORK_DIR-}" 2>/dev/null || true
         echo "=== Cleanup done ==="; exit "${ec}"
     }
     trap 'cleanup_kvm' EXIT
@@ -195,7 +196,7 @@ run_kvm_openwrt_test() {
     local IMG_FILE="openwrt-${OPENWRT_VERSION}-x86-64-generic-ext4-combined.img"
     local IMG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/x86/64/${IMG_FILE}.gz"
     wget -q --show-progress "${IMG_URL}"
-    gunzip -f "${IMG_FILE}.gz"
+    gunzip -f "${IMG_FILE}.gz" || true  # gzip returns 2 on trailing-garbage warning; harmless
     qemu-img convert -f raw -O qcow2 "${IMG_FILE}" openwrt.qcow2
     qemu-img resize openwrt.qcow2 2G
     rm -f "${IMG_FILE}"

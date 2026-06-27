@@ -250,8 +250,7 @@ run_kvm_openwrt_test() {
     sshpass -p "${ROOT_PASSWORD}" scp ${SSH_OPTS} -P ${SSH_PORT} \
         -r "${REPO_ROOT}/docs/install.sh" "${REPO_ROOT}/docs/install-file" root@127.0.0.1:/tmp/ 2>&1
 
-    sshpass -p "${ROOT_PASSWORD}" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 bash -s << 'REMOTE_TEST'
-#!/bin/sh
+    sshpass -p "${ROOT_PASSWORD}" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 sh -s << 'REMOTE_TEST'
 set -e
 PASS=0; FAIL=0
 INSTALL_DIR="/opt/ikuai-bypass"; BIN_PATH="${INSTALL_DIR}/ikuai-bypass"
@@ -308,7 +307,7 @@ rmdir "${INSTALL_DIR}" 2>/dev/null || true
 [ -d "${INSTALL_DIR}" ] && fail "Dir residue" || pass "Dir cleaned"
 
 echo ""; echo "── Test 9/9: Process residue ──"
-local IKB_PID; IKB_PID="$(pidof ikuai-bypass 2>/dev/null || true)"; [ -n "${IKB_PID}" ] && kill "${IKB_PID}" 2>/dev/null || true; sleep 1
+IKB_PID="$(pidof ikuai-bypass 2>/dev/null || true)"; [ -n "${IKB_PID}" ] && kill "${IKB_PID}" 2>/dev/null || true; sleep 1
 check_process && fail "Process residue" || pass "No residue"
 
 echo ""; echo "═══════════════════════════════════════"

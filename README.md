@@ -28,7 +28,7 @@
 
 | 部署方式 | 快速命令 / 说明 |
 |:---|:---|
-| **一键安装** | `bash <(curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh)` |
+| **一键安装** | `curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh \| sh` |
 | **Docker** | `docker run -itd --name ikuai-bypass --restart=always -e APP_RUN_MODE=ispdomain -p 19001:19001 -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest` |
 | **Linux/OpenWRT** | [安装为系统服务](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html) |
 | **iKuai v4 应用市场** | 下载 `.ipkg` 包，高级应用→应用市场→本地安装上传 |

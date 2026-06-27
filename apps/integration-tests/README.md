@@ -44,7 +44,7 @@
 bash apps/integration-tests/run-smoke-test.sh
 ```
 
-当本机存在 `qemu-system-x86_64` 且未显式设置 `IKB_TEST_IKUAI_IMAGE` 时，脚本会优先使用仓库里的 `.github/ikuai.qcow2.7z` 解压产物 `.github/ikuai.qcow2` 作为默认镜像。
+当本机存在 `qemu-system-x86_64` 且未显式设置 `IKB_TEST_IKUAI_IMAGE` 时，脚本会优先使用仓库里的 `.github/smoke-test-ikuai.qcow2.7z` 解压产物 `.github/smoke-test-ikuai.qcow2` 作为默认镜像。
 
 如果要显式指定模拟器后端：
 
@@ -104,7 +104,7 @@ bash script/dev.sh cli:dev -- -c apps/integration-tests/manual-cli.yml -r clean 
 
 ## 常用环境变量
 
-- `IKB_TEST_IKUAI_IMAGE`：爱快 qcow2 基础镜像路径；未显式设置时，若本机可用 QEMU，则默认取 `.github/ikuai.qcow2`。
+- `IKB_TEST_IKUAI_IMAGE`：爱快 qcow2 基础镜像路径；未显式设置时，若本机可用 QEMU，则默认取 `.github/smoke-test-ikuai.qcow2`。
 - `IKB_TEST_BACKEND`：集成测试后端，支持 `auto`、`kvm`、`simulator`、`external`，默认 `auto`。
 - `IKB_TEST_IKUAI_URL`：爱快管理地址，默认 `http://192.168.9.1`。
 - `IKB_TEST_IKUAI_USERNAME`：登录用户名，默认 `admin`。

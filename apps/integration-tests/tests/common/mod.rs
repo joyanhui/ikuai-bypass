@@ -119,7 +119,7 @@ impl TestEnv {
             .ok()
             .map(|value| PathBuf::from(value.trim()))
             .filter(|path| !path.as_os_str().is_empty())
-            .unwrap_or_else(|| workspace_root.join(".github/ikuai.qcow2"));
+            .unwrap_or_else(|| workspace_root.join(".github/smoke-test-ikuai.qcow2"));
         let ikuai_url_explicit = std::env::var("IKB_TEST_IKUAI_URL")
             .ok()
             .map(|value| !value.trim().is_empty())

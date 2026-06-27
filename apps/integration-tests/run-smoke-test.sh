@@ -43,8 +43,8 @@ workspace_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 artifact_root="${IKB_TEST_ARTIFACT_ROOT:-$workspace_root/apps/integration-tests/.artifacts}"
 dev_script_path="${IKB_TEST_DEV_SCRIPT:-$workspace_root/script/dev.sh}"
 backend="${IKB_TEST_BACKEND:-auto}"
-default_image_path="$workspace_root/.github/ikuai.qcow2"
-default_image_archive="$workspace_root/.github/ikuai.qcow2.7z"
+default_image_path="$workspace_root/.github/smoke-test-ikuai.qcow2"
+default_image_archive="$workspace_root/.github/smoke-test-ikuai.qcow2.7z"
 
 mkdir -p "$artifact_root"
 

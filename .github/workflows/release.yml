@@ -1533,7 +1533,7 @@ jobs:
             docker_platform="$(jq -r '.docker_platform' <<<"${item}")"
             zipball_name="$(ikb_cli_zip_name "${target}")"
             ipkg_name="$(ikb_ipkg_name "${target}")"
-            image_tag="ikuai-bypass:ipkg-${label}"
+            image_tag="ikuai-bypass:ikuai"
             stage=".ipkg-stage-${label}"
             package_stage="${stage}/package/ikuai-bypass"
 

@@ -24,38 +24,19 @@
 | 📖 **更新日志** | [版本历史与变更记录](docs/updatelog.md) |
 | 📚 **完整文档** | [文档首页](https://joyanhui.github.io/ikuai-bypass/) |
 
-## 安装部署
+## 快速开始
 
-| 部署方式 | 快速命令 / 说明 |
-|:---|:---|
-| **一键安装** | `curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh \| sh` |
-| **Docker** | `docker run -itd --name ikuai-bypass --restart=always -e APP_RUN_MODE=ispdomain -p 19001:19001 -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest` |
-| **Linux/OpenWRT** | [安装为系统服务](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html) |
-| **iKuai v4 应用市场** | 下载 `.ipkg` 包，高级应用→应用市场→本地安装上传 |
-| **LXC/PVE CT** | 使用 `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` 导入 CT 模板 |
-| **Unraid / 群晖** | Docker 套件中搜索 `joyanhui/ikuai-bypass` |
-
-## 快速示例
-配置文件
-```yaml
-# config.yml
-ikuai-url: http://192.168.9.1
-username: admin
-password: your_password
-cron: "0 7 * * *"
-custom-isp:
-  - tag: "国内IP"
-    url: "https://example.com/cn-ip.txt"
-```
-启动命令
 ```bash
-./ikuai-bypass -r cron -c ./config.yml   # 定时更新（推荐）
-./ikuai-bypass -r once -c ./config.yml    # 单次运行
+# Linux / OpenWrt 一键安装
+curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh
+
+# Docker
+docker run -itd --name ikuai-bypass --restart=always \
+  -e APP_RUN_MODE=ispdomain -p 19001:19001 \
+  -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest
 ```
 
----
-
-> 完整的 CLI 参数说明、运行模式、分流模式请查看 [CLI 参数说明](docs/cli-params.md) ，支持定时任务、单独或者组合不同的分流规则。
+> 📖 详细教程：[下载、配置、运行、部署全指南](https://joyanhui.github.io/ikuai-bypass/quickstart.html)
 
 ## 赞助支持
 

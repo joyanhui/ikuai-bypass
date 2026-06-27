@@ -4,6 +4,10 @@ nav_order: 7
 ---
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 
+> 💡 **推荐使用一键安装**：`curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh`，自动检测架构、下载二进制并注册为 init.d 服务。详见[快速上手](/quickstart.html#一键安装linux--openwrt)。
+>
+> 以下为手动安装步骤，适用于需要自定义安装路径或离线安装的场景。
+
 ### 环境要求
 
 - OpenWRT x64 / ARM / MIPS 等架构（Linux 内核 5.4+ 测试通过）

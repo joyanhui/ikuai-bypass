@@ -4,13 +4,23 @@ nav_order: 6
 ---
 # 部署方案
 
+## 一键安装（推荐）
+
+Linux / OpenWrt 用户推荐使用一键安装脚本，自动下载二进制并注册为系统服务：
+
+```bash
+curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh
+```
+
+[查看完整快速上手文档](https://joyanhui.github.io/ikuai-bypass/quickstart.html)
+
 ### 手机和电脑桌面用户（推荐新手）
 只要选对正确格式的包就可以，过于简单，教程掠过
 ### 服务器 / 命令行版本
 
 下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。
 
-**OpenWrt 用户**：可以参考这个[openwrt安装文档](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html)
+**OpenWrt 用户**：推荐使用[一键安装](/quickstart.html#一键安装linux--openwrt)，也支持[手动安装为系统服务](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html)
 
 ### Docker 用户
 

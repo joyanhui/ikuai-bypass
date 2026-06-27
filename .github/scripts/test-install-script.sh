@@ -192,13 +192,13 @@ run_kvm_openwrt_test() {
     echo "--- [2/8] Download OpenWrt ${OPENWRT_VERSION} x86_64 image ---"
     mkdir -p "${WORK_DIR}"
     pushd "${WORK_DIR}" > /dev/null
-    local IMG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/x86/64/openwrt-${OPENWRT_VERSION}-x86-64-generic-ext4-combined.img.gz"
-    wget -q --show-progress "${IMG_URL}" -O openwrt.img.gz
-    gunzip -f openwrt.img.gz
-    local RAW_IMG="openwrt-${OPENWRT_VERSION}-x86-64-generic-ext4-combined.img"
-    qemu-img convert -f raw -O qcow2 "${RAW_IMG}" openwrt.qcow2
+    local IMG_FILE="openwrt-${OPENWRT_VERSION}-x86-64-generic-ext4-combined.img"
+    local IMG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/x86/64/${IMG_FILE}.gz"
+    wget -q --show-progress "${IMG_URL}"
+    gunzip -f "${IMG_FILE}.gz"
+    qemu-img convert -f raw -O qcow2 "${IMG_FILE}" openwrt.qcow2
     qemu-img resize openwrt.qcow2 2G
-    rm -f "${RAW_IMG}"
+    rm -f "${IMG_FILE}"
 
     # ── 3. Pre-configure image ──
     echo "--- [3/8] Pre-configure image (qemu-nbd) ---"
@@ -210,9 +210,10 @@ run_kvm_openwrt_test() {
     PWD_HASH="$(openssl passwd -1 "${ROOT_PASSWORD}" 2>/dev/null || python3 -c "import crypt; print(crypt.crypt('${ROOT_PASSWORD}', crypt.mksalt(crypt.METHOD_MD5)))")"
     sudo sed -i "s|^root:[^:]*|root:${PWD_HASH}|" "${NBD_MNT}/etc/shadow"
     sudo sed -i 's/option Interface.*//' "${NBD_MNT}/etc/config/dropbear" 2>/dev/null || true
-    # 确保 VM 内有 DNS，否则 get_latest_version 和 curl 无法解析
-    echo "nameserver 1.1.1.1" | sudo tee -a "${NBD_MNT}/etc/resolv.conf" >/dev/null
-    echo "nameserver 8.8.8.8" | sudo tee -a "${NBD_MNT}/etc/resolv.conf" >/dev/null
+    # 确保 VM 内有 DNS（OpenWrt /etc/resolv.conf 是到 /tmp/resolv.conf 的 symlink，
+    # 启动时 tmpfs 覆盖使其失效，所以删掉 symlink 写一个实文件）
+    sudo rm -f "${NBD_MNT}/etc/resolv.conf"
+    printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" | sudo tee "${NBD_MNT}/etc/resolv.conf" >/dev/null
     sudo umount "${NBD_MNT}"; sudo qemu-nbd -d /dev/nbd0; rm -rf "${NBD_MNT}"
     echo "Image pre-configured"
 
@@ -230,7 +231,7 @@ run_kvm_openwrt_test() {
     echo "--- [5/8] Wait for boot (up to ${BOOT_TIMEOUT}s) ---"
     local BOOT_OK=0
     for i in $(seq 1 ${BOOT_TIMEOUT}); do
-        grep -q "localhost login:" "${SERIAL_LOG}" 2>/dev/null && { BOOT_OK=1; echo "Boot after ~${i}s"; break; }
+        grep -q " login:" "${SERIAL_LOG}" 2>/dev/null && { BOOT_OK=1; echo "Boot after ~${i}s"; break; }
         grep -q "Kernel panic" "${SERIAL_LOG}" 2>/dev/null && { tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
         sleep 1
     done
@@ -259,7 +260,7 @@ SERVICE_FILE="/etc/init.d/ikuai-bypass"
 pass() { echo "  ✓ $1"; PASS=$((PASS + 1)); }
 fail() { echo "  ✗ $1"; FAIL=$((FAIL + 1)); exit 1; }
 
-echo "[setup] Installing deps..."; opkg update > /dev/null 2>&1; opkg install curl unzip coreutils-sha256sum > /dev/null 2>&1
+echo "[setup] Installing deps..."; opkg update || echo "  [warn] opkg update failed"; opkg install curl unzip 2>&1 || echo "  [warn] some opkg installs failed"
 cd /tmp; LANG_CHOICE=1; . ./install-file/common.sh
 
 echo ""; echo "── Test 1/9: OS / Arch ──"
@@ -279,7 +280,11 @@ install_app "${VER}"
 echo ""; echo "── Test 4/9: Service file ──"
 install_service_file /tmp
 [ -f "${SERVICE_FILE}" ] && pass "Init.d exists" || fail "Init.d missing"
-[ "$(sha256sum /tmp/install-file/ikuai-bypass.initd | cut -d' ' -f1)" = "$(sha256sum "${SERVICE_FILE}" | cut -d' ' -f1)" ] && pass "Content matches" || fail "Content mismatch"
+local _sum_cmd="sha256sum"
+command -v sha256sum >/dev/null 2>&1 || _sum_cmd="md5sum"
+local _tmpl=$(${_sum_cmd} /tmp/install-file/ikuai-bypass.initd 2>/dev/null | cut -d' ' -f1)
+local _inst=$(${_sum_cmd} "${SERVICE_FILE}" 2>/dev/null | cut -d' ' -f1)
+[ -n "${_tmpl}" ] && [ "${_tmpl}" = "${_inst}" ] && pass "Content matches" || fail "Content mismatch (${_sum_cmd})"
 
 echo ""; echo "── Test 5/9: enable + start + stop ──"
 "${SERVICE_FILE}" enable && pass "Enabled" || fail "Enable failed"

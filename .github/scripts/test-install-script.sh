@@ -153,12 +153,9 @@ run_ubuntu_test() {
 run_kvm_openwrt_test() {
     set -eo pipefail
 
-    # ── KVM config ──
     local OPENWRT_VERSION="${IKB_OPENWRT_VERSION:-24.10.0}"
     local WORK_DIR="/tmp/ikb-openwrt-kvm"
     local SSH_PORT=2222
-    local ROOT_PASSWORD="ikbtest123"
-    local SSH_TIMEOUT=90
     local SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
     local QEMU_PID=""
     local REPO_ROOT
@@ -166,14 +163,11 @@ run_kvm_openwrt_test() {
     REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
     cleanup_kvm() {
-        trap '' EXIT  # prevent recursive cleanup when calling exit inside the trap
+        trap '' EXIT
         local ec=${1:-$?}
         echo ""; echo "=== Cleanup ==="
-        if [ -n "${QEMU_PID-}" ] && kill -0 "${QEMU_PID-}" 2>/dev/null; then
-            kill "${QEMU_PID-}" 2>/dev/null || true; wait "${QEMU_PID-}" 2>/dev/null || true
-        fi
-        pkill -f "qemu-system-x86.*openwrt" 2>/dev/null || true
-        sudo qemu-nbd -d /dev/nbd0 2>/dev/null || true
+        [ -n "${QEMU_PID-}" ] && kill -0 "${QEMU_PID-}" 2>/dev/null && kill "${QEMU_PID-}" 2>/dev/null || true
+        pkill -f "qemu-system-x86" 2>/dev/null || true
         sleep 1; rm -rf "${WORK_DIR-}" 2>/dev/null || true
         echo "=== Cleanup done ==="; exit "${ec}"
     }
@@ -184,66 +178,47 @@ run_kvm_openwrt_test() {
     echo "═══════════════════════════════════════"
 
     # ── 1. Install host deps ──
-    echo "--- [1/8] Install host dependencies ---"
+    echo "--- [1/7] Install dependencies ---"
     sudo apt-get update -qq
-    sudo apt-get install -y -qq qemu-system-x86 qemu-utils sshpass wget openssl
+    sudo apt-get install -y -qq qemu-system-x86 sshpass
 
-    # ── 2. Download OpenWrt image ──
-    echo "--- [2/8] Download OpenWrt ${OPENWRT_VERSION} x86_64 image ---"
+    # ── 2. Download & extract OpenWrt image ──
+    echo "--- [2/7] Download OpenWrt ${OPENWRT_VERSION} ---"
     mkdir -p "${WORK_DIR}"
     pushd "${WORK_DIR}" > /dev/null
-    local IMG_FILE="openwrt-${OPENWRT_VERSION}-x86-64-generic-ext4-combined.img"
-    local IMG_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/x86/64/${IMG_FILE}.gz"
-    wget -q --show-progress "${IMG_URL}"
-    gunzip -f "${IMG_FILE}.gz" || true  # gzip returns 2 on trailing-garbage warning; harmless
-    qemu-img convert -f raw -O qcow2 "${IMG_FILE}" openwrt.qcow2
-    qemu-img resize openwrt.qcow2 2G
-    rm -f "${IMG_FILE}"
+    local IMG_FILE="openwrt-${OPENWRT_VERSION}-x86-64-generic-ext4-combined"
+    wget -q "https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/x86/64/${IMG_FILE}.img.gz"
+    gunzip -f "${IMG_FILE}.img.gz" || true
+    popd > /dev/null 2>&1 || true
 
-    # ── 3. Pre-configure image ──
-    echo "--- [3/8] Pre-configure image (qemu-nbd) ---"
-    sudo modprobe nbd max_part=8
-    sudo qemu-nbd -c /dev/nbd0 openwrt.qcow2; sleep 2
-    local NBD_MNT="${WORK_DIR}/nbd-mnt"; mkdir -p "${NBD_MNT}"
-    sudo mount /dev/nbd0p2 "${NBD_MNT}"
-    local PWD_HASH
-    PWD_HASH="$(openssl passwd -1 "${ROOT_PASSWORD}" 2>/dev/null || python3 -c "import crypt; print(crypt.crypt('${ROOT_PASSWORD}', crypt.mksalt(crypt.METHOD_MD5)))")"
-    sudo sed -i "s|^root:[^:]*|root:${PWD_HASH}|" "${NBD_MNT}/etc/shadow"
-    sudo sed -i 's/option Interface.*//' "${NBD_MNT}/etc/config/dropbear" 2>/dev/null || true
-    # 确保 VM 内有 DNS（OpenWrt /etc/resolv.conf 是到 /tmp/resolv.conf 的 symlink，
-    # 启动时 tmpfs 覆盖使其失效，所以删掉 symlink 写一个实文件）
-    sudo rm -f "${NBD_MNT}/etc/resolv.conf"
-    printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\n" | sudo tee "${NBD_MNT}/etc/resolv.conf" >/dev/null
-    sudo umount "${NBD_MNT}"; sudo qemu-nbd -d /dev/nbd0; rm -rf "${NBD_MNT}"
-    echo "Image pre-configured"
-
-    # ── 4. Boot QEMU ──
-    echo "--- [4/8] Boot OpenWrt VM ---"
-    local SERIAL_LOG="${WORK_DIR}/serial.log" QEMU_LOG="${WORK_DIR}/qemu.log"
+    # ── 3. Boot QEMU with raw image (no convert, no pre-config needed) ──
+    echo "--- [3/7] Boot VM ---"
+    local SERIAL_LOG="${WORK_DIR}/serial.log"
     qemu-system-x86_64 -M q35 -m 1G -accel kvm -cpu host \
-        -drive file=openwrt.qcow2,if=virtio \
+        -drive file="${WORK_DIR}/${IMG_FILE}.img",format=raw,if=virtio \
         -nic user,hostfwd=tcp::${SSH_PORT}-:22,model=e1000 \
-        -display none -serial file:"${SERIAL_LOG}" \
-        > "${QEMU_LOG}" 2>&1 &
-    QEMU_PID=$!; echo "QEMU PID: ${QEMU_PID}"
+        -display none -serial file:"${SERIAL_LOG}" > /dev/null 2>&1 &
+    QEMU_PID=$!
 
-    # ── 5. Wait for SSH (OpenWrt serial console needs Enter for login prompt,
-    #       but dropbear is ready ~15-20s after boot; skip boot prompt, go direct to SSH)
-    echo "--- [5/8] Wait for SSH (up to ${SSH_TIMEOUT}s) ---"
-    local SSH_OK=0
-    for i in $(seq 1 ${SSH_TIMEOUT}); do
-        grep -q "Kernel panic" "${SERIAL_LOG}" 2>/dev/null && { trap '' EXIT; tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
-        sshpass -p "${ROOT_PASSWORD}" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 "echo SSH_READY" 2>/dev/null | grep -q SSH_READY && { SSH_OK=1; echo "SSH after ~${i}s"; break; }
+    # ── 4. Wait for SSH (default OpenWrt has empty root password) ──
+    echo "--- [4/7] Wait SSH (max 120s) ---"
+    local SSH_OK=""
+    for i in $(seq 1 60); do
+        grep -q "Kernel panic" "${SERIAL_LOG}" 2>/dev/null && { trap '' EXIT; tail -5 "${SERIAL_LOG}"; cleanup_kvm 1; }
+        if sshpass -p "" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 "echo OK" 2>/dev/null | grep -q OK; then
+            echo "SSH ready ~$((i*2))s"; SSH_OK=1; break
+        fi
         sleep 2
     done
-    [ "${SSH_OK}" -eq 1 ] || { trap '' EXIT; echo "SSH timeout"; tail -50 "${SERIAL_LOG}"; cleanup_kvm 1; }
+    [ -n "${SSH_OK}" ] || { trap '' EXIT; echo "SSH timeout"; tail -30 "${SERIAL_LOG}"; cleanup_kvm 1; }
 
-    # ── 6. Run tests via SSH ──
-    echo ""; echo "--- [6/8] Run install script tests via SSH ---"
-    sshpass -p "${ROOT_PASSWORD}" scp ${SSH_OPTS} -P ${SSH_PORT} \
-        -r "${REPO_ROOT}/docs/install.sh" "${REPO_ROOT}/docs/install-file" root@127.0.0.1:/tmp/ 2>&1
+    # ── 5. Copy install script & run tests ──
+    echo "--- [5/7] Copy install script ---"
+    sshpass -p "" scp ${SSH_OPTS} -P ${SSH_PORT} \
+        "${REPO_ROOT}/docs/install.sh" "${REPO_ROOT}/docs/install-file" root@127.0.0.1:/tmp/
 
-    sshpass -p "${ROOT_PASSWORD}" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 sh -s << 'REMOTE_TEST'
+    echo "--- [6/7] Run tests ---"
+    sshpass -p "" ssh ${SSH_OPTS} -p ${SSH_PORT} root@127.0.0.1 sh -s << 'REMOTE_TEST'
 set -e
 PASS=0; FAIL=0
 INSTALL_DIR="/opt/ikuai-bypass"; BIN_PATH="${INSTALL_DIR}/ikuai-bypass"
@@ -252,7 +227,7 @@ SERVICE_FILE="/etc/init.d/ikuai-bypass"
 pass() { echo "  ✓ $1"; PASS=$((PASS + 1)); }
 fail() { echo "  ✗ $1"; FAIL=$((FAIL + 1)); exit 1; }
 
-echo "[setup] Installing deps..."; opkg update || echo "  [warn] opkg update failed"; opkg install curl unzip 2>&1 || echo "  [warn] some opkg installs failed"
+echo "[setup] Installing deps..."; opkg update || true; opkg install curl unzip 2>&1 || true
 cd /tmp; LANG_CHOICE=1; . ./install-file/common.sh
 
 echo ""; echo "── Test 1/9: OS / Arch ──"
@@ -316,10 +291,9 @@ REMOTE_TEST
     local TEST_EXIT=$?
 
     # ── 7. Collect logs ──
-    echo ""; echo "--- [7/8] Collect logs ---"
+    echo ""; echo "--- [7/7] Collect logs ---"
     [ -f "${SERIAL_LOG}" ] && echo "Serial log: $(wc -c < "${SERIAL_LOG}") bytes" && echo "--- tail 30 ---" && tail -30 "${SERIAL_LOG}"
 
-    popd > /dev/null 2>&1 || true
     echo "Exit code: ${TEST_EXIT}"
     exit ${TEST_EXIT}
 }

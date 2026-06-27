@@ -24,6 +24,10 @@
 - 本地 KVM 默认镜像优先使用仓库内 `.github/smoke-test-ikuai.qcow2.7z` 解压得到的 `.github/smoke-test-ikuai.qcow2`，除非开发者自己通过环境变量覆盖
 - `webui` 浏览器 smoke 本地验证必须基于 `nix develop`，先预编译 `ikb-webui-fixture`，再以二进制路径运行 `apps/integration-tests/run-webui-browser-smoke.sh`。
 
+## 安装脚本测试
+
+`docs/install.sh` 一键安装脚本的 CI 测试覆盖 Ubuntu (systemd) 和 OpenWrt (KVM QEMU) 两种环境，验证 OS/arch 检测、版本获取、下载安装、服务文件注册、enable/start/stop/disable 生命周期、保留/删除配置卸载以及进程残留清理。
+
 ## 核心业务逻辑
 
 ### 1. 规则标识与命名约定

@@ -1,0 +1,48 @@
+name: Test Install Script
+
+on:
+  push:
+    branches:
+      - "**"
+    paths:
+      - "docs/install.sh"
+      - "docs/install-file/**"
+      - ".github/scripts/test-install-script.sh"
+      - ".github/workflows/test-install-script.yml"
+  pull_request:
+    paths:
+      - "docs/install.sh"
+      - "docs/install-file/**"
+      - ".github/scripts/test-install-script.sh"
+      - ".github/workflows/test-install-script.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-install-script-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ubuntu:
+    name: Ubuntu (systemd)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run install script tests (Ubuntu)
+        shell: bash
+        run: bash .github/scripts/test-install-script.sh ubuntu
+
+  openwrt-kvm:
+    name: OpenWrt (KVM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run install script tests in OpenWrt KVM
+        shell: bash
+        run: sudo bash .github/scripts/test-install-script.sh kvm-openwrt

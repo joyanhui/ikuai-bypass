@@ -6,8 +6,20 @@ on:
       - "**"
     tags-ignore:
       - "*"
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "golang_archive/**"
+      - ".github/workflows/test-install-script.yml"
+      - ".github/scripts/test-install-script.sh"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - "golang_archive/**"
+      - ".github/workflows/test-install-script.yml"
+      - ".github/scripts/test-install-script.sh"
   workflow_dispatch:
 
 permissions:

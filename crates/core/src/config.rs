@@ -234,6 +234,11 @@ pub struct Config {
     #[serde(rename = "AddWait", with = "duration_compat", default)]
     pub add_wait: Duration,
 
+    #[serde(rename = "run-mode", default)]
+    pub run_mode: String,
+    #[serde(rename = "mode", default)]
+    pub module: String,
+
     #[serde(rename = "github-proxy", default)]
     pub github_proxy: String,
 
@@ -303,6 +308,13 @@ impl Config {
 
         if self.webui.cdn_prefix.is_empty() {
             self.webui.cdn_prefix = "https://cdn.jsdelivr.net/npm".to_string();
+        }
+
+        if self.run_mode.is_empty() {
+            self.run_mode = "cronAft".to_string();
+        }
+        if self.module.is_empty() {
+            self.module = "ispdomain".to_string();
         }
 
         if self.max_number_of_one_records.isp == 0 {

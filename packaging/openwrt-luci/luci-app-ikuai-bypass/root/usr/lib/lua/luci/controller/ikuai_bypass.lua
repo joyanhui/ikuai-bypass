@@ -75,7 +75,7 @@ local function cleanup_old_tasks()
 	handle:close()
 end
 
-local function run_background(args, proxy)
+local function run_background(args, proxy, prerelease)
 	cleanup_old_tasks()
 	os.execute("mkdir -p " .. TASK_DIR)
 	local task_id = tostring(os.time()) .. tostring(math.random(10000, 99999))
@@ -85,6 +85,9 @@ local function run_background(args, proxy)
 	local cmd = "("
 	if proxy and proxy ~= "" then
 		cmd = cmd .. "export IKB_PROXY=" .. shell_quote(proxy) .. "; "
+	end
+	if prerelease and prerelease == "1" then
+		cmd = cmd .. "export IKB_PRERELEASE=1; "
 	end
 	cmd = cmd .. shell_quote(helper_script)
 	for _, arg in ipairs(args) do
@@ -148,13 +151,15 @@ end
 
 function action_install()
 	local proxy = http.formvalue("proxy") or ""
-	local task_id = run_background({ "install" }, proxy)
+	local prerelease = http.formvalue("prerelease") or ""
+	local task_id = run_background({ "install" }, proxy, prerelease)
 	json_response(200, { ok = true, task_id = task_id })
 end
 
 function action_latest()
 	local proxy = http.formvalue("proxy") or ""
-	local task_id = run_background({ "latest" }, proxy)
+	local prerelease = http.formvalue("prerelease") or ""
+	local task_id = run_background({ "latest" }, proxy, prerelease)
 	json_response(200, { ok = true, task_id = task_id })
 end
 

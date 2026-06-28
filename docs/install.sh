@@ -94,6 +94,8 @@ if [ "${NONINTERACTIVE}" = "1" ]; then
                 shift; IKB_MODE="$1"; export IKB_MODE ;;
             --run-mode)
                 shift; IKB_RUN_MODE="$1"; export IKB_RUN_MODE ;;
+            --prerelease)
+                IKB_PRERELEASE=1; export IKB_PRERELEASE ;;
             *)
                 filtered="${filtered} $1" ;;
         esac

@@ -339,6 +339,8 @@ pub async fn build_diagnostics_report(
     out.push_str(&format!("username: {}\n", cfg.username.trim()));
     out.push_str(&format!("password: {}\n", mask_secret(&cfg.password)));
     out.push_str(&format!("cron: {}\n", cfg.cron.trim()));
+    out.push_str(&format!("run-mode: {}\n", cfg.run_mode.trim()));
+    out.push_str(&format!("mode: {}\n", cfg.module.trim()));
     out.push_str(&format!("proxy.mode: {:?}\n", cfg.proxy.mode));
     out.push_str(&format!("proxy.url: {}\n", cfg.proxy.url.trim()));
     out.push_str(&format!("proxy.user: {}\n", cfg.proxy.user.trim()));

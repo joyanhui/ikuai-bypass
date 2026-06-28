@@ -168,11 +168,11 @@ struct Args {
     #[arg(short = 'c', long = "c")]
     config_path: Option<PathBuf>,
 
-    #[arg(short = 'r', long = "r", default_value = "cron")]
-    run_mode: String,
+    #[arg(short = 'r', long = "r")]
+    run_mode: Option<String>,
 
-    #[arg(short = 'm', long = "m", default_value = "ispdomain")]
-    module: String,
+    #[arg(short = 'm', long = "m")]
+    module: Option<String>,
 
     #[arg(long = "tag", default_value = "")]
     clean_tag: String,
@@ -199,12 +199,6 @@ fn main() {
 
     ensure_config_exists_or_prompt_create(&config_path);
 
-    println!(
-        "[START:启动程序] Run mode: {}, Config path: '{}'",
-        args.run_mode,
-        config_path.display()
-    );
-
     let cfg = match ikb_core::config::Config::load_from_path(&config_path) {
         Ok(v) => v,
         Err(e) => {
@@ -212,10 +206,33 @@ fn main() {
             std::process::exit(1);
         }
     };
-    let config = Arc::new(tokio::sync::Mutex::new(Arc::new(cfg)));
 
-    if let Err(e) = ikb_core::runner::validate_module(&args.module) {
-        if args.module.trim() == "exportDomainSteamToTxt" {
+    let effective_run_mode = args
+        .run_mode
+        .clone()
+        .or_else(|| {
+            let m = cfg.run_mode.trim().to_string();
+            if m.is_empty() { None } else { Some(m) }
+        })
+        .unwrap_or_else(|| "cronAft".to_string());
+
+    let effective_module = args
+        .module
+        .clone()
+        .or_else(|| {
+            let m = cfg.module.trim().to_string();
+            if m.is_empty() { None } else { Some(m) }
+        })
+        .unwrap_or_else(|| "ispdomain".to_string());
+
+    println!(
+        "[START:启动程序] Run mode: {}, Config path: '{}'",
+        effective_run_mode,
+        config_path.display()
+    );
+
+    if let Err(e) = ikb_core::runner::validate_module(&effective_module) {
+        if effective_module == "exportDomainSteamToTxt" {
             eprintln!(
                 "[ERR:参数错误] -m exportDomainSteamToTxt 不是模块：请使用 -r exportDomainSteamToTxt 并可配合 -exportPath 指定导出目录"
             );
@@ -224,6 +241,8 @@ fn main() {
         }
         std::process::exit(2);
     }
+
+    let config = Arc::new(tokio::sync::Mutex::new(Arc::new(cfg)));
 
     let stop = Arc::new(AtomicBool::new(false));
     {
@@ -244,7 +263,7 @@ fn main() {
         }
     };
 
-    let code = rt.block_on(async move { run(args, config_path, config, stop).await });
+    let code = rt.block_on(async move { run(args, config_path, config, stop, effective_run_mode, effective_module).await });
     std::process::exit(code);
 }
 
@@ -253,13 +272,15 @@ async fn run(
     config_path: PathBuf,
     config: Arc<tokio::sync::Mutex<Arc<ikb_core::config::Config>>>,
     stop: Arc<AtomicBool>,
+    effective_run_mode: String,
+    effective_module: String,
 ) -> i32 {
     let update_opts = Arc::new(ikb_core::update::UpdateOptions {
         export_path: args.export_path.to_string(),
         ip_group_name_add_random_suffix: parse_bool_flag(&args.is_ip_group_name_add_random_suff),
     });
 
-    match args.run_mode.as_str() {
+    match effective_run_mode.as_str() {
         "exportDomainSteamToTxt" | "exportDomainStreamToTxt" => {
             let started_at = Instant::now();
             println!(
@@ -318,7 +339,7 @@ async fn run(
                 Arc::clone(&config),
                 args.ikuai_login_info.to_string(),
                 cron_expr.to_string(),
-                args.module.to_string(),
+                effective_module.to_string(),
                 Arc::clone(&update_opts),
             ));
             spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
@@ -341,7 +362,7 @@ async fn run(
             }
 
             match Arc::clone(&runtime)
-                .start_run_once(args.module.to_string())
+                .start_run_once(effective_module.to_string())
                 .await
             {
                 Ok(started) => {
@@ -364,7 +385,7 @@ async fn run(
                 println!("[CRON:定时任务] Cron 配置为空：不会自动定时；可在 WebUI 中手动启动 cron");
             } else {
                 if let Err(e) = Arc::clone(&runtime)
-                    .start_cron(cron_expr.to_string(), args.module.to_string())
+                    .start_cron(cron_expr.to_string(), effective_module.to_string())
                     .await
                 {
                     eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
@@ -428,7 +449,7 @@ async fn run(
                 Arc::clone(&config),
                 args.ikuai_login_info.to_string(),
                 cron_expr.to_string(),
-                args.module.to_string(),
+                effective_module.to_string(),
                 Arc::clone(&update_opts),
             ));
             spawn_runtime_stdout_forwarder(Arc::clone(&runtime));
@@ -454,7 +475,7 @@ async fn run(
                 println!("[CRON:定时任务] Cron 配置为空：不会自动定时；可在 WebUI 中手动启动 cron");
             } else {
                 if let Err(e) = Arc::clone(&runtime)
-                    .start_cron(cron_expr.to_string(), args.module.to_string())
+                    .start_cron(cron_expr.to_string(), effective_module.to_string())
                     .await
                 {
                     eprintln!("[CRON:定时任务] Failed to start scheduled task: {}", e);
@@ -485,7 +506,7 @@ async fn run(
             if let Err(e) = run_update_once(
                 &config,
                 &args.ikuai_login_info,
-                &args.module,
+                &effective_module,
                 update_opts.as_ref(),
             )
             .await
@@ -494,12 +515,12 @@ async fn run(
                 return 1;
             }
 
-            let mode = match args.run_mode.as_str() {
+            let mode = match effective_run_mode.as_str() {
                 "nocron" | "1" => "once",
                 other => other,
             };
             let conf_path = display_conf_path(&config_path);
-            print_once_done_banner(mode, &args.module, &conf_path, started_at.elapsed());
+            print_once_done_banner(mode, &effective_module, &conf_path, started_at.elapsed());
             0
         }
 

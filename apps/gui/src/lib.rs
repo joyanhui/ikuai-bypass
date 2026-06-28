@@ -44,8 +44,9 @@ async fn save_raw_yaml(state: tauri::State<'_, AppState>, yaml_text: String) -> 
             .map_err(|e| format!("Failed to save config: {}", e))?
     };
     let new_cron = cfg.cron.to_string();
+    let new_module = cfg.module.to_string();
     *state.config.lock().await = Arc::new(cfg);
-    state.runtime.set_defaults(None, Some(new_cron)).await;
+    state.runtime.set_defaults(Some(new_module), Some(new_cron)).await;
     Ok(())
 }
 
@@ -201,6 +202,8 @@ pub fn run() {
         stream_ipport: Vec::new(),
         webui: Default::default(),
         max_number_of_one_records: Default::default(),
+        run_mode: String::new(),
+        module: String::new(),
     };
     fallback_cfg.apply_defaults();
     let config = Arc::new(tokio::sync::Mutex::new(Arc::new(fallback_cfg)));

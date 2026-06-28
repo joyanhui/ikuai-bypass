@@ -300,6 +300,31 @@ get_latest_version() {
     esac
 }
 
+# ── 获取最新预发行版本 / Get latest pre-release version ──
+get_prerelease_version() {
+    local api_url="https://api.github.com/repos/joyanhui/ikuai-bypass/releases?per_page=30"
+    local version=""
+
+    if command -v curl >/dev/null 2>&1; then
+        version="$(curl -fsSL "${api_url}" 2>/dev/null | \
+            grep -E '"tag_name"|"prerelease"|"draft"' | paste - - - | \
+            grep '"prerelease": true' | grep '"draft": false' | \
+            head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+    elif command -v wget >/dev/null 2>&1; then
+        version="$(wget -qO- "${api_url}" 2>/dev/null | \
+            grep -E '"tag_name"|"prerelease"|"draft"' | paste - - - | \
+            grep '"prerelease": true' | grep '"draft": false' | \
+            head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+    fi
+
+    case "${version}" in
+        ikuai-bypass-v*)  printf "%s" "${version#ikuai-bypass-v}" ;;
+        v*)               printf "%s" "${version#v}" ;;
+        "")               printf "" ;;
+        *)                printf "%s" "${version}" ;;
+    esac
+}
+
 # ── 下载并安装 / Download and install ──
 install_app() {
     local version="$1"
@@ -313,7 +338,11 @@ install_app() {
 
     if [ -z "${version}" ]; then
         print_msg "MSG_FETCHING"
-        version="$(get_latest_version)"
+        if [ "${IKB_PRERELEASE:-0}" = "1" ]; then
+            version="$(get_prerelease_version)"
+        else
+            version="$(get_latest_version)"
+        fi
         if [ -z "${version}" ]; then
             print_msg "MSG_DOWNLOAD_FAIL" "Failed to detect latest version"
             return 1
@@ -731,6 +760,20 @@ print_latest_kv() {
     fi
 }
 
+print_prerelease_kv() {
+    local latest=""
+    local current=""
+    latest="$(get_prerelease_version)"
+    [ -f "${VERSION_FILE}" ] && current="$(cat "${VERSION_FILE}")"
+    printf 'latest_version=%s\n' "${latest}"
+    printf 'current_version=%s\n' "${current}"
+    if [ -n "${latest}" ] && [ "${latest}" != "${current}" ]; then
+        printf 'update_available=1\n'
+    else
+        printf 'update_available=0\n'
+    fi
+}
+
 set_config_field() {
     local key="$1" val="$2" file="${CONFIG_PATH}"
     [ -n "${val}" ] || return 0
@@ -778,7 +821,13 @@ run_action() {
         enable) enable_autostart ;;
         disable) disable_autostart ;;
         status|inspect) print_status_kv ;;
-        latest) print_latest_kv ;;
+        latest)
+            if [ "${IKB_PRERELEASE:-0}" = "1" ]; then
+                print_prerelease_kv
+            else
+                print_latest_kv
+            fi
+            ;;
         log)
             if [ "${LOG_PATH}" != "/dev/null" ] && [ -f "${LOG_PATH}" ]; then tail -n 80 "${LOG_PATH}"; else print_msg "MSG_NO_LOG"; fi
             ;;

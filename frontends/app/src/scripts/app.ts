@@ -1273,6 +1273,8 @@ const initConfigModal = () => {
     'cfgMaxIpv4',
     'cfgMaxIpv6',
     'cfgMaxDomain',
+    'cfgMode',
+    'cfgRunMode',
   ];
 
   liveSyncIds.forEach((id) => {
@@ -1288,18 +1290,20 @@ const initConfigModal = () => {
   });
 
   // select fields
-  ['cfgProxyMode'].forEach((id) => {
+  ['cfgProxyMode', 'cfgMode', 'cfgRunMode'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', () => {
       commitBasicConfigToRawYaml();
 
-      syncProxyModeUi();
+      if (id === 'cfgProxyMode') {
+        syncProxyModeUi();
 
-      // custom 模式下若 url 为空则自动填入默认值。
-      // In custom mode, fill default url if empty.
-      const urlEl = document.getElementById('cfgProxyUrl') as HTMLInputElement | null;
-      const mode = state.cfg.proxy.mode;
-      if (urlEl && mode === 'custom' && !urlEl.value.trim() && state.cfg.proxy.url.trim()) {
-        urlEl.value = state.cfg.proxy.url.trim();
+        // custom 模式下若 url 为空则自动填入默认值。
+        // In custom mode, fill default url if empty.
+        const urlEl = document.getElementById('cfgProxyUrl') as HTMLInputElement | null;
+        const mode = state.cfg.proxy.mode;
+        if (urlEl && mode === 'custom' && !urlEl.value.trim() && state.cfg.proxy.url.trim()) {
+          urlEl.value = state.cfg.proxy.url.trim();
+        }
       }
     });
   });
@@ -1350,6 +1354,8 @@ const bindConfigFields = () => {
   setValue('cfgWebCdn', state.cfg.webui.cdnPrefix);
   setValue('cfgWebUser', state.cfg.webui.user);
   setValue('cfgWebPass', state.cfg.webui.pass);
+  setValue('cfgMode', state.cfg.mode);
+  setValue('cfgRunMode', state.cfg.runMode);
   
   // 数据限制
   setValue('cfgMaxIsp', String(state.cfg.maxNumberOfOneRecords.Isp));
@@ -1398,6 +1404,8 @@ const syncConfigFromInputs = () => {
   state.cfg.webui.cdnPrefix = getValue('cfgWebCdn');
   state.cfg.webui.user = getValue('cfgWebUser');
   state.cfg.webui.pass = getValue('cfgWebPass');
+  state.cfg.runMode = getValue('cfgRunMode') || 'cronAft';
+  state.cfg.mode = getValue('cfgMode') || 'ispdomain';
   
   state.cfg.maxNumberOfOneRecords.Isp = Number(getValue('cfgMaxIsp')) || 5000;
   state.cfg.maxNumberOfOneRecords.Ipv4 = Number(getValue('cfgMaxIpv4')) || 1000;
@@ -1424,6 +1432,8 @@ const commitBasicConfigToRawYaml = () => {
     { path: ['webui', 'user'], value: state.cfg.webui.user },
     { path: ['webui', 'pass'], value: state.cfg.webui.pass },
     { path: ['webui', 'cdn-prefix'], value: state.cfg.webui.cdnPrefix },
+    { path: ['mode'], value: state.cfg.mode },
+    { path: ['run-mode'], value: state.cfg.runMode },
     { path: ['MaxNumberOfOneRecords', 'Isp'], value: state.cfg.maxNumberOfOneRecords.Isp },
     { path: ['MaxNumberOfOneRecords', 'Ipv4'], value: state.cfg.maxNumberOfOneRecords.Ipv4 },
     { path: ['MaxNumberOfOneRecords', 'Ipv6'], value: state.cfg.maxNumberOfOneRecords.Ipv6 },

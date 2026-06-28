@@ -15,6 +15,8 @@ export type UiConfig = {
   username: string;
   password: string;
   cron: string;
+  runMode: string;
+  mode: string;
   proxy: {
     mode: 'custom' | 'system' | 'smart';
     url: string;
@@ -69,6 +71,8 @@ export function defaultUiConfig(): UiConfig {
     username: '',
     password: '',
     cron: '',
+    runMode: 'cronAft',
+    mode: 'ispdomain',
     proxy: {
       mode: 'smart',
       url: '',
@@ -144,6 +148,8 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; confPath: strin
   cfg.username = asStr(metaObj.username, '');
   cfg.password = asStr(metaObj.password, '');
   cfg.cron = asStr(metaObj.cron, '');
+  cfg.runMode = asStr(metaObj['run-mode'], 'cronAft');
+  cfg.mode = asStr(metaObj.mode, 'ispdomain');
 
   if (metaObj.proxy) {
     const p = asRecord(metaObj.proxy);
@@ -231,6 +237,8 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
     username: ui.username,
     password: ui.password,
     cron: ui.cron,
+    'run-mode': ui.runMode,
+    mode: ui.mode,
     proxy: {
       mode: ui.proxy.mode,
       url: ui.proxy.url,

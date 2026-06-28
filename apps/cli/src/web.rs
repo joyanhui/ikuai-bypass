@@ -209,11 +209,12 @@ async fn api_save_raw_yaml(
     };
 
     let new_cron = cfg.cron.to_string();
+    let new_module = cfg.module.to_string();
     {
         let mut current = state.config.lock().await;
         *current = Arc::new(cfg);
     }
-    state.runtime.set_defaults(None, Some(new_cron)).await;
+    state.runtime.set_defaults(Some(new_module), Some(new_cron)).await;
 
     (
         StatusCode::OK,

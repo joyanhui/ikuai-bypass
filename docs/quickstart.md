@@ -23,15 +23,27 @@ nav_order: 2
 
 [查看分流模式完整文档](router-mode.md)
 
-## 一键安装（Linux / OpenWrt）
+## 一键安装
 
-如果你在使用 Linux 服务器、OpenWrt 路由器或任何支持 `curl | sh` 的环境：
+### Linux / OpenWrt CLI 服务
+
+如果你在使用 Linux 服务器、OpenWrt 路由器或任何支持 `curl | sh` 的环境，并希望直接安装 CLI 二进制和系统服务：
 
 ```bash
 curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh
 ```
 
 安装脚本会自动检测你的系统架构，下载对应 CLI 二进制文件，注册为系统服务（systemd 或 init.d）并启动 WebUI。详情可参考 [install.sh 源码](install.sh)。
+
+### OpenWrt LuCI 面板
+
+如果你只想在 OpenWrt 管理界面里安装 LuCI 面板，直接安装最新正式版 IPK：
+
+```bash
+opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk
+```
+
+该命令会通过 GitHub `releases/latest/download` 自动指向最新正式 release 里的 `ikuai-bypass-luci-openwrt-all.ipk`。
 
 ## 手动下载
 
@@ -109,7 +121,8 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 ## 部署方案
 
 - **桌面用户/手机用户**：下载对应 GUI 版本直接运行即可
-- **一键安装**：Linux / OpenWrt 执行 `curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh`
+- **Linux / OpenWrt CLI 服务**：执行 `curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh`
+- **OpenWrt LuCI 面板**：执行 `opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk`
 - **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本](openwrt-service-install.md)
 - **Docker**：`docker run -itd --name ikuai-bypass --restart=always -e APP_RUN_MODE=ispdomain -p 19001:19001 -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest`，启动后在网页界面配置
 - **iKuai v4 应用市场**：上传 `.ipkg` 包安装

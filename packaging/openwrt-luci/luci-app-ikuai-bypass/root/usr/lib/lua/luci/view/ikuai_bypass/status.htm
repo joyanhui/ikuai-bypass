@@ -32,7 +32,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			zh: {
 				tabStatus: "状态", tabInstall: "安装", tabService: "服务", tabLog: "日志",
 				installedCli: "CLI 状态", binaryPath: "二进制路径", arch: "架构", serviceScript: "服务脚本", runtime: "运行状态", config: "配置文件", currentVersion: "当前版本", latestStable: "最新稳定版", updateAvailable: "可更新", pluginVersion: "插件版本", pluginLatest: "插件最新版本", checkPlugin: "检查插件更新", updatePlugin: "升级插件", pluginUpToDate: "已是最新", checkingPlugin: "正在检查插件更新...", updatingPlugin: "正在升级插件...", pluginUpdated: "插件升级成功，正在刷新页面...", pluginCheckDone: "检查完成", pluginCheckFailed: "检查插件更新失败", pluginUpdateFailed: "升级插件失败",
-				proxyTitle: "代理设置", proxyHelp: "HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。", proxyPlaceholder: "例如 http://192.168.1.101:7890", saveProxy: "保存到浏览器", clearProxy: "清空代理",
+				proxyTitle: "代理设置", proxyHelp: "HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。", proxyPlaceholder: "例如 http://192.168.1.101:7890", saveProxy: "保存到浏览器", clearProxy: "清空代理", configProxy: "配置临时网络代理", closeDialog: "关闭",
 				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 CLI", reinstallUpdate: "重新安装 / 更新 CLI",
 				start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载",
 				statusFailed: "刷新状态失败", latestFailed: "检查最新版本失败", installFailed: "安装失败", serviceFailed: "操作失败：", logFailed: "获取日志失败",
@@ -45,7 +45,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			en: {
 				tabStatus: "Status", tabInstall: "Install", tabService: "Service", tabLog: "Log",
 				installedCli: "CLI status", binaryPath: "Binary path", arch: "Architecture", serviceScript: "Service script", runtime: "Runtime", config: "Config", currentVersion: "Current version", latestStable: "Latest stable", updateAvailable: "Update available", pluginVersion: "Plugin version", pluginLatest: "Plugin latest", checkPlugin: "Check Plugin Update", updatePlugin: "Update Plugin", pluginUpToDate: "Up to date", checkingPlugin: "Checking plugin update...", updatingPlugin: "Updating plugin...", pluginUpdated: "Plugin updated, refreshing page...", pluginCheckDone: "Check complete", pluginCheckFailed: "Plugin check failed", pluginUpdateFailed: "Plugin update failed",
-				proxyTitle: "Proxy", proxyHelp: "HTTP proxy. Only needed when the router cannot reach GitHub (e.g. mainland China). The proxy is stored only in this browser and sent temporarily with install/check requests. It is never written to the router filesystem.", proxyPlaceholder: "Example: http://192.168.1.101:7890", saveProxy: "Save in Browser", clearProxy: "Clear",
+				proxyTitle: "Proxy", proxyHelp: "HTTP proxy. Only needed when the router cannot reach GitHub (e.g. mainland China). The proxy is stored only in this browser and sent temporarily with install/check requests. It is never written to the router filesystem.", proxyPlaceholder: "Example: http://192.168.1.101:7890", saveProxy: "Save in Browser", clearProxy: "Clear", configProxy: "Configure Temporary Proxy", closeDialog: "Close",
 				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update CLI", reinstallUpdate: "Reinstall / Update CLI",
 				start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall",
 				statusFailed: "Status check failed", latestFailed: "Latest version check failed", installFailed: "Install failed", serviceFailed: "Action failed: ", logFailed: "Failed to load log",
@@ -219,6 +219,8 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbTab = function(name) { switchTab(name); };
 		window.ikbSaveProxy = function() { try { window.localStorage.setItem(PROXY_KEY, currentProxy()); } catch (e) {} setMessage(t("savedProxy"), true); };
 		window.ikbClearProxy = function() { var input = el("ikb-proxy"); if (input) input.value = ""; try { window.localStorage.removeItem(PROXY_KEY); } catch (e) {} setMessage(t("clearedProxy"), true); };
+		window.ikbShowProxy = function() { el("ikb-proxy-modal").style.display = "flex"; };
+		window.ikbCloseProxy = function() { el("ikb-proxy-modal").style.display = "none"; };
 		window.ikbConfirmFull = function() { if (confirm(t("confirmFull"))) window.ikbService("uninstall_full"); };
 		window.ikbConfirmUninstallSelf = function() { if (confirm(t("confirmUninstallPlugin"))) { if (confirm(t("confirmUninstallPlugin2"))) { window.ikbService("uninstall_self"); } } };
 		window.ikbLoadStatus = function() { request("GET", ENDPOINTS.status, {}, function(err, data) { if (err) { setMessage(t("statusFailed") + ": " + err, false); setText("ikb-binary-status", "Error"); return; } renderStatus(data); setMessage(t("statusRefreshed"), true); }, 10000); };
@@ -293,6 +295,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
 		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbCheckPlugin)" data-i18n="checkPlugin">检查插件更新</button>
 		<button type="button" class="btn cbi-button cbi-button-positive ikb-action" onclick="return ikbClick(event, ikbUpdatePlugin)" data-i18n="updatePlugin">升级插件</button>
+		<button type="button" class="btn cbi-button cbi-button-neutral ikb-action" onclick="return ikbClick(event, ikbShowProxy)" data-i18n="configProxy">配置临时网络代理</button>
 	</div></div>
 	<hr>
 	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -302,11 +305,10 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 </fieldset>
 
 <fieldset class="cbi-section ikb-panel" data-panel="install">
-	<div class="cbi-value"><label class="cbi-value-title" data-i18n="proxyTitle">代理设置</label><div class="cbi-value-field"><span style="font-size:.9em;opacity:.7" data-i18n="proxyHelp">代理只保存在当前浏览器，点击安装或检查最新版时临时发送到路由器，不会写入系统。</span></div></div>
-	<div class="cbi-value"><label class="cbi-value-title">Proxy</label><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="ikb-proxy" type="text" class="cbi-input-text" style="width:20rem;max-width:100%" /><button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbSaveProxy)" data-i18n="saveProxy">保存到浏览器</button><button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, ikbClearProxy)" data-i18n="clearProxy">清空代理</button></div></div>
 	<div class="cbi-value"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
 		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbCheckLatest)" data-i18n="checkLatest">检查最新稳定版</button>
 		<button type="button" id="ikb-install-btn" class="btn cbi-button cbi-button-positive ikb-action" onclick="return ikbClick(event, ikbInstall)" data-i18n="installUpdate">安装 / 更新 CLI</button>
+		<button type="button" class="btn cbi-button cbi-button-neutral ikb-action" onclick="return ikbClick(event, ikbShowProxy)" data-i18n="configProxy">配置临时网络代理</button>
 	</div></div>
 	<hr>
 	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
@@ -347,4 +349,19 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 <div class="cbi-section" id="ikb-msg" style="display:none;padding:.5rem 1rem;margin-top:.5rem">
 	<span id="ikb-msg-text"></span>
 	<span id="ikb-countdown" style="margin-left:.5rem;opacity:.6"></span>
+</div>
+
+<div id="ikb-proxy-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)ikbCloseProxy()">
+	<div class="cbi-section" style="max-width:520px;width:90%;padding:1.5rem;margin:0;box-sizing:border-box">
+		<h3 data-i18n="proxyTitle" style="margin-top:0;margin-bottom:.5rem">代理设置</h3>
+		<p style="font-size:.9em;opacity:.7;margin:.5rem 0" data-i18n="proxyHelp">HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。</p>
+		<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
+			<input id="ikb-proxy" type="text" class="cbi-input-text" style="flex:1;min-width:200px" />
+			<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbSaveProxy)" data-i18n="saveProxy">保存到浏览器</button>
+			<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, ikbClearProxy)" data-i18n="clearProxy">清空代理</button>
+		</div>
+		<div style="margin-top:1rem;text-align:right">
+			<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, ikbCloseProxy)" data-i18n="closeDialog">关闭</button>
+		</div>
+	</div>
 </div>

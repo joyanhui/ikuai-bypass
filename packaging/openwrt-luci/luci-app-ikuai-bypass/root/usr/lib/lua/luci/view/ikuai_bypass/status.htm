@@ -356,8 +356,9 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	<div class="cbi-section" style="max-width:520px;width:90%;padding:1.5rem;margin:0;box-sizing:border-box">
 		<h3 data-i18n="proxyTitle" style="margin-top:0;margin-bottom:.5rem">代理设置</h3>
 		<p style="font-size:.9em;opacity:.7;margin:.5rem 0" data-i18n="proxyHelp">HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。</p>
-		<div style="margin-top:1rem">
-			<input id="ikb-proxy" type="text" class="cbi-input-text" style="width:100%;box-sizing:border-box" />
+		<div style="margin-top:1rem;display:flex;gap:.5rem;align-items:center">
+			<input id="ikb-proxy" type="text" class="cbi-input-text" style="flex:1;min-width:0" />
+			<a href="#" onclick="return ikbClick(event, ikbClearInput)" style="white-space:nowrap">&times;</a>
 		</div>
 		<div style="margin-top:.5rem;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
 			<a href="#" onclick="return ikbClick(event, ikbFillExampleProxy)" style="font-size:.9em;font-family:Menlo,Consolas,monospace">http://192.168.1.101:7890</a>

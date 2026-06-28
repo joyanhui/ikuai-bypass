@@ -11,7 +11,7 @@ function index()
 		return
 	end
 
-	entry({"admin", "services", "ikuai-bypass"}, cbi("ikuai_bypass"), _("iKuai Bypass"), 60).dependent = true
+	entry({"admin", "services", "ikuai-bypass"}, template("ikuai_bypass/status"), _("iKuai Bypass"), 60).dependent = true
 	entry({"admin", "services", "ikuai-bypass", "status"}, call("action_status")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "latest"}, call("action_latest")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "install"}, call("action_install")).leaf = true

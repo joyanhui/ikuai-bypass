@@ -3,6 +3,7 @@ local dispatcher = require "luci.dispatcher"
 local status_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "status")
 local latest_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "latest")
 local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "install")
+local task_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "task")
 local service_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "service")
 local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 %>
@@ -13,6 +14,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			status: <%= string.format("%q", status_url) %>,
 			latest: <%= string.format("%q", latest_url) %>,
 			install: <%= string.format("%q", install_url) %>,
+			task: <%= string.format("%q", task_url) %>,
 			service: <%= string.format("%q", service_url) %>,
 			log: <%= string.format("%q", log_url) %>
 		};
@@ -109,13 +111,6 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			if (btn) btn.textContent = s.binary_exists ? t("reinstallUpdate") : t("installUpdate");
 		}
 
-		function renderLatest(data) {
-			var v = data && data.latest ? data.latest : {};
-			setText("ikb-latest-version", v.latest_version || t("unknown"));
-			setText("ikb-update-available", v.update_available ? t("yes") : t("no"));
-			setLog(data.log || "");
-		}
-
 		function request(method, url, params, callback, timeoutMs) {
 			timeoutMs = timeoutMs || 30000;
 			var xhr = new XMLHttpRequest();
@@ -147,11 +142,67 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			else xhr.send(null);
 		}
 
-		function runBusy(label, fn) {
+		function pollTask(taskId, callbacks, timeoutMs) {
+			timeoutMs = timeoutMs || 120000;
+			var startTime = Date.now();
+			var lastLog = "";
+
+			function poll() {
+				var elapsed = Date.now() - startTime;
+				if (elapsed > timeoutMs) {
+					setCountdown("");
+					callbacks.onTimeout();
+					return;
+				}
+				setCountdown(t("remainingSec").replace("%d", Math.ceil((timeoutMs - elapsed) / 1000)));
+
+				request("GET", ENDPOINTS.task, { task_id: taskId }, function(err, data) {
+					if (data && data.log && data.log !== lastLog) {
+						lastLog = data.log;
+						callbacks.onProgress(data.log);
+					}
+					if (err) {
+						setTimeout(poll, 1000);
+						return;
+					}
+					if (data && data.done) {
+						setCountdown("");
+						callbacks.onDone(data);
+						return;
+					}
+					setTimeout(poll, 500);
+				}, 5000);
+			}
+			poll();
+		}
+
+		function startBackgroundTask(startUrl, params, label, failLabel, callbacks, taskTimeoutMs) {
 			STATE.busy = true;
 			updateButtons();
 			setMessage(label, true);
-			fn(function() { STATE.busy = false; updateButtons(); });
+
+			request("POST", startUrl, params, function(err, data) {
+				if (err || !data || !data.task_id) {
+					STATE.busy = false;
+					updateButtons();
+					setMessage(failLabel + ": " + (err || t("unknown")), false);
+					return;
+				}
+
+				pollTask(data.task_id, {
+					onProgress: function(log) { if (callbacks.onProgress) callbacks.onProgress(log); },
+					onDone: function(data) {
+						STATE.busy = false;
+						updateButtons();
+						if (callbacks.onDone) callbacks.onDone(data);
+					},
+					onTimeout: function() {
+						STATE.busy = false;
+						updateButtons();
+						setMessage(failLabel + ": " + t("requestTimeout"), false);
+					}
+				}, taskTimeoutMs || 120000);
+			}, 10000);
 		}
 
 		window.ikbClick = function(ev, fn) { if (ev && ev.preventDefault) ev.preventDefault(); if (ev && ev.stopPropagation) ev.stopPropagation(); fn(); return false; };
@@ -161,9 +212,30 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbClearProxy = function() { var input = el("ikb-proxy"); if (input) input.value = ""; try { window.localStorage.removeItem(PROXY_KEY); } catch (e) {} setMessage(t("clearedProxy"), true); };
 		window.ikbConfirmFull = function() { if (confirm(t("confirmFull"))) window.ikbService("uninstall_full"); };
 		window.ikbLoadStatus = function() { request("GET", ENDPOINTS.status, {}, function(err, data) { if (err) { setMessage(t("statusFailed") + ": " + err, false); setText("ikb-binary-status", "Error"); return; } renderStatus(data); setMessage(t("statusRefreshed"), true); }, 10000); };
-		window.ikbCheckLatest = function() { runBusy(t("checkingLatest"), function(done) { request("POST", ENDPOINTS.latest, { proxy: currentProxy() }, function(err, data) { done(); if (err) { setMessage(t("latestFailed") + ": " + err, false); if (data && data.log) setLog(data.log); return; } renderLatest(data); setMessage(t("latestChecked"), true); }, 30000); }); };
-		window.ikbInstall = function() { runBusy(t("installing"), function(done) { request("POST", ENDPOINTS.install, { proxy: currentProxy() }, function(err, data) { done(); if (err) { setMessage(t("installFailed") + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); window.ikbLoadStatus(); }, 30000); }); };
-		window.ikbService = function(action) { runBusy(t("runningAction") + action, function(done) { request("POST", ENDPOINTS.service, { action: action }, function(err, data) { done(); if (err) { setMessage(t("serviceFailed") + " " + action + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); window.ikbLoadStatus(); }, 10000); }); };
+		window.ikbCheckLatest = function() { startBackgroundTask(ENDPOINTS.latest, { proxy: currentProxy() }, t("checkingLatest"), t("latestFailed"), {
+			onProgress: function(log) { setLog(log); },
+			onDone: function(data) {
+				var meta = data.meta || {};
+				setText("ikb-latest-version", meta.latest_version || t("unknown"));
+				setText("ikb-update-available", meta.update_available === "true" || meta.update_available === true ? t("yes") : t("no"));
+				setLog(data.log || "");
+				setMessage(t("latestChecked"), true);
+			}
+		}, 60000); };
+		window.ikbInstall = function() { startBackgroundTask(ENDPOINTS.install, { proxy: currentProxy() }, t("installing"), t("installFailed"), {
+			onProgress: function(log) { setLog(log); },
+			onDone: function(data) {
+				var meta = data.meta || {};
+				setLog(data.log || "");
+				if (meta.status === "error") {
+					setMessage(t("installFailed") + ": " + (meta.message || ""), false);
+				} else {
+					setMessage(meta.message || t("actionDone"), true);
+				}
+				window.ikbLoadStatus();
+			}
+		}, 180000); };
+		window.ikbService = function(action) { STATE.busy = true; updateButtons(); setMessage(t("runningAction") + action, true); request("POST", ENDPOINTS.service, { action: action }, function(err, data) { STATE.busy = false; updateButtons(); if (err) { setMessage(t("serviceFailed") + " " + action + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); window.ikbLoadStatus(); }, 10000); };
 		window.ikbLoadLog = function() { request("GET", ENDPOINTS.log, {}, function(err, data) { if (err) { setMessage(t("logFailed") + ": " + err, false); return; } setLog(data.log || ""); setMessage(t("logLoaded"), true); }, 10000); };
 
 		document.addEventListener("DOMContentLoaded", function() {

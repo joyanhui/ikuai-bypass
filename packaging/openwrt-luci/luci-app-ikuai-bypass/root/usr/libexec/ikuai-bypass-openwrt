@@ -84,6 +84,7 @@ ensure_cache() {
 
 run_install_sh() {
 	ensure_cache 0
+	export_proxy
 	sh "${CACHE_INSTALL_SH}" "$@"
 }
 

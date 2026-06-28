@@ -15,12 +15,14 @@ function index()
 	entry({"admin", "services", "ikuai-bypass", "status"}, call("action_status")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "latest"}, call("action_latest")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "install"}, call("action_install")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "task"}, call("action_task")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "service"}, call("action_service")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "log"}, call("action_log")).leaf = true
 end
 
 local function trim(value)
-	return (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+	local s = (value or ""):gsub("^%s+", ""):gsub("%s+$", "")
+	return s
 end
 
 local function to_bool(value)
@@ -46,6 +48,45 @@ end
 
 local function shell_quote(value)
 	return "'" .. tostring(value or ""):gsub("'", "'\\''") .. "'"
+end
+
+local TASK_DIR = "/tmp/luci-ikuai-bypass-tasks"
+local TASK_TTL = 300
+
+local function cleanup_old_tasks()
+	local now = os.time()
+	local handle = io.popen("ls " .. TASK_DIR .. " 2>/dev/null || true")
+	if not handle then return end
+	for name in handle:lines() do
+		local prefix = name:match("^(%d+)")
+		if prefix then
+			local ts = tonumber(prefix)
+			if ts and (now - ts) > TASK_TTL then
+				os.execute("rm -f " .. TASK_DIR .. "/" .. shell_quote(name))
+			end
+		end
+	end
+	handle:close()
+end
+
+local function run_background(args, proxy)
+	cleanup_old_tasks()
+	os.execute("mkdir -p " .. TASK_DIR)
+	local task_id = tostring(os.time()) .. tostring(math.random(10000, 99999))
+	local out_file = TASK_DIR .. "/" .. task_id .. ".out"
+	local done_file = TASK_DIR .. "/" .. task_id .. ".done"
+
+	local cmd = "("
+	if proxy and proxy ~= "" then
+		cmd = cmd .. "export IKB_PROXY=" .. shell_quote(proxy) .. "; "
+	end
+	cmd = cmd .. shell_quote(helper_script)
+	for _, arg in ipairs(args) do
+		cmd = cmd .. " " .. shell_quote(arg)
+	end
+	cmd = cmd .. " 2>&1; echo $? > " .. shell_quote(done_file) .. ") > " .. shell_quote(out_file) .. " &"
+	os.execute(cmd)
+	return task_id
 end
 
 local function run_helper(args, proxy)
@@ -101,43 +142,54 @@ end
 
 function action_install()
 	local proxy = http.formvalue("proxy") or ""
-	local output, err = run_helper({ "install" }, proxy)
-	if not output then
-		return json_response(502, { ok = false, message = err })
-	end
-
-	local meta = parse_key_value_lines(output)
-	if meta.status == "error" then
-		return json_response(502, { ok = false, message = meta.message or "Install failed" })
-	end
-
-	json_response(200, {
-		ok = true,
-		message = meta.message or "Install completed",
-		log = output,
-		install = {
-			binary_path = meta.binary_path or "",
-			binary_version = meta.binary_version or "",
-			config_path = meta.config_path or "",
-		},
-	})
+	local task_id = run_background({ "install" }, proxy)
+	json_response(200, { ok = true, task_id = task_id })
 end
 
 function action_latest()
 	local proxy = http.formvalue("proxy") or ""
-	local output, err = run_helper({ "latest" }, proxy)
-	if not output then
-		return json_response(502, { ok = false, message = err })
+	local task_id = run_background({ "latest" }, proxy)
+	json_response(200, { ok = true, task_id = task_id })
+end
+
+function action_task()
+	local task_id = trim(http.formvalue("task_id") or "")
+	if task_id == "" then
+		return json_response(400, { ok = false, message = "Missing task_id" })
 	end
-	local meta = parse_key_value_lines(output)
+
+	local out_file = TASK_DIR .. "/" .. task_id .. ".out"
+	local done_file = TASK_DIR .. "/" .. task_id .. ".done"
+
+	if not fs.access(out_file) then
+		return json_response(404, { ok = false, message = "Task not found" })
+	end
+
+	local log = ""
+	local f = io.open(out_file, "r")
+	if f then
+		log = f:read("*a") or ""
+		f:close()
+	end
+
+	local done = fs.access(done_file)
+	local exit_code = nil
+	if done then
+		local df = io.open(done_file, "r")
+		if df then
+			exit_code = tonumber(trim(df:read("*l") or ""))
+			df:close()
+		end
+	end
+
+	local meta = parse_key_value_lines(log)
+
 	json_response(200, {
 		ok = true,
-		latest = {
-			latest_version = meta.latest_version or "",
-			current_version = meta.current_version or "",
-			update_available = to_bool(meta.update_available),
-		},
-		log = output,
+		done = done,
+		exit_code = exit_code,
+		log = log,
+		meta = meta,
 	})
 end
 

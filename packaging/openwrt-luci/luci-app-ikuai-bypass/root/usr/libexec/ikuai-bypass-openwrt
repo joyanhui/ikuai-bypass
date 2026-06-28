@@ -2,10 +2,17 @@
 
 set -eu
 
-# Why/为什么: LuCI IPK 只提供薄包装，实际安装/卸载/状态逻辑统一交给远程 install.sh。
-# English: Keep the LuCI package small and delegate all lifecycle logic to install.sh.
+# Why/为什么: LuCI IPK 只提供薄包装，实际安装/卸载/状态逻辑统一交给 install.sh。
+# English: Keep the LuCI package small and cache install.sh in /tmp to avoid refetching it for every button click.
 
 INSTALL_URL="${IKB_INSTALL_URL:-https://joyanhui.github.io/ikuai-bypass/install.sh}"
+BASE_URL="${INSTALL_URL%/install.sh}"
+CACHE_DIR="/tmp/ikuai-bypass-install-cache"
+CACHE_INSTALL_SH="${CACHE_DIR}/install.sh"
+CACHE_COMMON_DIR="${CACHE_DIR}/install-file"
+CACHE_COMMON_SH="${CACHE_COMMON_DIR}/common.sh"
+CACHE_STAMP="${CACHE_DIR}/.stamp"
+CACHE_TTL="${IKB_INSTALL_CACHE_TTL:-21600}"
 
 fail() {
 	printf 'status=error\n'
@@ -26,15 +33,58 @@ export_proxy() {
 	export HTTPS_PROXY="${proxy}"
 }
 
-run_install_sh() {
-	export_proxy
+now_ts() {
+	date +%s 2>/dev/null || printf '0'
+}
+
+cache_fresh() {
+	[ -f "${CACHE_INSTALL_SH}" ] || return 1
+	[ -f "${CACHE_COMMON_SH}" ] || return 1
+	[ -f "${CACHE_STAMP}" ] || return 1
+	now="$(now_ts)"
+	stamp="$(cat "${CACHE_STAMP}" 2>/dev/null || printf '0')"
+	[ $((now - stamp)) -lt "${CACHE_TTL}" ] 2>/dev/null
+}
+
+download_file() {
+	url="$1"
+	dst="$2"
 	if command -v curl >/dev/null 2>&1; then
-		curl -fsSL "${INSTALL_URL}" | sh -s -- "$@"
+		curl -fsSL -o "${dst}" "${url}"
 	elif command -v wget >/dev/null 2>&1; then
-		wget -qO- "${INSTALL_URL}" | sh -s -- "$@"
+		wget -qO "${dst}" "${url}"
 	else
 		fail "curl or wget is required"
 	fi
+}
+
+refresh_cache() {
+	export_proxy
+	tmp_dir="$(mktemp -d 2>/dev/null || mktemp -d -t ikb-install-cache)"
+	mkdir -p "${tmp_dir}/install-file" "${CACHE_COMMON_DIR}"
+	download_file "${INSTALL_URL}" "${tmp_dir}/install.sh"
+	download_file "${BASE_URL}/install-file/common.sh" "${tmp_dir}/install-file/common.sh"
+	sh -n "${tmp_dir}/install.sh" || fail "Downloaded install.sh has invalid syntax"
+	sh -n "${tmp_dir}/install-file/common.sh" || fail "Downloaded common.sh has invalid syntax"
+	mkdir -p "${CACHE_COMMON_DIR}"
+	cp "${tmp_dir}/install.sh" "${CACHE_INSTALL_SH}"
+	cp "${tmp_dir}/install-file/common.sh" "${CACHE_COMMON_SH}"
+	now_ts > "${CACHE_STAMP}"
+	rm -rf "${tmp_dir}"
+}
+
+ensure_cache() {
+	force="${1:-0}"
+	if [ "${force}" = "1" ] || ! cache_fresh; then
+		if ! refresh_cache; then
+			[ -f "${CACHE_INSTALL_SH}" ] && [ -f "${CACHE_COMMON_SH}" ] || fail "Failed to download install.sh cache"
+		fi
+	fi
+}
+
+run_install_sh() {
+	ensure_cache 0
+	sh "${CACHE_INSTALL_SH}" "$@"
 }
 
 case "${1:-status}" in
@@ -42,12 +92,16 @@ case "${1:-status}" in
 		shift
 		run_install_sh status "$@"
 		;;
-	status|install|update|uninstall|start|stop|restart|enable|disable|log)
+	status|latest|install|update|uninstall|start|stop|restart|enable|disable|log)
 		action="$1"
 		shift
 		run_install_sh "${action}" "$@"
 		;;
+	refresh-cache)
+		refresh_cache
+		printf 'status=ok\nmessage=install.sh cache refreshed\n'
+		;;
 	*)
-		fail "Unsupported action. Supported: status, inspect, install, update, uninstall, start, stop, restart, enable, disable, log"
+		fail "Unsupported action. Supported: status, inspect, latest, install, update, uninstall, start, stop, restart, enable, disable, log, refresh-cache"
 		;;
 esac

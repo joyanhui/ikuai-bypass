@@ -13,6 +13,7 @@ function index()
 
 	entry({"admin", "services", "ikuai-bypass"}, cbi("ikuai_bypass"), _("iKuai Bypass"), 60).dependent = true
 	entry({"admin", "services", "ikuai-bypass", "status"}, call("action_status")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "latest"}, call("action_latest")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "install"}, call("action_install")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "service"}, call("action_service")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "log"}, call("action_log")).leaf = true
@@ -119,6 +120,24 @@ function action_install()
 			binary_version = meta.binary_version or "",
 			config_path = meta.config_path or "",
 		},
+	})
+end
+
+function action_latest()
+	local proxy = http.formvalue("proxy") or ""
+	local output, err = run_helper({ "latest" }, proxy)
+	if not output then
+		return json_response(502, { ok = false, message = err })
+	end
+	local meta = parse_key_value_lines(output)
+	json_response(200, {
+		ok = true,
+		latest = {
+			latest_version = meta.latest_version or "",
+			current_version = meta.current_version or "",
+			update_available = to_bool(meta.update_available),
+		},
+		log = output,
 	})
 end
 

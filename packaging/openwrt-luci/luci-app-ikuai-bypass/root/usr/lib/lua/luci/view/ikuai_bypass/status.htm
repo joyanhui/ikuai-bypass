@@ -1,6 +1,7 @@
 <%
 local dispatcher = require "luci.dispatcher"
 local status_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "status")
+local latest_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "latest")
 local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "install")
 local service_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "service")
 local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
@@ -10,10 +11,12 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	(function() {
 		var ENDPOINTS = {
 			status: <%= string.format("%q", status_url) %>,
+			latest: <%= string.format("%q", latest_url) %>,
 			install: <%= string.format("%q", install_url) %>,
 			service: <%= string.format("%q", service_url) %>,
 			log: <%= string.format("%q", log_url) %>
 		};
+		var TOKEN = <%= string.format("%q", luci.dispatcher.context.authsession or "") %>;
 		var PROXY_KEY = "ikuai-bypass.proxy";
 		var STATE = { busy: false, data: null };
 
@@ -63,12 +66,24 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			setText("ikb-service-status", s.service_installed ? "Installed" : "Not installed");
 			setText("ikb-running", s.running ? "Running" : "Stopped");
 			setText("ikb-config", s.config_exists ? "Exists" : "Not generated");
+			setText("ikb-current-version", s.version || (s.binary_version || "Not installed"));
 			setMessage("Status refreshed", true);
+		}
+
+		function renderLatest(data) {
+			var v = data && data.latest ? data.latest : {};
+			setText("ikb-current-version", v.current_version || "Not installed");
+			setText("ikb-latest-version", v.latest_version || "Unknown");
+			setText("ikb-update-available", v.update_available ? "Yes" : "No");
+			setLog(data.log || "");
+			setMessage("Latest stable version checked", true);
 		}
 
 		function request(method, url, params, callback) {
 			var xhr = new XMLHttpRequest();
 			var parts = [];
+			params = params || {};
+			if (TOKEN && !params.token) params.token = TOKEN;
 			for (var k in params) {
 				if (Object.prototype.hasOwnProperty.call(params, k))
 					parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
@@ -78,6 +93,8 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				target += (url.indexOf("?") === -1 ? "?" : "&") + parts.join("&");
 
 			xhr.open(method, target, true);
+			xhr.timeout = 120000;
+			xhr.ontimeout = function() { callback("Request timed out", null); };
 			xhr.onreadystatechange = function() {
 				if (xhr.readyState !== 4) return;
 				var data = null, text = xhr.responseText || "";
@@ -126,6 +143,27 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				}
 				renderStatus(data);
 			});
+		};
+
+		window.ikbCheckLatest = function() {
+			runBusy("Checking latest stable version...", function(done) {
+				request("POST", ENDPOINTS.latest, { proxy: currentProxy() }, function(err, data) {
+					done();
+					if (err) {
+						setMessage(err, false);
+						if (data && data.log) setLog(data.log);
+						return;
+					}
+					renderLatest(data);
+				});
+			});
+		};
+
+		window.ikbClick = function(ev, fn) {
+			if (ev && ev.preventDefault) ev.preventDefault();
+			if (ev && ev.stopPropagation) ev.stopPropagation();
+			fn();
+			return false;
 		};
 
 		window.ikbInstall = function() {
@@ -199,6 +237,9 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		<div class="tr"><div class="td left">Service script</div><div class="td left" id="ikb-service-status">Loading...</div></div>
 		<div class="tr"><div class="td left">Runtime</div><div class="td left" id="ikb-running">Loading...</div></div>
 		<div class="tr"><div class="td left">Config</div><div class="td left" id="ikb-config">Loading...</div></div>
+		<div class="tr"><div class="td left">Current version</div><div class="td left" id="ikb-current-version">Unknown</div></div>
+		<div class="tr"><div class="td left">Latest stable</div><div class="td left" id="ikb-latest-version">Unknown</div></div>
+		<div class="tr"><div class="td left">Update available</div><div class="td left" id="ikb-update-available">Unknown</div></div>
 	</div>
 </div>
 
@@ -207,21 +248,25 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	<p>Optional proxy for this browser only. It is sent with install requests but is not stored on the router.</p>
 	<div class="ikb-proxy-row">
 		<input id="ikb-proxy" type="text" placeholder="http://192.168.1.101:7890" />
-		<button class="btn cbi-button ikb-action" onclick="ikbSaveProxy()">Save in Browser</button>
-		<button class="btn cbi-button ikb-action" onclick="ikbClearProxy()">Clear</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbSaveProxy)">Save in Browser</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbClearProxy)">Clear</button>
 	</div>
 </div>
 
 <div class="cbi-section ikb-section">
 	<h3>Actions</h3>
 	<div class="ikb-actions">
-		<button class="btn cbi-button ikb-action" onclick="ikbLoadStatus()">Refresh Status</button>
-		<button class="btn cbi-button cbi-button-apply ikb-action" onclick="ikbInstall()">Install / Update CLI</button>
-		<button class="btn cbi-button ikb-action" onclick="ikbService('restart')">Restart</button>
-		<button class="btn cbi-button ikb-action" onclick="ikbService('stop')">Stop</button>
-		<button class="btn cbi-button ikb-action" onclick="ikbService('uninstall_service')">Uninstall Service Only</button>
-		<button class="btn cbi-button ikb-action" onclick="if(confirm('Remove service and delete /opt/ikuai-bypass completely?')) ikbService('uninstall_full')">Full Uninstall</button>
-		<button class="btn cbi-button ikb-action" onclick="ikbLoadLog()">Load Log</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbLoadStatus)">Refresh Status</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbCheckLatest)">Check Latest Stable</button>
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbInstall)">Install / Update CLI</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('start') })">Start</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('stop') })">Stop</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('restart') })">Restart</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('enable') })">Enable Autostart</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('disable') })">Disable Autostart</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('uninstall_service') })">Uninstall Service Only</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ if(confirm('Remove service and delete /opt/ikuai-bypass completely?')) ikbService('uninstall_full') })">Full Uninstall</button>
+		<button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbLoadLog)">Load Log</button>
 	</div>
 	<div id="ikb-message" class="ikb-msg">Checking status...</div>
 </div>

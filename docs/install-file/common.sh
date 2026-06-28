@@ -715,6 +715,20 @@ print_status_kv() {
     printf 'arch=%s\n' "$(detect_arch 2>/dev/null || true)"
 }
 
+print_latest_kv() {
+    local latest=""
+    local current=""
+    latest="$(get_latest_version)"
+    [ -f "${VERSION_FILE}" ] && current="$(cat "${VERSION_FILE}")"
+    printf 'latest_version=%s\n' "${latest}"
+    printf 'current_version=%s\n' "${current}"
+    if [ -n "${latest}" ] && [ "${latest}" != "${current}" ]; then
+        printf 'update_available=1\n'
+    else
+        printf 'update_available=0\n'
+    fi
+}
+
 run_action() {
     local action="${1:-}"
     local version="${2:-}"
@@ -742,6 +756,7 @@ run_action() {
         enable) enable_autostart ;;
         disable) disable_autostart ;;
         status|inspect) print_status_kv ;;
+        latest) print_latest_kv ;;
         log)
             if [ "${LOG_PATH}" != "/dev/null" ] && [ -f "${LOG_PATH}" ]; then tail -n 80 "${LOG_PATH}"; else print_msg "MSG_NO_LOG"; fi
             ;;

@@ -22,20 +22,28 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		var STATE = { busy: false, lang: "zh" };
 		var I18N = {
 			zh: {
-				title: "iKuai Bypass 管理", subtitle: "轻量 LuCI 入口，核心安装逻辑由 install.sh 执行", langLabel: "语言", zh: "中文", en: "English",
 				tabStatus: "状态", tabInstall: "安装", tabService: "服务", tabLog: "日志",
 				installedCli: "CLI 状态", binaryPath: "二进制路径", arch: "架构", serviceScript: "服务脚本", runtime: "运行状态", config: "配置文件", currentVersion: "当前版本", latestStable: "最新稳定版", updateAvailable: "可更新",
 				proxyTitle: "代理设置", proxyHelp: "代理只保存在当前浏览器，点击安装或检查最新版时临时发送到路由器，不会写入系统。", proxyPlaceholder: "例如 http://192.168.1.101:7890", saveProxy: "保存到浏览器", clearProxy: "清空代理",
-				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 CLI", start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载", loadLog: "加载日志",
-				messageTitle: "执行结果", logTitle: "日志输出", noLog: "尚未加载日志。", confirmFull: "确认停止服务并彻底删除 /opt/ikuai-bypass/？", savedProxy: "代理已保存到当前浏览器", clearedProxy: "代理已清空", statusRefreshed: "状态已刷新", checkingLatest: "正在检查最新稳定版...", latestChecked: "最新稳定版检查完成", installing: "正在安装...", runningAction: "正在执行：", actionDone: "操作完成", logLoaded: "日志已加载", requestTimeout: "请求超时", notInstalled: "未安装", installed: "已安装", notGenerated: "未生成", unknown: "未知", running: "运行中", stopped: "已停止", yes: "是", no: "否"
+				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 CLI",
+				start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载",
+				loadLog: "加载日志",
+				savedProxy: "代理已保存到当前浏览器", clearedProxy: "代理已清空", statusRefreshed: "状态已刷新", checkingLatest: "正在检查最新稳定版...", latestChecked: "最新稳定版检查完成",
+				installing: "正在安装...", runningAction: "正在执行：", actionDone: "操作完成", logLoaded: "日志已加载", requestTimeout: "请求超时",
+				confirmFull: "确认停止服务并彻底删除 /opt/ikuai-bypass/？", notInstalled: "未安装", installed: "已安装", notGenerated: "未生成", unknown: "未知", running: "运行中", stopped: "已停止", yes: "是", no: "否", loading: "加载中...",
+				zh: "中文", en: "English"
 			},
 			en: {
-				title: "iKuai Bypass Manager", subtitle: "A small LuCI entry; install.sh owns the lifecycle logic", langLabel: "Language", zh: "中文", en: "English",
 				tabStatus: "Status", tabInstall: "Install", tabService: "Service", tabLog: "Log",
 				installedCli: "CLI status", binaryPath: "Binary path", arch: "Architecture", serviceScript: "Service script", runtime: "Runtime", config: "Config", currentVersion: "Current version", latestStable: "Latest stable", updateAvailable: "Update available",
 				proxyTitle: "Proxy", proxyHelp: "The proxy is stored only in this browser and sent temporarily for install/latest requests. It is not written to the router.", proxyPlaceholder: "Example: http://192.168.1.101:7890", saveProxy: "Save in Browser", clearProxy: "Clear",
-				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update CLI", start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall", loadLog: "Load Log",
-				messageTitle: "Result", logTitle: "Log Output", noLog: "No log loaded.", confirmFull: "Stop service and remove /opt/ikuai-bypass/ completely?", savedProxy: "Proxy saved in this browser", clearedProxy: "Proxy cleared", statusRefreshed: "Status refreshed", checkingLatest: "Checking latest stable version...", latestChecked: "Latest stable version checked", installing: "Installing...", runningAction: "Running: ", actionDone: "Action completed", logLoaded: "Log loaded", requestTimeout: "Request timed out", notInstalled: "Not installed", installed: "Installed", notGenerated: "Not generated", unknown: "Unknown", running: "Running", stopped: "Stopped", yes: "Yes", no: "No"
+				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update CLI",
+				start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall",
+				loadLog: "Load Log",
+				savedProxy: "Proxy saved in this browser", clearedProxy: "Proxy cleared", statusRefreshed: "Status refreshed", checkingLatest: "Checking latest stable version...", latestChecked: "Latest stable version checked",
+				installing: "Installing...", runningAction: "Running: ", actionDone: "Action completed", logLoaded: "Log loaded", requestTimeout: "Request timed out",
+				confirmFull: "Stop service and remove /opt/ikuai-bypass/ completely?", notInstalled: "Not installed", installed: "Installed", notGenerated: "Not generated", unknown: "Unknown", running: "Running", stopped: "Stopped", yes: "Yes", no: "No", loading: "Loading...",
+				zh: "中文", en: "English"
 			}
 		};
 
@@ -45,16 +53,16 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		function currentProxy() { var input = el("ikb-proxy"); return input ? input.value.trim() : ""; }
 
 		function setMessage(text, ok) {
-			var n = el("ikb-message");
+			var n = el("ikb-msg");
 			if (!n) return;
-			n.className = ok === false ? "ikb-msg ikb-msg-error" : "ikb-msg";
 			n.textContent = text || "";
+			n.style.display = text ? "block" : "none";
 		}
 
 		function setLog(text) {
 			var n = el("ikb-log");
 			if (!n) return;
-			n.textContent = text || t("noLog");
+			n.value = text || "";
 			n.scrollTop = n.scrollHeight;
 		}
 
@@ -65,18 +73,19 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 
 		function applyLanguage() {
 			var nodes = document.querySelectorAll("[data-i18n]");
-			for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t(nodes[i].getAttribute("data-i18n"));
-			var proxy = el("ikb-proxy");
-			if (proxy) proxy.setAttribute("placeholder", t("proxyPlaceholder"));
-			var lang = el("ikb-lang");
-			if (lang) lang.value = STATE.lang;
-			if ((el("ikb-log") || {}).textContent === "No log loaded." || (el("ikb-log") || {}).textContent === "尚未加载日志。") setLog("");
+			for (var i = 0; i < nodes.length; i++) {
+				var key = nodes[i].getAttribute("data-i18n");
+				if (nodes[i].tagName === "INPUT" && nodes[i].getAttribute("type") === "text") continue;
+				nodes[i].textContent = t(key);
+			}
+			var ph = el("ikb-proxy");
+			if (ph) ph.setAttribute("placeholder", t("proxyPlaceholder"));
 		}
 
 		function switchTab(name) {
 			var tabs = document.querySelectorAll(".ikb-tab");
 			var panels = document.querySelectorAll(".ikb-panel");
-			for (var i = 0; i < tabs.length; i++) tabs[i].className = tabs[i].getAttribute("data-tab") === name ? "ikb-tab active" : "ikb-tab";
+			for (var i = 0; i < tabs.length; i++) tabs[i].className = "ikb-tab cbi-tab" + (tabs[i].getAttribute("data-tab") === name ? "" : "-disabled");
 			for (var j = 0; j < panels.length; j++) panels[j].style.display = panels[j].getAttribute("data-panel") === name ? "block" : "none";
 		}
 
@@ -89,16 +98,13 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			setText("ikb-running", s.running ? t("running") : t("stopped"));
 			setText("ikb-config", s.config_exists ? t("installed") : t("notGenerated"));
 			setText("ikb-current-version", s.version || (s.binary_version || t("notInstalled")));
-			setMessage(t("statusRefreshed"), true);
 		}
 
 		function renderLatest(data) {
 			var v = data && data.latest ? data.latest : {};
-			setText("ikb-current-version", v.current_version || t("notInstalled"));
 			setText("ikb-latest-version", v.latest_version || t("unknown"));
 			setText("ikb-update-available", v.update_available ? t("yes") : t("no"));
 			setLog(data.log || "");
-			setMessage(t("latestChecked"), true);
 		}
 
 		function request(method, url, params, callback) {
@@ -136,8 +142,8 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbSaveProxy = function() { try { window.localStorage.setItem(PROXY_KEY, currentProxy()); } catch (e) {} setMessage(t("savedProxy"), true); };
 		window.ikbClearProxy = function() { var input = el("ikb-proxy"); if (input) input.value = ""; try { window.localStorage.removeItem(PROXY_KEY); } catch (e) {} setMessage(t("clearedProxy"), true); };
 		window.ikbConfirmFull = function() { if (confirm(t("confirmFull"))) window.ikbService("uninstall_full"); };
-		window.ikbLoadStatus = function() { request("GET", ENDPOINTS.status, {}, function(err, data) { if (err) { setText("ikb-binary-status", "Error"); setMessage(err, false); return; } renderStatus(data); }); };
-		window.ikbCheckLatest = function() { runBusy(t("checkingLatest"), function(done) { request("POST", ENDPOINTS.latest, { proxy: currentProxy() }, function(err, data) { done(); if (err) { setMessage(err, false); if (data && data.log) setLog(data.log); return; } renderLatest(data); }); }); };
+		window.ikbLoadStatus = function() { request("GET", ENDPOINTS.status, {}, function(err, data) { if (err) { setText("ikb-binary-status", "Error"); setMessage(err, false); return; } renderStatus(data); setMessage(t("statusRefreshed"), true); }); };
+		window.ikbCheckLatest = function() { runBusy(t("checkingLatest"), function(done) { request("POST", ENDPOINTS.latest, { proxy: currentProxy() }, function(err, data) { done(); if (err) { setMessage(err, false); if (data && data.log) setLog(data.log); return; } renderLatest(data); setMessage(t("latestChecked"), true); }); }); };
 		window.ikbInstall = function() { runBusy(t("installing"), function(done) { request("POST", ENDPOINTS.install, { proxy: currentProxy() }, function(err, data) { done(); if (err) { setMessage(err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); window.ikbLoadStatus(); }); }); };
 		window.ikbService = function(action) { runBusy(t("runningAction") + action, function(done) { request("POST", ENDPOINTS.service, { action: action }, function(err, data) { done(); if (err) { setMessage(err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); window.ikbLoadStatus(); }); }); };
 		window.ikbLoadLog = function() { request("GET", ENDPOINTS.log, {}, function(err, data) { if (err) { setMessage(err, false); return; } setLog(data.log || ""); setMessage(t("logLoaded"), true); }); };
@@ -153,76 +159,62 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	})();
 </script>
 
-<style type="text/css">
-	.ikb-shell { background: linear-gradient(135deg, rgba(37, 99, 235, .12), rgba(16, 185, 129, .10)); border-radius: 14px; padding: 1rem; }
-	.ikb-hero { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 1rem; }
-	.ikb-hero h2 { margin: 0 0 .25rem 0; background: transparent; }
-	.ikb-subtitle { opacity: .75; }
-	.ikb-lang { display: flex; gap: .5rem; align-items: center; white-space: nowrap; }
-	.ikb-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin: .75rem 0 1rem; }
-	.ikb-tab { border: 0; border-radius: 999px; padding: .55rem .9rem; background: rgba(255,255,255,.72); color: #1f2937; cursor: pointer; box-shadow: 0 1px 5px rgba(15,23,42,.08); }
-	.ikb-tab.active { background: #2563eb; color: #fff; }
-	.ikb-card { background: rgba(255,255,255,.86); border: 1px solid rgba(148,163,184,.35); border-radius: 12px; padding: 1rem; box-shadow: 0 8px 24px rgba(15,23,42,.08); }
-	.ikb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
-	.ikb-kv { padding: .8rem; border-radius: 10px; background: rgba(241,245,249,.9); }
-	.ikb-kv-label { font-size: .82rem; opacity: .65; margin-bottom: .25rem; }
-	.ikb-kv-value { font-weight: 650; word-break: break-all; }
-	.ikb-actions { display: flex; gap: .65rem; flex-wrap: wrap; align-items: center; }
-	.ikb-proxy-row { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin: .8rem 0 1rem; }
-	.ikb-proxy-row input { min-width: min(28rem, 100%); }
-	.ikb-msg { margin-top: 1rem; padding: .9rem 1rem; border-radius: 10px; line-height: 1.6; background: #111827; color: #d1d5db; }
-	.ikb-msg-error { color: #fecaca; }
-	#ikb-log { background: #0b1020; color: #d1d5db; border: 1px solid #374151; border-radius: 10px; padding: 12px; min-height: 220px; max-height: 420px; overflow: auto; white-space: pre-wrap; font-family: Menlo, Consolas, monospace; }
-	@media (prefers-color-scheme: dark) { .ikb-card { background: rgba(30,41,59,.9); } .ikb-kv { background: rgba(15,23,42,.65); } .ikb-tab { background: rgba(30,41,59,.9); color: #d1d5db; } }
-	@media (max-width: 720px) { .ikb-hero { display: block; } .ikb-grid { grid-template-columns: 1fr; } .ikb-lang { margin-top: .75rem; } }
-</style>
-
-<div class="ikb-shell">
-	<div class="ikb-hero">
-		<div>
-			<h2 data-i18n="title">iKuai Bypass 管理</h2>
-			<div class="ikb-subtitle" data-i18n="subtitle">轻量 LuCI 入口，核心安装逻辑由 install.sh 执行</div>
-		</div>
-		<label class="ikb-lang"><span data-i18n="langLabel">语言</span><select id="ikb-lang" onchange="ikbSetLang(this.value)"><option value="zh">中文</option><option value="en">English</option></select></label>
-	</div>
-
-	<div class="ikb-tabs">
-		<button type="button" class="ikb-tab" data-tab="status" onclick="return ikbClick(event, function(){ ikbTab('status') })" data-i18n="tabStatus">状态</button>
-		<button type="button" class="ikb-tab" data-tab="install" onclick="return ikbClick(event, function(){ ikbTab('install') })" data-i18n="tabInstall">安装</button>
-		<button type="button" class="ikb-tab" data-tab="service" onclick="return ikbClick(event, function(){ ikbTab('service') })" data-i18n="tabService">服务</button>
-		<button type="button" class="ikb-tab" data-tab="log" onclick="return ikbClick(event, function(){ ikbTab('log') })" data-i18n="tabLog">日志</button>
-	</div>
-
-	<div class="ikb-card ikb-panel" data-panel="status">
-		<div class="ikb-grid">
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="installedCli">CLI 状态</div><div class="ikb-kv-value" id="ikb-binary-status">Loading...</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="runtime">运行状态</div><div class="ikb-kv-value" id="ikb-running">Loading...</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="currentVersion">当前版本</div><div class="ikb-kv-value" id="ikb-current-version">Unknown</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="latestStable">最新稳定版</div><div class="ikb-kv-value" id="ikb-latest-version">Unknown</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="updateAvailable">可更新</div><div class="ikb-kv-value" id="ikb-update-available">Unknown</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="serviceScript">服务脚本</div><div class="ikb-kv-value" id="ikb-service-status">Loading...</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="config">配置文件</div><div class="ikb-kv-value" id="ikb-config">Loading...</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="arch">架构</div><div class="ikb-kv-value" id="ikb-arch">Loading...</div></div>
-			<div class="ikb-kv"><div class="ikb-kv-label" data-i18n="binaryPath">二进制路径</div><div class="ikb-kv-value" id="ikb-binary-path">/opt/ikuai-bypass/ikuai-bypass</div></div>
-		</div>
-		<div class="ikb-actions" style="margin-top:1rem"><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbLoadStatus)" data-i18n="refreshStatus">刷新状态</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbCheckLatest)" data-i18n="checkLatest">检查最新稳定版</button></div>
-	</div>
-
-	<div class="ikb-card ikb-panel" data-panel="install">
-		<h3 data-i18n="proxyTitle">代理设置</h3>
-		<p data-i18n="proxyHelp">代理只保存在当前浏览器，点击安装或检查最新版时临时发送到路由器，不会写入系统。</p>
-		<div class="ikb-proxy-row"><input id="ikb-proxy" type="text" /><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbSaveProxy)" data-i18n="saveProxy">保存到浏览器</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbClearProxy)" data-i18n="clearProxy">清空代理</button></div>
-		<div class="ikb-actions"><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbCheckLatest)" data-i18n="checkLatest">检查最新稳定版</button><button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbInstall)" data-i18n="installUpdate">安装 / 更新 CLI</button></div>
-	</div>
-
-	<div class="ikb-card ikb-panel" data-panel="service">
-		<div class="ikb-actions"><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('start') })" data-i18n="start">启动</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('stop') })" data-i18n="stop">停止</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('restart') })" data-i18n="restart">重启</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('enable') })" data-i18n="enable">启用开机自启</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('disable') })" data-i18n="disable">禁用开机自启</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, function(){ ikbService('uninstall_service') })" data-i18n="uninstallService">仅卸载服务</button><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbConfirmFull)" data-i18n="fullUninstall">完全卸载</button></div>
-	</div>
-
-	<div class="ikb-card ikb-panel" data-panel="log">
-		<div class="ikb-actions" style="margin-bottom:1rem"><button type="button" class="btn cbi-button ikb-action" onclick="return ikbClick(event, ikbLoadLog)" data-i18n="loadLog">加载日志</button></div>
-		<pre id="ikb-log">尚未加载日志。</pre>
-	</div>
-
-	<div class="ikb-card" style="margin-top:1rem"><h3 data-i18n="messageTitle">执行结果</h3><div id="ikb-message" class="ikb-msg">Checking status...</div></div>
+<div style="margin-bottom:.5rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+	<select id="ikb-lang" onchange="ikbSetLang(this.value)" style="min-width:auto">
+		<option value="zh">中文</option>
+		<option value="en">English</option>
+	</select>
 </div>
+
+<ul class="cbi-tabmenu" style="margin-bottom:.5rem">
+	<li class="cbi-tab ikb-tab" data-tab="status" onclick="return ikbClick(event, function(){ ikbTab('status') })"><a role="button" tabindex="0" data-i18n="tabStatus">状态</a></li>
+	<li class="cbi-tab ikb-tab" data-tab="install" onclick="return ikbClick(event, function(){ ikbTab('install') })"><a role="button" tabindex="0" data-i18n="tabInstall">安装</a></li>
+	<li class="cbi-tab ikb-tab" data-tab="service" onclick="return ikbClick(event, function(){ ikbTab('service') })"><a role="button" tabindex="0" data-i18n="tabService">服务</a></li>
+	<li class="cbi-tab ikb-tab" data-tab="log" onclick="return ikbClick(event, function(){ ikbTab('log') })"><a role="button" tabindex="0" data-i18n="tabLog">日志</a></li>
+</ul>
+
+<fieldset class="cbi-section ikb-panel" data-panel="status">
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="installedCli">CLI 状态</label><div class="cbi-value-field"><span id="ikb-binary-status">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="runtime">运行状态</label><div class="cbi-value-field"><span id="ikb-running">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="currentVersion">当前版本</label><div class="cbi-value-field"><span id="ikb-current-version">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="latestStable">最新稳定版</label><div class="cbi-value-field"><span id="ikb-latest-version">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="updateAvailable">可更新</label><div class="cbi-value-field"><span id="ikb-update-available">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="serviceScript">服务脚本</label><div class="cbi-value-field"><span id="ikb-service-status">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="config">配置文件</label><div class="cbi-value-field"><span id="ikb-config">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="arch">架构</label><div class="cbi-value-field"><span id="ikb-arch">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="binaryPath">二进制路径</label><div class="cbi-value-field"><span id="ikb-binary-path">/opt/ikuai-bypass/ikuai-bypass</span></div></div>
+	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbLoadStatus)" data-i18n="refreshStatus">刷新状态</button>
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbCheckLatest)" data-i18n="checkLatest">检查最新稳定版</button>
+	</div></div>
+</fieldset>
+
+<fieldset class="cbi-section ikb-panel" data-panel="install">
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="proxyTitle">代理设置</label><div class="cbi-value-field"><span style="font-size:.9em;opacity:.7" data-i18n="proxyHelp">代理只保存在当前浏览器，点击安装或检查最新版时临时发送到路由器，不会写入系统。</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title">Proxy</label><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap"><input id="ikb-proxy" type="text" class="cbi-input-text" style="width:20rem;max-width:100%" /><button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbSaveProxy)" data-i18n="saveProxy">保存到浏览器</button><button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, ikbClearProxy)" data-i18n="clearProxy">清空代理</button></div></div>
+	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbCheckLatest)" data-i18n="checkLatest">检查最新稳定版</button>
+		<button type="button" class="btn cbi-button cbi-button-positive ikb-action" onclick="return ikbClick(event, ikbInstall)" data-i18n="installUpdate">安装 / 更新 CLI</button>
+	</div></div>
+</fieldset>
+
+<fieldset class="cbi-section ikb-panel" data-panel="service">
+	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, function(){ ikbService('start') })" data-i18n="start">启动</button>
+		<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, function(){ ikbService('stop') })" data-i18n="stop">停止</button>
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, function(){ ikbService('restart') })" data-i18n="restart">重启</button>
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, function(){ ikbService('enable') })" data-i18n="enable">启用开机自启</button>
+		<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, function(){ ikbService('disable') })" data-i18n="disable">禁用开机自启</button>
+		<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, function(){ ikbService('uninstall_service') })" data-i18n="uninstallService">仅卸载服务</button>
+		<button type="button" class="btn cbi-button cbi-button-negative ikb-action" onclick="return ikbClick(event, ikbConfirmFull)" data-i18n="fullUninstall">完全卸载</button>
+	</div></div>
+</fieldset>
+
+<fieldset class="cbi-section ikb-panel" data-panel="log">
+	<div class="cbi-value"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbLoadLog)" data-i18n="loadLog">加载日志</button>
+	</div></div>
+	<div class="cbi-value cbi-value-last"><div class="cbi-value-field"><textarea id="ikb-log" class="cbi-input-textarea" readonly style="width:100%;min-height:200px;max-height:400px;font-family:Menlo,Consolas,monospace;resize:vertical;box-sizing:border-box"></textarea></div></div>
+</fieldset>
+
+<div class="cbi-section" id="ikb-msg" style="display:none;padding:.5rem 1rem;margin-top:.5rem"></div>

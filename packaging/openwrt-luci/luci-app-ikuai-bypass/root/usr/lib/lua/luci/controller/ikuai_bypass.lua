@@ -21,6 +21,9 @@ function index()
 	entry({"admin", "services", "ikuai-bypass", "task"}, call("action_task")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "service"}, call("action_service")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "log"}, call("action_log")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "config_read"}, call("action_config_read")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "config_save"}, call("action_config_save")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "config_backup"}, call("action_config_backup")).leaf = true
 end
 
 local function trim(value)
@@ -261,4 +264,57 @@ function action_log()
 		return json_response(502, { ok = false, message = err })
 	end
 	json_response(200, { ok = true, log = output })
+end
+
+local CONFIG_PATH = "/opt/ikuai-bypass/config.yml"
+
+function action_config_read()
+	local content = ""
+	local exists = fs.access(CONFIG_PATH)
+	if exists then
+		local f = io.open(CONFIG_PATH, "r")
+		if f then
+			content = f:read("*a") or ""
+			f:close()
+		end
+	end
+	json_response(200, { ok = true, exists = exists, content = content, path = CONFIG_PATH })
+end
+
+function action_config_save()
+	local content = http.formvalue("content") or ""
+	local tmp = CONFIG_PATH .. ".tmp." .. tostring(math.random(10000, 99999))
+	os.execute("mkdir -p /opt/ikuai-bypass")
+	local f = io.open(tmp, "w")
+	if not f then
+		return json_response(500, { ok = false, message = "Failed to open temp file for writing" })
+	end
+	f:write(content)
+	f:close()
+	os.execute("mv " .. shell_quote(tmp) .. " " .. shell_quote(CONFIG_PATH))
+	json_response(200, { ok = true, message = "Config saved" })
+end
+
+function action_config_backup()
+	local action = trim(http.formvalue("action") or "")
+	local slot = trim(http.formvalue("slot") or "")
+	if slot ~= "1" and slot ~= "2" and slot ~= "3" then
+		return json_response(400, { ok = false, message = "Invalid slot, must be 1/2/3" })
+	end
+	local backup_path = CONFIG_PATH:gsub("%.yml$", "-backup" .. slot .. ".yml")
+	if action == "backup" then
+		if not fs.access(CONFIG_PATH) then
+			return json_response(400, { ok = false, message = "Config file does not exist" })
+		end
+		os.execute("cp " .. shell_quote(CONFIG_PATH) .. " " .. shell_quote(backup_path))
+		json_response(200, { ok = true, message = "Backed up to " .. backup_path })
+	elseif action == "restore" then
+		if not fs.access(backup_path) then
+			return json_response(400, { ok = false, message = "Backup file " .. backup_path .. " does not exist" })
+		end
+		os.execute("cp " .. shell_quote(backup_path) .. " " .. shell_quote(CONFIG_PATH))
+		json_response(200, { ok = true, message = "Restored from " .. backup_path })
+	else
+		return json_response(400, { ok = false, message = "Invalid action, must be backup/restore" })
+	end
 end

@@ -13,8 +13,8 @@ local function prefers_chinese()
 end
 
 local description = prefers_chinese()
-	and "自动将通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。<br><br>1. LuCI 插件 — 用来安装和卸载 ikuaibypass CLI 的可视化界面<br>2. ikuaibypass CLI — 核心工具程序，负责实际工作"
-	or "Automatically organizes regional IPs, domains, and more from a remote config into iKuai, enabling bypass routing switching, domain分流, port分流 (IP group), custom ISP, ad blocking, and more.<br><br>1. LuCI Plugin — Visual interface to install/uninstall ikuaibypass CLI<br>2. ikuaibypass CLI — Core program that does the actual work"
+	and "自动整理区域 IP、域名等到爱快，实现旁路由自动切换、域名分流、端口分流、自定义运营商、广告屏蔽等。GitHub: https://github.com/joyanhui/ikuai-bypass/"
+	or "Automatically organizes regional IPs, domains, etc. into iKuai for bypass routing, domain/port分流, custom ISP, ad blocking, etc. GitHub: https://github.com/joyanhui/ikuai-bypass/"
 
 local form = SimpleForm("ikuai_bypass", "iKuai Bypass", description)
 form.reset = false

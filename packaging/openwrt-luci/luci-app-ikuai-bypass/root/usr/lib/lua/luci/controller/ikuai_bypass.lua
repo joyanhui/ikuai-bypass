@@ -15,6 +15,9 @@ function index()
 	entry({"admin", "services", "ikuai-bypass", "status"}, call("action_status")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "latest"}, call("action_latest")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "install"}, call("action_install")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "luci_version"}, call("action_luci_version")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "luci_check"}, call("action_luci_check")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "luci_update"}, call("action_luci_update")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "task"}, call("action_task")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "service"}, call("action_service")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "log"}, call("action_log")).leaf = true
@@ -149,6 +152,27 @@ end
 function action_latest()
 	local proxy = http.formvalue("proxy") or ""
 	local task_id = run_background({ "latest" }, proxy)
+	json_response(200, { ok = true, task_id = task_id })
+end
+
+function action_luci_version()
+	local output, err = run_helper({ "luci-version" })
+	if not output then
+		return json_response(502, { ok = false, message = err })
+	end
+	local meta = parse_key_value_lines(output)
+	json_response(200, { ok = true, version = meta.version or "" })
+end
+
+function action_luci_check()
+	local proxy = http.formvalue("proxy") or ""
+	local task_id = run_background({ "luci-check" }, proxy)
+	json_response(200, { ok = true, task_id = task_id })
+end
+
+function action_luci_update()
+	local proxy = http.formvalue("proxy") or ""
+	local task_id = run_background({ "luci-update" }, proxy)
 	json_response(200, { ok = true, task_id = task_id })
 end
 

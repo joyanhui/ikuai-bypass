@@ -3,6 +3,9 @@ local dispatcher = require "luci.dispatcher"
 local status_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "status")
 local latest_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "latest")
 local install_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "install")
+local luci_version_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "luci_version")
+local luci_check_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "luci_check")
+local luci_update_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "luci_update")
 local task_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "task")
 local service_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "service")
 local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
@@ -14,6 +17,9 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			status: <%= string.format("%q", status_url) %>,
 			latest: <%= string.format("%q", latest_url) %>,
 			install: <%= string.format("%q", install_url) %>,
+			luciVersion: <%= string.format("%q", luci_version_url) %>,
+			luciCheck: <%= string.format("%q", luci_check_url) %>,
+			luciUpdate: <%= string.format("%q", luci_update_url) %>,
 			task: <%= string.format("%q", task_url) %>,
 			service: <%= string.format("%q", service_url) %>,
 			log: <%= string.format("%q", log_url) %>
@@ -25,7 +31,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		var I18N = {
 			zh: {
 				tabStatus: "状态", tabInstall: "安装", tabService: "服务", tabLog: "日志",
-				installedCli: "CLI 状态", binaryPath: "二进制路径", arch: "架构", serviceScript: "服务脚本", runtime: "运行状态", config: "配置文件", currentVersion: "当前版本", latestStable: "最新稳定版", updateAvailable: "可更新",
+				installedCli: "CLI 状态", binaryPath: "二进制路径", arch: "架构", serviceScript: "服务脚本", runtime: "运行状态", config: "配置文件", currentVersion: "当前版本", latestStable: "最新稳定版", updateAvailable: "可更新", pluginVersion: "插件版本", pluginLatest: "插件最新版本", checkPlugin: "检查插件更新", updatePlugin: "升级插件", pluginUpToDate: "已是最新", checkingPlugin: "正在检查插件更新...", updatingPlugin: "正在升级插件...", pluginUpdated: "插件升级成功，正在刷新页面...", pluginCheckDone: "检查完成", pluginCheckFailed: "检查插件更新失败", pluginUpdateFailed: "升级插件失败",
 				proxyTitle: "代理设置", proxyHelp: "HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。", proxyPlaceholder: "例如 http://192.168.1.101:7890", saveProxy: "保存到浏览器", clearProxy: "清空代理",
 				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 CLI", reinstallUpdate: "重新安装 / 更新 CLI",
 				start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载",
@@ -38,7 +44,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			},
 			en: {
 				tabStatus: "Status", tabInstall: "Install", tabService: "Service", tabLog: "Log",
-				installedCli: "CLI status", binaryPath: "Binary path", arch: "Architecture", serviceScript: "Service script", runtime: "Runtime", config: "Config", currentVersion: "Current version", latestStable: "Latest stable", updateAvailable: "Update available",
+				installedCli: "CLI status", binaryPath: "Binary path", arch: "Architecture", serviceScript: "Service script", runtime: "Runtime", config: "Config", currentVersion: "Current version", latestStable: "Latest stable", updateAvailable: "Update available", pluginVersion: "Plugin version", pluginLatest: "Plugin latest", checkPlugin: "Check Plugin Update", updatePlugin: "Update Plugin", pluginUpToDate: "Up to date", checkingPlugin: "Checking plugin update...", updatingPlugin: "Updating plugin...", pluginUpdated: "Plugin updated, refreshing page...", pluginCheckDone: "Check complete", pluginCheckFailed: "Plugin check failed", pluginUpdateFailed: "Plugin update failed",
 				proxyTitle: "Proxy", proxyHelp: "HTTP proxy. Only needed when the router cannot reach GitHub (e.g. mainland China). The proxy is stored only in this browser and sent temporarily with install/check requests. It is never written to the router filesystem.", proxyPlaceholder: "Example: http://192.168.1.101:7890", saveProxy: "Save in Browser", clearProxy: "Clear",
 				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update CLI", reinstallUpdate: "Reinstall / Update CLI",
 				start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall",
@@ -241,6 +247,9 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		}, 180000); };
 		window.ikbService = function(action) { STATE.busy = true; updateButtons(); setMessage(t("runningAction") + action, true); request("POST", ENDPOINTS.service, { action: action }, function(err, data) { STATE.busy = false; updateButtons(); if (err) { setMessage(t("serviceFailed") + " " + action + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); if (action === "uninstall_self") { setMessage(t("uninstallSelfDone"), true); setTimeout(function() { window.location.href = "/cgi-bin/luci/"; }, 4000); } else { window.ikbLoadStatus(); } }, 10000); };
 		window.ikbLoadLog = function() { request("GET", ENDPOINTS.log, {}, function(err, data) { if (err) { setMessage(t("logFailed") + ": " + err, false); return; } setLog(data.log || ""); setMessage(t("logLoaded"), true); }, 10000); };
+		window.ikbLoadPluginVersion = function() { request("GET", ENDPOINTS.luciVersion, {}, function(err, data) { if (err) { setText("ikb-plugin-version", "Error"); return; } setText("ikb-plugin-version", data.version || "-"); }, 10000); };
+		window.ikbCheckPlugin = function() { startBackgroundTask(ENDPOINTS.luciCheck, { proxy: currentProxy() }, t("checkingPlugin"), t("pluginCheckFailed"), { onProgress: function(log) { setLog(log); }, onDone: function(data) { var meta = data.meta || {}; setText("ikb-plugin-latest", meta.latest_version || t("unknown")); setLog(data.log || ""); setMessage(t("pluginCheckDone"), true); } }, 60000); };
+		window.ikbUpdatePlugin = function() { startBackgroundTask(ENDPOINTS.luciUpdate, { proxy: currentProxy() }, t("updatingPlugin"), t("pluginUpdateFailed"), { onProgress: function(log) { setLog(log); }, onDone: function(data) { setLog(data.log || ""); var meta = data.meta || {}; if (meta.status === "error") { setMessage(t("pluginUpdateFailed") + ": " + (meta.message || ""), false); } else { setMessage(t("pluginUpdated"), true); setTimeout(function() { window.location.reload(); }, 3000); } } }, 180000); };
 
 		document.addEventListener("DOMContentLoaded", function() {
 			try { STATE.lang = window.localStorage.getItem(LANG_KEY) || "zh"; } catch (e) { STATE.lang = "zh"; }
@@ -249,6 +258,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			applyLanguage();
 			switchTab("status");
 			window.ikbLoadStatus();
+			window.ikbLoadPluginVersion();
 		});
 	})();
 </script>
@@ -277,6 +287,14 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="config">配置文件</label><div class="cbi-value-field"><span id="ikb-config">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="arch">架构</label><div class="cbi-value-field"><span id="ikb-arch">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="binaryPath">二进制路径</label><div class="cbi-value-field"><span id="ikb-binary-path">/opt/ikuai-bypass/ikuai-bypass</span></div></div>
+	<hr>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="pluginVersion">插件版本</label><div class="cbi-value-field"><span id="ikb-plugin-version">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="pluginLatest">插件最新版本</label><div class="cbi-value-field"><span id="ikb-plugin-latest">-</span></div></div>
+	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
+		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbCheckPlugin)" data-i18n="checkPlugin">检查插件更新</button>
+		<button type="button" class="btn cbi-button cbi-button-positive ikb-action" onclick="return ikbClick(event, ikbUpdatePlugin)" data-i18n="updatePlugin">升级插件</button>
+	</div></div>
+	<hr>
 	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
 		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbLoadStatus)" data-i18n="refreshStatus">刷新状态</button>
 		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbCheckLatest)" data-i18n="checkLatest">检查最新稳定版</button>

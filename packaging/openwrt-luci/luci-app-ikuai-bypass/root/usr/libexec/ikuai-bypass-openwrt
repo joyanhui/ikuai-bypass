@@ -93,6 +93,34 @@ case "${1:-status}" in
 		shift
 		run_install_sh status "$@"
 		;;
+	luci-version)
+		ctrl="/usr/lib/opkg/info/luci-app-ikuai-bypass.control"
+		if [ -f "$ctrl" ]; then
+			ver="$(grep '^Version:' "$ctrl" | sed 's/^Version: *//')"
+			printf 'version=%s\n' "${ver}"
+		else
+			fail "Control file not found"
+		fi
+		;;
+	luci-check)
+		export_proxy
+		url="https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk"
+		effective="$(curl -fsSL -o /dev/null -w '%{url_effective}' "${url}" --connect-timeout 10 --max-time 30)" || fail "Failed to check latest version"
+		latest_ver="$(echo "${effective}" | sed -n 's|.*/download/\([^/]*\)/.*|\1|p')"
+		[ -n "${latest_ver}" ] || fail "Could not extract version from redirect"
+		printf 'latest_version=%s\n' "${latest_ver}"
+		;;
+	luci-update)
+		export_proxy
+		tmp="/tmp/luci-ikuai-bypass-update.ipk"
+		url="https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk"
+		printf 'Downloading latest plugin...\n'
+		download_file "${url}" "${tmp}" || fail "Download failed"
+		printf 'Downloaded. Installing...\n'
+		opkg install "${tmp}" --force-overwrite 2>&1 || { rm -f "${tmp}"; fail "Install failed"; }
+		rm -f "${tmp}"
+		printf 'status=ok\nmessage=Plugin updated successfully\n'
+		;;
 	status|latest|install|update|uninstall|start|stop|restart|enable|disable|log)
 		action="$1"
 		shift
@@ -103,6 +131,6 @@ case "${1:-status}" in
 		printf 'status=ok\nmessage=install.sh cache refreshed\n'
 		;;
 	*)
-		fail "Unsupported action. Supported: status, inspect, latest, install, update, uninstall, start, stop, restart, enable, disable, log, refresh-cache"
+		fail "Unsupported action. Supported: status, inspect, latest, install, update, uninstall, start, stop, restart, enable, disable, log, refresh-cache, luci-version, luci-check, luci-update"
 		;;
 esac

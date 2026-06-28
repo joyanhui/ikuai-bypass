@@ -37,7 +37,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				tabLog: "日志",
 				installedCli: "CLI 状态", binaryPath: "二进制路径", arch: "架构", serviceScript: "服务脚本", runtime: "运行状态", config: "配置文件", currentVersion: "当前版本", latestStable: "最新稳定版", updateAvailable: "可更新", pluginVersion: "插件版本", pluginLatest: "插件最新版本", checkPlugin: "检查插件更新", updatePlugin: "升级插件", pluginUpToDate: "已是最新", checkingPlugin: "正在检查插件更新...", updatingPlugin: "正在升级插件...", pluginUpdated: "插件升级成功，正在刷新页面...", pluginCheckDone: "检查完成", pluginCheckFailed: "检查插件更新失败", pluginUpdateFailed: "升级插件失败",
 				proxyTitle: "代理设置", proxyHelp: "HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。", saveProxy: "保存并关闭", configProxy: "配置临时网络代理",
-				configDesc: "自动将通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。", configPart1: "1. LuCI 插件 — 用来安装和卸载 ikuaibypass CLI 的可视化界面", configPart2: "2. ikuaibypass CLI — 核心工具程序，负责实际工作", configFileLabel: "配置文件路径", configRef: "实例配置文件：", saveConfig: "保存配置", backupLabel: "备份", restoreLabel: "还原", configSaved: "配置已保存", configSaveFailed: "保存配置失败", configBackupDone: "备份完成", configRestoreDone: "还原完成", configLoadFailed: "加载配置失败",
+				configDesc: "自动将通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。", configPart1: "1. LuCI 插件 — 用来安装和卸载 ikuaibypass CLI 的可视化界面", configPart2: "2. ikuaibypass CLI — 核心工具程序，负责实际工作", configFileLabel: "配置文件路径", configRef: "实例配置文件：", saveConfig: "保存配置", reloadConfig: "重载", backupToSlot: "备份到", restoreFromSlot: "还原自", configSaved: "配置已保存", configSaveFailed: "保存配置失败", configRefreshed: "配置已重载", configBackupDone: "备份完成", configRestoreDone: "还原完成", configLoadFailed: "加载配置失败",
 				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 ikuaibypass CLI", reinstallUpdate: "重新安装 / 更新 ikuaibypass CLI",
 				start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载",
 				statusFailed: "刷新状态失败", latestFailed: "检查最新版本失败", installFailed: "安装失败", serviceFailed: "操作失败：", logFailed: "获取日志失败",
@@ -52,7 +52,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				tabLog: "Log",
 				installedCli: "CLI status", binaryPath: "Binary path", arch: "Architecture", serviceScript: "Service script", runtime: "Runtime", config: "Config", currentVersion: "Current version", latestStable: "Latest stable", updateAvailable: "Update available", pluginVersion: "Plugin version", pluginLatest: "Plugin latest", checkPlugin: "Check Plugin Update", updatePlugin: "Update Plugin", pluginUpToDate: "Up to date", checkingPlugin: "Checking plugin update...", updatingPlugin: "Updating plugin...", pluginUpdated: "Plugin updated, refreshing page...", pluginCheckDone: "Check complete", pluginCheckFailed: "Plugin check failed", pluginUpdateFailed: "Plugin update failed",
 				proxyTitle: "Proxy", proxyHelp: "HTTP proxy. Only needed when the router cannot reach GitHub (e.g. mainland China). The proxy is stored only in this browser and sent temporarily with install/check requests. It is never written to the router filesystem.", saveProxy: "Save & Close", configProxy: "Configure Temporary Proxy",
-				configDesc: "Automatically organizes regional IPs, domains, etc. into iKuai via a remote config file, enabling bypass routing, domain分流, port分流 (IP group分流), custom ISP, ad blocking, etc.", configPart1: "1. LuCI plugin — visual UI to install/uninstall the ikuaibypass CLI", configPart2: "2. ikuaibypass CLI — the core tool that does the actual work", configFileLabel: "Config file path", configRef: "Example config:", saveConfig: "Save Config", backupLabel: "Backup", restoreLabel: "Restore", configSaved: "Config saved", configSaveFailed: "Failed to save config", configBackupDone: "Backup complete", configRestoreDone: "Restore complete", configLoadFailed: "Failed to load config",
+				configDesc: "Automatically organizes regional IPs, domains, etc. into iKuai via a remote config file, enabling bypass routing, domain分流, port分流 (IP group分流), custom ISP, ad blocking, etc.", configPart1: "1. LuCI plugin — visual UI to install/uninstall the ikuaibypass CLI", configPart2: "2. ikuaibypass CLI — the core tool that does the actual work", configFileLabel: "Config file path", configRef: "Example config:", saveConfig: "Save Config", reloadConfig: "Reload", backupToSlot: "Backup to", restoreFromSlot: "Restore from", configSaved: "Config saved", configSaveFailed: "Failed to save config", configRefreshed: "Config reloaded", configBackupDone: "Backup complete", configRestoreDone: "Restore complete", configLoadFailed: "Failed to load config",
 				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update ikuaibypass CLI", reinstallUpdate: "Reinstall / Update ikuaibypass CLI",
 				start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall",
 				statusFailed: "Status check failed", latestFailed: "Latest version check failed", installFailed: "Install failed", serviceFailed: "Action failed: ", logFailed: "Failed to load log",
@@ -278,8 +278,9 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbLoadPluginVersion = function() { request("GET", ENDPOINTS.luciVersion, {}, function(err, data) { if (err) { setText("ikb-plugin-version", "Error"); return; } setText("ikb-plugin-version", data.version || "-"); }, 10000); };
 		window.ikbCheckPlugin = function() { startBackgroundTask(ENDPOINTS.luciCheck, { proxy: currentProxy() }, t("checkingPlugin"), t("pluginCheckFailed"), { onProgress: function(log) { setLog(log); }, onDone: function(data) { var meta = data.meta || {}; setText("ikb-plugin-latest", meta.latest_version || t("unknown")); setLog(data.log || ""); setMessage(t("pluginCheckDone"), true); } }, 60000); };
 		window.ikbUpdatePlugin = function() { startBackgroundTask(ENDPOINTS.luciUpdate, { proxy: currentProxy() }, t("updatingPlugin"), t("pluginUpdateFailed"), { onProgress: function(log) { setLog(log); }, onDone: function(data) { setLog(data.log || ""); var meta = data.meta || {}; if (meta.status === "error") { setMessage(t("pluginUpdateFailed") + ": " + (meta.message || ""), false); } else { setMessage(t("pluginUpdated"), true); setTimeout(function() { window.location.reload(); }, 3000); } } }, 60000); };
-		window.ikbLoadConfig = function() { request("GET", ENDPOINTS.configRead, {}, function(err, data) { if (err) { setMessage(t("configLoadFailed") + ": " + err, false); return; } var ta = el("ikb-config-editor"); if (ta) ta.value = data.content || ""; var pathEl = el("ikb-config-path"); if (pathEl) pathEl.textContent = data.path || "/opt/ikuai-bypass/config.yml"; }, 10000); };
+		window.ikbLoadConfig = function() { request("GET", ENDPOINTS.configRead, {}, function(err, data) { var ta = el("ikb-config-editor"); var pathEl = el("ikb-config-path"); if (err) { if (ta) ta.value = "# Error: " + err + "\n"; if (pathEl) pathEl.textContent = "/opt/ikuai-bypass/config.yml"; setMessage(t("configLoadFailed") + ": " + err, false); return; } if (ta) ta.value = data.content || ""; if (pathEl) pathEl.textContent = data.path || "/opt/ikuai-bypass/config.yml"; }, 10000); };
 		window.ikbSaveConfig = function() { var ta = el("ikb-config-editor"); var content = ta ? ta.value : ""; request("POST", ENDPOINTS.configSave, { content: content }, function(err, data) { if (err) { setMessage(t("configSaveFailed") + ": " + err, false); return; } setMessage(t("configSaved"), true); }, 10000); };
+window.ikbReloadConfig = function() { ikbLoadConfig(); setMessage(t("configRefreshed"), true); };
 		window.ikbBackup = function(slot) { request("POST", ENDPOINTS.configBackup, { action: "backup", slot: slot }, function(err, data) { if (err) { setMessage(t("configSaveFailed") + ": " + err, false); return; } setMessage(t("configBackupDone") + " (slot " + slot + ")", true); }, 10000); };
 		window.ikbRestore = function(slot) { request("POST", ENDPOINTS.configBackup, { action: "restore", slot: slot }, function(err, data) { if (err) { setMessage(err, false); return; } setMessage(t("configRestoreDone") + " (slot " + slot + ")", true); window.ikbLoadConfig(); }, 10000); };
 
@@ -371,33 +372,34 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 </fieldset>
 
 <fieldset class="cbi-section ikb-panel" data-panel="config">
-	<div class="cbi-map-descr">
-		<p data-i18n="configDesc">自动将通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。</p>
-		<p data-i18n="configPart1">1. LuCI 插件 — 用来安装和卸载 ikuaibypass CLI 的可视化界面</p>
-		<p data-i18n="configPart2">2. ikuaibypass CLI — 核心工具程序，负责实际工作</p>
-	</div>
-</fieldset>
-<fieldset class="cbi-section ikb-panel" data-panel="config">
-	<div class="cbi-value"><label class="cbi-value-title" data-i18n="configFileLabel">配置文件路径</label><div class="cbi-value-field"><code id="ikb-config-path" style="font-size:.9em">/opt/ikuai-bypass/config.yml</code></div></div>
-	<div class="cbi-value cbi-value-last"><div class="cbi-value-field">
-		<textarea id="ikb-config-editor" class="cbi-input-textarea" style="width:100%;min-height:250px;max-height:500px;font-family:Menlo,Consolas,monospace;resize:vertical;box-sizing:border-box;tab-size:2"></textarea>
-	</div></div>
-	<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.5rem 1rem 0">
-		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbSaveConfig)" data-i18n="saveConfig">保存配置</button>
-	</div>
-	<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.5rem 1rem .25rem">
-		<span style="font-size:.85em;margin-right:.25rem" data-i18n="backupLabel">备份：</span>
-		<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('1') })" style="font-size:.85em">1</button>
-		<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('2') })" style="font-size:.85em">2</button>
-		<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('3') })" style="font-size:.85em">3</button>
-		<span style="font-size:.85em;margin:0 .25rem 0 1rem" data-i18n="restoreLabel">还原：</span>
-		<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('1') })" style="font-size:.85em">1</button>
-		<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('2') })" style="font-size:.85em">2</button>
-		<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('3') })" style="font-size:.85em">3</button>
-	</div>
-	<div style="padding:.25rem 1rem .75rem;font-size:.85em">
-		<span data-i18n="configRef">实例配置文件：</span>
-		<a href="https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml" target="_blank">https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml</a>
+	<div style="padding:.75rem 1rem .5rem">
+		<div style="margin-bottom:.5rem"><span data-i18n="configFileLabel">配置文件路径</span> <code id="ikb-config-path" style="font-size:.9em">/opt/ikuai-bypass/config.yml</code></div>
+		<textarea id="ikb-config-editor" class="cbi-input-textarea" style="width:100%;min-height:400px;font-family:Menlo,Consolas,monospace;resize:vertical;box-sizing:border-box;tab-size:2;margin:0"></textarea>
+		<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.5rem">
+			<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbSaveConfig)" data-i18n="saveConfig">保存配置</button>
+			<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, ikbReloadConfig)" data-i18n="reloadConfig">重载</button>
+		</div>
+		<div style="margin-top:.75rem">
+			<div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
+				<code style="font-size:.85em;flex:1">/opt/ikuai-bypass/config-backup1.yml</code>
+				<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('1') })" data-i18n="backupToSlot">备份到</button>
+				<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('1') })" data-i18n="restoreFromSlot">还原自</button>
+			</div>
+			<div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
+				<code style="font-size:.85em;flex:1">/opt/ikuai-bypass/config-backup2.yml</code>
+				<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('2') })" data-i18n="backupToSlot">备份到</button>
+				<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('2') })" data-i18n="restoreFromSlot">还原自</button>
+			</div>
+			<div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
+				<code style="font-size:.85em;flex:1">/opt/ikuai-bypass/config-backup3.yml</code>
+				<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('3') })" data-i18n="backupToSlot">备份到</button>
+				<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('3') })" data-i18n="restoreFromSlot">还原自</button>
+			</div>
+		</div>
+		<div style="margin-top:.5rem;font-size:.85em">
+			<span data-i18n="configRef">实例配置文件：</span>
+			<a href="https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml" target="_blank">https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml</a>
+		</div>
 	</div>
 </fieldset>
 

@@ -269,16 +269,16 @@ end
 local CONFIG_PATH = "/opt/ikuai-bypass/config.yml"
 
 function action_config_read()
-	local content = ""
-	local exists = fs.access(CONFIG_PATH)
-	if exists then
-		local f = io.open(CONFIG_PATH, "r")
-		if f then
-			content = f:read("*a") or ""
-			f:close()
-		end
+	if not fs.access(CONFIG_PATH) then
+		return json_response(404, { ok = false, message = "Config file not found at " .. CONFIG_PATH })
 	end
-	json_response(200, { ok = true, exists = exists, content = content, path = CONFIG_PATH })
+	local f = io.open(CONFIG_PATH, "r")
+	if not f then
+		return json_response(500, { ok = false, message = "Failed to read config file" })
+	end
+	local content = f:read("*a") or ""
+	f:close()
+	json_response(200, { ok = true, content = content, path = CONFIG_PATH })
 end
 
 function action_config_save()

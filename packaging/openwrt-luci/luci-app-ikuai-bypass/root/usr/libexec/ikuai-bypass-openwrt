@@ -50,9 +50,9 @@ download_file() {
 	url="$1"
 	dst="$2"
 	if command -v curl >/dev/null 2>&1; then
-		curl -fsSL -o "${dst}" "${url}"
+		curl -fsSL --connect-timeout 10 --max-time 60 -o "${dst}" "${url}"
 	elif command -v wget >/dev/null 2>&1; then
-		wget -qO "${dst}" "${url}"
+		wget -qO "${dst}" "${url}" --timeout=60
 	else
 		fail "curl or wget is required"
 	fi

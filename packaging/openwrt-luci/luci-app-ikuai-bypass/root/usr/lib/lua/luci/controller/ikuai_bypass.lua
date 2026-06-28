@@ -203,6 +203,7 @@ function action_service()
 		disable = true,
 		uninstall_service = true,
 		uninstall_full = true,
+		uninstall_self = true,
 	}
 	if not allowed[action] then
 		return json_response(400, { ok = false, message = "Unsupported service action" })
@@ -213,6 +214,13 @@ function action_service()
 		args = { "uninstall", "--service-only" }
 	elseif action == "uninstall_full" then
 		args = { "uninstall", "--full" }
+	elseif action == "uninstall_self" then
+		local output, err = run_helper({ "uninstall", "--full" })
+		if not output then
+			return json_response(502, { ok = false, message = err })
+		end
+		os.execute("opkg remove luci-app-ikuai-bypass --force-removal-of-dependent-packages >/dev/null 2>&1")
+		return json_response(200, { ok = true, message = "Plugin uninstalled", log = output .. "\nRemoved luci-app-ikuai-bypass package" })
 	else
 		args = { action }
 	end

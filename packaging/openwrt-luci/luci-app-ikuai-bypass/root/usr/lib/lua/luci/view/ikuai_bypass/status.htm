@@ -33,7 +33,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				loadLog: "加载日志",
 				savedProxy: "代理已保存到当前浏览器", clearedProxy: "代理已清空", statusRefreshed: "状态已刷新", checkingLatest: "正在检查最新稳定版...", latestChecked: "最新稳定版检查完成",
 				installing: "正在安装...", runningAction: "正在执行：", actionDone: "操作完成", logLoaded: "日志已加载", requestTimeout: "请求超时", remainingSec: "剩余 %d 秒",
-				confirmFull: "确认停止服务并彻底删除 /opt/ikuai-bypass/？", notInstalled: "未安装", installed: "已安装", notGenerated: "未生成", unknown: "未知", running: "运行中", stopped: "已停止", yes: "是", no: "否", loading: "加载中...",
+				confirmFull: "确认停止服务并彻底删除 /opt/ikuai-bypass/？", uninstallPlugin: "卸载本插件", confirmUninstallPlugin: "确认卸载 iKuai Bypass LuCI 插件？此操作将停止服务、删除所有文件并移除本插件。之后需重新安装 IPK 才能使用。", confirmUninstallPlugin2: "再次确认：插件将被彻底移除！", notInstalled: "未安装", installed: "已安装", notGenerated: "未生成", unknown: "未知", running: "运行中", stopped: "已停止", yes: "是", no: "否", loading: "加载中...",
 				zh: "中文", en: "English"
 			},
 			en: {
@@ -46,7 +46,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				loadLog: "Load Log",
 				savedProxy: "Proxy saved in this browser", clearedProxy: "Proxy cleared", statusRefreshed: "Status refreshed", checkingLatest: "Checking latest stable version...", latestChecked: "Latest stable version checked",
 				installing: "Installing...", runningAction: "Running: ", actionDone: "Action completed", logLoaded: "Log loaded", requestTimeout: "Request timed out", remainingSec: "%d seconds remaining",
-				confirmFull: "Stop service and remove /opt/ikuai-bypass/ completely?", notInstalled: "Not installed", installed: "Installed", notGenerated: "Not generated", unknown: "Unknown", running: "Running", stopped: "Stopped", yes: "Yes", no: "No", loading: "Loading...",
+				confirmFull: "Stop service and remove /opt/ikuai-bypass/ completely?", uninstallPlugin: "Uninstall Plugin", confirmUninstallPlugin: "Confirm uninstalling iKuai Bypass LuCI plugin? This will stop the service, delete all files, and remove this plugin. You will need to reinstall the IPK to use it again.", confirmUninstallPlugin2: "Final confirmation: the plugin will be completely removed!", notInstalled: "Not installed", installed: "Installed", notGenerated: "Not generated", unknown: "Unknown", running: "Running", stopped: "Stopped", yes: "Yes", no: "No", loading: "Loading...",
 				zh: "中文", en: "English"
 			}
 		};
@@ -211,6 +211,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbSaveProxy = function() { try { window.localStorage.setItem(PROXY_KEY, currentProxy()); } catch (e) {} setMessage(t("savedProxy"), true); };
 		window.ikbClearProxy = function() { var input = el("ikb-proxy"); if (input) input.value = ""; try { window.localStorage.removeItem(PROXY_KEY); } catch (e) {} setMessage(t("clearedProxy"), true); };
 		window.ikbConfirmFull = function() { if (confirm(t("confirmFull"))) window.ikbService("uninstall_full"); };
+		window.ikbConfirmUninstallSelf = function() { if (confirm(t("confirmUninstallPlugin"))) { if (confirm(t("confirmUninstallPlugin2"))) { window.ikbService("uninstall_self"); } } };
 		window.ikbLoadStatus = function() { request("GET", ENDPOINTS.status, {}, function(err, data) { if (err) { setMessage(t("statusFailed") + ": " + err, false); setText("ikb-binary-status", "Error"); return; } renderStatus(data); setMessage(t("statusRefreshed"), true); }, 10000); };
 		window.ikbCheckLatest = function() { startBackgroundTask(ENDPOINTS.latest, { proxy: currentProxy() }, t("checkingLatest"), t("latestFailed"), {
 			onProgress: function(log) { setLog(log); },
@@ -290,6 +291,10 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
 		<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, function(){ ikbService('uninstall_service') })" data-i18n="uninstallService">仅卸载服务</button>
 		<button type="button" class="btn cbi-button cbi-button-negative ikb-action" onclick="return ikbClick(event, ikbConfirmFull)" data-i18n="fullUninstall">完全卸载</button>
+	</div></div>
+	<hr>
+	<div class="cbi-value cbi-value-last"><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap">
+		<button type="button" class="btn cbi-button cbi-button-negative ikb-action" onclick="return ikbClick(event, ikbConfirmUninstallSelf)" data-i18n="uninstallPlugin">卸载本插件</button>
 	</div></div>
 </fieldset>
 

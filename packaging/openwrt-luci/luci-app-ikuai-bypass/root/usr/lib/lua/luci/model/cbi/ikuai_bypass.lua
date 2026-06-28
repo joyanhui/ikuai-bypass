@@ -13,8 +13,8 @@ local function prefers_chinese()
 end
 
 local description = prefers_chinese()
-	and "该 LuCI 包不内置 CLI 或安装逻辑，安装/卸载/状态等操作均临时调用远程 install.sh；代理只保存在当前浏览器。"
-	or "This LuCI package does not bundle the CLI or install logic. It delegates lifecycle actions to the remote install.sh; proxy settings are stored only in this browser."
+	and "自动将通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。"
+	or "Automatically organizes regional IPs, domains, and more from a remote config into iKuai, enabling bypass routing switching, domain分流, port分流 (IP group), custom ISP, ad blocking, and more."
 
 local form = SimpleForm("ikuai_bypass", "iKuai Bypass", description)
 form.reset = false

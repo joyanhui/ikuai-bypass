@@ -87,7 +87,20 @@ configure_paths "${OS_TYPE}"
 
 if [ "${NONINTERACTIVE}" = "1" ]; then
     check_root
-    run_action "$@"
+    filtered=""
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --mode)
+                shift; IKB_MODE="$1"; export IKB_MODE ;;
+            --run-mode)
+                shift; IKB_RUN_MODE="$1"; export IKB_RUN_MODE ;;
+            *)
+                filtered="${filtered} $1" ;;
+        esac
+        shift
+    done
+    # shellcheck disable=SC2086
+    run_action ${filtered}
     exit $?
 fi
 

@@ -655,7 +655,7 @@ START=99
 STOP=10
 
 start() {
-    ${BIN_PATH} -r cronAft -c ${CONFIG_PATH} > /dev/null 2>&1 &
+    ${BIN_PATH} -c ${CONFIG_PATH} > /dev/null 2>&1 &
 }
 
 stop() {
@@ -683,7 +683,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=${BIN_PATH} -r cron -c ${CONFIG_PATH}
+ExecStart=${BIN_PATH} -c ${CONFIG_PATH}
 Restart=on-failure
 RestartSec=10
 
@@ -713,6 +713,8 @@ print_status_kv() {
     check_process && printf 'running=1\n' || printf 'running=0\n'
     [ -f "${VERSION_FILE}" ] && printf 'version=%s\n' "$(cat "${VERSION_FILE}")" || printf 'version=\n'
     printf 'arch=%s\n' "$(detect_arch 2>/dev/null || true)"
+    printf 'mode=%s\n' "$(grep '^mode:' "${CONFIG_PATH}" 2>/dev/null | head -1 | sed 's/^mode: *//')"
+    printf 'run_mode=%s\n' "$(grep '^run-mode:' "${CONFIG_PATH}" 2>/dev/null | head -1 | sed 's/^run-mode: *//')"
 }
 
 print_latest_kv() {
@@ -729,6 +731,18 @@ print_latest_kv() {
     fi
 }
 
+set_config_field() {
+    local key="$1" val="$2" file="${CONFIG_PATH}"
+    [ -n "${val}" ] || return 0
+    if [ -f "${file}" ]; then
+        if grep -q "^${key}:" "${file}" 2>/dev/null; then
+            sed -i "s|^${key}:.*|${key}: ${val}|" "${file}"
+        else
+            sed -i "/^AddWait:/a\\${key}: ${val}" "${file}"
+        fi
+    fi
+}
+
 run_action() {
     local action="${1:-}"
     local version="${2:-}"
@@ -737,11 +751,19 @@ run_action() {
     case "${action}" in
         install)
             ensure_base_deps
-            if install_app "${version}"; then install_service_file; enable_autostart; start_service; fi
+            if install_app "${version}"; then
+                set_config_field "mode" "${IKB_MODE:-}"
+                set_config_field "run-mode" "${IKB_RUN_MODE:-}"
+                install_service_file; enable_autostart; start_service
+            fi
             ;;
         update)
             ensure_base_deps
-            if install_app "${version}"; then install_service_file; restart_service; fi
+            if install_app "${version}"; then
+                set_config_field "mode" "${IKB_MODE:-}"
+                set_config_field "run-mode" "${IKB_RUN_MODE:-}"
+                install_service_file; restart_service
+            fi
             ;;
         uninstall)
             case "${2:-}" in

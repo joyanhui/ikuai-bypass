@@ -6,6 +6,12 @@ nav_order: 9999
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
 
+## v4.4.107 (2026-06-29)
+
+- OpenWrt LuCI IPK 重大升级：完整双语标签页界面、配置文件在线编辑器（备份/恢复）、插件自更新、自卸载（双重确认）、步骤进度+实时日志、代理配置模态框
+- 新增一键安装脚本 `docs/install.sh`，支持 Ubuntu (systemd) 和 OpenWrt，附带 CI 测试覆盖安装/卸载全生命周期
+- 文档重构：合并 quickstart/guide，新增一键安装指引
+
 ## v4.4.106 (2026-06-15)
 
 - 修复 CLI 版本未能嵌入 WebUI 静态编译结果的 bug [#142](https://github.com/joyanhui/ikuai-bypass/issues/142)

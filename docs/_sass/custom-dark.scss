@@ -142,9 +142,14 @@
     color: var(--global-link-color);
   }
 
-  /* Code blocks */
+  /* Code blocks & inline code */
   code,
   pre {
+    background-color: var(--global-code-bg-color);
+    color: var(--global-code-text-color);
+  }
+  /* Override theme's .page__content :not(pre) > code (higher specificity) */
+  .page__content :not(pre) > code {
     background-color: var(--global-code-bg-color);
     color: var(--global-code-text-color);
   }
@@ -155,23 +160,53 @@
   pre.highlight {
     background-color: var(--global-code-bg-color);
   }
+  .highlight .c,
   .highlight .c1,
   .highlight .cm,
   .highlight .cp,
-  .highlight .c { color: #6a737d; }
+  .highlight .cs { color: #6a737d; }
   .highlight .k,
+  .highlight .kc,
   .highlight .kd,
-  .highlight .kn { color: #ff79c6; }
+  .highlight .kn,
+  .highlight .kp,
+  .highlight .kr { color: #ff79c6; }
   .highlight .s,
+  .highlight .s1,
   .highlight .s2,
-  .highlight .s1 { color: #f1fa8c; }
+  .highlight .sa,
+  .highlight .sb,
+  .highlight .sc,
+  .highlight .dl { color: #f1fa8c; }
   .highlight .nf,
   .highlight .nx { color: #50fa7b; }
   .highlight .nb { color: #8be9fd; }
   .highlight .mi,
-  .highlight .mf { color: #bd93f9; }
-  .highlight .o { color: #ff79c6; }
+  .highlight .mf,
+  .highlight .mh,
+  .highlight .il,
+  .highlight .mo { color: #bd93f9; }
+  .highlight .o,
+  .highlight .ow { color: #ff79c6; }
   .highlight .err { color: #ff5555; }
+  .highlight .na { color: #89ddff; }
+  .highlight .nd { color: #c792ea; }
+  .highlight .ne { color: #f78c6c; }
+  .highlight .no { color: #ffcb6b; }
+  .highlight .nt { color: #82aaff; }
+  .highlight .nv { color: #eeffff; }
+  .highlight .w { color: #546e7a; }
+  .highlight .bp,
+  .highlight .vc,
+  .highlight .vg,
+  .highlight .vm { color: #eeffff; }
+  .highlight .si { color: #ff5370; }
+  .highlight .se { color: #89ddff; }
+  .highlight .sx { color: #c3e88d; }
+  .highlight .ss { color: #ffcb6b; }
+  .highlight .sr { color: #c3e88d; }
+  .highlight .ge { font-style: italic; }
+  .highlight .gs { font-weight: bold; }
 
   /* Tables */
   table {

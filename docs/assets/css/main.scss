@@ -17,13 +17,7 @@
   }
 }
 
-/* Mermaid subgraph labels: white text with dark outline for readability */
-.mermaid-container g.cluster .nodeLabel {
-  color: #fff;
-  text-shadow:
-    -0.5px -0.5px 0 #222,
-     0.5px -0.5px 0 #222,
-    -0.5px  0.5px 0 #222,
-     0.5px  0.5px 0 #222;
-  font-weight: 600;
+/* Mermaid subgraph labels: override default theme's near-white titleColor (#F9FFFE) */
+.mermaid-container foreignObject span[style*="F9FFFE"] {
+  color: #333 !important;
 }

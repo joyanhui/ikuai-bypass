@@ -1,46 +1,49 @@
 {% if page.mermaid %}
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
 <script>
 (function() {
   'use strict';
 
-  function getMermaidTheme() {
+  function getTheme() {
     return document.documentElement.getAttribute('data-skin') === 'dark' ? 'dark' : 'default';
   }
 
-  function convertMermaidBlocks() {
-    // Rouge wraps ```mermaid in .language-mermaid; convert to <div class="mermaid">
-    document.querySelectorAll('.language-mermaid').forEach(function(el) {
-      var pre = el.closest('pre');
-      if (pre) {
-        var div = document.createElement('div');
-        div.className = 'mermaid';
-        // Browser parses <br> as real element, so textContent drops them;
-        // use innerHTML + normalize <br> to Mermaid-compatible <br/>
-        var content = el.innerHTML.replace(/<br\s*\/?>/gi, '<br/>');
-        div.textContent = content;
-        pre.parentNode.replaceChild(div, pre);
-      }
-    });
-  }
-
-  function renderMermaid() {
+  async function renderAll() {
     if (typeof mermaid === 'undefined') return;
-    convertMermaidBlocks();
-    document.querySelectorAll('.mermaid').forEach(function(el) {
-      el.removeAttribute('data-processed');
-    });
-    mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme() });
-    mermaid.run();
+    mermaid.initialize({ startOnLoad: false, theme: getTheme() });
+    const containers = document.querySelectorAll('.mermaid-container');
+    for (let i = 0; i < containers.length; i++) {
+      const div = containers[i];
+      const source = div.dataset.source;
+      if (!source) continue;
+      const id = 'mermaid-' + Date.now() + '-' + i;
+      try {
+        const result = await mermaid.render(id, source);
+        div.innerHTML = result.svg;
+      } catch (err) {
+        div.innerHTML = '<div style="color:var(--text-danger,#c00);padding:1rem;border:1px solid currentColor;border-radius:4px">Mermaid error: ' + err.message + '</div>';
+      }
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', renderMermaid);
+  function prepare() {
+    document.querySelectorAll('pre > code.language-mermaid').forEach(function(code) {
+      var pre = code.parentNode;
+      var div = document.createElement('div');
+      div.className = 'mermaid-container';
+      div.dataset.source = code.innerHTML.replace(/<br\s*\/?>/gi, '<br/>');
+      pre.parentNode.replaceChild(div, pre);
+    });
+  }
 
-  // Re-render when toggling dark/light mode
-  var observer = new MutationObserver(function() {
-    renderMermaid();
+  document.addEventListener('DOMContentLoaded', function() {
+    prepare();
+    renderAll();
   });
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
+
+  new MutationObserver(function() {
+    renderAll();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
 })();
 </script>
 {% endif %}

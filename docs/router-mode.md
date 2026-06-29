@@ -36,20 +36,20 @@ graph TD
     光猫设备[光猫设备 / WAN出口]
     
     %% 局域网客户端
-    subgraph LAN_Clients [局域网客户端]
-        Client1[客户端  <br>例如: 手机/电脑<br>]
+    subgraph 局域网客户端
+        Client1["客户端<br/>例如: 手机/电脑"]
         ClientIP[ip: 192.168.1.2-254]
     end
     
     %% 爱快主路由系统（独立子图）
-    subgraph iKuai_Sys [iKuai 爱快主路由]
+    subgraph iKuai_Sys[iKuai 爱快主路由]
         Check{分流规则}
         iKuaiIP[ip192.168.1.1]
     end
 
     %% 旁路由系统（独立子图）
-    subgraph Proxy_Sys [旁路由 OpenWrt]
-        Proxy_Core[核心工具 <br>解密/加密/代理加速]
+    subgraph Proxy_Sys[旁路由 OpenWrt]
+        Proxy_Core["核心工具<br/>解密/加密/代理加速"]
         OpenWrtIP[ip192.168.1.2]
     end
 
@@ -66,7 +66,7 @@ graph TD
     Check --> |"来自旁路由192.168.1.2"| 光猫设备
 
     %% 3. 旁路由处理完毕后回传
-    Proxy_Core ==> |"加密后的代理流量 <br>(源IP变为旁路由自己)"| Check
+    Proxy_Core ==> |"加密后的代理流量<br/>(源IP变为旁路由自己)"| Check
 
     %% --- 样式与颜色优化 ---
     
@@ -122,19 +122,19 @@ graph TD
     光猫设备[光猫设备]
 
     %% 局域网客户端
-    subgraph LAN_Clients [局域网客户端]
+    subgraph 局域网客户端
         局域网其他设备1[局域网客户端 1]
         局域网其他设备2[局域网客户端 2]
         局域网其他设备3[其他客户端 ...]
     end
     
     %% 爱快系统容器
-    subgraph iKuai [爱快主路由系统]
-        爱快[爱快 <br>IP: 192.168.1.1]
+    subgraph iKuai[爱快主路由系统]
+        爱快["爱快<br/>IP: 192.168.1.1"]
         爱快lan[爱快 LAN 口]
         Check{规则判断}
-        爱快wan1[爱快 WAN1 <br>IP等由ppoe或者其他方式分配]
-        爱快wan2[爱快 WAN2 <br>IP:10.0.0.2 <br>网关：10.0.0.1「旁路由」]
+        爱快wan1["爱快 WAN1<br/>IP等由ppoe或者其他方式分配"]
+        爱快wan2["爱快 WAN2<br/>IP:10.0.0.2<br/>网关：10.0.0.1「旁路由」"]
         
         爱快 --> |IP/域名列表分流规则检查或者判断是否来自旁路由| Check 
         Check --> |直连| 爱快wan1 
@@ -144,10 +144,10 @@ graph TD
     end
 
     %% 旁路由通常为OpenWrt
-    subgraph OpenWrt [旁路由通常为OpenWrt]
+    subgraph OpenWrt[旁路由通常为OpenWrt]
         旁路由[旁路由核心处理程序]
-        旁路由lan[旁路由 LAN 口<br>IP: 10.0.0.1]
-        旁路由wan[旁路由 WAN 口<br>IP: 192.168.1.2 <br>网关：192.168.1.1「爱快」]
+        旁路由lan["旁路由 LAN 口<br/>IP: 10.0.0.1"]
+        旁路由wan["旁路由 WAN 口<br/>IP: 192.168.1.2<br/>网关：192.168.1.1「爱快」"]
         
         旁路由lan --> 旁路由
         旁路由 --> |特殊处理加密/加速代理| 旁路由wan
@@ -163,7 +163,7 @@ graph TD
     爱快wan1 -->|运营商网络| 光猫设备
     爱快wan2 --> 旁路由lan
             %% line 12
-    旁路由wan ==> |"加密后的代理流量 <br>(源IP变为旁路由自己)"|爱快lan
+    旁路由wan ==> |"加密后的代理流量<br/>(源IP变为旁路由自己)"|爱快lan
 
     %% 样式与颜色优化
     style iKuai fill:#fdf2f2,stroke:#f8b4b4,stroke-width:2px

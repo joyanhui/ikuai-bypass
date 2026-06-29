@@ -335,34 +335,6 @@ import '../styles/global.css';
                         </section>
 
                         <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.mode">分流模式</h3>
-                          <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
-                            <div class="space-y-3">
-                              <select id="cfgMode" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
-                                <option value="ispdomain" data-i18n="config.mode.ispdomain">运营商+域名分流</option>
-                                <option value="ipgroup" data-i18n="config.mode.ipgroup">IPv4分组</option>
-                                <option value="ipv6group" data-i18n="config.mode.ipv6group">IPv6分组</option>
-                                <option value="ii" data-i18n="config.mode.ii">运营商+域名+IPv4</option>
-                                <option value="ip" data-i18n="config.mode.ip">IPv4+IPv6</option>
-                                <option value="iip" data-i18n="config.mode.iip">全模式</option>
-                              </select>
-                              <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="config.mode.desc">修改后需重启 ikuaibypass CLI 以生效</p>
-                            </div>
-                          </div>
-                        </section>
-
-                        <section class="space-y-3">
-                          <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.run_mode">运行模式</h3>
-                          <div class="rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
-                            <select id="cfgRunMode" class="w-full rounded-xl bg-white px-4 py-3 text-base text-gray-900 outline-none dark:bg-gray-800 dark:text-white">
-                              <option value="cron" data-i18n="config.run_mode.cron">cron — 先执行后定时</option>
-                              <option value="cronAft" data-i18n="config.run_mode.cronaft">cronAft — 直接定时</option>
-                              <option value="once" data-i18n="config.run_mode.once">once — 执行一次</option>
-                            </select>
-                          </div>
-                        </section>
-
-                        <section class="space-y-3">
                           <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400" data-i18n="config.section.pagination">数据分页</h3>
                           <div class="grid grid-cols-2 gap-3 rounded-2xl bg-gray-100/60 p-4 dark:bg-gray-900/40">
                             <div>

@@ -984,7 +984,10 @@ const initRunModeSelection = () => {
         return;
       }
       state.selectedRunMode = (chip.getAttribute('data-run-mode') as typeof state.selectedRunMode) || 'once';
+      state.cfg.runMode = state.selectedRunMode;
+      state.rawYaml = updateYamlPaths(state.rawYaml, [{ path: ['run-mode'], value: state.selectedRunMode }]);
       updateRunModeUI();
+      refreshEditorFromRawYaml();
     });
   });
   updateRunModeUI();
@@ -993,6 +996,14 @@ const initRunModeSelection = () => {
 // ============================================
 // 模块选择
 // ============================================
+const updateModuleUI = () => {
+  const grid = document.getElementById('moduleGrid');
+  if (!grid) return;
+  grid.querySelectorAll('.module-chip').forEach((c) => {
+    c.classList.toggle('active', c.getAttribute('data-module') === state.selectedModule);
+  });
+};
+
 const initModuleSelection = () => {
   const grid = document.getElementById('moduleGrid');
   if (!grid) return;
@@ -1003,13 +1014,14 @@ const initModuleSelection = () => {
         showToast(t('toast.need_stop_first'));
         return;
       }
-      grid.querySelectorAll('.module-chip').forEach((c) => {
-        c.classList.remove('active');
-      });
-      chip.classList.add('active');
       state.selectedModule = chip.getAttribute('data-module') || 'ispdomain';
+      state.cfg.mode = state.selectedModule;
+      state.rawYaml = updateYamlPaths(state.rawYaml, [{ path: ['mode'], value: state.selectedModule }]);
+      updateModuleUI();
+      refreshEditorFromRawYaml();
     });
   });
+  updateModuleUI();
 };
 
 // ============================================
@@ -1273,8 +1285,6 @@ const initConfigModal = () => {
     'cfgMaxIpv4',
     'cfgMaxIpv6',
     'cfgMaxDomain',
-    'cfgMode',
-    'cfgRunMode',
   ];
 
   liveSyncIds.forEach((id) => {
@@ -1290,7 +1300,7 @@ const initConfigModal = () => {
   });
 
   // select fields
-  ['cfgProxyMode', 'cfgMode', 'cfgRunMode'].forEach((id) => {
+  ['cfgProxyMode'].forEach((id) => {
     document.getElementById(id)?.addEventListener('change', () => {
       commitBasicConfigToRawYaml();
 
@@ -1354,8 +1364,10 @@ const bindConfigFields = () => {
   setValue('cfgWebCdn', state.cfg.webui.cdnPrefix);
   setValue('cfgWebUser', state.cfg.webui.user);
   setValue('cfgWebPass', state.cfg.webui.pass);
-  setValue('cfgMode', state.cfg.mode);
-  setValue('cfgRunMode', state.cfg.runMode);
+  state.selectedRunMode = (state.cfg.runMode as typeof state.selectedRunMode) || 'cronAft';
+  state.selectedModule = state.cfg.mode || 'ispdomain';
+  updateRunModeUI();
+  updateModuleUI();
   
   // 数据限制
   setValue('cfgMaxIsp', String(state.cfg.maxNumberOfOneRecords.Isp));
@@ -1404,8 +1416,8 @@ const syncConfigFromInputs = () => {
   state.cfg.webui.cdnPrefix = getValue('cfgWebCdn');
   state.cfg.webui.user = getValue('cfgWebUser');
   state.cfg.webui.pass = getValue('cfgWebPass');
-  state.cfg.runMode = getValue('cfgRunMode') || 'cronAft';
-  state.cfg.mode = getValue('cfgMode') || 'ispdomain';
+  state.cfg.runMode = state.selectedRunMode || 'cronAft';
+  state.cfg.mode = state.selectedModule || 'ispdomain';
   
   state.cfg.maxNumberOfOneRecords.Isp = Number(getValue('cfgMaxIsp')) || 5000;
   state.cfg.maxNumberOfOneRecords.Ipv4 = Number(getValue('cfgMaxIpv4')) || 1000;

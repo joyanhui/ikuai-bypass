@@ -18,10 +18,12 @@
 }
 
 /* Mermaid subgraph labels: white text with dark outline for readability */
-.mermaid-container .cluster-label text {
-  fill: #fff;
-  stroke: #222;
-  stroke-width: 0.6px;
-  paint-order: stroke fill;
+.mermaid-container g.cluster .nodeLabel {
+  color: #fff;
+  text-shadow:
+    -0.5px -0.5px 0 #222,
+     0.5px -0.5px 0 #222,
+    -0.5px  0.5px 0 #222,
+     0.5px  0.5px 0 #222;
   font-weight: 600;
 }

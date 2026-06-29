@@ -285,10 +285,10 @@ get_latest_version() {
 
     if command -v curl >/dev/null 2>&1; then
         version="$(curl -fsSL -A "ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
-            grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+            grep '"tag_name"' | head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     elif command -v wget >/dev/null 2>&1; then
         version="$(wget -qO- --header="User-Agent: ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
-            grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+            grep '"tag_name"' | head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     fi
 
     # tag is like "ikuai-bypass-v0.1.0", extract version part
@@ -309,12 +309,12 @@ get_prerelease_version() {
         version="$(curl -fsSL -A "ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
             grep -E '"tag_name"|"prerelease"|"draft"' | paste - - - | \
             grep '"prerelease": true' | grep '"draft": false' | \
-            head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+            head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     elif command -v wget >/dev/null 2>&1; then
         version="$(wget -qO- --header="User-Agent: ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
             grep -E '"tag_name"|"prerelease"|"draft"' | paste - - - | \
             grep '"prerelease": true' | grep '"draft": false' | \
-            head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+            head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     fi
 
     case "${version}" in

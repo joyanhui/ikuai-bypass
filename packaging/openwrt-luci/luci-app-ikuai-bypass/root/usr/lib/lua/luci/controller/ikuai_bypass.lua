@@ -173,9 +173,36 @@ function action_luci_version()
 end
 
 function action_luci_check()
-	local proxy = http.formvalue("proxy") or ""
-	local task_id = run_background({ "luci-check" }, proxy)
-	json_response(200, { ok = true, task_id = task_id })
+	local proxy = trim(http.formvalue("proxy") or "")
+
+	local cmd = ""
+	if proxy ~= "" then
+		cmd = "export http_proxy=" .. shell_quote(proxy) .. " export https_proxy=" .. shell_quote(proxy) .. "; "
+	end
+	cmd = cmd .. "curl -fsSL --connect-timeout 10 --max-time 30 'https://api.github.com/repos/joyanhui/ikuai-bypass/releases/latest' 2>/dev/null"
+
+	local handle = io.popen(cmd)
+	if not handle then
+		return json_response(502, { ok = false, message = "Failed to run curl" })
+	end
+	local raw = handle:read("*a") or ""
+	handle:close()
+
+	if raw == "" then
+		return json_response(502, { ok = false, message = "GitHub API returned empty response (check proxy/network)" })
+	end
+
+	local ok, data = pcall(jsonc.parse, raw)
+	if not ok or type(data) ~= "table" then
+		return json_response(502, { ok = false, message = "Failed to parse GitHub API response" })
+	end
+
+	local tag = data.tag_name or ""
+	if tag == "" then
+		return json_response(502, { ok = false, message = "GitHub API response missing tag_name" })
+	end
+
+	json_response(200, { ok = true, latest_version = tag })
 end
 
 function action_luci_update()

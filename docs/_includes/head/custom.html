@@ -15,7 +15,10 @@
       if (pre) {
         var div = document.createElement('div');
         div.className = 'mermaid';
-        div.textContent = el.textContent;
+        // Browser parses <br> as real element, so textContent drops them;
+        // use innerHTML + normalize <br> to Mermaid-compatible <br/>
+        var content = el.innerHTML.replace(/<br\s*\/?>/gi, '<br/>');
+        div.textContent = content;
         pre.parentNode.replaceChild(div, pre);
       }
     });

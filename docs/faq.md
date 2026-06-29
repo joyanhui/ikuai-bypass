@@ -1,6 +1,7 @@
 ---
 title: FAQ - 常见问题
-nav_order: 9998
+toc: true
+toc_sticky: true
 ---
 
 # FAQ - 常见问题
@@ -90,7 +91,7 @@ stream-ipport:
 
 ### 相关链接
 
-- [更新日志](updatelog.html) — v4.4.104 对此问题的兼容性修复
+- [更新日志](/updatelog/) — v4.4.104 对此问题的兼容性修复
 
 ---
 

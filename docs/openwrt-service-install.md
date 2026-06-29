@@ -1,10 +1,11 @@
 ---
 title: OpenWRT 系统服务安装
-nav_exclude: true
+sitemap: false
+sidebar: false
 ---
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 
-> 💡 **推荐使用一键安装**，详见[快速上手 - 一键安装](quickstart.html#一键安装)。两种方式：
+> 💡 **推荐使用一键安装**，详见[快速上手 - 一键安装](/quickstart/#一键安装)。两种方式：
 > - **OpenWrt LuCI 面板** — 可视化管理，IPK 一行搞定
 > - **Linux CLI 服务** — 命令行 + WebUI
 >
@@ -122,6 +123,6 @@ rm -f /opt/ikuai-bypass.yml
 
 ### 六、参数说明
 
-完整的 CLI 参数说明请查看 [CLI 参数说明](cli-params.md)。
+完整的 CLI 参数说明请查看 [CLI 参数说明](/cli-params/)。
 
 </details>

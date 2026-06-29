@@ -1,5 +1,7 @@
 /release/
 /target/
+/docs/_site/
+/docs/Gemfile.lock
 **/target/
 /node_modules/
 **/node_modules/

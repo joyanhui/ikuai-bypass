@@ -1,14 +1,51 @@
 title: iKuai Bypass
-description: 爱快路由分流工具 — iKuai Bypass
+subtitle: 爱快路由分流工具
+description: 爱快路由器专用的分流规则自动同步工具
 baseurl: /ikuai-bypass
 url: https://joyanhui.github.io
-remote_theme: just-the-docs/just-the-docs
+remote_theme: mmistakes/minimal-mistakes
 
-search_enabled: true
+minimal_mistakes_skin: "default"
+
+search: true
+search_provider: lunr
+lunr:
+  search_within_pages: true
+
+# Mermaid support (loaded on-demand via page.mermaid frontmatter)
 
 # Favicon
-favicon_ico: "/favicon.ico"
+favicon: "/favicon.ico"
 
-# Mermaid diagram support (used by just-the-docs theme)
-mermaid:
-  version: "10.9.0"
+# Permalink format
+permalink: /:path/
+
+# Default layout for all pages
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: single
+      sidebar:
+        nav: "docs"
+
+# Include processing
+include:
+  - .htaccess
+
+# Plugins used
+plugins:
+  - jekyll-include-cache
+
+footer:
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/joyanhui/ikuai-bypass"
+    - label: "Releases"
+      icon: "fas fa-fw fa-download"
+      url: "https://github.com/joyanhui/ikuai-bypass/releases"
+
+after_footer_scripts:
+  - /assets/js/dark-mode.js

@@ -1,6 +1,7 @@
 ---
 title: WebUI 与 GUI 可视化操作
-nav_order: 5
+toc: true
+toc_sticky: true
 ---
 # WebUI 与 GUI
 

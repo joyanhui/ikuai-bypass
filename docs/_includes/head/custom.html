@@ -1,0 +1,18 @@
+{% if page.mermaid %}
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({ startOnLoad: true });
+    // Re-run after dark mode toggle
+    const observer = new MutationObserver(function() {
+      document.querySelectorAll('.mermaid').forEach(function(el) {
+        el.removeAttribute('data-processed');
+      });
+      mermaid.run();
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
+  }
+});
+</script>
+{% endif %}

@@ -1,6 +1,7 @@
 ---
 title: CLI 参数运行模式和分流模式说明
-nav_order: 12
+toc: true
+toc_sticky: true
 ---
 
 # CLI 参数说明
@@ -29,7 +30,7 @@ nav_order: 12
 
 ## 分流模式 (`-m`)
 
-一般使用默认的 `ispdomain` 即可，特殊情况才需要改。各模式的详细工作原理请查看[分流模式详解](router-mode.md)。
+一般使用默认的 `ispdomain` 即可，特殊情况才需要改。各模式的详细工作原理请查看[分流模式详解](/router-mode/)。
 
 | 模式 | 说明 |
 | :--- | :--- |

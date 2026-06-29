@@ -307,16 +307,39 @@ function action_config_webui()
 		if f then
 			local content = f:read("*a") or ""
 			f:close()
+			local in_webui = false
 			for line in content:gmatch("[^\r\n]+") do
-				local v = line:match("^  enable:%s*(.*)$")
-				if v then enable = (trim(v) == "true") end
-				local p = line:match('^  port:%s*"?([0-9]+)"?%s*$')
-				if p then port = p end
+				-- Track whether we are inside the webui: section
+				local clean = line:gsub("%s*#.*$", "")
+				if clean:match("^webui:") then
+					in_webui = true
+				elseif in_webui and clean:match("^%S") then
+					in_webui = false
+				end
+				if in_webui then
+					local v = clean:match("^  enable:%s*(.*)$")
+					if v then enable = (trim(v) == "true") end
+					local p = clean:match('^  port:%s*"?([0-9]+)"?')
+					if p then port = p end
+				end
 			end
 			if toggle == "1" then
 				local new_val = enable and "false" or "true"
-				content = content:gsub('^(  enable:)%s*%S+', '%1 ' .. new_val)
-				content = content:gsub('^(  enable:)%s*$', '%1 ' .. new_val)
+				local in_webui = false
+				local lines = {}
+				for line in content:gmatch("[^\r\n]+") do
+					local clean = line:gsub("%s*#.*$", "")
+					if clean:match("^webui:") then
+						in_webui = true
+					elseif in_webui and clean:match("^%S") then
+						in_webui = false
+					end
+					if in_webui and clean:match("^  enable:") then
+						line = line:gsub("^(  enable:)%s*%S+", "%1 " .. new_val)
+					end
+					table.insert(lines, line)
+				end
+				content = table.concat(lines, "\n")
 				local tmp = CONFIG_PATH .. ".tmp." .. tostring(math.random(10000, 99999))
 				os.execute("mkdir -p /opt/ikuai-bypass")
 				local fw = io.open(tmp, "w")

@@ -38,7 +38,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 
 				aboutTitle: "自动整理区域 IP、域名等到爱快，实现旁路由自动切换、域名分流、端口分流、自定义运营商、广告屏蔽等。",
 				aboutDetail: "iKuai Bypass — 自动通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。\n\n本项目由两部分组成：\n1. LuCI 插件（本页面）— 用来安装和卸载 ikuaibypass CLI 的可视化界面\n2. ikuaibypass CLI — 核心工具程序，负责实际的配置同步工作\n\nGitHub: https://github.com/joyanhui/ikuai-bypass/",
-				webuiStatus: "Web 管理页面", webuiEnabled: "已启用", webuiDisabled: "已禁用",
+				webuiStatus: "Web 管理页面", webuiEnabled: "已启用", webuiDisabled: "已禁用", enableWebUI: "启用", disableWebUI: "禁用",
 				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 ikuaibypass CLI", reinstallUpdate: "重新安装 / 更新 ikuaibypass CLI",
 				start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载",
 				statusFailed: "刷新状态失败", latestFailed: "检查最新版本失败", installFailed: "安装失败", serviceFailed: "操作失败：", logFailed: "获取日志失败",
@@ -56,7 +56,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 
 				aboutTitle: "Automatically organizes regional IPs, domains, etc. into iKuai for bypass routing, domain/port分流, custom ISP, ad blocking, etc.",
 				aboutDetail: "iKuai Bypass — Automatically organizes regional IPs, domains, etc. into iKuai via remote config files. Supports bypass routing, domain分流, port分流 (IP group分流), custom ISP, ad blocking, etc.\n\nThis project consists of two parts:\n1. LuCI Plugin (this page) — Visual UI to install/uninstall the ikuaibypass CLI\n2. ikuaibypass CLI — The core tool that performs the actual configuration sync\n\nGitHub: https://github.com/joyanhui/ikuai-bypass/",
-				webuiStatus: "Web UI", webuiEnabled: "Enabled", webuiDisabled: "Disabled",
+				webuiStatus: "Web UI", webuiEnabled: "Enabled", webuiDisabled: "Disabled", enableWebUI: "Enable", disableWebUI: "Disable",
 				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update ikuaibypass CLI", reinstallUpdate: "Reinstall / Update ikuaibypass CLI",
 				start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall",
 				statusFailed: "Status check failed", latestFailed: "Latest version check failed", installFailed: "Install failed", serviceFailed: "Action failed: ", logFailed: "Failed to load log",
@@ -297,16 +297,16 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbLoadWebUIStatus = function() {
 			request("GET", ENDPOINTS.configWebUI, {}, function(err, data) {
 				var statusEl = el("ikb-webui-status");
-				var btn = el("ikb-webui-toggle-btn");
-				var link = el("ikb-webui-link");
-				if (err) {
-					if (statusEl) statusEl.textContent = t("unknown");
-					if (btn) btn.style.display = "none";
-					if (link) link.style.display = "none";
-					return;
-				}
-				if (statusEl) statusEl.textContent = data.enable ? t("webuiEnabled") : t("webuiDisabled");
-				if (btn) btn.textContent = data.enable ? t("disable") : t("enable");
+			var btn = el("ikb-webui-toggle-btn");
+			var link = el("ikb-webui-link");
+			if (err) {
+				if (statusEl) statusEl.textContent = t("unknown");
+				if (btn) btn.style.display = "none";
+				if (link) link.style.display = "none";
+				return;
+			}
+			if (statusEl) statusEl.textContent = data.enable ? t("webuiEnabled") : t("webuiDisabled");
+			if (btn) btn.textContent = data.enable ? t("disableWebUI") : t("enableWebUI");
 				if (link) {
 					if (data.enable && data.port) {
 						var proto = window.location.protocol;
@@ -365,7 +365,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="updateAvailable">可更新</label><div class="cbi-value-field"><span id="ikb-update-available">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="serviceScript">服务脚本</label><div class="cbi-value-field"><span id="ikb-service-status">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="config">配置文件</label><div class="cbi-value-field"><span id="ikb-config">-</span></div></div>
-	<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiStatus">Web 管理页面</label><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><span id="ikb-webui-status">-</span> <button type="button" id="ikb-webui-toggle-btn" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbToggleWebUI)" data-i18n="enable">启用</button> <a id="ikb-webui-link" href="#" target="_blank" style="display:none;font-family:Menlo,Consolas,monospace;font-size:.9em"></a></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiStatus">Web 管理页面</label><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><span id="ikb-webui-status">-</span> <button type="button" id="ikb-webui-toggle-btn" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbToggleWebUI)">启用</button> <a id="ikb-webui-link" href="#" target="_blank" style="display:none;font-family:Menlo,Consolas,monospace;font-size:.9em"></a></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="arch">架构</label><div class="cbi-value-field"><span id="ikb-arch">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="binaryPath">二进制路径</label><div class="cbi-value-field"><span id="ikb-binary-path">/opt/ikuai-bypass/ikuai-bypass</span></div></div>
 	<hr>

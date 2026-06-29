@@ -3,3 +3,16 @@
 
 @import "minimal-mistakes";
 @import "custom-dark";
+
+// Make the main content area full-width
+#main {
+  @include breakpoint($x-large) {
+    max-width: 100%;
+  }
+}
+
+.masthead__inner-wrap {
+  @include breakpoint($x-large) {
+    max-width: 100%;
+  }
+}

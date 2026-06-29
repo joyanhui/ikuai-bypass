@@ -1,18 +1,43 @@
 {% if page.mermaid %}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof mermaid !== 'undefined') {
-    mermaid.initialize({ startOnLoad: true });
-    // Re-run after dark mode toggle
-    const observer = new MutationObserver(function() {
-      document.querySelectorAll('.mermaid').forEach(function(el) {
-        el.removeAttribute('data-processed');
-      });
-      mermaid.run();
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
+(function() {
+  'use strict';
+
+  function getMermaidTheme() {
+    return document.documentElement.getAttribute('data-skin') === 'dark' ? 'dark' : 'default';
   }
-});
+
+  function convertMermaidBlocks() {
+    // Rouge wraps ```mermaid in .language-mermaid; convert to <div class="mermaid">
+    document.querySelectorAll('.language-mermaid').forEach(function(el) {
+      var pre = el.closest('pre');
+      if (pre) {
+        var div = document.createElement('div');
+        div.className = 'mermaid';
+        div.textContent = el.textContent;
+        pre.parentNode.replaceChild(div, pre);
+      }
+    });
+  }
+
+  function renderMermaid() {
+    if (typeof mermaid === 'undefined') return;
+    convertMermaidBlocks();
+    document.querySelectorAll('.mermaid').forEach(function(el) {
+      el.removeAttribute('data-processed');
+    });
+    mermaid.initialize({ startOnLoad: false, theme: getMermaidTheme() });
+    mermaid.run();
+  }
+
+  document.addEventListener('DOMContentLoaded', renderMermaid);
+
+  // Re-render when toggling dark/light mode
+  var observer = new MutationObserver(function() {
+    renderMermaid();
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
+})();
 </script>
 {% endif %}

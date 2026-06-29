@@ -43,13 +43,30 @@
     background: var(--global-masthead-bg);
     border-bottom-color: var(--global-border-color);
   }
+  .masthead__inner-wrap {
+    background: var(--global-masthead-bg);
+  }
+  .masthead__menu {
+    background: var(--global-masthead-bg);
+  }
+  .greedy-nav {
+    background: var(--global-masthead-bg);
+  }
+  .site-title {
+    color: var(--global-text-color);
+  }
+  .site-title:hover {
+    color: var(--global-link-color);
+  }
+  .site-subtitle {
+    color: var(--global-text-color);
+  }
   .masthead a {
     color: var(--global-text-color);
   }
   .masthead a:hover {
     color: var(--global-link-color);
   }
-
   .greedy-nav a {
     color: var(--global-text-color);
   }

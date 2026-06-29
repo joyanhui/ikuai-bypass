@@ -9,47 +9,34 @@ nav_order: 4
 
 ## 网络拓扑总览
 
-```mermaid
+<pre class="mermaid">
 graph TD
-    %% 节点定义及样式
-    Client[内网客户端<br>IP: 192.168.1.X]
-    iKuai[iKuai 主路由<br>网关: 192.168.1.1]
-    
-    %% 分流判断
+    Client[内网客户端&lt;br&gt;IP: 192.168.1.X]
+    iKuai[iKuai 主路由&lt;br&gt;网关: 192.168.1.1]
     Check{iKuai 端口分流规则 / 域名分流}
-    
-    %% 路径A：国内直连
-    WAN1_ISP[爱快物理 WAN1 接口<br>拨号/静态公网]
-    China_Web[国内网络 / 目标网站<br>百度、淘宝、微信等]
-    
-    %% 路径B：特殊流量（通过 OpenWrt）
-    Op_WAN[OpenWrt 虚拟运营商线路<br>爱快分流目的地]
-    OpenWrt[OpenWrt 副路由<br>IP: 192.168.1.2<br>核心：特殊插件]
-    Op_Out[OpenWrt 流量流出<br>网关指向 iKuai]
-    WAN2_ISP[爱快物理 WAN2 接口<br>专线/特殊出口]
-    Global_Web[海外/特殊网络<br>GitHub、Google 等]
+    WAN1_ISP[爱快物理 WAN1 接口&lt;br&gt;拨号/静态公网]
+    China_Web[国内网络 / 目标网站&lt;br&gt;百度、淘宝、微信等]
+    Op_WAN[OpenWrt 虚拟运营商线路&lt;br&gt;爱快分流目的地]
+    OpenWrt[OpenWrt 副路由&lt;br&gt;IP: 192.168.1.2&lt;br&gt;核心：特殊插件]
+    Op_Out[OpenWrt 流量流出&lt;br&gt;网关指向 iKuai]
+    WAN2_ISP[爱快物理 WAN2 接口&lt;br&gt;专线/特殊出口]
+    Global_Web[海外/特殊网络&lt;br&gt;GitHub、Google 等]
 
-    %% 流程连接
     Client -->|发出流量请求| iKuai
     iKuai --> Check
-    
-    %% 方式一：国内流量分流路径
     Check -->|方式一：匹配国内IP/域名| WAN1_ISP
     WAN1_ISP -->|直连高带宽| China_Web
-    
-    %% 方式二：特殊流量分流路径
     Check -->|方式二：匹配特殊IP/域名| Op_WAN
     Op_WAN -->|下一跳网关| OpenWrt
     OpenWrt -->|插件处理| Op_Out
     Op_Out -->|重新回到爱快物理接口| WAN2_ISP
     WAN2_ISP -->|安全访问| Global_Web
 
-    %% 样式调整
     style Client fill:#f9f,stroke:#333,stroke-width:2px
     style iKuai fill:#bbf,stroke:#333,stroke-width:2px
     style OpenWrt fill:#fbb,stroke:#333,stroke-width:2px
     style Check fill:#ff9,stroke:#333,stroke-width:2px
-```
+</pre>
 
 ---
 

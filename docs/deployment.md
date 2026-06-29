@@ -1,6 +1,6 @@
 ---
-title: Docker / CLI / LXC 部署
-nav_order: 6
+title: 部署方案纵览
+nav_order: 3
 ---
 # 部署方案
 

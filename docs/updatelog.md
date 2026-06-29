@@ -2,6 +2,7 @@
 title: 更新日志：版本历史
 nav_order: 9999
 ---
+
 # 更新日志
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
@@ -9,10 +10,7 @@ nav_order: 9999
 ## v4.4.108 (2026-06-29)
 
 - 新增 `run-mode` / `mode` 配置字段，支持三优先级解析（CLI 参数 > config.yml > 默认值）
-- LuCI 配置 tab 移除，改为在状态页直接显示 Web 管理页面启用/禁用状态及一键切换按钮，支持根据当前页面地址自动拼接链接
-- LuCI 配置双向同步、表单验证、CDN 前缀移除、GitHub API JSON 解析重构（Lua jsonc.parse）
-- 修复 `spdomain` 拼写错误为 `ispdomain`（旧版 config.yml 中 `mode: spdomain` 会导致 CLI 启动失败）
-- OpenWrt 脚本 `local` 必须在函数内定义修复，LuCI 检查改用 Lua 控制器避免 shell grep 脆弱性
+- 大幅简化 OpenWRT luCI IPK的ui功能 尽可能的简单易用，并复用 install.sh 完成可视化的安装
 
 ## v4.4.107 (2026-06-29)
 
@@ -60,4 +58,3 @@ nav_order: 9999
 - 功能和 v4.4.13 完全对齐
 - 提供 PVE LXC/CT 部署方式（`ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz`）
 - 支持爱快 v4.0 应用市场 ipkg 安装
-

@@ -4,9 +4,7 @@ nav_order: 7
 ---
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 
-> 💡 **推荐使用 LuCI 面板**：`opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk`，直接安装最新正式版 OpenWrt LuCI 包。
->
-> 如果只需要 CLI 服务，也可以使用一键安装：`curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh`，自动检测架构、下载二进制并注册为 init.d 服务。详见[快速上手](/quickstart.html#linux--openwrt-cli-服务)。
+> 💡 **推荐使用一键安装**，详见[快速上手 - 一键安装](quickstart.html#一键安装)。
 >
 > 以下为手动安装步骤，适用于需要自定义安装路径或离线安装的场景。
 

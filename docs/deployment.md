@@ -6,27 +6,15 @@ nav_order: 6
 
 ## 一键安装（推荐）
 
-Linux / OpenWrt CLI 服务推荐使用一键安装脚本，自动下载二进制并注册为系统服务：
-
-```bash
-curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh
-```
-
-OpenWrt LuCI 面板推荐直接通过 `opkg` 安装最新正式版 IPK：
-
-```bash
-opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk
-```
-
-[查看完整快速上手文档](https://joyanhui.github.io/ikuai-bypass/quickstart.html)
+Linux / OpenWrt 支持两种安装方式，详见[快速上手 - 一键安装](quickstart.html#一键安装)。
 
 ### 手机和电脑桌面用户（推荐新手）
 只要选对正确格式的包就可以，过于简单，教程掠过
 ### 服务器 / 命令行版本
 
-下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。
+下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。详见[快速上手 - 一键安装](quickstart.html#一键安装)。
 
-**OpenWrt 用户**：如果需要 LuCI 面板，推荐执行 `opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk`；如果只需要 CLI 服务，推荐使用[一键安装](/quickstart.html#linux--openwrt-cli-服务)，也支持[手动安装为系统服务](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html)。
+**OpenWrt 用户**：详见[快速上手 - 一键安装](quickstart.html#一键安装)；也支持[手动安装为系统服务](https://joyanhui.github.io/ikuai-bypass/openwrt-service-install.html)。
 
 ### Docker 用户
 

@@ -4,7 +4,9 @@
 
 `luci-app-ikuai-bypass` 是一个纯 LuCI 界面包，**不内置 CLI 二进制，也不内置完整安装逻辑**。它只提供 WebUI 和一个很薄的 `/usr/libexec/ikuai-bypass-openwrt` 包装脚本，实际安装、卸载、状态、服务控制统一委托给远程 `docs/install.sh`。
 
-核心命令等价于：
+IPK 安装命令：[快速上手 - OpenWrt LuCI 面板](../docs/quickstart.md#openwrt-luci-面板)。
+
+安装后，LuCI 页面的 Install/Update 按钮在后台实际执行：
 
 ```sh
 curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh -s -- install

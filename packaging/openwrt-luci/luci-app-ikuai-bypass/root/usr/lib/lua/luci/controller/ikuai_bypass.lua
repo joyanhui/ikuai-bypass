@@ -21,9 +21,7 @@ function index()
 	entry({"admin", "services", "ikuai-bypass", "task"}, call("action_task")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "service"}, call("action_service")).leaf = true
 	entry({"admin", "services", "ikuai-bypass", "log"}, call("action_log")).leaf = true
-	entry({"admin", "services", "ikuai-bypass", "config_read"}, call("action_config_read")).leaf = true
-	entry({"admin", "services", "ikuai-bypass", "config_save"}, call("action_config_save")).leaf = true
-	entry({"admin", "services", "ikuai-bypass", "config_backup"}, call("action_config_backup")).leaf = true
+	entry({"admin", "services", "ikuai-bypass", "config_webui"}, call("action_config_webui")).leaf = true
 end
 
 local function trim(value)
@@ -300,61 +298,36 @@ end
 
 local CONFIG_PATH = "/opt/ikuai-bypass/config.yml"
 
-function action_config_read()
-	if not fs.access(CONFIG_PATH) then
-		return json_response(404, { ok = false, message = "Config file not found at " .. CONFIG_PATH })
-	end
-	local f = io.open(CONFIG_PATH, "r")
-	if not f then
-		return json_response(500, { ok = false, message = "Failed to read config file" })
-	end
-	local content = f:read("*a") or ""
-	f:close()
-	json_response(200, { ok = true, content = content, path = CONFIG_PATH })
-end
-
-function action_config_save()
-	local content = http.formvalue("content") or ""
-	if content == "" then
-		return json_response(400, { ok = false, message = "Config content is empty" })
-	end
-	-- Reject binary/null bytes to prevent corrupt writes
-	-- 禁止 null 字节，防止写入损坏数据
-	if content:find("\000") then
-		return json_response(400, { ok = false, message = "Config content contains null bytes" })
-	end
-	local tmp = CONFIG_PATH .. ".tmp." .. tostring(math.random(10000, 99999))
-	os.execute("mkdir -p /opt/ikuai-bypass")
-	local f = io.open(tmp, "w")
-	if not f then
-		return json_response(500, { ok = false, message = "Failed to open temp file for writing" })
-	end
-	f:write(content)
-	f:close()
-	os.execute("mv " .. shell_quote(tmp) .. " " .. shell_quote(CONFIG_PATH))
-	json_response(200, { ok = true, message = "Config saved" })
-end
-
-function action_config_backup()
-	local action = trim(http.formvalue("action") or "")
-	local slot = trim(http.formvalue("slot") or "")
-	if slot ~= "1" and slot ~= "2" and slot ~= "3" then
-		return json_response(400, { ok = false, message = "Invalid slot, must be 1/2/3" })
-	end
-	local backup_path = CONFIG_PATH:gsub("%.yml$", "-backup" .. slot .. ".yml")
-	if action == "backup" then
-		if not fs.access(CONFIG_PATH) then
-			return json_response(400, { ok = false, message = "Config file does not exist" })
+function action_config_webui()
+	local toggle = trim(http.formvalue("toggle") or "")
+	local enable = false
+	local port = "19001"
+	if fs.access(CONFIG_PATH) then
+		local f = io.open(CONFIG_PATH, "r")
+		if f then
+			local content = f:read("*a") or ""
+			f:close()
+			for line in content:gmatch("[^\r\n]+") do
+				local v = line:match("^  enable:%s*(.*)$")
+				if v then enable = (trim(v) == "true") end
+				local p = line:match('^  port:%s*"?([0-9]+)"?%s*$')
+				if p then port = p end
+			end
+			if toggle == "1" then
+				local new_val = enable and "false" or "true"
+				content = content:gsub('^(  enable:)%s*%S+', '%1 ' .. new_val)
+				content = content:gsub('^(  enable:)%s*$', '%1 ' .. new_val)
+				local tmp = CONFIG_PATH .. ".tmp." .. tostring(math.random(10000, 99999))
+				os.execute("mkdir -p /opt/ikuai-bypass")
+				local fw = io.open(tmp, "w")
+				if fw then
+					fw:write(content)
+					fw:close()
+					os.execute("mv " .. shell_quote(tmp) .. " " .. shell_quote(CONFIG_PATH))
+					enable = not enable
+				end
+			end
 		end
-		os.execute("cp " .. shell_quote(CONFIG_PATH) .. " " .. shell_quote(backup_path))
-		json_response(200, { ok = true, message = "Backed up to " .. backup_path })
-	elseif action == "restore" then
-		if not fs.access(backup_path) then
-			return json_response(400, { ok = false, message = "Backup file " .. backup_path .. " does not exist" })
-		end
-		os.execute("cp " .. shell_quote(backup_path) .. " " .. shell_quote(CONFIG_PATH))
-		json_response(200, { ok = true, message = "Restored from " .. backup_path })
-	else
-		return json_response(400, { ok = false, message = "Invalid action, must be backup/restore" })
 	end
+	json_response(200, { ok = true, enable = enable, port = port })
 end

@@ -23,9 +23,7 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			task: <%= string.format("%q", task_url) %>,
 			service: <%= string.format("%q", service_url) %>,
 			log: <%= string.format("%q", log_url) %>,
-			configRead: <%= string.format("%q", luci.dispatcher.build_url("admin", "services", "ikuai-bypass", "config_read")) %>,
-			configSave: <%= string.format("%q", luci.dispatcher.build_url("admin", "services", "ikuai-bypass", "config_save")) %>,
-			configBackup: <%= string.format("%q", luci.dispatcher.build_url("admin", "services", "ikuai-bypass", "config_backup")) %>
+			configWebUI: <%= string.format("%q", luci.dispatcher.build_url("admin", "services", "ikuai-bypass", "config_webui")) %>
 		};
 		var TOKEN = <%= string.format("%q", luci.dispatcher.context.authsession or "") %>;
 		var PROXY_KEY = "ikuai-bypass.proxy";
@@ -34,13 +32,13 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		var STATE = { busy: false, lang: "zh" };
 		var I18N = {
 			zh: {
-				tabStatus: "状态", tabInstall: "安装", tabService: "服务", tabConfig: "配置",
-				tabBasic: "基本", tabAdvanced: "高级", tabLog: "日志",
+				tabStatus: "状态", tabInstall: "安装", tabService: "服务", tabLog: "日志",
 				installedCli: "CLI 状态", binaryPath: "二进制路径", arch: "架构", serviceScript: "服务脚本", runtime: "运行状态", config: "配置文件", currentVersion: "当前版本", latestStable: "最新稳定版", updateAvailable: "可更新", pluginVersion: "插件版本", pluginLatest: "插件最新版本", checkPlugin: "检查插件更新", updatePlugin: "升级插件", pluginUpToDate: "已是最新", checkingPlugin: "正在检查插件更新...", updatingPlugin: "正在升级插件...", pluginUpdated: "插件升级成功，正在刷新页面...", pluginCheckDone: "检查完成", pluginCheckFailed: "检查插件更新失败", pluginUpdateFailed: "升级插件失败",
 				proxyTitle: "更新升级和网络代理设置", proxyHelp: "HTTP 代理。仅在 OpenWrt 无法访问 GitHub 时需要配置（如中国大陆网络环境）。代理只保存在当前浏览器，安装/检查请求时临时发送，不会写入路由器文件系统。", saveProxy: "保存并关闭", configProxy: "更新升级和网络代理配置",
-				configFileLabel: "配置文件路径", configRef: "实例配置文件：",
+
 				aboutTitle: "自动整理区域 IP、域名等到爱快，实现旁路由自动切换、域名分流、端口分流、自定义运营商、广告屏蔽等。",
-				aboutDetail: "iKuai Bypass — 自动通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。\n\n本项目由两部分组成：\n1. LuCI 插件（本页面）— 用来安装和卸载 ikuaibypass CLI 的可视化界面\n2. ikuaibypass CLI — 核心工具程序，负责实际的配置同步工作\n\nGitHub: https://github.com/joyanhui/ikuai-bypass/", saveConfig: "保存配置", reloadConfig: "重载", backupToSlot: "备份到", restoreFromSlot: "还原自", configSaved: "配置已保存", configSaveFailed: "保存配置失败", configRefreshed: "配置已重载", configBackupDone: "备份完成", configRestoreDone: "还原完成", configLoadFailed: "加载配置失败", webuiEnable: "启用 WebUI", webuiPort: "端口", webuiUser: "用户名", webuiPass: "密码", webuiCdnPrefix: "CDN 前缀", modeLabel: "分流模式", runModeLabel: "运行模式", modeRestartNote: "修改后需要重启服务", modeISPdomain: "运营商+域名分流（默认）", modeIpgroup: "IPv4 分组模式", modeIpv6group: "IPv6 分组模式", modeIi: "运营商和域名分流+IPv4 分组混合模式", modeIp: "IPv4 + IPv6 分组", modeIip: "完整混合模式", runModeCron: "定时运行（先执行一次）", runModeCronAft: "定时运行（仅定时，不先执行）", runModeOnce: "只运行一次",
+				aboutDetail: "iKuai Bypass — 自动通过指定的远程配置文件把区域 IP、域名等整理到爱快，实现旁路由自动切换、域名分流、端口分流（IP 分组分流）、自定义运营商、广告屏蔽等。\n\n本项目由两部分组成：\n1. LuCI 插件（本页面）— 用来安装和卸载 ikuaibypass CLI 的可视化界面\n2. ikuaibypass CLI — 核心工具程序，负责实际的配置同步工作\n\nGitHub: https://github.com/joyanhui/ikuai-bypass/",
+				webuiStatus: "Web 管理页面", webuiEnabled: "已启用", webuiDisabled: "已禁用",
 				refreshStatus: "刷新状态", checkLatest: "检查最新稳定版", installUpdate: "安装 / 更新 ikuaibypass CLI", reinstallUpdate: "重新安装 / 更新 ikuaibypass CLI",
 				start: "启动", stop: "停止", restart: "重启", enable: "启用开机自启", disable: "禁用开机自启", uninstallService: "仅卸载服务", fullUninstall: "完全卸载",
 				statusFailed: "刷新状态失败", latestFailed: "检查最新版本失败", installFailed: "安装失败", serviceFailed: "操作失败：", logFailed: "获取日志失败",
@@ -52,13 +50,13 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				zh: "中文", en: "English"
 			},
 			en: {
-				tabStatus: "Status", tabInstall: "Install", tabService: "Service", tabConfig: "Config",
-				tabBasic: "Basic", tabAdvanced: "Advanced", tabLog: "Log",
+				tabStatus: "Status", tabInstall: "Install", tabService: "Service", tabLog: "Log",
 				installedCli: "CLI status", binaryPath: "Binary path", arch: "Architecture", serviceScript: "Service script", runtime: "Runtime", config: "Config", currentVersion: "Current version", latestStable: "Latest stable", updateAvailable: "Update available", pluginVersion: "Plugin version", pluginLatest: "Plugin latest", checkPlugin: "Check Plugin Update", updatePlugin: "Update Plugin", pluginUpToDate: "Up to date", checkingPlugin: "Checking plugin update...", updatingPlugin: "Updating plugin...", pluginUpdated: "Plugin updated, refreshing page...", pluginCheckDone: "Check complete", pluginCheckFailed: "Plugin check failed", pluginUpdateFailed: "Plugin update failed",
 				proxyTitle: "Update & Proxy Settings", proxyHelp: "HTTP proxy. Only needed when the router cannot reach GitHub (e.g. mainland China). The proxy is stored only in this browser and sent temporarily with install/check requests. It is never written to the router filesystem.", saveProxy: "Save & Close", configProxy: "Update & Proxy Settings",
-				configFileLabel: "Config file path", configRef: "Example config:",
+
 				aboutTitle: "Automatically organizes regional IPs, domains, etc. into iKuai for bypass routing, domain/port分流, custom ISP, ad blocking, etc.",
-				aboutDetail: "iKuai Bypass — Automatically organizes regional IPs, domains, etc. into iKuai via remote config files. Supports bypass routing, domain分流, port分流 (IP group分流), custom ISP, ad blocking, etc.\n\nThis project consists of two parts:\n1. LuCI Plugin (this page) — Visual UI to install/uninstall the ikuaibypass CLI\n2. ikuaibypass CLI — The core tool that performs the actual configuration sync\n\nGitHub: https://github.com/joyanhui/ikuai-bypass/", saveConfig: "Save Config", reloadConfig: "Reload", backupToSlot: "Backup to", restoreFromSlot: "Restore from", configSaved: "Config saved", configSaveFailed: "Failed to save config", configRefreshed: "Config reloaded", configBackupDone: "Backup complete", configRestoreDone: "Restore complete", configLoadFailed: "Failed to load config", webuiEnable: "Enable WebUI", webuiPort: "Port", webuiUser: "Username", webuiPass: "Password", webuiCdnPrefix: "CDN Prefix", modeLabel: "Traffic Mode", runModeLabel: "Run Mode", modeRestartNote: "Restart required after change", modeISPdomain: "ISP + Domain (default)", modeIpgroup: "IPv4 Group", modeIpv6group: "IPv6 Group", modeIi: "ISP+Domain + IPv4 Group Hybrid", modeIp: "IPv4 + IPv6 Group", modeIip: "Full Hybrid (ips+domain+ipv4+ipv6)", runModeCron: "Cron (run once then schedule)", runModeCronAft: "Cron (schedule only)", runModeOnce: "Run once",
+				aboutDetail: "iKuai Bypass — Automatically organizes regional IPs, domains, etc. into iKuai via remote config files. Supports bypass routing, domain分流, port分流 (IP group分流), custom ISP, ad blocking, etc.\n\nThis project consists of two parts:\n1. LuCI Plugin (this page) — Visual UI to install/uninstall the ikuaibypass CLI\n2. ikuaibypass CLI — The core tool that performs the actual configuration sync\n\nGitHub: https://github.com/joyanhui/ikuai-bypass/",
+				webuiStatus: "Web UI", webuiEnabled: "Enabled", webuiDisabled: "Disabled",
 				refreshStatus: "Refresh Status", checkLatest: "Check Latest Stable", installUpdate: "Install / Update ikuaibypass CLI", reinstallUpdate: "Reinstall / Update ikuaibypass CLI",
 				start: "Start", stop: "Stop", restart: "Restart", enable: "Enable Autostart", disable: "Disable Autostart", uninstallService: "Uninstall Service Only", fullUninstall: "Full Uninstall",
 				statusFailed: "Status check failed", latestFailed: "Latest version check failed", installFailed: "Install failed", serviceFailed: "Action failed: ", logFailed: "Failed to load log",
@@ -95,6 +93,12 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 			n.value = text || "";
 			n.scrollTop = n.scrollHeight;
 		}
+		function appendLog(text) {
+			var n = el("ikb-log");
+			if (!n) return;
+			n.value = (n.value || "") + (text || "");
+			n.scrollTop = n.scrollHeight;
+		}
 
 		function extractProgress(log) {
 			var re = /\[IKB\]\s*(\d+)\/(\d+)\s+(.*)/g;
@@ -129,13 +133,10 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		}
 
 		function switchTab(name) {
-			var activeTab = document.querySelector(".ikb-tab.cbi-tab");
-			if (activeTab && activeTab.getAttribute("data-tab") === "config") syncFormToTextarea();
 			var tabs = document.querySelectorAll(".ikb-tab");
 			var panels = document.querySelectorAll(".ikb-panel");
 			for (var i = 0; i < tabs.length; i++) tabs[i].className = "ikb-tab cbi-tab" + (tabs[i].getAttribute("data-tab") === name ? "" : "-disabled");
 			for (var j = 0; j < panels.length; j++) panels[j].style.display = panels[j].getAttribute("data-panel") === name ? "block" : "none";
-			if (name === "config") syncTextareaToForm();
 		}
 
 		function renderStatus(data) {
@@ -287,80 +288,45 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		window.ikbService = function(action) { STATE.busy = true; updateButtons(); setMessage(t("runningAction") + action, true); request("POST", ENDPOINTS.service, { action: action }, function(err, data) { STATE.busy = false; updateButtons(); if (err) { setMessage(t("serviceFailed") + " " + action + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); if (action === "uninstall_self") { setMessage(t("uninstallSelfDone"), true); setTimeout(function() { window.location.href = "/cgi-bin/luci/"; }, 4000); } else { window.ikbLoadStatus(); } }, 10000); };
 		window.ikbLoadLog = function() { request("GET", ENDPOINTS.log, {}, function(err, data) { if (err) { setMessage(t("logFailed") + ": " + err, false); return; } setLog(data.log || ""); setMessage(t("logLoaded"), true); }, 10000); };
 		window.ikbLoadPluginVersion = function() { request("GET", ENDPOINTS.luciVersion, {}, function(err, data) { if (err) { setText("ikb-plugin-version", "Error"); return; } setText("ikb-plugin-version", data.version || "-"); }, 10000); };
-		window.ikbCheckPlugin = function() { setLog(t("checkingPlugin")); request("GET", ENDPOINTS.luciCheck, { proxy: currentProxy() }, function(err, data) { if (err) { setMessage(t("pluginCheckFailed") + ": " + err, false); setLog(""); return; } if (data && data.latest_version) { setText("ikb-plugin-latest", data.latest_version); setMessage(t("pluginCheckDone"), true); setLog(""); } else { setMessage(t("pluginCheckFailed") + ": " + (data ? data.message : "unknown"), false); setLog(""); } }, 30000); };
+		window.ikbCheckPlugin = function() { setLog(t("checkingPlugin") + "...\n"); request("GET", ENDPOINTS.luciCheck, { proxy: currentProxy() }, function(err, data) { if (err) { setMessage(t("pluginCheckFailed") + ": " + err, false); appendLog(t("pluginCheckFailed") + ": " + err + "\n"); return; } if (data && data.latest_version) { setText("ikb-plugin-latest", data.latest_version); appendLog("latest_version=" + data.latest_version + "\n"); setMessage(t("pluginCheckDone"), true); } else { var msg = (data ? data.message : "unknown"); setMessage(t("pluginCheckFailed") + ": " + msg, false); appendLog(t("pluginCheckFailed") + ": " + msg + "\n"); } }, 30000); };
 		window.ikbUpdatePlugin = function() { startBackgroundTask(ENDPOINTS.luciUpdate, { proxy: currentProxy() }, t("updatingPlugin"), t("pluginUpdateFailed"), { onProgress: function(log) { setLog(log); }, onDone: function(data) { setLog(data.log || ""); var meta = data.meta || {}; if (meta.status === "error") { setMessage(t("pluginUpdateFailed") + ": " + (meta.message || ""), false); } else { setMessage(t("pluginUpdated"), true); setTimeout(function() { window.location.reload(); }, 3000); } } }, 60000); };
-		window.ikbLoadConfig = function() { request("GET", ENDPOINTS.configRead, {}, function(err, data) { var ta = el("ikb-config-editor"); var pathEl = el("ikb-config-path"); if (err) { if (ta) ta.value = "# Error: " + err + "\n"; if (pathEl) pathEl.textContent = "/opt/ikuai-bypass/config.yml"; setMessage(t("configLoadFailed") + ": " + err, false); return; } if (ta) ta.value = data.content || ""; if (pathEl) pathEl.textContent = data.path || "/opt/ikuai-bypass/config.yml"; syncTextareaToForm(); }, 10000); };
-		window.ikbSaveConfig = function() { syncFormToTextarea(); var ta = el("ikb-config-editor"); var content = ta ? ta.value : ""; request("POST", ENDPOINTS.configSave, { content: content }, function(err, data) { if (err) { setMessage(t("configSaveFailed") + ": " + err, false); return; } setMessage(t("configSaved"), true); }, 10000); };
-window.ikbReloadConfig = function() { ikbLoadConfig(); };
-		window.ikbBackup = function(slot) { request("POST", ENDPOINTS.configBackup, { action: "backup", slot: slot }, function(err, data) { if (err) { setMessage(t("configSaveFailed") + ": " + err, false); return; } setMessage(t("configBackupDone") + " (slot " + slot + ")", true); }, 10000); };
-		window.ikbRestore = function(slot) { request("POST", ENDPOINTS.configBackup, { action: "restore", slot: slot }, function(err, data) { if (err) { setMessage(err, false); return; } setMessage(t("configRestoreDone") + " (slot " + slot + ")", true); window.ikbLoadConfig(); }, 10000); };
 
-		function yamlSetLine(yaml, key, value) {
-			var re = new RegExp('^(' + key + ':)\\s*\\S*', 'm');
-			if (re.test(yaml)) return yaml.replace(re, '$1 ' + value);
-			return yaml.replace(/^(AddWait:.*)/m, '$1\n' + key + ': ' + value);
-		}
-		function yamlSetNested(yaml, parent, key, value) {
-			var re = new RegExp('^(  ' + key + ':)\\s*\\S*', 'm');
-			if (re.test(yaml)) return yaml.replace(re, '$1 ' + value);
-			return yaml.replace(new RegExp('^(' + parent + ':.*)', 'm'), '$1\n  ' + key + ': ' + value);
-		}
-		function syncFormToTextarea() {
-			var ta = el("ikb-config-editor");
-			if (!ta) return;
-			var y = ta.value;
-			var e = el("ikb-webui-enable");
-			if (e) y = yamlSetNested(y, "webui", "enable", e.checked ? "true" : "false");
-			var p = el("ikb-webui-port");
-			if (p) y = yamlSetNested(y, "webui", "port", '"' + p.value + '"');
-			var u = el("ikb-webui-user");
-			if (u) y = yamlSetNested(y, "webui", "user", u.value);
-			var pw = el("ikb-webui-pass");
-			if (pw) y = yamlSetNested(y, "webui", "pass", pw.value);
-			var c = el("ikb-webui-cdn");
-			if (c) y = yamlSetNested(y, "webui", "cdn-prefix", c.value);
-			var m = el("ikb-mode");
-			if (m) y = yamlSetLine(y, "mode", m.value);
-			var r = el("ikb-run-mode");
-			if (r) y = yamlSetLine(y, "run-mode", r.value);
-			ta.value = y;
-		}
-		function syncTextareaToForm() {
-			var ta = el("ikb-config-editor");
-			if (!ta || !ta.value) return;
-			var y = ta.value;
-			function getVal(key) { var re = new RegExp('^' + key + ':\\s*(.*)', 'm'); var m = re.exec(y); return m ? m[1].trim() : null; }
-			function getNested(parent, key) { var re = new RegExp('^  ' + key + ':\\s*(.*)', 'm'); var m = re.exec(y); return m ? m[1].trim() : null; }
-			var e = el("ikb-webui-enable");
-			var v = getNested("webui", "enable");
-			if (e && v !== null) e.checked = v === "true" || v === "yes" || v === "1";
-			var f = el("ikb-webui-port");
-			v = getNested("webui", "port");
-			if (f && v !== null) f.value = v.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-			var fi = el("ikb-webui-user");
-			v = getNested("webui", "user");
-			if (fi && v !== null) fi.value = v.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-			var fp = el("ikb-webui-pass");
-			v = getNested("webui", "pass");
-			if (fp && v !== null) fp.value = v.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-			var fc = el("ikb-webui-cdn");
-			v = getNested("webui", "cdn-prefix");
-			if (fc && v !== null) fc.value = v.replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
-			var fm = el("ikb-mode");
-			v = getVal("mode");
-			if (fm && v !== null) fm.value = v;
-			var fr = el("ikb-run-mode");
-			v = getVal("run-mode");
-			if (fr && v !== null) fr.value = v;
-		}
-		window.ikbSwitchConfigTab = function(name) {
-			var tabs = document.querySelectorAll(".ikb-subtab");
-			var panels = document.querySelectorAll(".ikb-subpanel");
-			for (var i = 0; i < tabs.length; i++) tabs[i].className = "ikb-subtab cbi-tab" + (tabs[i].getAttribute("data-subtab") === name ? "" : "-disabled");
-			for (var j = 0; j < panels.length; j++) panels[j].style.display = panels[j].getAttribute("data-ikb-subpanel") === name ? "block" : "none";
-			if (name === "basic") syncTextareaToForm();
+
+
+
+		window.ikbLoadWebUIStatus = function() {
+			request("GET", ENDPOINTS.configWebUI, {}, function(err, data) {
+				var statusEl = el("ikb-webui-status");
+				var btn = el("ikb-webui-toggle-btn");
+				var link = el("ikb-webui-link");
+				if (err) {
+					if (statusEl) statusEl.textContent = t("unknown");
+					if (btn) btn.style.display = "none";
+					if (link) link.style.display = "none";
+					return;
+				}
+				if (statusEl) statusEl.textContent = data.enable ? t("webuiEnabled") : t("webuiDisabled");
+				if (btn) btn.textContent = data.enable ? t("disable") : t("enable");
+				if (link) {
+					if (data.enable && data.port) {
+						var proto = window.location.protocol;
+						var host = window.location.hostname;
+						link.href = proto + "//" + host + ":" + data.port;
+						link.textContent = proto + "//" + host + ":" + data.port;
+						link.style.display = "inline";
+					} else {
+						link.style.display = "none";
+					}
+				}
+			}, 10000);
 		};
-
+		window.ikbToggleWebUI = function() {
+			request("GET", ENDPOINTS.configWebUI, { toggle: "1" }, function(err, data) {
+				if (err) { setMessage("WebUI toggle failed: " + err, false); return; }
+				setMessage(data.enable ? "WebUI enabled" : "WebUI disabled", true);
+				window.ikbLoadWebUIStatus();
+			}, 10000);
+		};
 		document.addEventListener("DOMContentLoaded", function() {
 			try { STATE.lang = window.localStorage.getItem(LANG_KEY) || "zh"; } catch (e) { STATE.lang = "zh"; }
 			var input = el("ikb-proxy");
@@ -371,16 +337,12 @@ window.ikbReloadConfig = function() { ikbLoadConfig(); };
 			switchTab("status");
 			window.ikbLoadStatus();
 			window.ikbLoadPluginVersion();
-			window.ikbLoadConfig();
+			window.ikbLoadWebUIStatus();
 		});
 	})();
 </script>
 
-<style>
-.ikb-subtab { padding:.4rem .8rem; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
-.ikb-subtab.cbi-tab { font-weight:700; border-bottom-color:currentColor; }
-.ikb-subtab.cbi-tab-disabled { opacity:.65; }
-</style>
+
 
 <div style="margin-bottom:.5rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
 	<select id="ikb-lang" onchange="ikbSetLang(this.value)" style="min-width:auto">
@@ -393,7 +355,6 @@ window.ikbReloadConfig = function() { ikbLoadConfig(); };
 	<li class="cbi-tab ikb-tab" data-tab="status" onclick="return ikbClick(event, function(){ ikbTab('status') })"><a role="button" tabindex="0" data-i18n="tabStatus">状态</a></li>
 	<li class="cbi-tab ikb-tab" data-tab="install" onclick="return ikbClick(event, function(){ ikbTab('install') })"><a role="button" tabindex="0" data-i18n="tabInstall">安装</a></li>
 	<li class="cbi-tab ikb-tab" data-tab="service" onclick="return ikbClick(event, function(){ ikbTab('service') })"><a role="button" tabindex="0" data-i18n="tabService">服务</a></li>
-	<li class="cbi-tab ikb-tab" data-tab="config" onclick="return ikbClick(event, function(){ ikbTab('config') })"><a role="button" tabindex="0" data-i18n="tabConfig">配置</a></li>
 </ul>
 
 <fieldset class="cbi-section ikb-panel" data-panel="status">
@@ -404,6 +365,7 @@ window.ikbReloadConfig = function() { ikbLoadConfig(); };
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="updateAvailable">可更新</label><div class="cbi-value-field"><span id="ikb-update-available">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="serviceScript">服务脚本</label><div class="cbi-value-field"><span id="ikb-service-status">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="config">配置文件</label><div class="cbi-value-field"><span id="ikb-config">-</span></div></div>
+	<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiStatus">Web 管理页面</label><div class="cbi-value-field" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center"><span id="ikb-webui-status">-</span> <button type="button" id="ikb-webui-toggle-btn" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbToggleWebUI)" data-i18n="enable">启用</button> <a id="ikb-webui-link" href="#" target="_blank" style="display:none;font-family:Menlo,Consolas,monospace;font-size:.9em"></a></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="arch">架构</label><div class="cbi-value-field"><span id="ikb-arch">-</span></div></div>
 	<div class="cbi-value"><label class="cbi-value-title" data-i18n="binaryPath">二进制路径</label><div class="cbi-value-field"><span id="ikb-binary-path">/opt/ikuai-bypass/ikuai-bypass</span></div></div>
 	<hr>
@@ -456,78 +418,7 @@ window.ikbReloadConfig = function() { ikbLoadConfig(); };
 	</div></div>
 </fieldset>
 
-<fieldset class="cbi-section ikb-panel" data-panel="config">
-	<div style="padding:.5rem 1rem 0;font-size:.9em;opacity:.7;display:flex;gap:.25rem;flex-wrap:wrap">
-		<span data-i18n="aboutTitle">自动整理区域 IP、域名等到爱快...</span>
-		<a href="https://github.com/joyanhui/ikuai-bypass/" target="_blank">GitHub</a>
-	</div>
-	<div style="display:flex;gap:0;border-bottom:1px solid #ccc;margin:0 1rem">
-		<div class="cbi-tab ikb-subtab" data-subtab="basic" onclick="return ikbClick(event, function(){ ikbSwitchConfigTab('basic') })" data-i18n="tabBasic">基本</div>
-		<div class="cbi-tab-disabled ikb-subtab" data-subtab="advanced" onclick="return ikbClick(event, function(){ ikbSwitchConfigTab('advanced') })" data-i18n="tabAdvanced">高级</div>
-	</div>
-	<div class="ikb-subpanel" data-ikb-subpanel="basic">
-		<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiEnable">启用 WebUI</label><div class="cbi-value-field"><input type="checkbox" id="ikb-webui-enable" onchange="syncFormToTextarea()" class="cbi-input-checkbox" /></div></div>
-		<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiPort">端口</label><div class="cbi-value-field"><input type="text" id="ikb-webui-port" class="cbi-input-text" onchange="syncFormToTextarea()" /></div></div>
-		<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiUser">用户名</label><div class="cbi-value-field"><input type="text" id="ikb-webui-user" class="cbi-input-text" onchange="syncFormToTextarea()" /></div></div>
-		<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiPass">密码</label><div class="cbi-value-field"><input type="text" id="ikb-webui-pass" class="cbi-input-text" onchange="syncFormToTextarea()" /></div></div>
-		<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiCdnPrefix">CDN 前缀</label><div class="cbi-value-field"><input type="text" id="ikb-webui-cdn" class="cbi-input-text" onchange="syncFormToTextarea()" /></div></div>
-		<div class="cbi-value">
-			<label class="cbi-value-title" data-i18n="modeLabel">分流模式</label>
-			<div class="cbi-value-field">
-				<select id="ikb-mode" class="cbi-input-select" onchange="syncFormToTextarea()">
-					<option value="ispdomain" data-i18n="modeISPdomain">运营商+域名分流（默认）</option>
-					<option value="ipgroup" data-i18n="modeIpgroup">IPv4 分组模式</option>
-					<option value="ipv6group" data-i18n="modeIpv6group">IPv6 分组模式</option>
-					<option value="ii" data-i18n="modeIi">运营商和域名分流+IPv4 分组混合模式</option>
-					<option value="ip" data-i18n="modeIp">IPv4 + IPv6 分组</option>
-					<option value="iip" data-i18n="modeIip">完整混合模式</option>
-				</select>
-				<span style="font-size:.85em;opacity:.6;margin-left:.5rem" data-i18n="modeRestartNote">修改后需要重启服务</span>
-			</div>
-		</div>
-		<div class="cbi-value">
-			<label class="cbi-value-title" data-i18n="runModeLabel">运行模式</label>
-			<div class="cbi-value-field">
-				<select id="ikb-run-mode" class="cbi-input-select" onchange="syncFormToTextarea()">
-					<option value="cronAft" data-i18n="runModeCronAft">定时运行（仅定时，不先执行）</option>
-					<option value="cron" data-i18n="runModeCron">定时运行（先执行一次）</option>
-					<option value="once" data-i18n="runModeOnce">只运行一次</option>
-				</select>
-			</div>
-		</div>
-	</div>
-	<div class="ikb-subpanel" data-ikb-subpanel="advanced" style="display:none">
-		<div style="padding:.75rem 1rem .5rem">
-			<div style="margin-bottom:.5rem"><span data-i18n="configFileLabel">配置文件路径</span> <code id="ikb-config-path" style="font-size:.9em">/opt/ikuai-bypass/config.yml</code></div>
-			<textarea id="ikb-config-editor" class="cbi-input-textarea" style="width:100%;min-height:400px;font-family:Menlo,Consolas,monospace;resize:vertical;box-sizing:border-box;tab-size:2;margin:0"></textarea>
-		</div>
-	</div>
-	<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.5rem 1rem 0">
-		<button type="button" class="btn cbi-button cbi-button-apply ikb-action" onclick="return ikbClick(event, ikbSaveConfig)" data-i18n="saveConfig">保存配置</button>
-		<button type="button" class="btn cbi-button cbi-button-reset ikb-action" onclick="return ikbClick(event, ikbReloadConfig)" data-i18n="reloadConfig">重载</button>
-	</div>
-	<div style="padding:.25rem 1rem .5rem">
-		<div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
-			<code style="font-size:.85em;flex:1">/opt/ikuai-bypass/config-backup1.yml</code>
-			<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('1') })" data-i18n="backupToSlot">备份到</button>
-			<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('1') })" data-i18n="restoreFromSlot">还原自</button>
-		</div>
-		<div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
-			<code style="font-size:.85em;flex:1">/opt/ikuai-bypass/config-backup2.yml</code>
-			<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('2') })" data-i18n="backupToSlot">备份到</button>
-			<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('2') })" data-i18n="restoreFromSlot">还原自</button>
-		</div>
-		<div style="display:flex;gap:.5rem;align-items:center;padding:.25rem 0">
-			<code style="font-size:.85em;flex:1">/opt/ikuai-bypass/config-backup3.yml</code>
-			<button type="button" class="btn cbi-button cbi-button-reset" onclick="return ikbClick(event, function(){ ikbBackup('3') })" data-i18n="backupToSlot">备份到</button>
-			<button type="button" class="btn cbi-button cbi-button-apply" onclick="return ikbClick(event, function(){ ikbRestore('3') })" data-i18n="restoreFromSlot">还原自</button>
-		</div>
-	</div>
-	<div style="padding:.25rem 1rem .75rem;font-size:.85em">
-		<span data-i18n="configRef">实例配置文件：</span>
-		<a href="https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml" target="_blank">https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml</a>
-	</div>
-</fieldset>
+
 
 <div class="cbi-section" id="ikb-msg" style="display:none;padding:.5rem 1rem;margin-top:.5rem">
 	<span id="ikb-msg-text"></span>

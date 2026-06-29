@@ -16,3 +16,12 @@
     max-width: 100%;
   }
 }
+
+/* Mermaid subgraph labels: white text with dark outline for readability */
+.mermaid-container .cluster-label text {
+  fill: #fff;
+  stroke: #222;
+  stroke-width: 0.6px;
+  paint-order: stroke fill;
+  font-weight: 600;
+}

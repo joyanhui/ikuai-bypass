@@ -27,6 +27,7 @@ nav_order: 9999
 - 增加 arm64 版本爱快 ipkg 插件支持
 - iOS 端优化
 - 增加对爱快≥ 4.0.210 端口分流的主备模式说明文案和默认值[aaa2c3c](https://github.com/joyanhui/ikuai-bypass/commit/aaa2c3c0b9d6d06086b2fc1b3558210327c8b2fd)
+
 ## v4.4.104 (2026-04-27)
 
 - 针对爱快 v4.0.210beta 端口分流 mode:5 被弃用改为 6 的兼容性修复 [#130](https://github.com/joyanhui/ikuai-bypass/issues/130)

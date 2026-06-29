@@ -23,12 +23,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "router-mode.md",
+                "file": "faq.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "router-mode"
+              "title": "faq"
             }
           }
         ],
@@ -105,7 +105,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "router-mode.md",
+                "file": "faq.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +115,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "router-mode 的反向链接列表"
+              "title": "faq 的反向链接列表"
             }
           },
           {
@@ -124,12 +124,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "router-mode.md",
+                "file": "faq.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "router-mode 的出链列表"
+              "title": "faq 的出链列表"
             }
           },
           {
@@ -167,13 +167,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "router-mode.md",
+                "file": "faq.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "router-mode 的大纲"
+              "title": "faq 的大纲"
             }
           }
         ]
@@ -194,8 +194,11 @@
       "bases:新建数据库": false
     }
   },
-  "active": "887fe4d40d721aea",
+  "active": "77bf5ab77ea47c16",
   "lastOpenFiles": [
+    "favicon.ico",
+    "updatelog.md",
+    "faq.md",
     "router-mode.md",
     "quickstart.md",
     "index.md"

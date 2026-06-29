@@ -15,7 +15,7 @@ cron: 0 7 * * * # 更新周期cron表达式，例如 0 7 * * *
 AddErrRetryWait: 10s # 自动重试时间间隔 (10s, 120s)
 AddWait: 1s # 规则添加后的反应等待时间
 run-mode: cronAft # 运行模式: cron(先执行一次再定时)/cronAft(仅定时推荐)/once(运行一次)
-mode: spdomain # 分流模式: ispdomain(默认推荐)/ipgroup/ipv6group/ii/ip/iip; CLI -m 可覆盖
+mode: ispdomain # 分流模式: ispdomain(默认推荐)/ipgroup/ipv6group/ii/ip/iip; CLI -m 可覆盖
 
 # 代理模式（proxy）与 GitHub Proxy（github-proxy/ghproxy）的区别见下方说明
 # mode 可选：custom / system / smart

@@ -742,7 +742,7 @@ print_status_kv() {
     check_process && printf 'running=1\n' || printf 'running=0\n'
     [ -f "${VERSION_FILE}" ] && printf 'version=%s\n' "$(cat "${VERSION_FILE}")" || printf 'version=\n'
     printf 'arch=%s\n' "$(detect_arch 2>/dev/null || true)"
-    printf 'mode=%s\n' "$(grep '^mode:' "${CONFIG_PATH}" 2>/dev/null | head -1 | sed 's/^mode: *//')"
+    printf 'mode=%s\n' "$(sed -n '/^mode: /{s/^mode: *//p;q}' "${CONFIG_PATH}" 2>/dev/null)"
     printf 'run_mode=%s\n' "$(grep '^run-mode:' "${CONFIG_PATH}" 2>/dev/null | head -1 | sed 's/^run-mode: *//')"
 }
 

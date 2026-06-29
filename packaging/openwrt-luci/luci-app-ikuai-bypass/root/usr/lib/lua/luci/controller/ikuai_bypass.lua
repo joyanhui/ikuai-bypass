@@ -288,6 +288,14 @@ end
 
 function action_config_save()
 	local content = http.formvalue("content") or ""
+	if content == "" then
+		return json_response(400, { ok = false, message = "Config content is empty" })
+	end
+	-- Reject binary/null bytes to prevent corrupt writes
+	-- 禁止 null 字节，防止写入损坏数据
+	if content:find("\000") then
+		return json_response(400, { ok = false, message = "Config content contains null bytes" })
+	end
 	local tmp = CONFIG_PATH .. ".tmp." .. tostring(math.random(10000, 99999))
 	os.execute("mkdir -p /opt/ikuai-bypass")
 	local f = io.open(tmp, "w")

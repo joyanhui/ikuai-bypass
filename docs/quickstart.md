@@ -124,9 +124,7 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 - **Linux / OpenWrt CLI 服务**：执行 `curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh`
 - **OpenWrt LuCI 面板**：执行 `opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk`
 - **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本](openwrt-service-install.md)
-- **Docker**：`docker run -itd --name ikuai-bypass --restart=always -e APP_RUN_MODE=ispdomain -p 19001:19001 -v ./data:/etc/ikuai-bypass joyanhui/ikuai-bypass:latest`，启动后在网页界面配置
-- **iKuai v4 应用市场**：上传 `.ipkg` 包安装
-- **Unraid / 群晖**：Docker 套件中搜索 `joyanhui/ikuai-bypass`，映射端口和配置目录
+- **Docker / LXC / 群晖 / Unraid**：详见[部署方案完整文档](deployment.md)
 
 [查看部署方案完整文档](deployment.md)
 

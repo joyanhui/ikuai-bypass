@@ -3,17 +3,19 @@ title: 分流模式：运营商 vs IP 分组
 nav_order: 4
 ---
 
-{% include head_custom_mermaid.html %}
-
 # 爱快两种分流模式解析
 
 本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。运行 CLI 时通过 `-m` 参数选择分流模式，详见 [CLI 参数说明](cli-params.html#分流模式--m)。
+
+{% include head_custom_mermaid.html %}
 
 ## 网络拓扑总览
 
 <pre class="mermaid">
 graph TD
-    Client[内网客户端&lt;br&gt;IP: 192.168.1.X]
+    Client1[内网客户端&lt;br&gt;IP: 192.168.1.X]
+    Client2[内网客户端&lt;br&gt;IP: 192.168.1.X]
+    Client3[内网客户端&lt;br&gt;IP: 192.168.1.X]
     iKuai[iKuai 主路由&lt;br&gt;网关: 192.168.1.1]
     Check{iKuai 端口分流规则 / 域名分流}
     WAN1_ISP[爱快物理 WAN1 接口&lt;br&gt;拨号/静态公网]
@@ -24,7 +26,9 @@ graph TD
     WAN2_ISP[爱快物理 WAN2 接口&lt;br&gt;专线/特殊出口]
     Global_Web[海外/特殊网络&lt;br&gt;GitHub、Google 等]
 
-    Client -->|发出流量请求| iKuai
+    Client1 -->|发出流量请求| iKuai
+    Client2 -->|发出流量请求| iKuai
+    Client3 -->|发出流量请求| iKuai
     iKuai --> Check
     Check -->|方式一：匹配国内IP/域名| WAN1_ISP
     WAN1_ISP -->|直连高带宽| China_Web
@@ -53,6 +57,7 @@ graph TD
 2. **规则同步**：本工具将目标 IP 列表导入 iKuai 的"自定义运营商"。iKuai 会认为这些 IP 属于该"虚拟运营商"，从而将流量转发给 OpenWrt。
 
 **数据流向：**
+
 ```
 客户端 → iKuai 路由 → 端口分流（下一跳指向 OpenWrt）
                         → OpenWrt 插件处理
@@ -85,6 +90,7 @@ graph TD
 2. **策略路由**：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组的流量，将其"下一跳网关"指向 OpenWrt 的 IP。
 
 **数据流向：**
+
 ```
 客户端 → iKuai 路由 → iKuai 物理 WAN1 接口 → 国内目标网站
 （国内流量不受影响，直接硬件转发）
@@ -93,5 +99,3 @@ graph TD
 **特点**：配置简单直接，OpenWrt 宕机时匹配到该分组的规则将无法上网。
 
 **参考文档**：[实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7) 或 [恩山y2kji的教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)。
-
-

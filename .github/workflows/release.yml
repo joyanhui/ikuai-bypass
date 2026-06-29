@@ -1763,6 +1763,14 @@ jobs:
           {
             echo "## 变更"
             echo
+            echo "> [ikuai-bypass v4.2.0](https://github.com/${REPO}/releases/tag/v4.2.0) 是支持爱快3.7.x的最后一个版本，最版只支持爱快v4.x"
+            echo
+            echo "> 爱快≥ 4.0.210的端口分流mode 不可以使用5，爱快≥ 4.0.210的主备模式是6 [详情](https://joyanhui.github.io/ikuai-bypass/ikuai-firmware-4.0.210-port-streaming-mode-fix.html)"
+            echo
+            echo "### 主要更新"
+            echo
+            echo "请参考日志： https://joyanhui.github.io/ikuai-bypass/updatelog.html"
+            echo
 
             commits=""
             if [ -n "${base_tag}" ]; then

@@ -373,6 +373,12 @@ window.ikbReloadConfig = function() { ikbLoadConfig(); };
 	})();
 </script>
 
+<style>
+.ikb-subtab { padding:.4rem .8rem; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
+.ikb-subtab.cbi-tab { font-weight:700; border-bottom-color:currentColor; }
+.ikb-subtab.cbi-tab-disabled { opacity:.65; }
+</style>
+
 <div style="margin-bottom:.5rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
 	<select id="ikb-lang" onchange="ikbSetLang(this.value)" style="min-width:auto">
 		<option value="zh">中文</option>
@@ -453,8 +459,8 @@ window.ikbReloadConfig = function() { ikbLoadConfig(); };
 		<a href="https://github.com/joyanhui/ikuai-bypass/" target="_blank">GitHub</a>
 	</div>
 	<div style="display:flex;gap:0;border-bottom:1px solid #ccc;margin:0 1rem">
-		<div class="cbi-tab ikb-subtab" data-subtab="basic" onclick="return ikbClick(event, function(){ ikbSwitchConfigTab('basic') })" data-i18n="tabBasic" style="padding:.4rem .8rem;cursor:pointer;font-weight:600;border:1px solid #ccc;border-bottom:1px solid #fff;margin-bottom:-1px;background:#fff;border-radius:3px 3px 0 0">基本</div>
-		<div class="cbi-tab-disabled ikb-subtab" data-subtab="advanced" onclick="return ikbClick(event, function(){ ikbSwitchConfigTab('advanced') })" data-i18n="tabAdvanced" style="padding:.4rem .8rem;cursor:pointer;border:1px solid transparent;border-bottom:1px solid #ccc;margin-bottom:-1px;background:#f6f6f6;border-radius:3px 3px 0 0">高级</div>
+		<div class="cbi-tab ikb-subtab" data-subtab="basic" onclick="return ikbClick(event, function(){ ikbSwitchConfigTab('basic') })" data-i18n="tabBasic">基本</div>
+		<div class="cbi-tab-disabled ikb-subtab" data-subtab="advanced" onclick="return ikbClick(event, function(){ ikbSwitchConfigTab('advanced') })" data-i18n="tabAdvanced">高级</div>
 	</div>
 	<div class="ikb-subpanel" data-ikb-subpanel="basic">
 		<div class="cbi-value"><label class="cbi-value-title" data-i18n="webuiEnable">启用 WebUI</label><div class="cbi-value-field"><input type="checkbox" id="ikb-webui-enable" onchange="syncFormToTextarea()" class="cbi-input-checkbox" /></div></div>

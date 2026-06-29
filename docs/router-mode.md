@@ -51,8 +51,6 @@ graph TD
     style Check fill:#ff9,stroke:#333,stroke-width:2px
 ```
 
-> GitHub Pages 默认主题不支持 Mermaid。如果流程图未显示，参考文末启用方法。
-
 ---
 
 ### 1. 自定义运营商分流模式 (推荐)
@@ -107,15 +105,4 @@ graph TD
 
 **参考文档**：[实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7) 或 [恩山y2kji的教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)。
 
----
 
-## Mermaid 启用方法
-
-如果流程图未正常渲染，在 Jekyll 模板中（`_includes/head.html` 或相应位置）加入以下脚本即可：
-
-```html
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true });
-</script>
-```

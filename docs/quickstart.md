@@ -25,43 +25,43 @@ nav_order: 2
 
 ## 一键安装
 
-### Linux / OpenWrt CLI 服务
+### Linux 安装 CLI 服务
 
-如果你在使用 Linux 服务器、OpenWrt 路由器或任何支持 `curl | sh` 的环境，并希望直接安装 CLI 二进制和系统服务：
+如果你在使用 Linux 服务器/LXC/OpenWRT，并希望直接安装 CLI 二进制和系统服务：
 
 ```bash
 curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh
 ```
 
-安装脚本会自动检测你的系统架构，下载对应 CLI 二进制文件，注册为系统服务（systemd 或 init.d）并启动 WebUI。详情可参考 [install.sh 源码](install.sh)。
+安装脚本会自动检测你的系统架构，下载对应 CLI 二进制文件，注册为系统服务（systemd 或 init. y）并启动 WebUI。这个脚本支持较新的ubuntu/debian/openwrt 等linux发行版。
 
 ### OpenWrt LuCI 面板
 
-如果你只想在 OpenWrt 管理界面里安装 LuCI 面板，直接安装最新正式版 IPK：
+如果你只想在 OpenWrt 管理界面里安装 可视化管理面板，直接安装最新正式版 IPK：
 
 ```bash
 opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk
 ```
 
-该命令会通过 GitHub `releases/latest/download` 自动指向最新正式 release 里的 `ikuai-bypass-luci-openwrt-all.ipk`。
+安装后会有一个可视化的面板 你可以在这个可视化面板完成 更新和安装 iKuaiBypass的cli版本为系统服务 并可以检查和配置某些常用配置项
 
 ## 手动下载
 
 从 [Releases](https://github.com/joyanhui/ikuai-bypass/releases) 下载适合你系统的版本。
 
-| 场景 | 推荐下载 |
-| :--- | :--- |
-| Windows 桌面 | `ikuai-bypass-gui-windows-x86_64.exe.zip` 解压即可 |
-| macOS 桌面 | `ikuai-bypass-gui-macos-aarch64.dmg`（M芯片）或 `x86_64.dmg`（Intel） |
-| Linux 桌面 | `ikuai-bypass-gui-linux-x86_64.zip` 解压后运行（需系统已安装 WebKitGTK/GTK3） |
-| Android | `.apk` |
-| iOS | `.ipa`（仅支持自签名或越狱设备） |
-| 服务器/路由器/容器 | CLI 版本 `ikuai-bypass-cli-linux-xxx.zip` |
-| LXC/PVE CT 容器 | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz` |
-| Docker | [joyanhui/ikuai-bypass](https://hub.docker.com/r/joyanhui/ikuai-bypass/tags) |
-| iKuai v4 应用市场 | `ikuai-bypass-x86_64.ipkg`，在爱快"高级应用 -> 应用市场 -> 本地安装"上传 |
+| 场景               | 推荐下载                                                                      |
+| :----------------- | :---------------------------------------------------------------------------- |
+| Windows 桌面       | `ikuai-bypass-gui-windows-x86_64.exe.zip` 解压                                |
+| macOS 桌面         | `ikuai-bypass-gui-macos-aarch64.dmg`（M芯片）或 `x86_64.dmg`（Intel）         |
+| Linux 桌面         | `ikuai-bypass-gui-linux-x86_64.zip` 解压后运行（需系统已安装 WebKitGTK/GTK3） |
+| Android            | `.apk` 侧载安装                                                               |
+| iOS                | `.ipa`（仅支持自签名或越狱设备）                                              |
+| 服务器/路由器/容器 | CLI 版本 `ikuai-bypass-cli-linux-xxx.zip`                                     |
+| LXC/PVE CT 容器    | `ikuai-bypass-lxc-alpine-musl-x86_64.tar.gz`                                  |
+| Docker             | [joyanhui/ikuai-bypass](https://hub.docker.com/r/joyanhui/ikuai-bypass/tags)  |
+| iKuai v4 应用市场  | `ikuai-bypass-x86_64.ipkg`，在爱快"高级应用 -> 应用市场 -> 本地安装"上传      |
 
-> **新手建议**：如果你在电脑上使用，直接下载 GUI 版本即可；Windows / Linux 解压后运行，macOS 打开 DMG 安装，无需命令行。
+> **新手建议**：如果你在电脑上使用，直接下载 GUI 版本即可；Windows / Linux 解压后运行，macOS 打开 DMG 安装，无需命令行，或者安卓手机版也不错。
 
 ## 配置
 
@@ -69,9 +69,9 @@ opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/i
 
 ```yaml
 # 爱快路由器地址和登录信息
-ikuai-url: http://192.168.9.1   # 改成你的爱快地址
-username: admin                   # 登录用户名
-password: your_password           # 登录密码
+ikuai-url: http://192.168.9.1 # 改成你的爱快地址
+username: admin # 登录用户名
+password: your_password # 登录密码
 
 # 定时更新（每天早上7点）
 cron: "0 7 * * *"

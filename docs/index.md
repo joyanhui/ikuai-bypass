@@ -27,7 +27,7 @@ permalink: /
 
 ## 📦 部署
 
-- [部署方案总览](deployment.md) — Docker、CLI、ipkg、Unraid 全场景
+- [部署方案总览](deployment.md) — Docker、CLI、ipkg、PVE、Unraid 全场景
 - [OpenWRT 安装为系统服务](openwrt-service-install) — 开机自启配置
 - [iKuai v4 应用市场 ipkg 安装](ikuai-v4-ipkg-install-guide) — 直接在爱快中安装
 

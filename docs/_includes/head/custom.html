@@ -31,7 +31,7 @@
       var pre = code.parentNode;
       var div = document.createElement('div');
       div.className = 'mermaid-container';
-      div.dataset.source = code.innerHTML.replace(/<br\s*\/?>/gi, '<br/>');
+      div.dataset.source = code.textContent;
       pre.parentNode.replaceChild(div, pre);
     });
   }

@@ -17,7 +17,16 @@
   }
 }
 
-/* Mermaid subgraph labels: override default theme's near-white titleColor (#F9FFFE) */
-.mermaid-container foreignObject span[style*="F9FFFE"] {
-  color: #333 !important;
+/* Mermaid subgraph labels: white text with dark outline for readability on any fill */
+.mermaid-container g.cluster foreignObject span,
+.mermaid-container g[class*="cluster"] foreignObject span,
+.mermaid-container foreignObject span[style*="FFF"],
+.mermaid-container foreignObject span[style*="fff"] {
+  color: #fff !important;
+  text-shadow:
+    -0.5px -0.5px 0 #222,
+     0.5px -0.5px 0 #222,
+    -0.5px  0.5px 0 #222,
+     0.5px  0.5px 0 #222 !important;
+  font-weight: 600 !important;
 }

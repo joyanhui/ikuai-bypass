@@ -12,31 +12,29 @@
     if (typeof mermaid === 'undefined') return;
     mermaid.initialize({
       startOnLoad: false,
-      theme: getTheme(),
-      themeVariables: {
-        titleColor: '#333'
-      }
+      theme: getTheme()
     });
-    const containers = document.querySelectorAll('.mermaid-container');
-    for (let i = 0; i < containers.length; i++) {
-      const div = containers[i];
-      const source = div.dataset.source;
+    var containers = document.querySelectorAll('.mermaid-container');
+    for (var i = 0; i < containers.length; i++) {
+      var div = containers[i];
+      var source = div.dataset.source;
       if (!source) continue;
-      const id = 'mermaid-' + Date.now() + '-' + i;
+      var id = 'mermaid-' + Date.now() + '-' + i;
       try {
-        const result = await mermaid.render(id, source);
+        var result = await mermaid.render(id, source);
         div.innerHTML = result.svg;
       } catch (err) {
         div.innerHTML = '<div style="color:var(--text-danger,#c00);padding:1rem;border:1px solid currentColor;border-radius:4px">Mermaid error: ' + err.message + '</div>';
       }
     }
-    // Safety net: fix any subgraph labels still using the default light titleColor
+    // White text with dark outline for subgraph labels, readable on any fill
+    var shadow = '-0.5px -0.5px 0 #222, 0.5px -0.5px 0 #222, -0.5px 0.5px 0 #222, 0.5px 0.5px 0 #222';
     containers.forEach(function(div) {
-      div.querySelectorAll('g foreignObject span').forEach(function(sp) {
-        var c = sp.style.color;
-        if (c === '#F9FFFE' || c === '#f9fffe' || c === '#fff' || c === 'white' || c === '#ffffff') {
-          sp.style.setProperty('color', '#333', 'important');
-        }
+      // Select: subgraph label spans inside cluster groups
+      div.querySelectorAll('g.cluster foreignObject span, g[class*="cluster"] foreignObject span, foreignObject span[style*="FFF"], foreignObject span[style*="fff"]').forEach(function(sp) {
+        sp.style.setProperty('color', '#fff', 'important');
+        sp.style.setProperty('text-shadow', shadow, 'important');
+        sp.style.setProperty('font-weight', '600', 'important');
       });
     });
   }

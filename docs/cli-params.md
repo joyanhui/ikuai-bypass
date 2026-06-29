@@ -39,3 +39,13 @@ nav_order: 12
 | `ii` | 运营商和域名分流+IPv4分组混合模式 |
 | `ip` | IPv4 + IPv6 分组 |
 | `iip` | 完整混合模式 ips+domain+ipv4+ipv6 |
+
+## 三优先级规则
+
+从 v4.4.108 开始，`-r` 运行模式和 `-m` 分流模式的值由三优先级决定：
+
+1. **CLI 参数优先** — 传了 `-r` / `-m` 就用传的值
+2. **config.yml 次之** — 未传 CLI 参数时，读取配置文件中的 `run-mode:` / `mode:` 字段
+3. **硬编码默认值兜底** — 都未设置时，运行模式默认 `cronAft`，分流模式默认 `ispdomain`
+
+> 修改 config.yml 中的 `run-mode:` 或 `mode:` 后需要重启服务进程才能生效。

@@ -6,6 +6,14 @@ nav_order: 9999
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
 
+## v4.4.108 (2026-06-29)
+
+- 新增 `run-mode` / `mode` 配置字段，支持三优先级解析（CLI 参数 > config.yml > 默认值）
+- 修复 `spdomain` 拼写错误为 `ispdomain`（旧版 config.yml 中 `mode: spdomain` 会导致 CLI 启动失败）
+- WebUI 运行时 chip 选择与 rawYaml 双向同步；标签切换时编辑器内容同步
+- CLI `-r` / `-m` 改为 `Option<String>`，不再强设默认值，由配置文件和默认值共同决定
+- LuCI IPK Config 子 tab 布局样式修复
+
 ## v4.4.107 (2026-06-29)
 
 - OpenWrt LuCI IPK 重大升级：完整双语标签页界面、配置文件在线编辑器（备份/恢复）、插件自更新、自卸载（双重确认）、步骤进度+实时日志、代理配置模态框

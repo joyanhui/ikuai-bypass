@@ -108,12 +108,22 @@ case "${1:-status}" in
 		printf '[IKB] 2/3 正在请求 GitHub API...\n'
 		api_url="https://api.github.com/repos/joyanhui/ikuai-bypass/releases/latest"
 		latest_tag=""
+		local api_resp=""
 		if command -v curl >/dev/null 2>&1; then
-			latest_tag="$(curl -fsSL "${api_url}" --connect-timeout 10 --max-time 30 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+			api_resp="$(curl -fsSL -A "ikuai-bypass-luci/1.0" "${api_url}" --connect-timeout 10 --max-time 30 2>/dev/null)" || true
+			latest_tag="$(printf "%s" "${api_resp}" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
 		elif command -v wget >/dev/null 2>&1; then
-			latest_tag="$(wget -qO- "${api_url}" --timeout=30 2>/dev/null | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
+			api_resp="$(wget -qO- --header="User-Agent: ikuai-bypass-luci/1.0" "${api_url}" --timeout=30 2>/dev/null)" || true
+			latest_tag="$(printf "%s" "${api_resp}" | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "\(.*\)",.*/\1/')"
 		fi
-		[ -n "${latest_tag}" ] || fail "Could not extract version from API"
+		if [ -z "${latest_tag}" ]; then
+			local api_msg="$(printf "%s" "${api_resp}" | grep '"message"' | head -1 | sed 's/.*"message": *"\(.*\)"[,}].*/\1/')"
+			if [ -n "${api_msg}" ]; then
+				fail "GitHub API: ${api_msg}"
+			else
+				fail "Could not extract version from API (check proxy/network and try again)"
+			fi
+		fi
 		printf 'latest_version=%s\n' "${latest_tag}"
 		;;
 	luci-update)

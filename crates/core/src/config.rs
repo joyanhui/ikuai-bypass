@@ -451,3 +451,60 @@ pub fn validate_save_path(path: &Path) -> Result<(), ConfigError> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_apply_defaults_empty_fields() {
+        let raw = r#"
+username: admin
+password: admin888
+ikuai-url: http://192.168.1.1
+cron: 0 7 * * *
+"#;
+        let cfg = Config::load_from_yaml_str(raw).unwrap();
+        assert_eq!(cfg.run_mode, "cronAft", "empty run-mode should default to cronAft");
+        assert_eq!(cfg.module, "ispdomain", "empty module should default to ispdomain");
+    }
+
+    #[test]
+    fn test_apply_defaults_preserves_set_values() {
+        let raw = r#"
+username: admin
+password: admin888
+ikuai-url: http://192.168.1.1
+cron: 0 7 * * *
+run-mode: once
+mode: ipgroup
+"#;
+        let cfg = Config::load_from_yaml_str(raw).unwrap();
+        assert_eq!(cfg.run_mode, "once", "explicit run-mode should be kept");
+        assert_eq!(cfg.module, "ipgroup", "explicit mode should be kept");
+    }
+
+    #[test]
+    fn test_apply_defaults_old_spdomain_is_rejected() {
+        let raw = r#"
+username: admin
+password: admin888
+ikuai-url: http://192.168.1.1
+cron: 0 7 * * *
+mode: spdomain
+"#;
+        let cfg = Config::load_from_yaml_str(raw).unwrap();
+        assert_eq!(cfg.module, "spdomain", "apply_defaults does NOT fix spdomain");
+        assert!(
+            crate::runner::validate_module(&cfg.module).is_err(),
+            "spdomain should fail validate_module"
+        );
+    }
+
+    #[test]
+    fn test_embedded_default_has_correct_mode() {
+        let cfg = Config::load_embedded_default().unwrap();
+        assert_eq!(cfg.run_mode, "cronAft");
+        assert_eq!(cfg.module, "ispdomain");
+    }
+}

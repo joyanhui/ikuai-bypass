@@ -37,8 +37,6 @@ nav_order: 4
 
 **参考文档**：[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。
 
-{% include head_custom_mermaid.html %}
-
 
 
 ```mermaid

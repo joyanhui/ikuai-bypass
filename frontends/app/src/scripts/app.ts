@@ -926,6 +926,11 @@ const initMainTabs = () => {
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const tabName = tab.dataset.tab || 'runtime';
+      const currentActive = document.querySelector('.main-tab.active') as HTMLElement | null;
+      const currentName = currentActive?.dataset.tab;
+      if (currentName === 'config' && state.selectedConfigTab === 'raw') {
+        if (!applyRawEditorToState()) return;
+      }
       apply(tabName, tab);
     });
   });

@@ -129,10 +129,13 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 		}
 
 		function switchTab(name) {
+			var activeTab = document.querySelector(".ikb-tab.cbi-tab");
+			if (activeTab && activeTab.getAttribute("data-tab") === "config") syncFormToTextarea();
 			var tabs = document.querySelectorAll(".ikb-tab");
 			var panels = document.querySelectorAll(".ikb-panel");
 			for (var i = 0; i < tabs.length; i++) tabs[i].className = "ikb-tab cbi-tab" + (tabs[i].getAttribute("data-tab") === name ? "" : "-disabled");
 			for (var j = 0; j < panels.length; j++) panels[j].style.display = panels[j].getAttribute("data-panel") === name ? "block" : "none";
+			if (name === "config") syncTextareaToForm();
 		}
 
 		function renderStatus(data) {

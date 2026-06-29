@@ -3,6 +3,8 @@ title: 分流模式：运营商 vs IP 分组
 nav_order: 4
 ---
 
+{% include head_custom_mermaid.html %}
+
 # 爱快两种分流模式解析
 
 本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。运行 CLI 时通过 `-m` 参数选择分流模式，详见 [CLI 参数说明](cli-params.html#分流模式--m)。

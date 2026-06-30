@@ -117,8 +117,6 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 
 无需命令行，下载对应平台版本直接运行。桌面版支持 Windows / macOS / Linux；手机版支持 Android（APK）和 iOS（需自签名或越狱）。Linux 需已安装 `WebKitGTK` 和 `GTK3`。支持一键运行/停止和实时日志查看。
 
-[查看 WebUI 与 GUI 完整文档](/webui-gui/)
-
 ## 部署方案
 
 - **桌面用户/手机用户**：下载对应 GUI 版本直接运行即可

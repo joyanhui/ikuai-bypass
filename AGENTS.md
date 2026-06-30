@@ -14,6 +14,7 @@
 - `apps/gui/`：Tauri v2 后端
 - `config.yml`：示例配置
 - `api-docs/`: 爱快4.x api抓包记录
+- `docs/`: Jekyll + GitHub Pages 文档站，本地预览执行 `docs/docs_dev.sh`
 - `golang_archive/`：Go 版本归档，除非用户明确要求，否则不要把新功能继续做进归档目录
 
 ## 集成测试约定

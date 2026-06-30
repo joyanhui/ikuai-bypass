@@ -3,9 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-DOCS_DIR="$SCRIPT_DIR/docs"
 
-cd "$DOCS_DIR"
+cd "$SCRIPT_DIR"
 
 if ! command -v ruby >/dev/null 2>&1; then
     echo "Error: Ruby is not installed."

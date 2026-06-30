@@ -1,0 +1,15 @@
+# Obsidian 运行时文件（非配置类）
+.obsidian/workspace.json
+.obsidian/graph.json
+.obsidian/cache/
+.obsidian/plugins/*/data.json
+
+# Obsidian 回收站
+.trash/
+
+# 可能含有安全风险的文件
+**/.env
+**/.env.*
+**/*.secret.*
+**/secret.*
+**/credentials*

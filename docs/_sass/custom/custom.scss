@@ -1,0 +1,77 @@
+// Default: TOC hidden
+.ikb-toc {
+  display: none;
+}
+
+// On wide screens (>= 120rem = 1920px):
+//    - widen content to 120rem
+//    - add right padding to accommodate TOC
+//    - show TOC on the right
+@media (min-width: 120rem) {
+  .main {
+    max-width: none;
+  }
+  .side-bar {
+    width: calc((100% - 120rem) / 2 + 16.5rem);
+  }
+  .side-bar + .main {
+    margin-left: Max(16.5rem, calc((100% - 120rem) / 2 + 16.5rem));
+  }
+  .main-content-wrap {
+    max-width: 120rem;
+    padding-right: 16rem;
+  }
+
+  .ikb-toc {
+    display: block;
+    position: fixed;
+    top: 6rem;
+    right: 2rem;
+    width: 13rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    z-index: 10;
+
+    .ikb-toc-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: $link-color;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    li {
+      margin-bottom: 0.25rem;
+      a {
+        color: $body-text-color;
+        text-decoration: none;
+        &:hover {
+          color: $link-color;
+        }
+      }
+      &.ikb-toc-sub {
+        padding-left: 0.75rem;
+        a {
+          color: $body-text-color;
+          font-size: 0.7rem;
+        }
+      }
+    }
+  }
+}
+
+// Hide nav entries for redirect pages
+.nav-list-link[href*="proxy-vs-github"],
+.nav-list-link[href*="port-streaming"],
+.nav-list-link[href*="v4.4.13"],
+.nav-list-link[href*="404"] {
+  display: none;
+}

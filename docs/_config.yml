@@ -1,51 +1,64 @@
 title: iKuai Bypass
-subtitle: 爱快路由分流工具
 description: 爱快路由器专用的分流规则自动同步工具
 baseurl: /ikuai-bypass
 url: https://joyanhui.github.io
-remote_theme: mmistakes/minimal-mistakes
+remote_theme: just-the-docs/just-the-docs
 
-minimal_mistakes_skin: "default"
-
-search: true
-search_provider: lunr
-lunr:
-  search_within_pages: true
-
-# Mermaid support (loaded on-demand via page.mermaid frontmatter)
+search_enabled: true
 
 # Favicon
-favicon: "/favicon.ico"
+favicon_ico: "/favicon.ico"
+
+# Mermaid support (just-the-docs built-in)
+mermaid:
+  version: "10.9.0"
+
+# Enable right-side TOC (built-in in v0.12)
+toc: true
+
+# Color scheme: default follows system preference, toggle via JS sets data-theme
+color_scheme: nil
 
 # Permalink format
 permalink: /:path/
-
-# Default layout for all pages
-defaults:
-  - scope:
-      path: ""
-      type: pages
-    values:
-      layout: single
-      sidebar:
-        nav: "docs"
 
 # Include processing
 include:
   - .htaccess
 
-# Plugins used
-plugins:
-  - jekyll-include-cache
+# Footer
+footer_content: "Copyright &copy; 2026 iKuai Bypass. Powered by Jekyll &amp; Just the Docs."
 
-footer:
-  links:
-    - label: "GitHub"
-      icon: "fab fa-fw fa-github"
-      url: "https://github.com/joyanhui/ikuai-bypass"
-    - label: "Releases"
-      icon: "fas fa-fw fa-download"
-      url: "https://github.com/joyanhui/ikuai-bypass/releases"
+# Back to top
+back_to_top: true
+back_to_top_text: "回到顶部"
 
-after_footer_scripts:
-  - /assets/js/dark-mode.js
+# Heading anchors
+heading_anchors: true
+
+# Aux links (top right)
+aux_links:
+  "GitHub":
+    - "https://github.com/joyanhui/ikuai-bypass"
+  "Releases":
+    - "https://github.com/joyanhui/ikuai-bypass/releases"
+
+# Edit link (optional)
+gh_edit_link: true
+gh_edit_link_text: "在 GitHub 上编辑此页"
+gh_edit_repository: "https://github.com/joyanhui/ikuai-bypass"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "tree"
+
+# Callouts (Just the Docs feature)
+callouts:
+  tip:
+    title: 提示
+    color: purple
+  warning:
+    title: 警告
+    color: red
+  note:
+    title: 注意
+    color: blue

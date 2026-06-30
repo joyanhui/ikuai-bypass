@@ -1,7 +1,6 @@
 ---
 title: 更新日志：版本历史
-toc: true
-toc_sticky: true
+nav_order: 5
 ---
 
 # 更新日志

@@ -1,7 +1,6 @@
 ---
 title: FAQ - 常见问题
-toc: true
-toc_sticky: true
+nav_order: 4
 ---
 
 # FAQ - 常见问题

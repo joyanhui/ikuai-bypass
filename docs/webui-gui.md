@@ -1,7 +1,7 @@
 ---
 title: WebUI 与 GUI 可视化操作
-toc: true
-toc_sticky: true
+parent: 🚀 快速上手与入门指南
+nav_order: 2
 ---
 # WebUI 与 GUI
 

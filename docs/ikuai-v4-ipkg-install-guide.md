@@ -1,7 +1,7 @@
 ---
 title: 爱快应用市场 ipkg 安装
-toc: true
-toc_sticky: true
+parent: 部署方案纵览
+nav_order: 2
 ---
 ## iKuai v4 应用市场 ipkg 安装说明
 

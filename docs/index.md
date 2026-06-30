@@ -1,8 +1,7 @@
 ---
 title: 首页
-layout: splash
 permalink: /
-sidebar: false
+nav_order: 1
 ---
 
 # iKuai Bypass

@@ -1,7 +1,6 @@
 ---
 title: 爱快4.0.210以上版本后端口分流参数错误
-sitemap: false
-sidebar: false
+nav_exclude: true
 ---
 
 此页面已迁移至 [FAQ - 常见问题 - 爱快固件兼容性：端口分流参数变更](/faq/#爱快固件兼容性端口分流参数变更)。

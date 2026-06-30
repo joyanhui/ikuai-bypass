@@ -1,7 +1,7 @@
 ---
 title: 🚀 快速上手与入门指南
-toc: true
-toc_sticky: true
+nav_order: 2
+has_children: true
 ---
 
 # 🚀 快速上手与入门指南

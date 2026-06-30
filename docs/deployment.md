@@ -1,7 +1,7 @@
 ---
 title: 部署方案纵览
-toc: true
-toc_sticky: true
+nav_order: 3
+has_children: true
 ---
 # 部署方案
 

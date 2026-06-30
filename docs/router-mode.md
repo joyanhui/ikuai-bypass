@@ -1,7 +1,7 @@
 ---
 title: 分流模式：运营商 vs IP 分组
-toc: true
-toc_sticky: true
+parent: 🚀 快速上手与入门指南
+nav_order: 1
 mermaid: true
 ---
 
@@ -75,7 +75,7 @@ graph TD
     
     style iKuai_Sys fill:#fff5f5,stroke:#f87171,stroke-width:2px
     style Proxy_Sys fill:#f0fdf4,stroke:#4ade80,stroke-width:2px
-    style LAN_Clients fill:#f8fafc,stroke:#cbd5e1,stroke-width:1px
+
     
     style Check fill:#fbbf24,stroke:#d97706,stroke-width:2px
     style NextHop fill:#38bdf8,stroke:#0284c7,stroke-width:1px

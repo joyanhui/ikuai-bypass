@@ -23,12 +23,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "faq.md",
+                "file": "router-mode.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "faq"
+              "title": "router-mode"
             }
           }
         ],
@@ -105,7 +105,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "faq.md",
+                "file": "router-mode.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -115,7 +115,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "faq 的反向链接列表"
+              "title": "router-mode 的反向链接列表"
             }
           },
           {
@@ -124,12 +124,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "faq.md",
+                "file": "router-mode.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "faq 的出链列表"
+              "title": "router-mode 的出链列表"
             }
           },
           {
@@ -167,13 +167,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "faq.md",
+                "file": "router-mode.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "faq 的大纲"
+              "title": "router-mode 的大纲"
             }
           }
         ]
@@ -196,11 +196,25 @@
   },
   "active": "77bf5ab77ea47c16",
   "lastOpenFiles": [
-    "favicon.ico",
-    "updatelog.md",
-    "faq.md",
-    "router-mode.md",
+    "docs_dev.sh",
+    "_sass/custom/custom.scss",
+    "_site/assets/js/custom.js",
+    "_sass/custom",
+    "_sass",
+    "_includes/head_custom.html",
+    "assets/js/custom.js",
+    "assets/js",
+    "assets",
+    "_includes",
+    "_site/assets/js/vendor/lunr.min.js",
+    "_site/assets/images/small-image.jpg",
+    "_site/assets/images/large-image.jpg",
+    "deployment.md",
+    "cli-params.md",
     "quickstart.md",
+    "faq.md",
+    "updatelog.md",
+    "router-mode.md",
     "index.md"
   ]
 }

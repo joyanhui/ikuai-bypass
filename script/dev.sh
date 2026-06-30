@@ -28,6 +28,29 @@ frontend_build() {
     bun run build
 }
 
+docs_dev() {
+    cd "${PROJECT_ROOT}/docs"
+    if ! command -v ruby >/dev/null 2>&1; then
+        echo "Error: Ruby is not installed."
+        echo "  Ubuntu/Debian: sudo apt install ruby-full"
+        echo "  NixOS: nix shell nixpkgs#ruby nixpkgs#bundler"
+        exit 1
+    fi
+    if ! command -v bundle >/dev/null 2>&1; then
+        echo "Installing Bundler..."
+        gem install bundler
+    fi
+    bundle install
+    echo "Starting Jekyll dev server at http://127.0.0.1:4000"
+    exec bundle exec jekyll serve \
+        --baseurl '' \
+        --watch \
+        --livereload \
+        --host 127.0.0.1 \
+        --port 4000
+}
+
+
 gui_dev() {
     if [[ "${1:-}" == "--" ]]; then
         shift
@@ -76,7 +99,7 @@ print_usage() {
     echo "  gui:dev                           运行 GUI(App)（封装/复用 CLI 完整能力）"
     echo ""
     echo "  （可选附带能力）"
-    echo "  webui:dev                         启动 Astro dev server（仅前端调试）"
+    echo "  docs:dev                          启动 Jekyll 文档站（localhost:4000）"
     echo "  webui:build                       构建 Astro dist（供 CLI/Tauri 加载）"
 }
 
@@ -87,6 +110,9 @@ case "${1:-}" in
             shift
         fi
         cli_dev "$@"
+        ;;
+    docs:dev)
+        docs_dev
         ;;
     webui:dev)
         shift

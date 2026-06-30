@@ -2,7 +2,7 @@
   description = "iKuai Bypass development shell (Rust 主线版本)";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-25.11";
+    nixpkgs.url = "nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -24,9 +24,9 @@
           pkgs.nss
           pkgs.cups
           pkgs.expat
-          pkgs.xorg.libxcb
-          pkgs.xorg.libXcomposite
-          pkgs.xorg.libXdamage
+          pkgs.libxcb
+          pkgs.libXcomposite
+          pkgs.libXdamage
           pkgs.libgbm
           pkgs.systemd
           pkgs.alsa-lib
@@ -36,8 +36,7 @@
 
         bootstrapReleaseTools = pkgs.writeShellScriptBin "ikb-bootstrap-release-tools" ''
           set -euo pipefail
-          cargo install cargo-binstall || true
-          cargo binstall -y tauri-cli cross cargo-release
+          cargo binstall -y tauri-cli cross cargo-dist
         '';
       in
       {
@@ -56,7 +55,7 @@
             # 构建工具
             pkg-config
             clang
-            gcc
+            libclang
             cmake
             ninja
             perl
@@ -64,20 +63,41 @@
 
             # 系统库 (Rust/Tauri 依赖)
             openssl
+            openssl.dev
             sqlite
+            zlib
+            zlib.dev
+            glibc.static
 
             # GTK/WebKit (Tauri Linux GUI)
             gtk3
+            gtk3.dev
             glib
+            glib.dev
             cairo
+            cairo.dev
             pango
+            pango.dev
             gdk-pixbuf
+            gdk-pixbuf.dev
             atk
+            atk.dev
+            gsettings-desktop-schemas
             libsoup_3
+            libsoup_3.dev
             webkitgtk_4_1
+            webkitgtk_4_1.dev
             libayatana-appindicator
             librsvg
+            librsvg.dev
             dbus
+            dbus.dev
+            libepoxy
+            libepoxy.dev
+            at-spi2-core
+            at-spi2-core.dev
+            harfbuzz
+            harfbuzz.dev
             xdg-utils
             patchelf
             chromium
@@ -86,42 +106,49 @@
             nss
             cups
             expat
-            xorg.libxcb
-            xorg.libXcomposite
-            xorg.libXdamage
+            libxcb
+            libXcomposite
+            libXdamage
             libgbm
             alsa-lib
 
-            # Rust 工具链
+            # Rust 工具链 (rustup 管理 rustc/cargo 版本，避免与 nixpkgs 版本冲突)
             rustup
-            rustc
-            cargo
-            cargo-release
-            rust-analyzer
-            cargo-nextest
+            cargo-binstall
             cargo-edit
+            cargo-release
+            cargo-nextest
             cargo-zigbuild
+            rust-analyzer
             bootstrapReleaseTools
             sccache
             mold
 
-            # Zig (cross compilation)
-            zig
-            zls
 
             # 前端工具链 (Bun + Astro)
-            nodejs_22
+            nodejs_26
             bun
+            pnpm
             typescript
             typescript-language-server
+            prettier
+
+            # 通用开发辅助工具
+            ripgrep
+            taplo
+            file
+            lsof
+            bc
+            hivemind
           ];
 
           env = {
-            # Rust 编译优化
+            # Rust 编译缓存
             RUSTC_WRAPPER = "sccache";
             SCCACHE_CACHE_SIZE = "10G";
             CARGO_BUILD_JOBS = "16";
-            RUSTFLAGS = "-C link-arg=-fuse-ld=mold";
+            # 清空宿主机继承和 nix 包装器注入的 RUSTFLAGS
+            RUSTFLAGS = "";
 
             # Clang
             LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
@@ -132,6 +159,12 @@
             export CARGO_HOME="$HOME/.cargo"
             export SCCACHE_DIR="$HOME/.cache/sccache"
             export PATH="$HOME/.bun/bin:$PATH:$CARGO_HOME/bin"
+
+            # Nix gcc/clang 包装器注入的环境变量会导致二进制链接到有问题的
+            # libgcc_s.so.1（gcc-15.2.0 IFUNC bug），清除它们让宿主机 gcc 直接工作
+            unset NIX_CC NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
+            unset NIX_LDFLAGS NIX_CFLAGS_COMPILE NIX_CFLAGS_LINK
+
             if [ -n "$LD_LIBRARY_PATH" ]; then
               export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
             else

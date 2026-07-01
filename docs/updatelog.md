@@ -7,6 +7,10 @@ nav_order: 5
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
 
+## v4.4.109 (2026-07-01)
+
+- 修复 iKuai 应用市场和 Docker 镜像默认时区未生效的问题，默认时区设为上海 (Asia/Shanghai)，支持在爱快应用市场自定义时区 [#145](https://github.com/joyanhui/ikuai-bypass/discussions/145) [#146](https://github.com/joyanhui/ikuai-bypass/issues/146)
+
 ## v4.4.108 (2026-06-29)
 
 - 新增 `run-mode` / `mode` 配置字段，支持三优先级解析（CLI 参数 > config.yml > 默认值）

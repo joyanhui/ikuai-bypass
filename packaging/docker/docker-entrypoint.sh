@@ -7,6 +7,9 @@ CONFIG_PATH="${CONFIG_DIR}/config.yml"
 TEMPLATE_PATH="/opt/ikuai-bypass/config.yml"
 RUN_MODULE="${APP_RUN_MODE:-ispdomain}"
 
+TZ="${TZ:-Asia/Shanghai}"
+ln -sf "/usr/share/zoneinfo/${TZ}" /etc/localtime 2>/dev/null || true
+
 mkdir -p "${CONFIG_DIR}"
 
 if [ ! -f "${CONFIG_PATH}" ]; then

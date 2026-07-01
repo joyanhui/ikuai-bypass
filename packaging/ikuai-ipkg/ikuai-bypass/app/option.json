@@ -22,5 +22,16 @@
     "required": true,
     "scope": "config",
     "type": "integer"
+  },
+  {
+    "default": "Asia/Shanghai",
+    "attrname": "TZ",
+    "label": {
+      "en": "Timezone",
+      "zh": "时区"
+    },
+    "required": true,
+    "scope": "environment",
+    "type": "string"
   }
 ]

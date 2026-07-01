@@ -4,6 +4,8 @@ ARG TARGETPLATFORM
 
 RUN apk add --no-cache ca-certificates tzdata unzip
 
+ENV TZ=Asia/Shanghai
+
 WORKDIR /opt/ikuai-bypass
 
 COPY docker/bin /opt/ikuai-bypass/docker/bin

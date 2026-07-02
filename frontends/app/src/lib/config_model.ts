@@ -62,6 +62,7 @@ export type UiConfig = {
     prio: string;
     mode: number;
     ifaceband: string;
+    protocol: string;
   }>;
 };
 
@@ -225,6 +226,7 @@ export function fromBackendMeta(meta: unknown): { cfg: UiConfig; confPath: strin
       prio: asStr(item.prio ?? '0'),
       mode: asNum(item.mode, 0),
       ifaceband: asStr(item.ifaceband ?? '0'),
+      protocol: asStr(item.protocol, 'tcp+udp'),
     };
   });
 
@@ -284,6 +286,7 @@ export function toBackendPayload(ui: UiConfig): JsonRecord {
       prio: Number(i.prio || 0),
       mode: i.mode,
       ifaceband: Number(i.ifaceband || 0),
+      protocol: i.protocol || 'tcp+udp',
     })),
   };
 }

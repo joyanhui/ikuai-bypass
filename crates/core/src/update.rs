@@ -51,6 +51,7 @@ struct StreamIpPortUpdate<'a> {
     prio: i64,
     mode: i64,
     ifaceband: i64,
+    protocol: &'a str,
 }
 
 pub async fn run_update_by_module(
@@ -331,6 +332,7 @@ async fn update_ipgroup(
             prio: item.prio,
             mode: item.mode,
             ifaceband: item.ifaceband,
+            protocol: &item.protocol,
         };
         let res = update_stream_ipport(cfg, api, sink, input).await;
         if let Err(e) = res {
@@ -1005,6 +1007,7 @@ async fn update_stream_ipport(
         prio: input.prio,
         mode: input.mode,
         iface_band: input.ifaceband,
+        protocol: input.protocol,
     };
 
     let res = if let Some((name, id)) = found {

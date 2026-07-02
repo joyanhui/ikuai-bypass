@@ -145,6 +145,7 @@ pub struct StreamIpPortSpec<'a> {
     pub prio: i64,
     pub mode: i64,
     pub iface_band: i64,
+    pub protocol: &'a str,
 }
 
 pub async fn add_stream_ipport(
@@ -181,7 +182,7 @@ pub async fn add_stream_ipport(
         "comment": NEW_COMMENT,
         "type": f_type,
         "mode": spec.mode,
-        "protocol": "tcp+udp",
+        "protocol": if spec.protocol.is_empty() { "tcp+udp" } else { spec.protocol },
         "src_addr": {"custom": src_custom, "object": src_objects},
         "dst_addr": {"custom": dst_custom, "object": dst_objects},
         // iKuai uses *_inv numeric flags for inverse matching on address blocks.
@@ -236,7 +237,7 @@ pub async fn edit_stream_ipport(
         "comment": NEW_COMMENT,
         "type": f_type,
         "mode": spec.mode,
-        "protocol": "tcp+udp",
+        "protocol": if spec.protocol.is_empty() { "tcp+udp" } else { spec.protocol },
         "src_addr": {"custom": src_custom, "object": src_objects},
         "dst_addr": {"custom": dst_custom, "object": dst_objects},
         // iKuai uses *_inv numeric flags for inverse matching on address blocks.

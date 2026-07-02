@@ -1587,6 +1587,18 @@ const RULE_LIST_META: Record<RuleListKey, {
       { key: 'srcAddrOptIpGroup', label: tt('rule.field.src_ip_group'), placeholder: tt('rule.placeholder.src_ip_group') },
       { key: 'srcAddrInv', label: tt('rule.field.src_addr_inv'), type: 'toggle' },
       { key: 'dstAddrInv', label: tt('rule.field.dst_addr_inv'), type: 'toggle' },
+      {
+        key: 'protocol',
+        label: tt('rule.field.protocol'),
+        type: 'select',
+        options: [
+          { value: 'tcp+udp', label: tt('rule.option.protocol.tcp_udp') },
+          { value: 'tcp', label: tt('rule.option.protocol.tcp') },
+          { value: 'udp', label: tt('rule.option.protocol.udp') },
+          { value: 'icmp', label: tt('rule.option.protocol.icmp') },
+          { value: 'any', label: tt('rule.option.protocol.any') },
+        ],
+      },
       { key: 'prio', label: tt('rule.field.prio'), placeholder: '0' },
       {
         key: 'mode',
@@ -1799,7 +1811,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
     ipGroup: { tag: '', url: '' },
     ipv6Group: { tag: '', url: '' },
     streamDomain: { interface: 'wan1', srcAddr: '', srcAddrOptIpGroup: '', url: '', tag: '' },
-    streamIpPort: { optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', srcAddrInv: '0', ipGroup: '', dstAddrInv: '0', prio: '0', mode: 0, ifaceband: '0' },
+    streamIpPort: { optTagName: '', type: '0', interface: 'wan1', nexthop: '', srcAddr: '', srcAddrOptIpGroup: '', srcAddrInv: '0', ipGroup: '', dstAddrInv: '0', prio: '0', mode: 0, ifaceband: '0', protocol: 'tcp+udp' },
   };
   const item = index >= 0 ? list[index] : defaults[listKey];
   if (!item) return;
@@ -1920,6 +1932,7 @@ const openRuleEditor = (listKey: RuleListKey, index: number, readonly: boolean) 
           prio: Number(draft.prio || 0),
           mode: typeof draft.mode === 'number' ? draft.mode : Number(draft.mode || 0),
           ifaceband: Number(draft.ifaceband || 0),
+          protocol: draft.protocol || 'tcp+udp',
         },
       };
       state.rawYaml = upsertYamlSeqItem(state.rawYaml, [pathMap[listKey]], index, payloadMap[listKey]);

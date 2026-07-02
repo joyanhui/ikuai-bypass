@@ -151,6 +151,8 @@ pub struct StreamIpPortItem {
     pub mode: i64,
     #[serde(rename = "ifaceband")]
     pub ifaceband: i64,
+    #[serde(rename = "protocol", default)]
+    pub protocol: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]

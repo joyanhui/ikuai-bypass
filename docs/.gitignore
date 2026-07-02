@@ -2,7 +2,8 @@
 .obsidian/workspace.json
 .obsidian/graph.json
 .obsidian/cache/
-.obsidian/plugins/*/data.json
+.obsidian/community-plugins.json
+.obsidian/plugins/
 
 # Obsidian 回收站
 .trash/

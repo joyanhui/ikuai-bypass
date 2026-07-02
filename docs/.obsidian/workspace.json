@@ -176,12 +176,12 @@
               "title": "router-mode 的大纲"
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -191,10 +191,11 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "bases:新建数据库": false
+      "bases:新建数据库": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "77bf5ab77ea47c16",
+  "active": "887fe4d40d721aea",
   "lastOpenFiles": [
     "docs_dev.sh",
     "_sass/custom/custom.scss",

@@ -191,6 +191,7 @@ describe('config_model', () => {
         prio: 63,
         mode: 6,
         ifaceband: 0,
+        protocol: 'tcp+udp',
       },
     ]);
   });

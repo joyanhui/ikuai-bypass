@@ -98,6 +98,7 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
             prio: 5,
             mode: 6,
             iface_band: 0,
+            protocol: "tcp+udp",
         },
     )
     .await
@@ -121,6 +122,7 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
             prio: 9,
             mode: 6,
             iface_band: 0,
+            protocol: "tcp+udp",
         },
         sip_id,
     )

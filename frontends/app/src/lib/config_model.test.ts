@@ -48,6 +48,7 @@ describe('config_model', () => {
       prio: '5',
       mode: 6,
       ifaceband: '0',
+      protocol: 'tcp+udp',
     });
 
     const payload = toBackendPayload(cfg);
@@ -67,6 +68,7 @@ describe('config_model', () => {
         prio: 5,
         mode: 6,
         ifaceband: 0,
+        protocol: 'tcp+udp',
       },
     ]);
   });
@@ -103,6 +105,7 @@ describe('config_model', () => {
         prio: '0',
         mode: 0,
         ifaceband: '0',
+        protocol: 'tcp+udp',
       },
     ]);
   });

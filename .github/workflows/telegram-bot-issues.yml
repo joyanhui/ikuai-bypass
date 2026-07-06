@@ -1,0 +1,21 @@
+name: Push Issues to Telegram
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            *New Issue Action:* ${{ github.event.action }}
+            *Title:* ${{ github.event.issue.title }}
+            *Created by:* ${{ github.event.issue.user.login }}
+            *Link:* ${{ github.event.issue.html_url }}

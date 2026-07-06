@@ -1,0 +1,24 @@
+name: Push Release to Telegram
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Telegram Message
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🚀 *New Release: ${{ github.event.release.tag_name }}*
+
+            ${{ github.event.release.prerelease == 'true' && '🧪 **Pre-release**' || '✅ **Stable Release**' }}
+
+            ${{ github.event.release.body }}
+
+            🔗 ${{ github.event.release.html_url }}

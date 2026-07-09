@@ -22,7 +22,7 @@ has_children: true
 - **自定义运营商分流模式（推荐）**：旁路由作为 iKuai 的"虚拟运营商"，由 iKuai 内核级调度。旁路由宕机不影响普通流量，终端无需更改网关配置，稳定性极高。
 - **IP 分组与端口分流模式**：将 IP 列表同步到 iKuai 的 IP 分组，通过端口分流将流量指向旁路由。配置简单，旁路由宕机时被分流设备无法上网。
 
-[查看分流模式完整文档]({{ '/router-mode/' | relative_url }})
+[查看分流模式完整文档](router-mode.md)
 
 ## 一键安装
 
@@ -83,7 +83,7 @@ custom-isp:
     url: "https://example.com/cn-ip.txt"
 ```
 
-> **提示**：完整配置示例请参考 [config.yml](../config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。关于 proxy 与 github-proxy 的区别 [查看文档]({{ '/proxy-vs-github-proxy-guide/' | relative_url }})。
+> **提示**：完整配置示例请参考 [config.yml](../config.yml)，里面有详细注释。GUI 版本可以在界面里直接配置。关于 proxy 与 github-proxy 的区别 [查看文档](proxy-vs-github-proxy-guide.md)。
 
 ## 运行
 
@@ -105,7 +105,7 @@ custom-isp:
 # 可直接访问 http://你的IP:19001 查看状态、修改配置、停止定时任务
 ```
 
-完整的 CLI 参数（运行模式、分流模式等）请查看 [CLI 参数说明]({{ '/cli-params/' | relative_url }})。
+完整的 CLI 参数（运行模式、分流模式等）请查看 [CLI 参数说明](cli-params.md)。
 
 ## WebUI 与 GUI
 
@@ -122,10 +122,10 @@ CLI 版本在计划任务模式启动后，访问 `http://你的IP:19001` 即可
 - **桌面用户/手机用户**：下载对应 GUI 版本直接运行即可
 - **Linux / OpenWrt CLI 服务**：执行 `curl -fsSL https://joyanhui.github.io/ikuai-bypass/install.sh | sh`
 - **OpenWrt LuCI 面板**：执行 `opkg install https://github.com/joyanhui/ikuai-bypass/releases/latest/download/ikuai-bypass-luci-openwrt-all.ipk`
-- **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本]({{ '/openwrt-service-install/' | relative_url }})
-- **Docker / LXC / 群晖 / Unraid**：详见[部署方案完整文档]({{ '/deployment/' | relative_url }})
+- **服务器 / CLI**：下载 CLI 版本，建议配置为系统服务。OpenWrt 用户可参考[服务脚本](openwrt-service-install.md)
+- **Docker / LXC / 群晖 / Unraid**：详见[部署方案完整文档](deployment.md)
 
-[查看部署方案完整文档]({{ '/deployment/' | relative_url }})
+[查看部署方案完整文档](deployment.md)
 
 ## 注意事项
 

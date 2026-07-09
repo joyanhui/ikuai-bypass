@@ -4,6 +4,10 @@ baseurl: /ikuai-bypass
 url: https://joyanhui.github.io
 remote_theme: just-the-docs/just-the-docs
 
+# Plugins
+plugins:
+  - jekyll-relative-links
+
 search_enabled: true
 
 # Favicon

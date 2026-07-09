@@ -14,7 +14,9 @@
 - `apps/gui/`：Tauri v2 后端
 - `config.yml`：示例配置
 - `api-docs/`: 爱快4.x api抓包记录
-- `docs/`: Jekyll + GitHub Pages 文档站，本地预览执行 `bash script/dev.sh docs:dev`
+- `docs/`: Jekyll + GitHub Pages 文档站，部署于 `https://joyanhui.github.io/ikuai-bypass/`（子目录），本地预览执行 `bash script/dev.sh docs:dev`
+   - 内部链接必须使用标准 Markdown 相对路径 `](file.md)` 或 `](file.md#锚点)`，**禁止** `](/根路径/)` 和 `]({{ site.baseurl }}/path/)` 等 Liquid 写法
+   - `jekyll-relative-links` 插件在构建时自动将 `file.md` 转为 `/ikuai-bypass/file/`，同时 Obsidian 原生支持 `.md` 相对路径跳转和图谱
 - `golang_archive/`：Go 版本归档，除非用户明确要求，否则不要把新功能继续做进归档目录
 
 ## 集成测试约定

@@ -7,15 +7,15 @@ has_children: true
 
 ## 一键安装（推荐）
 
-Linux / OpenWrt 支持两种安装方式，详见[快速上手 - 一键安装]({{ '/quickstart/' | relative_url }}#一键安装)。
+Linux / OpenWrt 支持两种安装方式，详见[快速上手 - 一键安装](quickstart.md#一键安装)。
 
 ### 手机和电脑桌面用户（推荐新手）
 只要选对正确格式的包就可以，过于简单，教程掠过
 ### 服务器 / 命令行版本
 
-下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。详见[快速上手 - 一键安装]({{ '/quickstart/' | relative_url }}#一键安装)。
+下载 CLI 版本，用命令行运行。建议配置成系统服务，开机自启动。详见[快速上手 - 一键安装](quickstart.md#一键安装)。
 
-**OpenWrt 用户**：详见[快速上手 - 一键安装]({{ '/quickstart/' | relative_url }}#一键安装)；也支持[手动安装为系统服务]({{ '/openwrt-service-install/' | relative_url }})。
+**OpenWrt 用户**：详见[快速上手 - 一键安装](quickstart.md#一键安装)；也支持[手动安装为系统服务](openwrt-service-install.md)。
 
 ### Docker 用户
 

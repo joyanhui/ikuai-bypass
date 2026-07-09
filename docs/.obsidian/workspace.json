@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "index.md",
+                "file": "openwrt-service-install.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "index"
+              "title": "openwrt-service-install"
             }
           }
         ]
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "index.md",
+                "file": "openwrt-service-install.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "index 的大纲"
+              "title": "openwrt-service-install 的大纲"
             }
           }
         ],
@@ -185,8 +185,8 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
-    "{{.md",
     "index.md",
+    "{{.md",
     "deployment.md",
     "quickstart 1.md",
     "cli-params.md",

@@ -90,7 +90,7 @@ stream-ipport:
 
 ### 相关链接
 
-- [更新日志]({{ '/updatelog/' | relative_url }}) — v4.4.104 对此问题的兼容性修复
+- [更新日志](updatelog.md) — v4.4.104 对此问题的兼容性修复
 
 ---
 

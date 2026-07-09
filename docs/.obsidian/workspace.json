@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "openwrt-service-install.md",
+                "file": "router-mode.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "openwrt-service-install"
+              "title": "router-mode"
             }
           }
         ]
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "openwrt-service-install.md",
+                "file": "router-mode.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "openwrt-service-install 的大纲"
+              "title": "router-mode 的大纲"
             }
           }
         ],
@@ -185,14 +185,14 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
+    "quickstart.md",
+    "openwrt-service-install.md",
     "index.md",
     "{{.md",
     "deployment.md",
     "quickstart 1.md",
     "cli-params.md",
     "router-mode 1.md",
-    "openwrt-service-install.md",
-    "quickstart.md",
     "ikuai-v4-ipkg-install-guide.md",
     "router-mode.md",
     "docs_dev.sh",

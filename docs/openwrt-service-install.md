@@ -5,7 +5,7 @@ nav_order: 1
 ---
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 
-> 💡 **推荐使用一键安装**，详见[快速上手 - 一键安装](/quickstart/#一键安装)。两种方式：
+> 💡 **推荐使用一键安装**，详见[快速上手 - 一键安装](https://joyanhui.github.io/ikuai-bypass/quickstart/#%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85)。两种方式：
 > - **OpenWrt LuCI 面板** — 可视化管理，IPK 一行搞定
 > - **Linux CLI 服务** — 命令行 + WebUI
 >

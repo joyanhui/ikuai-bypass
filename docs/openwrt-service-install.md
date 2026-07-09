@@ -123,6 +123,6 @@ rm -f /opt/ikuai-bypass.yml
 
 ### 六、参数说明
 
-完整的 CLI 参数说明请查看 [CLI 参数说明](/cli-params/)。
+完整的 CLI 参数说明请查看 [CLI 参数说明]({{ '/cli-params/' | relative_url }})。
 
 </details>

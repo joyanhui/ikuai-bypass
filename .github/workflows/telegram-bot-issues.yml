@@ -2,7 +2,7 @@ name: Push Issues to Telegram
 
 on:
   issues:
-    types: [opened, edited, closed, reopened]
+    types: [opened, reopened]
 
 jobs:
   notify:

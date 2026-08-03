@@ -1828,7 +1828,7 @@ jobs:
             exit 0
           fi
 
-          args=(create "${TAG_NAME}" --repo "${REPO}" --title "${TAG_NAME}" --notes-file /tmp/release-notes.md)
+          args=(release create "${TAG_NAME}" --repo "${REPO}" --title "${TAG_NAME}" --notes-file /tmp/release-notes.md)
           if [[ "${IS_PRERELEASE}" == "true" ]]; then
             args+=(--prerelease)
           fi

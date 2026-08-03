@@ -1769,7 +1769,7 @@ jobs:
             echo
             echo "### 主要更新"
             echo
-            echo "请参考日志： https://joyanhui.github.io/ikuai-bypass/updatelog.html"
+            echo "请参考日志： https://joyanhui.github.io/ikuai-bypass/updatelog/"
             echo
 
             commits=""

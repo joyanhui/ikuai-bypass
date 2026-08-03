@@ -1833,8 +1833,12 @@ jobs:
             args+=(--prerelease)
           fi
 
+          # Why/为什么: 只上传 release/ 第一层归档文件；.stage/ 目录是打包中间产物，
+          # 内含同名 ikuai-bypass/README.md/config.yml，上传会触发 asset 重名 422。
+          # English: Only top-level archives are uploaded; .stage/ dirs are packaging
+          # intermediates with duplicate basenames that cause 422 on asset upload.
           while IFS= read -r -d '' f; do
             args+=("${f}")
-          done < <(find release -maxdepth 2 -type f -print0 | sort -z)
+          done < <(find release -maxdepth 1 -type f -print0 | sort -z)
 
           gh "${args[@]}"

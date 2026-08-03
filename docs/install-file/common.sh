@@ -623,7 +623,8 @@ enable_autostart() {
             systemctl daemon-reload 2>/dev/null || true
             ;;
         openwrt)
-            if [ -f /etc/rc.common ]; then
+            # 仅当 init.d 脚本存在时才执行 enable; 服务已卸载时静默(避免误报)
+            if [ -f /etc/rc.common ] && [ -f "/etc/init.d/${SERVICE_NAME}" ]; then
                 /etc/init.d/${SERVICE_NAME} enable 2>/dev/null || ikb_error "service_enable" "Failed to enable auto-start" "/etc/init.d/${SERVICE_NAME} enable"
             fi
             ;;
@@ -644,7 +645,8 @@ disable_autostart() {
             }
             ;;
         openwrt)
-            if [ -f /etc/rc.common ]; then
+            # 仅当 init.d 脚本存在时才执行 disable; 服务已卸载时静默(避免误报)
+            if [ -f /etc/rc.common ] && [ -f "/etc/init.d/${SERVICE_NAME}" ]; then
                 /etc/init.d/${SERVICE_NAME} disable 2>/dev/null || ikb_error "service_enable" "Failed to disable auto-start" "/etc/init.d/${SERVICE_NAME} disable"
             fi
             ;;

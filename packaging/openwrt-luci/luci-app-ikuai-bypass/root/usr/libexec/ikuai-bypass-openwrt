@@ -136,12 +136,23 @@ case "${1:-status}" in
 		ensure_cache 0
 		export_proxy
 		printf '[IKB] 2/5 正在检测系统信息...\n'
+		# Why/为什么: 把 run_install_sh 放在 if 条件里, 使 set -e 不会在失败时提前退出,
+		# 从而能在 install.sh 真正成功时才打印"5/5 正在配置服务", 失败时输出 status=error。
+		# English: keep run_install_sh in an if condition so set -e does not exit early;
+		# we then print "5/5 configuring service" only on real success, else status=error.
 		if [ "${IKB_PRERELEASE:-0}" = "1" ]; then
-			run_install_sh install --prerelease
+			if run_install_sh install --prerelease; then
+				printf '[IKB] 5/5 正在配置服务...\n'
+			else
+				fail 'install.sh failed (check log/network)'
+			fi
 		else
-			run_install_sh install
+			if run_install_sh install; then
+				printf '[IKB] 5/5 正在配置服务...\n'
+			else
+				fail 'install.sh failed (check log/network)'
+			fi
 		fi
-		printf '[IKB] 5/5 正在配置服务...\n'
 		;;
 	status|update|uninstall|start|stop|restart|enable|disable|log)
 		action="$1"

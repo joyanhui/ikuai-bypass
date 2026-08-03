@@ -15,6 +15,12 @@ test.describe('WebUI 浏览器 smoke', () => {
 
     const runButton = page.locator('#btnRunAction');
     await page.locator('[data-module="ipgroup"]').click();
+    // Fixture CLI is launched with `-r cronAft`, and the frontend syncs the
+    // selected run-mode from cfg.runMode. Select once explicitly so this case
+    // exercises the run-once start/stop flow regardless of the fixture config.
+    // fixture CLI 以 -r cronAft 启动，前端会从 cfg.runMode 同步运行模式；
+    // 这里显式选择 once，确保本用例始终覆盖 run-once 的启动/停止交互。
+    await page.locator('[data-run-mode="once"]').click();
     await runButton.click();
 
     await expect(runButton).toHaveAttribute('data-action', 'stop', {

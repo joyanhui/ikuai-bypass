@@ -45,11 +45,17 @@ if [ -f "${COMMON_PATH}" ]; then
 else
     COMMON_TMP="$(mktemp 2>/dev/null || printf '/tmp/ikuai-bypass-common.%s' "$$")"
     if command -v curl >/dev/null 2>&1; then
-        curl -fsSL -o "${COMMON_TMP}" "${REMOTE_BASE_URL}/install-file/common.sh"
+        curl -fsSL --connect-timeout 15 --max-time 120 -o "${COMMON_TMP}" "${REMOTE_BASE_URL}/install-file/common.sh" || {
+            printf 'status=error\nerror_code=download\nmessage=Failed to download install helpers\nerror_detail=%s\n' "${REMOTE_BASE_URL}/install-file/common.sh" >&2
+            exit 1
+        }
     elif command -v wget >/dev/null 2>&1; then
-        wget -qO "${COMMON_TMP}" "${REMOTE_BASE_URL}/install-file/common.sh"
+        wget -qO "${COMMON_TMP}" "${REMOTE_BASE_URL}/install-file/common.sh" --timeout=120 || {
+            printf 'status=error\nerror_code=download\nmessage=Failed to download install helpers\nerror_detail=%s\n' "${REMOTE_BASE_URL}/install-file/common.sh" >&2
+            exit 1
+        }
     else
-        printf "curl or wget is required to load install helpers\n" >&2
+        printf 'status=error\nerror_code=deps_missing\nmessage=curl or wget is required to load install helpers\n' >&2
         exit 1
     fi
     # shellcheck source=/dev/null
@@ -66,11 +72,11 @@ OS_TYPE="$(detect_os)"
 case "${OS_TYPE}" in
     openwrt|debian|arch) ;;
     nixos)
-        print_msg "MSG_NIXOS"
+        ikb_error "os_unsupported" "NixOS is not supported by this install script" "manual setup required"
         exit 1
         ;;
     *)
-        print_msg "ERR_OS"
+        ikb_error "os_unsupported" "Unsupported OS" "${OS_TYPE}"
         exit 1
         ;;
 esac
@@ -78,7 +84,7 @@ esac
 ARCH="$(detect_arch)"
 case "${ARCH}" in
     unsupported:*)
-        print_msg "ERR_ARCH" "${ARCH#unsupported:}"
+        ikb_error "arch_unsupported" "Unsupported architecture" "${ARCH#unsupported:}"
         exit 1
         ;;
 esac

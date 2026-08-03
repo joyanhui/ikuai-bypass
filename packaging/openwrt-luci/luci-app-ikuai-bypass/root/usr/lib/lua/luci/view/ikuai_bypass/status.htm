@@ -245,7 +245,9 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 					onTimeout: function() {
 						STATE.busy = false;
 						updateButtons();
-						setMessage(failLabel + ": " + t("requestTimeout"), false);
+						// Why/为什么: 慢网络下后台任务可能仍在执行, 超时并不等于失败, 提示稍后刷新确认。
+						// English: on slow links the task may still be running in the background; refresh later to confirm.
+						setMessage(failLabel + ": " + t("requestTimeout") + " (may still be running, refresh to confirm)", false);
 					}
 				}, taskTimeoutMs || 60000);
 			}, 10000, true);
@@ -284,8 +286,14 @@ local log_url = dispatcher.build_url("admin", "services", "ikuai-bypass", "log")
 				}
 				window.ikbLoadStatus();
 			}
-		}, 60000); };
-		window.ikbService = function(action) { STATE.busy = true; updateButtons(); setMessage(t("runningAction") + action, true); request("POST", ENDPOINTS.service, { action: action }, function(err, data) { STATE.busy = false; updateButtons(); if (err) { setMessage(t("serviceFailed") + " " + action + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); if (action === "uninstall_self") { setMessage(t("uninstallSelfDone"), true); setTimeout(function() { window.location.href = "/cgi-bin/luci/"; }, 4000); } else { window.ikbLoadStatus(); } }, 10000); };
+			// Why/为什么: install 含 GitHub 下载+解压+服务启动, 慢速网络下经常超过 60s。
+			// 固定 60s 超时会让 UI 一直停在"5/5 正在配置服务"并误判超时, 实际服务早已成功。
+			// English: install includes GitHub download+extract+service start; on slow links it often exceeds 60s.
+			// A fixed 60s timeout kept the UI stuck on "5/5 configuring service" and wrongly reported timeout.
+		}, 300000); };
+		window.ikbService = function(action) { STATE.busy = true; updateButtons(); setMessage(t("runningAction") + action, true); request("POST", ENDPOINTS.service, { action: action }, function(err, data) { STATE.busy = false; updateButtons(); if (err) { setMessage(t("serviceFailed") + " " + action + ": " + err, false); if (data && data.log) setLog(data.log); return; } setMessage(data.message || t("actionDone"), true); setLog(data.log || ""); if (action === "uninstall_self") { setMessage(t("uninstallSelfDone"), true); setTimeout(function() { window.location.href = "/cgi-bin/luci/"; }, 4000); } else { window.ikbLoadStatus(); } // Why/为什么: stop/restart 在 OpenWrt 上可能等待进程退出(最多~5s), 10s 超时在慢设备上偏紧。
+			// English: stop/restart may wait for process exit (up to ~5s); 10s timeout is tight on slow devices.
+		}, 30000); };
 		window.ikbLoadLog = function() { request("GET", ENDPOINTS.log, {}, function(err, data) { if (err) { setMessage(t("logFailed") + ": " + err, false); return; } setLog(data.log || ""); setMessage(t("logLoaded"), true); }, 10000); };
 		window.ikbLoadPluginVersion = function() { request("GET", ENDPOINTS.luciVersion, {}, function(err, data) { if (err) { setText("ikb-plugin-version", "Error"); return; } setText("ikb-plugin-version", data.version || "-"); }, 10000); };
 		window.ikbCheckPlugin = function() { setLog(t("checkingPlugin") + "...\n"); request("GET", ENDPOINTS.luciCheck, { proxy: currentProxy() }, function(err, data) { if (err) { setMessage(t("pluginCheckFailed") + ": " + err, false); appendLog(t("pluginCheckFailed") + ": " + err + "\n"); return; } if (data && data.latest_version) { setText("ikb-plugin-latest", data.latest_version); appendLog("latest_version=" + data.latest_version + "\n"); setMessage(t("pluginCheckDone"), true); } else { var msg = (data ? data.message : "unknown"); setMessage(t("pluginCheckFailed") + ": " + msg, false); appendLog(t("pluginCheckFailed") + ": " + msg + "\n"); } }, 30000); };

@@ -85,7 +85,7 @@ detect_os() {
 # ── 检查 root / Root check ──
 check_root() {
     [ "$(id -u)" != "0" ] && {
-        print_msg "ERR_ROOT"
+        ikb_error "root" "Please run as root" "install.sh must run as root (uid 0)"
         exit 1
     }
     return 0
@@ -104,7 +104,7 @@ ensure_cmd() {
             opkg update >/dev/null 2>&1 && opkg install "${pkg}" ca-bundle
         fi
         if ! command -v "${cmd}" >/dev/null 2>&1; then
-            print_msg "ERR_CMD" "${cmd}"
+            ikb_error "deps_missing" "Failed to install required command: ${cmd}" "package=${pkg}"
             exit 1
         fi
     fi
@@ -122,10 +122,10 @@ install_file_atomic() {
     local dst="$2"
     local mode="${3:-0644}"
     local tmp="/tmp/ikuai-bypass-install.$$.$(basename "${dst}")"
-    mkdir -p "$(dirname "${dst}")"
-    cp "${src}" "${tmp}"
+    mkdir -p "$(dirname "${dst}")" || return 1
+    cp "${src}" "${tmp}" || return 1
     chmod "${mode}" "${tmp}" 2>/dev/null || true
-    mv "${tmp}" "${dst}"
+    mv "${tmp}" "${dst}" || return 1
 }
 
 # ── 进程检查 / Check process ──
@@ -137,6 +137,52 @@ check_process() {
     else
         ps 2>/dev/null | grep -v grep | grep "ikuai-bypass" >/dev/null 2>&1
     fi
+}
+
+# ── 结构化错误输出 / Structured error output ──
+# Why/为什么: 安装脚本的错误信息需要可被上层(helper/LuCI/前端)机器解析。
+# 统一输出 key=value 行(status/error_code/message/error_detail), 与 LuCI parse_key_value_lines 兼容。
+# English: emit machine-parsable key=value error lines (status/error_code/message/error_detail)
+# compatible with LuCI parse_key_value_lines, so callers can report the real reason.
+#
+# 用法 / Usage:
+#   ikb_error "download" "Download failed" "curl: (28) SSL timeout"
+#   ikb_fail  "download" "Download failed" "curl: (28) SSL timeout"   # 返回 1
+#   ikb_die   "root" "Please run as root"                              # 退出 1
+#
+# 错误码 / Error codes:
+#   root              非 root 运行
+#   os_unsupported    不支持的操作系统
+#   arch_unsupported  不支持的架构
+#   deps_missing      依赖命令缺失或安装失败
+#   version_fetch     版本检测失败
+#   download          下载失败(detail 含 curl/wget 错误)
+#   extract           解压失败
+#   archive_invalid   压缩包内容不符合预期
+#   install_write     写盘/安装失败
+#   service_start     服务启动失败
+#   service_stop      服务停止失败
+#   service_enable    开机自启设置失败
+#   config_write      配置写入失败
+ikb_error() {
+    local code="$1"
+    local msg="$2"
+    printf 'status=error\n'
+    printf 'error_code=%s\n' "${code}"
+    printf 'message=%s\n' "${msg}"
+    [ $# -gt 2 ] && printf 'error_detail=%s\n' "$3"
+}
+
+# 函数级失败: 输出结构化错误并返回非零 / Function-level failure: emit structured error, return non-zero
+ikb_fail() {
+    ikb_error "$@"
+    return 1
+}
+
+# 脚本级致命错误: 输出结构化错误并退出 / Fatal: emit structured error, exit 1
+ikb_die() {
+    ikb_error "$@"
+    exit 1
 }
 
 # ── 双语消息 / Bilingual messages ──
@@ -284,10 +330,10 @@ get_latest_version() {
     local version=""
 
     if command -v curl >/dev/null 2>&1; then
-        version="$(curl -fsSL -A "ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
+        version="$(curl -fsSL --connect-timeout 15 --max-time 30 -A "ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
             grep '"tag_name"' | head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     elif command -v wget >/dev/null 2>&1; then
-        version="$(wget -qO- --header="User-Agent: ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
+        version="$(wget -qO- --timeout=30 --header="User-Agent: ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
             grep '"tag_name"' | head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     fi
 
@@ -306,12 +352,12 @@ get_prerelease_version() {
     local version=""
 
     if command -v curl >/dev/null 2>&1; then
-        version="$(curl -fsSL -A "ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
+        version="$(curl -fsSL --connect-timeout 15 --max-time 30 -A "ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
             grep -E '"tag_name"|"prerelease"|"draft"' | paste - - - | \
             grep '"prerelease": true' | grep '"draft": false' | \
             head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
     elif command -v wget >/dev/null 2>&1; then
-        version="$(wget -qO- --header="User-Agent: ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
+        version="$(wget -qO- --timeout=30 --header="User-Agent: ikuai-bypass-install/1.0" "${api_url}" 2>/dev/null | \
             grep -E '"tag_name"|"prerelease"|"draft"' | paste - - - | \
             grep '"prerelease": true' | grep '"draft": false' | \
             head -1 | sed 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/')"
@@ -344,7 +390,7 @@ install_app() {
             version="$(get_latest_version)"
         fi
         if [ -z "${version}" ]; then
-            print_msg "MSG_DOWNLOAD_FAIL" "Failed to detect latest version"
+            ikb_error "version_fetch" "Failed to detect latest version"
             return 1
         fi
         print_msg "MSG_LATEST_VER" "${version}"
@@ -363,62 +409,111 @@ install_app() {
 
     print_msg "MSG_DOWNLOADING" "ikuai-bypass-cli-linux-${arch}.zip"
     if command -v curl >/dev/null 2>&1; then
-        curl -fsSL -o "${zip_file}" "${url}" || {
-            print_msg "MSG_DOWNLOAD_FAIL" "${url}"
+        curl_err="$(mktemp 2>/dev/null || printf '/tmp/ikb-curl-err.%s' "$$")"
+        curl -fsSL --connect-timeout 15 --max-time 300 -o "${zip_file}" "${url}" 2>"${curl_err}" || {
+            local detail
+            detail="$(head -1 "${curl_err}" 2>/dev/null || true)"
+            rm -f "${curl_err}"
+            ikb_error "download" "Download failed" "URL: ${url}${detail:+ | ${detail}}"
             rm -rf "${tmp_dir}"
             return 1
         }
+        rm -f "${curl_err}"
     elif command -v wget >/dev/null 2>&1; then
-        wget -qO "${zip_file}" "${url}" || {
-            print_msg "MSG_DOWNLOAD_FAIL" "${url}"
+        wget -qO "${zip_file}" "${url}" --timeout=300 2>/tmp/ikb-wget-err.$$ || {
+            local detail
+            detail="$(head -1 /tmp/ikb-wget-err.$$ 2>/dev/null || true)"
+            rm -f /tmp/ikb-wget-err.$$
+            ikb_error "download" "Download failed" "URL: ${url}${detail:+ | ${detail}}"
             rm -rf "${tmp_dir}"
             return 1
         }
+        rm -f /tmp/ikb-wget-err.$$
     else
-        print_msg "ERR_CMD" "curl/wget"
+        ikb_error "deps_missing" "curl or wget is required"
         return 1
     fi
 
     print_msg "MSG_EXTRACTING"
-    mkdir -p "${unpack_dir}"
+    mkdir -p "${unpack_dir}" || {
+        ikb_error "install_write" "Failed to create extract dir" "${unpack_dir}"
+        rm -rf "${tmp_dir}"
+        return 1
+    }
 
     if command -v unzip >/dev/null 2>&1; then
-        unzip -qo "${zip_file}" -d "${unpack_dir}"
+        unzip -qo "${zip_file}" -d "${unpack_dir}" 2>/tmp/ikb-unzip-err.$$ || {
+            local detail
+            detail="$(head -1 /tmp/ikb-unzip-err.$$ 2>/dev/null || true)"
+            rm -f /tmp/ikb-unzip-err.$$
+            ikb_error "extract" "Failed to extract archive" "${detail:-unzip exit $?}"
+            rm -rf "${tmp_dir}"
+            return 1
+        }
+        rm -f /tmp/ikb-unzip-err.$$
     else
         if command -v python3 >/dev/null 2>&1; then
             python3 -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" \
-                "${zip_file}" "${unpack_dir}"
+                "${zip_file}" "${unpack_dir}" || {
+                ikb_error "extract" "Failed to extract archive" "python3 zipfile failed"
+                rm -rf "${tmp_dir}"
+                return 1
+            }
         elif command -v python >/dev/null 2>&1; then
             python -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" \
-                "${zip_file}" "${unpack_dir}"
+                "${zip_file}" "${unpack_dir}" || {
+                ikb_error "extract" "Failed to extract archive" "python zipfile failed"
+                rm -rf "${tmp_dir}"
+                return 1
+            }
         else
-            print_msg "ERR_CMD" "unzip"
+            ikb_error "deps_missing" "unzip is required" "install unzip (opkg install unzip)"
             rm -rf "${tmp_dir}"
             return 1
         fi
     fi
 
     if [ ! -f "${unpack_dir}/ikuai-bypass" ]; then
-        print_msg "MSG_DOWNLOAD_FAIL" "Archive does not contain ikuai-bypass"
+        ikb_error "archive_invalid" "Archive does not contain ikuai-bypass" "${zip_file}"
         rm -rf "${tmp_dir}"
         return 1
     fi
 
-    install_file_atomic "${unpack_dir}/ikuai-bypass" "${BIN_PATH}" 0755
+    install_file_atomic "${unpack_dir}/ikuai-bypass" "${BIN_PATH}" 0755 || {
+        ikb_error "install_write" "Failed to install binary" "${BIN_PATH}"
+        rm -rf "${tmp_dir}"
+        return 1
+    }
 
     chmod +x "${BIN_PATH}"
 
     # 如果 config.yml 不存在，从 sample 复制
     if [ ! -f "${CONFIG_PATH}" ]; then
         if [ -f "${unpack_dir}/config.yml" ]; then
-            install_file_atomic "${unpack_dir}/config.yml" "${CONFIG_PATH}" 0644
+            install_file_atomic "${unpack_dir}/config.yml" "${CONFIG_PATH}" 0644 || {
+                ikb_error "config_write" "Failed to write config.yml" "${CONFIG_PATH}"
+                rm -rf "${tmp_dir}"
+                return 1
+            }
         fi
     fi
 
     # 写入版本
-    mkdir -p "$(dirname "${VERSION_FILE}")"
-    printf "%s" "${version}" > "/tmp/ikuai-bypass-version.$$"
-    mv "/tmp/ikuai-bypass-version.$$" "${VERSION_FILE}"
+    mkdir -p "$(dirname "${VERSION_FILE}")" || {
+        ikb_error "install_write" "Failed to create version dir" "$(dirname "${VERSION_FILE}")"
+        rm -rf "${tmp_dir}"
+        return 1
+    }
+    printf "%s" "${version}" > "/tmp/ikuai-bypass-version.$$" || {
+        ikb_error "install_write" "Failed to write version file" "/tmp/ikuai-bypass-version.$$"
+        rm -rf "${tmp_dir}"
+        return 1
+    }
+    mv "/tmp/ikuai-bypass-version.$$" "${VERSION_FILE}" || {
+        ikb_error "install_write" "Failed to move version file" "${VERSION_FILE}"
+        rm -rf "${tmp_dir}"
+        return 1
+    }
     rm -rf "${tmp_dir}"
 
     print_msg "MSG_INSTALL_OK"
@@ -438,10 +533,14 @@ start_service() {
     print_msg "MSG_STARTING"
     case "${os_type}" in
         debian|arch)
-            systemctl start "${SERVICE_NAME}" 2>/dev/null || {
-                print_msg "MSG_START_FAIL"
+            systemctl start "${SERVICE_NAME}" 2>/tmp/ikb-systemctl-err.$$ || {
+                local detail
+                detail="$(head -1 /tmp/ikb-systemctl-err.$$ 2>/dev/null || true)"
+                rm -f /tmp/ikb-systemctl-err.$$
+                ikb_error "service_start" "Failed to start service" "systemctl: ${detail:-unknown error}"
                 return 1
             }
+            rm -f /tmp/ikb-systemctl-err.$$
             ;;
         openwrt)
             "${BIN_PATH}" -r cronAft -c "${CONFIG_PATH}" > /dev/null 2>&1 &
@@ -453,7 +552,9 @@ start_service() {
     if check_process; then
         print_msg "MSG_START_OK"
     else
+        ikb_error "service_start" "Failed to start service" "process not running (check binary/config)"
         print_msg "MSG_START_FAIL"
+        return 1
     fi
 }
 
@@ -465,7 +566,10 @@ stop_service() {
     print_msg "MSG_STOPPING"
     case "${os_type}" in
         debian|arch)
-            systemctl stop "${SERVICE_NAME}" 2>/dev/null || true
+            # 仅当服务实际存在且激活时才报错; 服务不存在/已停止时 systemctl 返回非0属正常
+            systemctl stop "${SERVICE_NAME}" 2>/dev/null || {
+                systemctl is-active "${SERVICE_NAME}" >/dev/null 2>&1 && ikb_error "service_stop" "Failed to stop service" "systemctl stop ${SERVICE_NAME}"
+            }
             ;;
         openwrt)
             local pid
@@ -475,7 +579,7 @@ stop_service() {
                 pid="$(pgrep ikuai-bypass 2>/dev/null || true)"
             fi
             if [ -n "${pid}" ]; then
-                kill -TERM "${pid}" 2>/dev/null || true
+                kill -TERM "${pid}" 2>/dev/null || ikb_error "service_stop" "Failed to signal process" "kill -TERM ${pid}"
             fi
             local i=0
             while [ $i -lt 5 ]; do
@@ -491,7 +595,7 @@ stop_service() {
                 else
                     pid="$(pgrep ikuai-bypass 2>/dev/null || true)"
                 fi
-                [ -n "${pid}" ] && kill -KILL "${pid}" 2>/dev/null || true
+                [ -n "${pid}" ] && kill -KILL "${pid}" 2>/dev/null || ikb_error "service_stop" "Failed to force-kill process" "kill -KILL ${pid}"
                 sleep 1
             fi
             ;;
@@ -513,12 +617,14 @@ enable_autostart() {
     print_msg "MSG_AUTO_ENABLE"
     case "${os_type}" in
         debian|arch)
-            systemctl enable "${SERVICE_NAME}" 2>/dev/null || true
+            systemctl enable "${SERVICE_NAME}" 2>/dev/null || {
+                systemctl is-enabled "${SERVICE_NAME}" >/dev/null 2>&1 || ikb_error "service_enable" "Failed to enable auto-start" "systemctl enable ${SERVICE_NAME}"
+            }
             systemctl daemon-reload 2>/dev/null || true
             ;;
         openwrt)
             if [ -f /etc/rc.common ]; then
-                /etc/init.d/${SERVICE_NAME} enable 2>/dev/null || true
+                /etc/init.d/${SERVICE_NAME} enable 2>/dev/null || ikb_error "service_enable" "Failed to enable auto-start" "/etc/init.d/${SERVICE_NAME} enable"
             fi
             ;;
     esac
@@ -533,11 +639,13 @@ disable_autostart() {
     print_msg "MSG_AUTO_DISABLE"
     case "${os_type}" in
         debian|arch)
-            systemctl disable "${SERVICE_NAME}" 2>/dev/null || true
+            systemctl disable "${SERVICE_NAME}" 2>/dev/null || {
+                systemctl is-enabled "${SERVICE_NAME}" >/dev/null 2>&1 && ikb_error "service_enable" "Failed to disable auto-start" "systemctl disable ${SERVICE_NAME}"
+            }
             ;;
         openwrt)
             if [ -f /etc/rc.common ]; then
-                /etc/init.d/${SERVICE_NAME} disable 2>/dev/null || true
+                /etc/init.d/${SERVICE_NAME} disable 2>/dev/null || ikb_error "service_enable" "Failed to disable auto-start" "/etc/init.d/${SERVICE_NAME} disable"
             fi
             ;;
     esac
@@ -798,6 +906,12 @@ run_action() {
                 set_config_field "mode" "${IKB_MODE:-}"
                 set_config_field "run-mode" "${IKB_RUN_MODE:-}"
                 install_service_file; enable_autostart; start_service
+            else
+                # Why/为什么: install_app 失败时必须返回非0, 供上层(helper/LuCI)判断真实结果。
+                # 否则空 if 分支会让整个 install 伪装成功, 上层误报"服务配置成功"。
+                # English: return non-zero when install_app fails so the caller (helper/LuCI)
+                # can report the real result instead of faking success.
+                return 1
             fi
             ;;
         update)
@@ -806,6 +920,8 @@ run_action() {
                 set_config_field "mode" "${IKB_MODE:-}"
                 set_config_field "run-mode" "${IKB_RUN_MODE:-}"
                 install_service_file; restart_service
+            else
+                return 1
             fi
             ;;
         uninstall)

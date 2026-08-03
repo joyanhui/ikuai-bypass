@@ -158,6 +158,9 @@ async fn add_legacy_stream_domain(api: &IKuaiClient, tag: &str) -> Result<(), St
             "src_addr": {"custom": ["192.168.88.10-192.168.88.20"], "object": []},
             "domain": {"custom": [format!("{tag}.legacy.example")], "object": []},
             "time": weekly_time(),
+            // Some real iKuai firmware requires prio for stream-domain add.
+            // 部分真实固件要求 stream-domain add 必须携带 prio 字段。
+            "prio": 31,
         }),
     )
     .await

@@ -34,6 +34,16 @@
 
         playwrightLibraryPath = pkgs.lib.makeLibraryPath playwrightRuntimeLibs;
 
+        # cargo 编译出的二进制运行时依赖的系统动态库（如 openssl/native-tls、sqlite 等）
+        # nix 不会自动为 rustc 产物注入 rpath，必须显式加入 LD_LIBRARY_PATH
+        cargoRuntimeLibs = [
+          pkgs.openssl
+          pkgs.sqlite
+          pkgs.zlib
+        ];
+
+        cargoLibraryPath = pkgs.lib.makeLibraryPath cargoRuntimeLibs;
+
         bootstrapReleaseTools = pkgs.writeShellScriptBin "ikb-bootstrap-release-tools" ''
           set -euo pipefail
           cargo binstall -y tauri-cli cross cargo-dist
@@ -153,6 +163,7 @@
             # Clang
             LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
             PLAYWRIGHT_LD_LIBRARY_PATH = playwrightLibraryPath;
+            CARGO_LD_LIBRARY_PATH = cargoLibraryPath;
           };
 
           shellHook = ''
@@ -166,9 +177,9 @@
             unset NIX_LDFLAGS NIX_CFLAGS_COMPILE NIX_CFLAGS_LINK
 
             if [ -n "$LD_LIBRARY_PATH" ]; then
-              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
+              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$CARGO_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
             else
-              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH"
+              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$CARGO_LD_LIBRARY_PATH"
             fi
             export XDG_DATA_DIRS="${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS"
 

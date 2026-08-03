@@ -398,6 +398,17 @@ impl Config {
         write_config_file(path.as_ref(), raw.as_bytes())?;
         Ok(cfg)
     }
+
+    /// Returns true when the raw YAML explicitly contains a top-level `mode` field.
+    /// 判断原始 YAML 是否显式包含顶层 mode 字段。
+    /// Used by save-raw to avoid overriding the runtime module chosen via CLI args
+    /// (e.g. `-m ipgroup`) when the saved config does not mention `mode` at all.
+    /// 用于 save-raw：当保存的配置完全不包含 mode 字段时，避免覆盖 CLI 启动参数指定的模块。
+    pub fn yaml_has_explicit_mode(raw: &str) -> bool {
+        serde_yaml::from_str::<serde_yaml::Value>(raw)
+            .map(|value| value.get("mode").is_some())
+            .unwrap_or(false)
+    }
 }
 
 fn write_config_file(path: &Path, data: &[u8]) -> Result<(), ConfigError> {

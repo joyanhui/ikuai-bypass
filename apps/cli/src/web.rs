@@ -209,7 +209,17 @@ async fn api_save_raw_yaml(
     };
 
     let new_cron = cfg.cron.to_string();
-    let new_module = cfg.module.to_string();
+    // Only update the runtime module when the saved YAML explicitly contains a `mode` field.
+    // Otherwise keep the module chosen via CLI args (e.g. `-m ipgroup`), because
+    // Config::apply_defaults fills an empty mode with "ispdomain" which would silently
+    // override the CLI-selected module on every save.
+    // 仅当保存的 YAML 显式包含 mode 字段时才更新运行时模块，避免 apply_defaults 的
+    // 默认值 "ispdomain" 在每次保存时悄悄覆盖 CLI 启动参数指定的模块。
+    let new_module = if ikb_core::config::Config::yaml_has_explicit_mode(&req.yaml_text) {
+        cfg.module.to_string()
+    } else {
+        String::new()
+    };
     {
         let mut current = state.config.lock().await;
         *current = Arc::new(cfg);

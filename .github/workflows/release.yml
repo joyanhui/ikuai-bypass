@@ -1804,12 +1804,37 @@ jobs:
           sed -n '1,120p' "${notes_file}"
 
       - name: Publish GitHub release
-        uses: softprops/action-gh-release@v2.3.3
-        with:
-          tag_name: ${{ needs.resolve-matrix.outputs.tag_name }}
-          name: ${{ needs.resolve-matrix.outputs.tag_name }}
-          target_commitish: ${{ github.sha }}
-          files: release/*
-          generate_release_notes: false
-          body_path: /tmp/release-notes.md
-          prerelease: ${{ needs.resolve-matrix.outputs.prerelease == 'true' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.resolve-matrix.outputs.tag_name }}
+          IS_PRERELEASE: ${{ needs.resolve-matrix.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          REPO="${{ github.repository }}"
+
+          # Why/为什么: softprops/action-gh-release 总是携带 target_commitish，
+          # 当发布期间默认分支前进了新 commit 时，GITHUB_TOKEN 会被平台以 403
+          # "Resource not accessible by integration" 拒绝（action issue #411/#758）。
+          # 改用 gh release create：tag 已存在时只关联 tag、不传 target_commitish，
+          # 从根上规避该限制；tag 不存在时 gh 自动以默认分支 tip 创建。
+          # English: softprops/action-gh-release always sends target_commitish, which
+          # GitHub rejects with 403 for GITHUB_TOKEN when it points at a non-tip commit.
+          # gh release create associates the existing tag without target_commitish.
+
+          if gh release view "${TAG_NAME}" --repo "${REPO}" >/dev/null 2>&1; then
+            echo "Release ${TAG_NAME} already exists, skip creation"
+            exit 0
+          fi
+
+          args=(create "${TAG_NAME}" --repo "${REPO}" --title "${TAG_NAME}" --notes-file /tmp/release-notes.md)
+          if [[ "${IS_PRERELEASE}" == "true" ]]; then
+            args+=(--prerelease)
+          fi
+
+          while IFS= read -r -d '' f; do
+            args+=("${f}")
+          done < <(find release -maxdepth 2 -type f -print0 | sort -z)
+
+          gh "${args[@]}"

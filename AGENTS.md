@@ -92,3 +92,9 @@ OpenWrt LuCI IPK 的说明和构建细节参考 `dev-docs/openwrt-luci-ipk构建
 ## CI 约束
 
 `.github/workflows/release.yml` 只允许 `tag push` 和 `workflow_dispatch` 触发，禁止恢复每日定时构建；手动执行时 `publish_release` 与 `push_docker` 默认勾选，未填写 `release_tag` 但勾选发布时必须自动生成 `manual-release-年月日时分秒` 继续发布，且手动执行发布一律标记为 prerelease，选择 `full` 时必须自动包含 nightly MIPS 架构。Tag push 仅在 tag 名包含 `test`、`rc`、`alpha`、`beta`、`pre`、`preview`、`dev`、`nightly` 时发布为 prerelease，否则发布为正式版并推送 Docker `latest`。
+
+### 发布 workflow 注意事项
+
+- 发布 workflow 运行期间不要在 main 上 push 新 commit；tag 指向的 commit 不再是默认分支 tip 时，GitHub 平台会拒绝 GITHUB_TOKEN 携带该 commit 作为 target_commitish 创建 release（403 Resource not accessible by integration），该限制要求 PAT 级权限
+- Publish Release 步骤使用 `gh release create` 而非 softprops/action-gh-release：tag 已存在时只关联 tag、不传 target_commitish，天然规避上述 403
+- 上传资产只收集 release/ 第一层归档文件；`.zip.stage/` 等打包中间产物内含同名 `ikuai-bypass`/`README.md`/`config.yml`，上传会触发 asset 重名 422

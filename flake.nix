@@ -1,212 +1,325 @@
 {
+  # devShell 的 WebKitGTK TLS 依赖系统服务 services.gnome.glib-networking（os-config dev_webkitgtk.nix）
   description = "iKuai Bypass development shell (Rust 主线版本)";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-26.05";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
   outputs =
+    { self, nixpkgs }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          android_sdk.accept_license = true;
+        };
+      };
+
+      playwrightRuntimeLibs = [
+        pkgs.nspr
+        pkgs.nss
+        pkgs.cups
+        pkgs.expat
+        pkgs.libxcb
+        pkgs.libXcomposite
+        pkgs.libXdamage
+        pkgs.libgbm
+        pkgs.systemd
+        pkgs.alsa-lib
+      ];
+      playwrightLibraryPath = pkgs.lib.makeLibraryPath playwrightRuntimeLibs;
+
+      androidSdk = (pkgs.androidenv.composeAndroidPackages {
+        cmdLineToolsVersion = "latest";
+        platformToolsVersion = "latest";
+        buildToolsVersions = [ "35.0.0" "36.1.0" ];
+        platformVersions = [ "34" "35" "36" ];
+        includeNDK = true;
+        ndkVersion = "28.2.13676358";
+        includeCmake = true;
+        includeEmulator = false;
+        includeSources = false;
+      }).androidsdk;
+      androidHome = "${androidSdk}/libexec/android-sdk";
+      androidNdk = "${androidHome}/ndk/28.2.13676358";
+
+      libraryPath = pkgs.lib.makeLibraryPath (with pkgs; [
+        openssl
+        sqlite
+        zlib
+        libglvnd
+        mesa
+        libgbm
+        wayland
+        libx11
+        libxrandr
+        libxrender
+        libxcursor
+        libxinerama
+        libxi
+        libxext
+        libxfixes
+        libxcb
+        libXcomposite
+        libXdamage
+        glib
+        gtk3
+        cairo
+        pango
+        gdk-pixbuf
+        atk
+        harfbuzz
+        pcre
+        gst_all_1.gstreamer
+        gst_all_1.gst-plugins-base
+        gst_all_1.gst-plugins-good
+        gst_all_1.gst-plugins-bad
+        gst_all_1.gst-plugins-ugly
+        gst_all_1.gst-libav
+        libsoup_3
+        webkitgtk_4_1
+        dbus
+        at-spi2-core
+        libxkbcommon
+        libayatana-appindicator
+        librsvg
+        libffi
+        nss
+        nspr
+        cups
+        expat
+        systemd
+        udev
+        alsa-lib
+      ]);
+
+      rustFlags = "-Cdebuginfo=1 -Ccodegen-units=1 -Clink-arg=-fuse-ld=lld -Csplit-debuginfo=packed -Clink-arg=-Wl,-rpath,${libraryPath}";
+      crossRustFlags = "-Cdebuginfo=1 -Ccodegen-units=1 -Csplit-debuginfo=packed";
+
+      bootstrapReleaseTools = pkgs.writeShellScriptBin "ikb-bootstrap-release-tools" ''
+        set -euo pipefail
+        cargo binstall -y tauri-cli cross cargo-dist
+      '';
+
+      tauriNative = with pkgs; [
+        webkitgtk_4_1
+        webkitgtk_4_1.dev
+        libsoup_3
+        libsoup_3.dev
+        gtk3
+        gtk3.dev
+        glib
+        glib.dev
+        cairo.dev
+        pango.dev
+        gdk-pixbuf.dev
+        atk.dev
+        harfbuzz.dev
+        libepoxy.dev
+        librsvg
+        librsvg.dev
+        at-spi2-core.dev
+        dbus.dev
+        libayatana-appindicator
+        glib-networking
+        gsettings-desktop-schemas
+      ];
+
+      guiNative = with pkgs; [
+        libglvnd
+        libglvnd.dev
+        mesa
+        libxkbcommon.dev
+        wayland.dev
+        libx11.dev
+        libxext.dev
+        libxi.dev
+        libxrandr.dev
+        libxrender.dev
+        libxcursor.dev
+        libxinerama.dev
+        libxfixes.dev
+        libxcb
+        libXcomposite
+        libXdamage
+        libxtst
+        libxxf86vm
+        libdrm
+        libffi.dev
+        pcre.dev
+        openssl
+        openssl.dev
+        sqlite.dev
+        zlib.dev
+        expat
+        nss
+        nspr
+        cups
+        udev
+        alsa-lib
+        gst_all_1.gstreamer
+        gst_all_1.gst-plugins-base
+        gst_all_1.gst-plugins-good
+        gst_all_1.gst-plugins-bad
+        gst_all_1.gst-plugins-ugly
+        gst_all_1.gst-libav
+      ];
+
+      toolchain = with pkgs; [
+        rustup
+        cargo-binstall
+        cargo-edit
+        cargo-release
+        cargo-nextest
+        cargo-zigbuild
+        rust-analyzer
+        bootstrapReleaseTools
+        sccache
+        mold
+        zig
+        llvmPackages_19.clang
+        llvmPackages_19.libclang
+        llvmPackages_19.libllvm
+        llvmPackages_19.lld
+        gcc
+        gnumake
+        cmake
+        ninja
+        binutils
+        pkg-config
+        perl
+        bun
+        nodejs_26
+        pnpm
+        typescript
+        typescript-language-server
+        prettier
+        jdk17
+        androidSdk
+        chromium
+        dpkg
+        zstd
+        file
+        patchelf
+        git
+        curl
+        wget
+        jq
+        tree
+        unzip
+        zip
+        xz
+        ripgrep
+        taplo
+        lsof
+        bc
+        hivemind
+        (ruby.withPackages (ps: with ps; [ bundler ]))
+      ];
+    in
     {
-      self,
-      nixpkgs,
-      flake-utils,
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
+      devShells.${system}.default = pkgs.mkShell {
+        packages = toolchain ++ tauriNative ++ guiNative;
+
+        env = {
+          ANDROID_HOME = androidHome;
+          ANDROID_SDK_ROOT = androidHome;
+          ANDROID_NDK = androidNdk;
+          ANDROID_NDK_HOME = androidNdk;
+          JAVA_HOME = "${pkgs.jdk17}";
+          GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidHome}/build-tools/35.0.0/aapt2";
+
+          RUSTFLAGS = rustFlags;
+          RUSTC_WRAPPER = "sccache";
+          SCCACHE_CACHE_SIZE = "30G";
+          CARGO_BUILD_JOBS = "16";
+          CARGO_INCREMENTAL = "0";
+          CARGO_PROFILE_DEV_INCREMENTAL = "false";
+          CARGO_PROFILE_DEV_DEBUG = "0";
+          CARGO_CACHE_RUSTC_INFO = "0";
+          RUSTC_CODEGEN_UNITS = "1";
+          LIBCLANG_PATH = "${pkgs.llvmPackages_19.libclang.lib}/lib";
+          LIBRARY_PATH = libraryPath;
+          CROSS_RUSTFLAGS = crossRustFlags;
+          RUSTUP_HOME = "/home/y/.rustup";
+          CARGO_HOME = "/home/y/.cargo";
+          RUSTUP_DIST_SERVER = "https://rsproxy.cn";
+          RUSTUP_UPDATE_ROOT = "https://rsproxy.cn/rustup";
+          PLAYWRIGHT_LD_LIBRARY_PATH = playwrightLibraryPath;
+
+          GIO_EXTRA_MODULES = "${pkgs.glib-networking}/lib/gio/modules:${pkgs.dconf.lib}/lib/gio/modules";
+
+          GST_PLUGIN_SYSTEM_PATH_1_0 = (pkgs.lib.concatStringsSep ":" (map (pkg: "${pkgs.lib.getOutput "out" pkg}/lib/gstreamer-1.0") (with pkgs.gst_all_1; [ gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav ])));
+          GST_PLUGIN_SCANNER_1_0 = "${pkgs.lib.getOutput "out" pkgs.gst_all_1.gstreamer}/libexec/gstreamer-1.0/gst-plugin-scanner";
+
+          WEBKIT_DISABLE_COMPOSITING_MODE = "1";
         };
 
-        playwrightRuntimeLibs = [
-          pkgs.nspr
-          pkgs.nss
-          pkgs.cups
-          pkgs.expat
-          pkgs.libxcb
-          pkgs.libXcomposite
-          pkgs.libXdamage
-          pkgs.libgbm
-          pkgs.systemd
-          pkgs.alsa-lib
-        ];
+        shellHook = ''
+          export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/35.0.0:$PATH"
+          export PATH="$CARGO_HOME/bin:$PATH"
+          export SCCACHE_DIR="$HOME/.cache/sccache"
 
-        playwrightLibraryPath = pkgs.lib.makeLibraryPath playwrightRuntimeLibs;
+          if [ -n "$LD_LIBRARY_PATH" ]; then
+            export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
+          else
+            export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH"
+          fi
 
-        # cargo 编译出的二进制运行时依赖的系统动态库（如 openssl/native-tls、sqlite 等）
-        # nix 不会自动为 rustc 产物注入 rpath，必须显式加入 LD_LIBRARY_PATH
-        cargoRuntimeLibs = [
-          pkgs.openssl
-          pkgs.sqlite
-          pkgs.zlib
-        ];
+          __CROSS_TARGETS=(aarch64-unknown-linux-gnu x86_64-unknown-linux-musl wasm32-unknown-unknown)
+          __MISSING=()
+          for t in "''${__CROSS_TARGETS[@]}"; do
+            rustup target list --installed 2>/dev/null | grep -qxF "$t" || __MISSING+=("$t")
+          done
+          if [ "''${#__MISSING[@]}" -gt 0 ]; then
+            echo "  [rustup] 安装缺失 targets: ''${__MISSING[*]}（首次运行需要网络下载）"
+            rustup target add "''${__MISSING[@]}" 2>/dev/null || echo "  [warn] target 安装失败，请手动执行: rustup target add ''${__MISSING[*]}"
+          fi
+          unset __CROSS_TARGETS __MISSING
 
-        cargoLibraryPath = pkgs.lib.makeLibraryPath cargoRuntimeLibs;
+          if command -v cargo-tauri >/dev/null 2>&1; then
+            CARGO_TAURI_BIN="$(command -v cargo-tauri)"
+            CARGO_TAURI_VER="$(cargo-tauri --version 2>/dev/null || echo n/a)"
+          else
+            CARGO_TAURI_BIN="(未找到，请先 cargo install tauri-cli --locked --version 2.11.4)"
+            CARGO_TAURI_VER="n/a"
+          fi
 
-        bootstrapReleaseTools = pkgs.writeShellScriptBin "ikb-bootstrap-release-tools" ''
-          set -euo pipefail
-          cargo binstall -y tauri-cli cross cargo-dist
+          if ! rustup show active-toolchain >/dev/null 2>&1; then
+            echo "  [提示] 未设置默认 Rust 工具链，请执行: rustup default stable"
+          fi
+
+          mkdir -p "$HOME/.cache/sccache" "$CARGO_HOME/bin"
+
+          echo ""
+          echo "== iKuai Bypass devShell =="
+          echo "  rustc         = $(rustc --version 2>/dev/null || echo '未安装（rustup default stable）')"
+          echo "  bun           = $(bun --version 2>/dev/null)"
+          echo "  ruby/bundle   = $(ruby --version 2>/dev/null) / $(bundle --version 2>/dev/null || echo '?')"
+          echo "  cargo-tauri   = $CARGO_TAURI_BIN ($CARGO_TAURI_VER)"
+          echo "  zig / cargo-zigbuild = $(zig version 2>/dev/null) / $(cargo-zigbuild --version 2>/dev/null)"
+          echo "  ANDROID_HOME  = $ANDROID_HOME"
+          echo "  ANDROID_NDK   = $ANDROID_NDK"
+          echo "  JAVA_HOME     = $JAVA_HOME"
+          echo ""
+          echo "项目结构:"
+          echo "  crates/core/     - 核心业务库"
+          echo "  apps/cli/        - CLI + Web 模式"
+          echo "  frontends/app/   - Bun + Astro 前端"
+          echo "  apps/gui/        - Tauri v2 GUI"
+          echo ""
+          echo "常用命令:"
+          echo "  bash script/dev.sh cli:dev              # 运行 CLI（本体，完整功能）"
+          echo "  bash script/dev.sh gui:dev              # 运行 GUI (Tauri)"
+          echo "  bash script/dev.sh webui:dev            # 启动 Astro dev server"
+          echo "  bash script/dev.sh webui:build          # 构建前端 dist"
+          echo ""
+          echo "Jekyll 站点（docs/）:"
+          echo "  bundle install && bundle exec jekyll serve   # 本地预览（localhost:4000）"
         '';
-      in
-      {
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            # 基础工具
-            git
-            curl
-            wget
-            jq
-            tree
-            unzip
-            zip
-            xz
-
-            # 构建工具
-            pkg-config
-            clang
-            libclang
-            cmake
-            ninja
-            perl
-            gnumake
-
-            # 系统库 (Rust/Tauri 依赖)
-            openssl
-            openssl.dev
-            sqlite
-            zlib
-            zlib.dev
-            glibc.static
-
-            # GTK/WebKit (Tauri Linux GUI)
-            gtk3
-            gtk3.dev
-            glib
-            glib.dev
-            cairo
-            cairo.dev
-            pango
-            pango.dev
-            gdk-pixbuf
-            gdk-pixbuf.dev
-            atk
-            atk.dev
-            gsettings-desktop-schemas
-            libsoup_3
-            libsoup_3.dev
-            webkitgtk_4_1
-            webkitgtk_4_1.dev
-            libayatana-appindicator
-            librsvg
-            librsvg.dev
-            dbus
-            dbus.dev
-            libepoxy
-            libepoxy.dev
-            at-spi2-core
-            at-spi2-core.dev
-            harfbuzz
-            harfbuzz.dev
-            xdg-utils
-            patchelf
-            chromium
-
-            nspr
-            nss
-            cups
-            expat
-            libxcb
-            libXcomposite
-            libXdamage
-            libgbm
-            alsa-lib
-
-            # Rust 工具链 (rustup 管理 rustc/cargo 版本，避免与 nixpkgs 版本冲突)
-            rustup
-            cargo-binstall
-            cargo-edit
-            cargo-release
-            cargo-nextest
-            cargo-zigbuild
-            rust-analyzer
-            bootstrapReleaseTools
-            sccache
-            mold
-
-
-            # 前端工具链 (Bun + Astro)
-            nodejs_26
-            bun
-            pnpm
-            typescript
-            typescript-language-server
-            prettier
-
-            # 通用开发辅助工具
-            ripgrep
-            taplo
-            file
-            lsof
-            bc
-            hivemind
-          ];
-
-          env = {
-            # Rust 编译缓存
-            RUSTC_WRAPPER = "sccache";
-            SCCACHE_CACHE_SIZE = "10G";
-            CARGO_BUILD_JOBS = "16";
-            # 清空宿主机继承和 nix 包装器注入的 RUSTFLAGS
-            RUSTFLAGS = "";
-
-            # Clang
-            LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
-            PLAYWRIGHT_LD_LIBRARY_PATH = playwrightLibraryPath;
-            CARGO_LD_LIBRARY_PATH = cargoLibraryPath;
-          };
-
-          shellHook = ''
-            export CARGO_HOME="$HOME/.cargo"
-            export SCCACHE_DIR="$HOME/.cache/sccache"
-            export PATH="$HOME/.bun/bin:$PATH:$CARGO_HOME/bin"
-
-            # Nix gcc/clang 包装器注入的环境变量会导致二进制链接到有问题的
-            # libgcc_s.so.1（gcc-15.2.0 IFUNC bug），清除它们让宿主机 gcc 直接工作
-            unset NIX_CC NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-            unset NIX_LDFLAGS NIX_CFLAGS_COMPILE NIX_CFLAGS_LINK
-
-            if [ -n "$LD_LIBRARY_PATH" ]; then
-              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$CARGO_LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
-            else
-              export LD_LIBRARY_PATH="$PLAYWRIGHT_LD_LIBRARY_PATH:$CARGO_LD_LIBRARY_PATH"
-            fi
-            export XDG_DATA_DIRS="${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:$XDG_DATA_DIRS"
-
-            mkdir -p \
-              "$HOME/.cache/sccache" \
-              "$HOME/.cargo/bin"
-
-            cat <<'EOF'
-            iKuai Bypass dev shell ready (Rust 主线版本)
-
-            项目结构:
-              crates/core/     - 核心业务库
-              apps/cli/        - CLI + Web 模式
-              frontends/app/   - Bun + Astro 前端
-              apps/gui/        - Tauri v2 GUI
-
-            首次使用:
-              ikb-bootstrap-release-tools  # 安装 tauri-cli, cross 等
-
-            常用命令:
-              bash script/dev.sh cli:dev              # 运行 CLI（本体，完整功能）
-              bash script/dev.sh gui:dev              # 运行 GUI (Tauri)
-              bash script/dev.sh webui:dev            # 启动 Astro dev server
-              bash script/dev.sh webui:build          # 构建前端 dist
-            EOF
-          '';
-        };
-      }
-    );
+      };
+    };
 }

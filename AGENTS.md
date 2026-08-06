@@ -1,5 +1,7 @@
 # AI rules
 
+- flake 用法：进入 ikuai-bypass 目录后执行 `nix develop`（或 direnv），获得 Rust/前端/Jekyll 开发环境。
+
 这是 iKuai Bypass 的 **Rust 主线版本**。仓库根目录即当前可交付版本，旧的 Go/Fyne 代码、文档和旧 CI 已归档到 `golang_archive/`。
 
 **永远用中文和我对话**

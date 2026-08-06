@@ -1,6 +1,6 @@
 {
   # devShell 的 WebKitGTK TLS 依赖系统服务 services.gnome.glib-networking（os-config dev_webkitgtk.nix）
-  description = "iKuai Bypass development shell (Rust 主线版本)";
+  description = "Rust CLI / Tauri Linux x86 GUI / Bun Astro 前端 / Jekyll 文档 开发编译环境";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";

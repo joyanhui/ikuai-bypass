@@ -104,6 +104,76 @@
         cargo binstall -y tauri-cli cross cargo-dist
       '';
 
+      basePackages = with pkgs; [
+        git
+        curl
+        wget
+        jq
+        tree
+        unzip
+        zip
+        xz
+        ripgrep
+        lsof
+        bc
+        hivemind
+        taplo
+      ];
+
+      serverLibPackages = with pkgs; [
+        gcc
+        gnumake
+        cmake
+        ninja
+        binutils
+        pkg-config
+        perl
+        dpkg
+        zstd
+        file
+        patchelf
+      ];
+
+      jsPackages = with pkgs; [
+        bun
+        nodejs_26
+        pnpm
+        typescript
+        typescript-language-server
+        prettier
+      ];
+
+      rustPackages = with pkgs; [
+        rustup
+        cargo-binstall
+        cargo-edit
+        cargo-release
+        cargo-nextest
+        cargo-zigbuild
+        rust-analyzer
+        bootstrapReleaseTools
+        sccache
+        mold
+        zig
+        llvmPackages_19.clang
+        llvmPackages_19.libclang
+        llvmPackages_19.libllvm
+        llvmPackages_19.lld
+      ];
+
+      androidPackages = with pkgs; [
+        jdk17
+        androidSdk
+      ];
+
+      jekyllPackages = with pkgs; [
+        (ruby.withPackages (ps: with ps; [ bundler ]))
+      ];
+
+      playwrightPackages = with pkgs; [
+        chromium
+      ];
+
       tauriNative = with pkgs; [
         webkitgtk_4_1
         webkitgtk_4_1.dev
@@ -167,62 +237,19 @@
         gst_all_1.gst-plugins-ugly
         gst_all_1.gst-libav
       ];
-
-      toolchain = with pkgs; [
-        rustup
-        cargo-binstall
-        cargo-edit
-        cargo-release
-        cargo-nextest
-        cargo-zigbuild
-        rust-analyzer
-        bootstrapReleaseTools
-        sccache
-        mold
-        zig
-        llvmPackages_19.clang
-        llvmPackages_19.libclang
-        llvmPackages_19.libllvm
-        llvmPackages_19.lld
-        gcc
-        gnumake
-        cmake
-        ninja
-        binutils
-        pkg-config
-        perl
-        bun
-        nodejs_26
-        pnpm
-        typescript
-        typescript-language-server
-        prettier
-        jdk17
-        androidSdk
-        chromium
-        dpkg
-        zstd
-        file
-        patchelf
-        git
-        curl
-        wget
-        jq
-        tree
-        unzip
-        zip
-        xz
-        ripgrep
-        taplo
-        lsof
-        bc
-        hivemind
-        (ruby.withPackages (ps: with ps; [ bundler ]))
-      ];
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        packages = toolchain ++ tauriNative ++ guiNative;
+        packages =
+          basePackages
+          ++ serverLibPackages
+          ++ jsPackages
+          ++ rustPackages
+          ++ androidPackages
+          ++ jekyllPackages
+          ++ playwrightPackages
+          ++ tauriNative
+          ++ guiNative;
 
         env = {
           ANDROID_HOME = androidHome;

@@ -7,7 +7,7 @@
   };
 
   outputs =
-    { self, nixpkgs }:
+    { nixpkgs, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -249,7 +249,8 @@
           ++ jekyllPackages
           ++ playwrightPackages
           ++ tauriNative
-          ++ guiNative;
+          ++ guiNative
+          ++ [ pkgs.fish ];
 
         env = {
           ANDROID_HOME = androidHome;
@@ -346,6 +347,12 @@
           echo ""
           echo "Jekyll 站点（docs/）:"
           echo "  bundle install && bundle exec jekyll serve   # 本地预览（localhost:4000）"
+          # 默认落进 fish（带专门 dev 主题，与系统 bash/fish 明确区分）
+          # 仅在交互式 TTY 下 exec，命令行模式（nix develop -c）保留原 shell
+          if [ -t 0 ] && command -v fish >/dev/null 2>&1; then
+            export __FISH_DEVSHELL=1
+            exec fish
+          fi
         '';
       };
     };

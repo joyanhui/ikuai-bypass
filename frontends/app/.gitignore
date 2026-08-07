@@ -52,3 +52,6 @@ blob-report/
 # Temporary files
 *.tmp
 *.temp
+
+# npm lockfile（bun.lock 为准）
+package-lock.json

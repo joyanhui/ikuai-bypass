@@ -150,6 +150,7 @@
         cargo-release
         cargo-nextest
         cargo-zigbuild
+        lldb
         rust-analyzer
         bootstrapReleaseTools
         sccache

@@ -1,5 +1,9 @@
 # AI rules
 
+## 命令防卡死
+- 前端命令防卡死：`vite build`（vite-plugin-checker 构建完进程不退出）与 `typesafe-i18n`（默认 watch 永不退出，手工调用必须带 `--no-watch`，`bun run typesafe-i18n` 已内置）这类不退出进程不可接 `| tail`/`| head` 等等待管道 EOF 的命令，否则永久卡死，截断输出改用 `timeout` 或重定向到文件再 tail。
+
+
 - flake 用法：进入 ikuai-bypass 目录后执行 `nix develop`（或 direnv），获得 Rust/前端/Jekyll 开发环境。
 
 这是 iKuai Bypass 的 **Rust 主线版本**。仓库根目录即当前可交付版本，旧的 Go/Fyne 代码、文档和旧 CI 已归档到 `golang_archive/`。

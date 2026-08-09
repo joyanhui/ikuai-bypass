@@ -1,106 +1,77 @@
-# AI rules
+# 开发规范（AGENTS.md）
 
-## 命令防卡死
-- 前端命令防卡死：`vite build`（vite-plugin-checker 构建完进程不退出）与 `typesafe-i18n`（默认 watch 永不退出，手工调用必须带 `--no-watch`，`bun run typesafe-i18n` 已内置）这类不退出进程不可接 `| tail`/`| head` 等等待管道 EOF 的命令，否则永久卡死，截断输出改用 `timeout` 或重定向到文件再 tail。
+- 本文件为通用开发规范，项目特有内容见同目录 `@AGENTS_This.md`。 
+- AI LLM 禁止修改本文件,可以给出修改建议但是绝对禁止自动编辑修改和删除。
 
+## 语言和注释
+- 沟通、文档使用中文；源码标识符、错误信息、接口返回、日志、git commit messages 使用英文（项目特殊约定见 `AGENTS_This.md`）。
+- 除非明确要求，永远不要新增注释；旧注释失效须主动更新或清理，否则不要删除已有注释。
+- 除非明确要求，不得新增任何测试代码。
 
-- flake 用法：进入 ikuai-bypass 目录后执行 `nix develop`（或 direnv），获得 Rust/前端/Jekyll 开发环境。
+## 文档约定
+- 文档只记录当前有效设计与约束，不写实现步骤、计划、历史沿革、历史对比、代码片段。
+- 新建文档禁用 emoji 与 `**xx**`；多用 `-` 列表，避免多余空行与废话，不写大段示例代码和约定俗成文案。
+- 新增核心功能必须同步更新对应模块文档；README 总览引用专题文档而非重复内容。
+- 各项目文档目录、专题文档与事实来源见 `AGENTS_This.md`。
 
-这是 iKuai Bypass 的 **Rust 主线版本**。仓库根目录即当前可交付版本，旧的 Go/Fyne 代码、文档和旧 CI 已归档到 `golang_archive/`。
+## 文件拆分与结构
+- 单文件尽量 ≤800 行，>1000 行强制拆分；`lib.rs` / `mod.rs` / `index.ts` 只做导出，不写业务逻辑；按功能垂直拆分（`xx/xx.rs`）。
+- 目录层级避免过深；同模块小文件用 `前缀+后缀.文件后缀` 前缀分组，文件过多再建子目录。
+- 禁止用注解、注释、`_` 前缀或 eslint-disable 等绕过代码质量检查，必须彻底解决问题。
 
-**永远用中文和我对话**
+## Rust 规范
+- 错误：生产代码全局禁用 `.unwrap()` / `.expect()`，用 `?` 或 `match`；错误码用统一枚举（唯一来源），API 层转前端友好格式，压平嵌套避免多层包装；
+- 测试代码（`#[cfg(test)]` 模块与 `tests/` 集成测试）允许 `unwrap` / `expect`；生产代码由各 crate 根 `#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used))]` 强制拦截。
+- 并发：全 `tokio` 异步；跨 `.await` 共享状态用 `RwLock`，独占状态用 `Mutex`；异步中禁止同步 IO / `thread::sleep` 等阻塞，CPU 密集用 `spawn_blocking`；`tokio::spawn` 必须带 `timeout`（≤ 24h）；捕获值须 `Send + 'static`，禁止 `Rc` / `RefCell` / 裸指针 / 持锁守卫传入；禁止持有 `MutexGuard` / `RwLockWriteGuard` 跨 `.await`；避免捕获局部借用的异步闭包。
+- 后台任务须异常隔离，单任务 panic 不拖死全局循环，须有 supervisor 自愈。
+- 所有异步任务必须具备明确的超时、取消和防重入机制：无论正常完成、超时或失败，占用的资源（连接、内存、信号量等）必须真正释放，任务可安全重试或跳过，不产生并发冲突与重复副作用。
+- 优先借用、引用、迭代器链、模式匹配、`if let`、`let else`；`mut` 只在必要时使用；`.clone()` 是异味，优先借用 / 所有权转移 / `Cow` / `Arc`。
+- 函数参数优先 `&str`、`&Path`、切片或泛型借用；仅在确需所有权、跨线程转移或持久化时用 `String` / `PathBuf`。
+- 数据库用 ORM Query Builder，禁止 raw SQL（ORM 无法表达的 UNION 聚合等保留 parameterized 例外）；禁止 N+1；高频字段建索引；事务范围最小化，跨表修改必须同一事务完成，事务外不得有副作用写入。
+- 数值运算用 `checked_add` / `checked_sub` / `saturating_mul` 等安全方式，禁止直接加减可能溢出的值。
+- 禁止直接调用 `std::env::var` / `std::env::var_os`，统一走项目环境变量封装。
+- 验收必须通过 `cargo clippy -- -D warnings` 并切实解决警告。但是除非明确要求，否则不要进行clippy验收和优化。
 
-## 当前目录结构
+## 前端 / TypeScript 规范
+- 技术栈：bun + React Router v7（React + TS + Vite）+ TanStack Query + Tailwind v4 + Zustand + shadcn/ui + Zod + React Hook Form + Lucide + Motion + typesafe-i18n + vite-plugin-checker + typescript-eslint。
+- 类型安全：禁止 `any`；禁止 `@ts-ignore`、`as any`、非必要非空断言；导入类型用 `import type`；函数命名 camelCase，表/列命名 snake_case。
+- 检查：必须通过 `tsc --noEmit`、`eslint`（0 错误 0 警告）、`vite build`；前端零 `any`、零 eslint-disable 注释、零 `_` 前缀规避。
+- API 契约：响应统一 `ApiResponse`（`{ code, message, data }`）；错误码引用共享枚举，禁止硬编码数字；分页请求 `{ page, page_size }`、响应 `{ total, items }`；请求体解析必须校验并类型检查输入，禁止吞错误；API 类型复用自动生成的 OpenAPI / 错误码产物。
+- UI：优先 shadcn/ui 组件 + Tailwind v4 原子类；移动优先（触控 ≥32px 按钮 / ≥24px 图标、字体 ≥14px、`Esc` 关闭弹层、避免 `hover` 作为唯一触发器）；主题三态由 CSS 变量 + ThemeProvider 驱动；全局样式放统一入口。
+- 存储：统一 `@/lib/storage.ts` 管理；小数据 `localStorage`，大对象 IndexedDB；禁止组件直接 `setItem` / `getItem`。
+- i18n：所有用户可见文本必须通过 typesafe-i18n（`LL.xxx()`），禁止硬编码文案；新增词条同步 `i18n-types.ts` 及所有语言 `index.ts`，嵌套结构一致（管理员页面除外）。
+- 错误提示：后端只返回错误码与英文 message；前端按错误码映射 i18n 词条渲染，未覆盖码回退后端 message；网络/限流等通用错误映射约定词条；非组件模块通过 `getLL()` 获取当前语言 LL。
+- Vite HMR：纯 CSS/TSX/TS 组件、非新增路由的改动绝不重启 bun dev 服务；只有 vite.config、新增路由、新增文件、env 变更等 HMR 覆盖不到的场景才允许重启。
 
-- `crates/core/`：核心业务库（配置、iKuai API、更新流程、运行时、日志）
-- `apps/cli/`：CLI + Web 模式
-- `apps/integration-tests/`：集成测试模块
-  其中 `apps/integration-tests/src/ikuai_simulator/` 是 iKuai 真机模拟器目录（CI 默认使用）
-- `frontends/app/`：Bun + Astro 单页前端
-- `apps/gui/`：Tauri v2 后端
-- `config.yml`：示例配置
-- `api-docs/`: 爱快4.x api抓包记录
-- `docs/`: Jekyll + GitHub Pages 文档站，部署于 `https://joyanhui.github.io/ikuai-bypass/`（子目录），本地预览执行 `bash script/dev.sh docs:dev`
-   - 内部链接必须使用标准 Markdown 相对路径 `](file.md)` 或 `](file.md#锚点)`，**禁止** `](/根路径/)` 和 `]({{ site.baseurl }}/path/)` 等 Liquid 写法
-   - `jekyll-relative-links` 插件在构建时自动将 `file.md` 转为 `/ikuai-bypass/file/`，同时 Obsidian 原生支持 `.md` 相对路径跳转和图谱
-- `golang_archive/`：Go 版本归档，除非用户明确要求，否则不要把新功能继续做进归档目录
+## 错误码与 API 规范
+- 错误码枚举为唯一来源：Rust 引用常量，TS 自动生成并 re-export，禁止硬编码数字。
+- 所有 HTTP API 统一 `ApiResponse<T>` 返回；API 错误关联唯一错误码，API 层转前端友好 message，错误处理压平嵌套。
+- 所有路由 RESTful + OpenAPI 3.0，operationId 全局唯一；OpenAPI 由 `#[utoipa::path]` 宏聚合到统一文档，新增接口必须登记进 `paths(...)`。
+- 前端契约同步走统一入口（生成错误码 TS + OpenAPI 并转 TS 类型）；cargo run 调试启动自动同步（仅 debug + 开关允许 + 同进程一次，失败只记日志不阻断），Release 为空操作；CI 同步后校验产物与代码一致。
 
-## 集成测试约定
+## 配置与环境变量规范
+- 所有配置以项目配置文件为唯一真实来源（文件名与格式见 `AGENTS_This.md`）；禁止代码中存在配置未声明的配置项。
+- 运行中可以变的配置项统一到数据库中，并合理利用缓存。
+- 启动时找不到配置文件直接报错退出，禁止带病启动。
+- 所有配置统一用 `*_env(key, default)` 读取，无启动时校验；env 不存在用代码默认值并打印警告；敏感配置（密码、密钥、token）必须随默认值打印警告。
+- `string_env` 中 `""` 是合法值原样返回；`bool_env` / 数值中 `""` 回退 fallback；JSON 布尔值必须用 `true` / `false`，禁止字符串。
+- 可选功能必须有独立 `ENABLED` 标志，禁止用 `""` 表示功能关闭。
+- 环境变量带模块名前缀；同类配置用对象管理，变量使用相同前缀；简单结构写一行，嵌套不宜太深。
+- 脚本禁止用 `env KEY=VALUE` 覆盖配置文件已加载的配置。
+## 编译和构建
+- 优先使用 base script/dev.sh <模块:动作  参数> （查看用法：bash script/dev.sh -h）
+## 其他约定
+- 可能存在用户或其他 agent 的未提交改动，禁止回滚、覆盖或整理与当前任务无关的改动。
+- 为提高开发效率 尽量使用 `do sleep x` 避免使用  `timeout xx`执行命令
+- 命令防卡死：`vite build`（vite-plugin-checker 构建完进程不退出）与 `typesafe-i18n`（默认 watch 永不退出，手工调用必须带 `--no-watch`）这类不退出进程不可接 `| tail` / `| head` 等等待管道 EOF 的命令；截断输出改用 `do sleep 5`或者 重定向到文件再 tail。
+- GitHub Actions 记录用 `gh` 命令查看；Cloudflare Worker 交互用 `bunx wrangler`，明确由 GitHub 触发 Cloudflare Worker 构建的项目不手动执行 wrangler。
 
-- GitHub CI 默认使用 `apps/integration-tests/src/ikuai_simulator/` 里的 iKuai 模拟器，不再依赖在线 KVM
-- 本地进行集成测试时，默认优先使用 KVM/QEMU 真机链路，用于验证和模拟器的行为差异
-- 如果本地没有 `qemu-system-x86_64` / `qemu-img` / `/dev/kvm`，允许通过 `IKB_TEST_IKUAI_URL` 连接开发者显式指定的爱快地址继续跑集成测试
-- 本地 KVM 默认镜像优先使用仓库内 `.github/smoke-test-ikuai.qcow2.7z` 解压得到的 `.github/smoke-test-ikuai.qcow2`，除非开发者自己通过环境变量覆盖
-- `webui` 浏览器 smoke 本地验证必须基于 `nix develop`，先预编译 `ikb-webui-fixture`，再以二进制路径运行 `apps/integration-tests/run-webui-browser-smoke.sh`。
+## 浏览器控制（Chrome DevTools MCP）
+除非明确要求你使用浏览器调试，否则永远不要打开浏览器调试和截图。
+需要控制浏览器时，必须使用 `chrome-devtools_*` MCP 工具（由 `chrome-devtools-mcp` 提供）。
+- `chrome-devtools-mcp` 并没有调试和操作手机的tauri app的ui能力。要调试手机app请依赖adb。
+- 禁止通过 bash 手动启动 Chrome（禁止 `google-chrome-stable --remote-debugging-port` 等命令）
+- 除非远程调试手机的webdav，否则禁止使用 --headless（测试前端功能时 headless 会跳过 GPU 渲染、字体渲染、WebGL 等）
+- 禁止使用 --user-data-dir=/tmp/...（临时目录）
+- 禁止手动清理 user-data-dir 目录（MCP 服务器自动管理持久化 profile）
 
-## 安装脚本测试
-
-`docs/install.sh` 一键安装脚本的 CI 测试覆盖 Ubuntu (systemd) 和 OpenWrt (KVM QEMU) 两种环境，验证 OS/arch 检测、版本获取、下载安装、服务文件注册、enable/start/stop/disable 生命周期、保留/删除配置卸载以及进程残留清理。
-
-## OpenWrt LuCI IPK
-
-OpenWrt LuCI IPK 的说明和构建细节参考 `dev-docs/openwrt-luci-ipk构建和说明.md`。
-
-## 核心业务逻辑
-
-### 1. 规则标识与命名约定
-
-- 名称前缀：`IKB`
-- 统一备注：`IkuaiBypass`
-- 命名规则：`IKB + tag + 序号`
-- 识别逻辑：名字以 `IKB` 开头或备注包含 `IkuaiBypass`
-- 旧版本兼容：清理/更新模式保留对 `joyanhui/ikuai-bypass` 与 `IKUAI_BYPASS` 的兼容识别
-
-### 2. 执行与日志规范
-
-- 所有更新任务必须严格顺序执行，禁止并发更新多个规则块
-- 所有面向用户的日志标签必须使用中文
-- API 和内部错误信息保持英文，便于定位
-
-### 3. 配置与编辑模型
-
-- `rawYaml` 是前端配置编辑的唯一真来源
-- 可视化编辑必须通过 YAML AST 定点修改 `rawYaml`
-- 文本编辑直接编辑 `rawYaml`
-- 后端保存必须先解析 YAML 校验，再按 `rawYaml` 原文写盘
-
-### 4. 配置一致性要求
-
-- 新增或修改配置项时，至少同步更新：
-  - `config.yml`
-  - `crates/core/src/config.rs`
-  - `frontends/app/src/lib/config_model.ts`
-  - `frontends/app` 相关表单 / YAML AST / 保存逻辑
-- 统一使用 `tag` 字段作为用户标识，不再新增 `name` 字段语义
-
-### 5. 更新与安全策略
-
-- 原地更新：匹配则 Edit，不匹配则 Add，保持爱快内部 ID 稳定
-- 自定义运营商分片：同名 `IKB+tag`，通过备注中的分片序号匹配并清理冗余分片
-- Safe-Before：远程资源下载失败或 HTTP 状态异常时，立即终止当前项更新，严禁清理旧规则
-- 清理模式：必须显式指定 `-tag`，不得设置危险默认值
-- 配置覆写：必须做 YAML 后缀、软链接和写入安全校验
-
-## 技术约束
-
-- CLI 是完整功能本体，GUI/WebUI 只是可视化入口
-- WebUI 与 Tauri 共用 `frontends/app/` 这一套 Astro 单页
-- Tauri IPC 语义需要和 Web API 对齐
-- 前端禁止 `as any` / `@ts-ignore` 绕过类型系统
-- 核心逻辑避免无意义 clone、unwrap 和隐式 panic
-- 前端monaco 编辑器仅限pc模式可用，在tauri app的移动端禁止使用，会导致webview崩溃
-## 注释与文案规范
-
-- 代码注释使用双语文本（中文 + English）
-- 注释优先解释为什么存在，再解释做了什么
-- UI 返回文案与 API 错误信息保持英文
-
-## CI 约束
-
-`.github/workflows/release.yml` 只允许 `tag push` 和 `workflow_dispatch` 触发，禁止恢复每日定时构建；手动执行时 `publish_release` 与 `push_docker` 默认勾选，未填写 `release_tag` 但勾选发布时必须自动生成 `manual-release-年月日时分秒` 继续发布，且手动执行发布一律标记为 prerelease，选择 `full` 时必须自动包含 nightly MIPS 架构。Tag push 仅在 tag 名包含 `test`、`rc`、`alpha`、`beta`、`pre`、`preview`、`dev`、`nightly` 时发布为 prerelease，否则发布为正式版并推送 Docker `latest`。
-
-### 发布 workflow 注意事项
-
-- 发布 workflow 运行期间不要在 main 上 push 新 commit；tag 指向的 commit 不再是默认分支 tip 时，GitHub 平台会拒绝 GITHUB_TOKEN 携带该 commit 作为 target_commitish 创建 release（403 Resource not accessible by integration），该限制要求 PAT 级权限
-- Publish Release 步骤使用 `gh release create` 而非 softprops/action-gh-release：tag 已存在时只关联 tag、不传 target_commitish，天然规避上述 403
-- 上传资产只收集 release/ 第一层归档文件；`.zip.stage/` 等打包中间产物内含同名 `ikuai-bypass`/`README.md`/`config.yml`，上传会触发 asset 重名 422

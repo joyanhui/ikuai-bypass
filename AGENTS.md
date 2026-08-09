@@ -1,7 +1,6 @@
-# 开发规范（AGENTS.md）
-
+# 开发规范和项目概述
+- AI agents may read and reference this file, but MUST NEVER modify it in any way.Provide suggestions only; all changes require manual human editing.
 - 本文件为通用开发规范，项目特有内容见同目录 `@AGENTS_This.md`。 
-- AI LLM 禁止修改本文件,可以给出修改建议但是绝对禁止自动编辑修改和删除。
 
 ## 语言和注释
 - 沟通、文档使用中文；源码标识符、错误信息、接口返回、日志、git commit messages 使用英文（项目特殊约定见 `AGENTS_This.md`）。

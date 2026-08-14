@@ -68,8 +68,8 @@ let
   # 前端
   jsPackages = pkgList "bun|typescript|typescript-language-server|prettierd";
 
-  # Cloudflare Workers
-  cloudflarePackages = pkgList "wrangler";
+  # Cloudflare Workers（wrangler 已从 nix 移除，改用 bunx/npx wrangler 按需调用）
+  cloudflarePackages = [ ];
 
   # Playwright
   playwrightLibPath = pkgs.lib.makeLibraryPath (

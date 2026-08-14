@@ -44,7 +44,7 @@
         };
 
         shellHook = ''
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.cargo/bin:/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH"
           export SCCACHE_DIR="$HOME/.cache/sccache"
 
           echo "==========================================================="
@@ -56,11 +56,9 @@
           echo "  Jekyll 文档本地预览："
           echo "    bundle install && bundle exec jekyll serve"
           echo "==========================================================="
-          if command -v fish >/dev/null 2>&1; then
+          if [ -t 0 ] && command -v fish >/dev/null 2>&1; then
             export __FISH_DEVSHELL=1
-            if [ -t 0 ]; then
-              exec fish
-            fi
+            exec fish
           fi
         '';
       };

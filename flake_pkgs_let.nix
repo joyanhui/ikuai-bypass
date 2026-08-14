@@ -61,7 +61,7 @@ let
     archive = pkgList "unzip|zip|xz|zstd|p7zip|upx"; # 压缩打包
     dev = pkgList "shellcheck|shfmt|taplo|pkg-config|perl|dpkg|protobuf"; # 开发辅助
     build = pkgList "gcc|gnumake|cmake|ninja|binutils|patchelf"; # 编译工具链
-    libs = pkgList "openssl|openssl.dev|sqlite|zlib|zlib.dev|glibc.static"; # 编译链接库
+    libs = pkgList "openssl|openssl.dev|sqlite|zlib|zlib.dev"; # 编译链接库（不放 glibc.static：其 lib 会进 NIX_LDFLAGS，链接器误用 libc.a 导致 Rust 程序崩溃）
     all = utils ++ net ++ archive ++ dev ++ build ++ libs;
   };
 

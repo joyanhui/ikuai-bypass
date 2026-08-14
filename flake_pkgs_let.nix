@@ -80,7 +80,7 @@ let
   rustPackages = rec {
     libPath = pkgs.lib.makeLibraryPath (pkgList "openssl|curl|zlib|stdenv.cc.cc.lib");
     serverLibPath = pkgs.lib.makeLibraryPath (pkgList "openssl|sqlite|zlib|libffi");
-    rustFlags = "-Cdebuginfo=1 -Ccodegen-units=1 -Clink-arg=-fuse-ld=lld -Csplit-debuginfo=packed -Clink-arg=-Wl,-rpath,${serverLibPath} -Clink-arg=-Wl,-rpath,${desktopPackages.libPath}";
+    rustFlags = "-Cdebuginfo=1 -Ccodegen-units=1 -Clink-arg=-fuse-ld=lld -Csplit-debuginfo=packed -Clink-arg=-Wl,-rpath,${libPath} -Clink-arg=-Wl,-rpath,${serverLibPath} -Clink-arg=-Wl,-rpath,${desktopPackages.libPath}";
     packages = pkgList "rustup|cargo-tauri|sccache|mold|cargo-edit|cargo-nextest|cargo-binstall|cargo-release|lldb|llvmPackages_19.clang|llvmPackages_19.libclang|llvmPackages_19.libllvm|llvmPackages_19.lld|gcc|gnumake|cmake|ninja|binutils|patchelf";
     env = {
       RUSTFLAGS = rustFlags;
@@ -93,8 +93,8 @@ let
       CARGO_CACHE_RUSTC_INFO = "0";
       RUSTC_CODEGEN_UNITS = "1";
       LIBCLANG_PATH = "${pkgs.llvmPackages_19.libclang.lib}/lib";
-      LIBRARY_PATH = "${serverLibPath}:${desktopPackages.libPath}";
-      LD_LIBRARY_PATH = libPath;
+      # 编译期库搜索路径（含 libPath）；不设 LD_LIBRARY_PATH，避免 devShell 库污染系统程序运行时加载
+      LIBRARY_PATH = "${libPath}:${serverLibPath}:${desktopPackages.libPath}";
     };
   };
   # Linux 桌面 GUI 应用依赖（Tauri/Flutter/Electron 通用）

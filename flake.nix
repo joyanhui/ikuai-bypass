@@ -56,9 +56,11 @@
           echo "  Jekyll 文档本地预览："
           echo "    bundle install && bundle exec jekyll serve"
           echo "==========================================================="
-          if [ -t 0 ] && command -v fish >/dev/null 2>&1; then
+          if command -v fish >/dev/null 2>&1; then
             export __FISH_DEVSHELL=1
-            exec fish
+            if [ -t 0 ]; then
+              exec fish
+            fi
           fi
         '';
       };

@@ -1,5 +1,45 @@
 { nixpkgs }:
 let
+  readme = ''
+    # flake_pkgs_let.nix —— 统一开发环境配置全集
+
+    ## 作用
+    - 所有项目共享的开发环境包配置全集，项目 flake.nix 按需引入其中的组。
+    - 本文件所有副本必须保持完全一致；修改后需同步到：
+      - os-config/dev-env/flake_pkgs_let.nix（模板与系统模块的数据源）
+      - 各项目根目录的 flake_pkgs_let.nix
+
+    ## 使用方式（项目 flake.nix）
+    - import ./flake_pkgs_let.nix 取得 env，按需 inherit 需要的组：
+        env = import ./flake_pkgs_let.nix { inherit nixpkgs; };
+        inherit (env) system pkgs rustPackages desktopPackages android;
+    - devShell 中 packages 组合各组的 .packages，env 组合各组的 .env。
+
+    ## 配置组说明
+    - basePackages：基础工具全集 all = utils + net + archive + dev + build + libs
+      - utils 通用命令 / net 网络下载 / archive 压缩打包 / dev 开发辅助 / build 编译工具链 / libs 编译链接库
+    - jsPackages：bun + typescript + tsserver + prettierd（前端）
+    - cloudflarePackages：wrangler（Cloudflare Workers）
+    - playwrightPackages / playwrightLibPath：chromium、google-chrome 及运行库路径
+    - rustPackages：rustup + cargo 工具链 + LLVM；env 含 RUSTFLAGS / sccache 等
+    - desktopPackages：Linux 桌面 GUI 依赖（GTK / WebKitGTK / 图形栈），Tauri / Flutter / Electron 通用
+    - espPackages：ESP32 工具（espflash / esptool 等）+ python 串口依赖
+    - docsPackages：文档工具 all = hugo + jekyll + mdbook
+    - golangPackages：go + gopls + delve；env 含 GOPROXY 国内镜像
+    - zigPackages：zig + zls
+    - pythonPackages：python313 + uv / ruff / pyright 等
+    - flutterPackages：flutter（Android 构建依赖 android 组）
+    - android：Android SDK / NDK + jdk17；env 含 ANDROID_HOME / JAVA_HOME 等
+
+    ## 快速上手
+    - 复制 os-config/dev-env/flake_tpl_*.nix（按语言组合命名）到项目改名 flake.nix 即可使用。
+    - 组合模板：flake_tpl_rust_tauri（Rust + Tauri + Android + Bun）、flake_tpl_all（全量）。
+
+    ## 系统级引入（可选）
+    - os-config modules/dev/dev_ext_import_all.nix 将全部包挂入系统 systemPackages：
+      - 防止 nix-collect-garbage 清理开发环境包（devShell 包不在系统闭包内）
+      - 仅引入 packages，不注入 env，避免污染日用环境
+  '';
   system = "x86_64-linux";
   pkgs = import nixpkgs {
     inherit system;
@@ -146,6 +186,7 @@ let
 in
 {
   inherit
+    readme
     system
     pkgs
     basePackages

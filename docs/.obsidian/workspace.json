@@ -188,6 +188,8 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
+    "hugo/public/en.search.min.a39fe016224e46438406fe1be861870771629edd117f790d51a00b71fe8dd423.js",
+    "hugo/public/en.search-data.min.b1799a0958f1d718cc250a887038f8e909ee98bd0bee764f43d92679b0ac7130.json",
     "hugo/public/en.search.min.bf4bbc91cb2c19fb148d357f012710ba0055c52eafa16862dca951c8876544dd.js",
     "hugo/public/en.search-data.min.2dee1a183fad0a596ceab543143a4a780a6caf244021a1805b937f9ec2d95d50.json",
     "hugo/public/en.search.min.b01d02627d85a3e2a1ae8a2c0fade999b2165f72789f32478eb00d4d3b0a35bc.js",
@@ -201,8 +203,6 @@
     "ikuai-firmware-4.0.210-port-streaming-mode-fix.md",
     "proxy-vs-github-proxy-guide.md",
     "hugo/public/分流模式动画/index.html",
-    "hugo/public/分流模式动画",
-    "hugo/public/en.search.min.492fa44021f7e8d6aa3507508914402a7a092b4911b5907c657edcedd28ae4c0.js",
     "cli-params.md",
     "quickstart.md",
     "openwrt-service-install.md",

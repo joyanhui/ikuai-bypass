@@ -151,8 +151,8 @@ weight: 3
 
 ```
 客户端 → iKuai 路由 → 检查IP/域名
-     → 直接走wan1/运营商光猫
-     → 或者 走wan2  → 旁路由处理 → 重新交回 iKuai 的lan口 → ikuai根据来源 请求wan1/运营商光猫
+     → 直接走wan1 → 光猫
+     → 或者 走wan2  → 旁路由 → 重回iKuai的lan口 → ikuai根据来源 → 请求wan1/光猫
 ```
 
 **特性：**

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "router-mode-animation.md",
+                "file": "router-mode.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "router-mode-animation"
+              "title": "router-mode"
             }
           }
         ]
@@ -158,7 +158,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "router-mode-animation.md",
+                "file": "router-mode.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -186,21 +186,23 @@
       "bases:新建数据库": false
     }
   },
-  "active": "f1df1b981b8f05d0",
+  "active": "887fe4d40d721aea",
   "lastOpenFiles": [
+    "分流模式动画.md",
+    "hugo/public/en.search.min.49f69e246e6ae5d3b6f59a02625a970b3e86a4712341f2778b76b026b4bfb775.js",
+    "hugo/public/en.search-data.min.5a3b0bf304e8003f9d7730d7bf0e618972ee33345f342c15012c2e6730890fe0.json",
+    "router-mode.md",
+    "ikuai-firmware-4.0.210-port-streaming-mode-fix.md",
+    "proxy-vs-github-proxy-guide.md",
+    "hugo/public/分流模式动画/index.html",
+    "hugo/public/分流模式动画",
+    "hugo/public/en.search.min.492fa44021f7e8d6aa3507508914402a7a092b4911b5907c657edcedd28ae4c0.js",
+    "hugo/public/en.search-data.min.93066671f9910248074b2cedbe0557be962a7ece1a1d44c6da45408bef5f3434.json",
+    "hugo/public/en.search.min.7482f744f2ade05175a83b0f3a214bc589e9297d34663e7434f97bef93d29412.js",
+    "hugo/public/en.search-data.min.0a59f36bd5c1d9050b1825ebda3051eff1331a211835d6c31df99771301573e8.json",
     "hugo/public/en.search.min.98daea125bdb6d8d462b15fb0c86fa4289591fba27f8cdd97008d7926b4556ba.js",
     "hugo/public/en.search-data.min.b6008c76ab278f273d2793adf3e6774834147a888168d0582ee3b1ba76babb18.json",
-    "hugo/public/en.search.min.be37d8e1b60043e23a710c0d81f0025d00324210f6bc68525de4aef70a37e477.js",
-    "hugo/public/en.search-data.min.a7750570ca1300959814cb8d5d2a57ebb3c1e709a5c5a1a805b5852c89c46bfc.json",
-    "hugo/public/en.search.min.16630c50a1e66afbae8181e59c87dffa195906b4f20d6e4f440ddea543bc6df0.js",
-    "hugo/public/en.search-data.min.f79ea3b85adc83c64f28c82870e2c63b8add01d4ffecfec46fee70eaa5912e4a.json",
-    "hugo/public/en.search.min.21d5126869de51f723e89d1f3c9443cf208142f2f92180a363d0d8136492019f.js",
-    "hugo/public/en.search-data.min.1adc38ab701a7c943e783ce4a9ef341ac5fe2c079a392c45671f12fdcba36b77.json",
-    "hugo/public/en.search.min.a76cd8bb56fb6b34c3b4e0a1fea01e3c6d95e283b626c1cb3d456e29c98aa30a.js",
-    "hugo/public/en.search-data.min.223407362f6975727dffcbc1b433895d9166eb6635a9fc54ccafb9c274e2adb7.json",
-    "hugo/public/en.search.min.0a18b91075bd1352aceca68a6b632f764e781146fc5f4e41ee0345061aea9585.js",
     "cli-params.md",
-    "router-mode.md",
     "quickstart.md",
     "openwrt-service-install.md",
     "index.md",

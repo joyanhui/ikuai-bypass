@@ -13,12 +13,12 @@ weight: 3
 ---
 ### 1. IP 分组与端口分流模式 
 
-**适用场景：** 简单的旁路由方案，逻辑直接。
+**适用场景：** 简单的旁路由方案，逻辑直接。旁路由可以是单臂路由，也可以是单虚拟网卡虚拟机。
 
 **实现逻辑：**
 
-1. **IP 分组**：本工具将订阅的 IP 列表同步到 iKuai 的"IP 分组"中。
-2. **策略路由**：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组IP的流量，将其"下一跳网关"指向 旁路由的 IP。把流量导向旁路由
+- **IP 分组**：本工具将订阅的 IP 列表同步到 iKuai 的"IP 分组"中，支持ipv4和ipv6。
+- **下一跳网关**：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组IP的流量，将其"下一跳网关"指向 旁路由的 IP。把流量导向旁路由
 
 **数据流向：**
 
@@ -26,10 +26,9 @@ weight: 3
 客户端 → iKuai 路由 → 检查请求的IP地址
       → iKuai 物理 WAN1 接口 → 运营商光猫
       → 端口分流（下一跳指向 旁路由特殊处理) → 返回iKuai  → 运营商光猫
-
 ```
 
-**特点**：流量逻辑简单直接，也更加灵活。
+**特点**：流量逻辑简单直接，也更加灵活。 下图svg动画为指示的用户请求。`ikuai-bypass`负责处理ip分组的订阅也会创建`下一跳`的规则。
 
 <svg viewBox="80 20 560 410" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
   <defs>
@@ -77,11 +76,11 @@ weight: 3
   <rect x="90" y="360" width="190" height="60" rx="10" fill="#1e293b" stroke="#a78bfa" stroke-width="2"/>
 
   <!-- 绿：终端设备 -> LAN口 -> 规则 -->
-  <path d="M430 270 L310 270 L310 210 L350 210 L350 136 L265 136" stroke="#4ade80" stroke-width="4" marker-end="url(#arrG)" fill="none"/>
+  <path d="M430 270 L310 270 L310 210 L350 210 L350 126 L265 126" stroke="#4ade80" stroke-width="4" marker-end="url(#arrG)" fill="none"/>
   <path d="M430 270 L368 270" stroke="none" fill="none" marker-end="url(#arrG)"/>
   <path d="M310 210 L340 210" stroke="none" fill="none" marker-end="url(#arrG)"/>
   <path d="M350 210 L350 173" stroke="none" fill="none" marker-end="url(#arrG)"/>
-  <path d="M350 136 L300 136" stroke="none" fill="none" marker-end="url(#arrG)"/>
+  <path d="M350 126 L300 126" stroke="none" fill="none" marker-end="url(#arrG)"/>
   <path id="pg" d="M430 270 L310 270 L310 210 L350 210 L350 136 L265 136" stroke="none" fill="none"/>
   <circle r="7" fill="url(#dotG)">
     <animateMotion dur="2s" repeatCount="indefinite"><mpath xlink:href="#pg"/></animateMotion>
@@ -125,7 +124,7 @@ weight: 3
   <text x="245" y="70" fill="#fca5a5" font-size="15" text-anchor="middle">爱快主路由 iKuai</text>
   <text x="245" y="90" fill="#94a3b8" font-size="11" text-anchor="middle">LAN ip 192.168.1.1 / WAN1 pppoe</text>
   <text x="185" y="128" fill="#e2e8f0" font-size="12" text-anchor="middle">规则：目标 IP 匹配分组</text>
-  <text x="242" y="162" fill="#0f172a" font-size="9" text-anchor="middle">下一跳</text>
+  <text x="242" y="162" fill="#0f172a" font-size="9" text-anchor="middle">下一跳网关</text>
   <text x="242" y="178" fill="#0f172a" font-size="8" text-anchor="middle">到旁路由 192.168.1.2</text>
   <text x="145" y="208" fill="#e2e8f0" font-size="11" text-anchor="middle">WAN1(PPPOE)</text>
   <text x="255.5" y="208" fill="#e2e8f0" font-size="11" text-anchor="middle">LAN口</text>
@@ -139,7 +138,7 @@ weight: 3
 
 ### 2. 自定义运营商分流模式 
 
-**适用场景：** 追求极致稳定性、网络自愈、终端无感分流。（需要多网卡或能添加虚拟网卡）
+**适用场景：** 追求极致稳定性、网络自愈、终端无感分流。（需要多网卡或能添加虚拟网卡的pve等环境）
 .
 **实现逻辑：**
 这种模式下，iKuai 将 旁路由 同时视为"虚拟的上级运营商"和下级终端设备。
@@ -161,6 +160,9 @@ weight: 3
 - **性能优异**：直连速度最快，旁路仅处理特定流量。
 - **缺点** ： 网络拓扑理解起来较为复杂，需要占用ikuai的一个wan一个lan，旁路由自身最好也需要双网口。
 **参考文档**：可以参考 [小类的文章](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。 
+
+
+下图svg动画为指示的用户请求。`ikuai-bypass`负责处理 `域名分流规则`到wan2 ,以及wan2 的ip订阅；你需要手动添加一条来源ip到wan1的规则，如果有需要可以另外在wan2口上手动添加故障转移（可以在旁路由故障的时候全部走wan1）
 
 <svg viewBox="13 10 607 500" width="607" height="500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
   <defs>
@@ -246,9 +248,11 @@ weight: 3
   <text x="755" y="198" fill="#e2e8f0" font-size="14" text-anchor="middle">终端设备</text>
   <text x="755" y="222" fill="#4ade80" font-size="12" text-anchor="middle">ip 192.168.1.100</text>
   <text x="755" y="241" fill="#94a3b8" font-size="11" text-anchor="middle">网关 192.168.1.1（爱快 LAN）</text>
-  <text x="445" y="52" fill="#fca5a5" font-size="14" text-anchor="middle">爱快主路由 iKuai</text>
+  <text x="445" y="38" fill="#fca5a5" font-size="14" text-anchor="middle">爱快主路由 iKuai</text>
+  <text x="445" y="54" fill="#94a3b8" font-size="10" text-anchor="middle">LAN ip 192.168.1.1 / WAN1 pppoe /WAN2接旁路由的lan</text>
   <text x="434" y="90" fill="#e2e8f0" font-size="9" text-anchor="middle">规则：IP匹配自定义虚拟运营商或者域名匹配</text>
   <text x="496" y="139" fill="#e2e8f0" font-size="10" text-anchor="middle">规则：来源 IP</text>
+  <text x="496" y="150" fill="#94a3b8" font-size="8" text-anchor="middle">（来自192.168.1.2）</text>
   <text x="554" y="178" fill="#e2e8f0" font-size="10" text-anchor="middle">LAN 口</text>
   <text x="338" y="182" fill="#e2e8f0" font-size="11" text-anchor="middle">WAN1(PPPOE)</text>
   <text x="441" y="182" fill="#000" font-size="9" text-anchor="middle">WAN2(虚拟运营商)</text>
@@ -258,7 +262,7 @@ weight: 3
   <text x="755" y="286" fill="#7dd3fc" font-size="11" text-anchor="middle">WAN 口 ip 192.168.1.2</text>
   <text x="755" y="303" fill="#94a3b8" font-size="10" text-anchor="middle">网关 192.168.1.1（接爱快 LAN, 出网）</text>
   <text x="755" y="338" fill="#7dd3fc" font-size="11" text-anchor="middle">LAN 口 ip 10.0.0.1</text>
-  <text x="755" y="355" fill="#94a3b8" font-size="10" text-anchor="middle">（接爱快 WAN2）</text>
+  <text x="755" y="355" fill="#94a3b8" font-size="10" text-anchor="middle">（接爱快 WAN2，最好关闭DHCP服务）</text>
   <text x="385" y="476" fill="#c4b5fd" font-size="14" text-anchor="middle">光猫</text>
   </g>
 </svg>

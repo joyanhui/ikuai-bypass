@@ -1,21 +1,19 @@
 ---
-title: 分流模式：运营商 vs IP 分组
+title: 分流模式：运营商(ISP)分流+域名分流 vs IP分组和端口分流
 type: docs
 weight: 3
 ---
 
 # 爱快两种分流模式解析
 
-本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。运行 CLI 时通过 `-m` 参数选择分流模式 [CLI 参数说明](cli-params.md#分流模式--m)。
+本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。运行 CLI 时通过 `-m` 参数选择分流模式 [CLI 参数说明](cli-params.md#分流模式--m)。两种模式均不需要修改终端设备的网关地址。
 
-简单的说，如果你旁路由没有多网口，那么选择 ip分组配合端口分流的下一条网关的方式把要分流的流量给到旁路由。如果支持多网口（虚拟机 pve也可以）那么
+如何选择：如果你旁路由没有多网口，那么选择 IP分组和端口分流的。如果支持多网口（虚拟机 pve也可以）并且追求旁路由宕机后自愈，那么建议使用 运行运营商(ISP)分流+域名分流
 
 ---
-### 1. IP 分组与端口分流模式 
+### 1. IP分组和端口分流
 
 **适用场景：** 简单的旁路由方案，逻辑直接。旁路由可以是单臂路由，也可以是单虚拟网卡虚拟机。
-
-**实现逻辑：**
 
 - **IP 分组**：本工具将订阅的 IP 列表同步到 iKuai 的"IP 分组"中，支持ipv4和ipv6。
 - **下一跳网关**：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组IP的流量，将其"下一跳网关"指向 旁路由的 IP。把流量导向旁路由
@@ -27,8 +25,8 @@ weight: 3
       → iKuai 物理 WAN1 接口 → 光猫
       → 端口分流（下一跳指向 旁路由特殊处理) → 返回iKuai → 光猫
 ```
-
-**特点**：流量逻辑简单直接，也更加灵活。 下图svg动画为指示的用户请求。`ikuai-bypass`负责处理ip分组的订阅也会创建`下一跳`的规则（下一跳规则记得避开旁路由的ip地址）。
+#### 示意图
+下图svg动画为指示的用户请求。`ikuai-bypass`负责处理ip分组的订阅也会创建`下一跳`的规则（下一跳规则记得避开旁路由的ip地址）。
 
 <svg viewBox="80 20 560 410" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
   <defs>
@@ -137,11 +135,9 @@ weight: 3
 
 **参考文档**：[实现方式参考](https://github.com/joyanhui/ikuai-bypass/issues/7) 或 [恩山y2kji的教程](https://www.right.com.cn/forum/thread-8288009-1-1.html)。
 
-### 2. 自定义运营商分流模式 
+### 2. 运营商(ISP)分流+域名分流
 
 **适用场景：** 追求极致稳定性、网络自愈、终端无感分流。（需要多网卡或能添加虚拟网卡的pve等环境）
-.
-**实现逻辑：**
 这种模式下，iKuai 将 旁路由 同时视为"虚拟的上级运营商"和下级终端设备。
 
 - **链路设计**：旁路由作为 iKuai 的上级isp接收流量，处理后再将出口流量"绕回"给 iKuai ,然后ikuai根据来源ip（旁路由的lan地址），然后再发给真实的 WAN 口（光猫）。
@@ -156,13 +152,11 @@ weight: 3
 ```
 
 **特性：**
-
-- **无感**：终端设备无需更改网关;可以利用爱快的多wan自动切换功能实现自愈。
 - **性能优异**：直连速度最快，旁路仅处理特定流量。
 - **缺点** ： 网络拓扑理解起来较为复杂，需要占用ikuai的一个wan一个lan，旁路由自身最好也需要双网口。
 **参考文档**：可以参考 [小类的文章](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。 
 
-
+#### 示意图
 下图svg动画为指示的用户请求。`ikuai-bypass`负责处理 `域名分流规则`到wan2 ,以及wan2 的ip订阅；你需要手动添加一条来源ip到wan1的规则，如果有需要可以另外在wan2口上手动添加故障转移（可以在旁路由故障的时候全部走wan1）
 
 <svg viewBox="13 10 607 500" width="607" height="500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
@@ -270,8 +264,8 @@ weight: 3
 </svg>
 
 <details>
-<summary>⭐ 点击这里展开查看详细图文说明(自定义运营商分流模式拓扑图)</summary>
-<img src="https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/v4.4.13/assets/img.png" alt="自定义运营商分流模式拓扑图">
+<summary>⭐ 点击这里展开查看详细图文说明(运营商(ISP)分流+域名分流模式拓扑图)</summary>
+<img src="https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/v4.4.13/assets/img.png" alt="运营商(ISP)分流+域名分流模式拓扑图">
 </details>
 
 ---

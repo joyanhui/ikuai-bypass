@@ -34,10 +34,10 @@ weight: 4
 
 | 模式 | 说明 |
 | :--- | :--- |
-| `ispdomain` | 运营商+域名分流（默认，推荐） |
+| `ispdomain` | 运营商(ISP)分流+域名分流（默认，推荐） |
 | `ipgroup` | IPv4分组模式 |
 | `ipv6group` | IPv6分组模式 |
-| `ii` | 运营商和域名分流+IPv4分组混合模式 |
+| `ii` | 运营商(ISP)分流+域名分流+IPv4分组混合模式 |
 | `ip` | IPv4 + IPv6 分组 |
 | `iip` | 完整混合模式 ips+domain+ipv4+ipv6 |
 

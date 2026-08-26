@@ -19,7 +19,7 @@
 | 分类 | 文档链接 |
 |:---|:---|
 | 🚀 **入门指南** | [功能特性、下载配置、CLI 运行、WebUI/GUI](https://joyanhui.github.io/ikuai-bypass/quickstart) |
-| 🔀 **分流模式** | [自定义运营商 vs IP 分组模式详解](docs/router-mode.md) |
+| 🔀 **分流模式** | [运营商(ISP)分流+域名分流 vs IP分组和端口分流详解](docs/router-mode.md) |
 | ⚡ **CLI 参数** | [运行模式、分流模式、清理参数](docs/cli-params.md) |
 | 📦 **部署方式** | [Docker / CLI / OpenWRT / ipkg 全场景覆盖](docs/deployment.md) |
 | 📖 **更新日志** | [版本历史与变更记录](docs/updatelog.md) |

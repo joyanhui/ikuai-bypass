@@ -15,7 +15,7 @@ weight: 1
 ## 🚀 入门
 
 - [快速上手](quickstart.md) — 下载、配置、运行定时任务
-- [爱快两种分流模式解析](router-mode.md) — 自定义运营商 / IP 分组模式
+- [爱快两种分流模式解析](router-mode.md) — 运营商(ISP)分流+域名分流 / IP分组和端口分流
 - [CLI 参数说明](cli-params.md) — 命令行参数、运行模式、分流模式
 - [FAQ - 常见问题](faq.md) — 故障排查与使用疑问
 

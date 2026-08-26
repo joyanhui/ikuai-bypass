@@ -250,7 +250,6 @@ weight: 3
   <text x="434" y="90" fill="#e2e8f0" font-size="9" text-anchor="middle">规则：IP匹配自定义虚拟运营商或者域名匹配</text>
   <text x="496" y="139" fill="#e2e8f0" font-size="10" text-anchor="middle">规则：来源 IP</text>
   <text x="554" y="178" fill="#e2e8f0" font-size="10" text-anchor="middle">LAN 口</text>
-  <text x="554" y="193" fill="#94a3b8" font-size="8" text-anchor="middle">ip 10.0.0.1</text>
   <text x="338" y="182" fill="#e2e8f0" font-size="11" text-anchor="middle">WAN1(PPPOE)</text>
   <text x="441" y="182" fill="#000" font-size="9" text-anchor="middle">WAN2(虚拟运营商)</text>
   <text x="441" y="198" fill="#000" font-size="10" text-anchor="middle">ip 10.0.0.2</text>

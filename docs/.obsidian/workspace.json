@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "cli-params.md",
+                "file": "router-mode-animation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "cli-params"
+              "title": "router-mode-animation"
             }
           }
         ]
@@ -41,7 +41,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "文件列表"
@@ -156,13 +158,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "cli-params.md",
+                "file": "router-mode-animation.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "cli-params 的大纲"
+              "title": "大纲"
             }
           }
         ],
@@ -170,7 +172,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 300,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -185,6 +188,18 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
+    "hugo/public/en.search.min.a76cd8bb56fb6b34c3b4e0a1fea01e3c6d95e283b626c1cb3d456e29c98aa30a.js",
+    "hugo/public/en.search-data.min.223407362f6975727dffcbc1b433895d9166eb6635a9fc54ccafb9c274e2adb7.json",
+    "hugo/public/en.search.min.0a18b91075bd1352aceca68a6b632f764e781146fc5f4e41ee0345061aea9585.js",
+    "hugo/public/en.search-data.min.be7fe4bdac27c7338485b3a82ed3d61245bdfdaf7f05d3b893db86be058f01aa.json",
+    "hugo/public/en.search.min.0bf6aeaff226e39077a0f40c9cf3b40def95e085393b6c763dcda7757c384f83.js",
+    "hugo/public/en.search-data.min.91369942fef91025707ba07e5a33035bff17712d2e8bf4cab459f66927aec234.json",
+    "hugo/public/en.search.min.a36ac7d1d1a533f2e09ba20dfd40ebe4c7d574ae5e574ac488fb0cd2fdfa151a.js",
+    "hugo/public/en.search-data.min.767db451127503a5133056464820ea6753e09cc0e7997d32844a302c27819bdf.json",
+    "hugo/public/en.search.min.8c68af40a89b6eb7536254d1abd573d8a7b0023bd5d03bc5930206325584a8b9.js",
+    "hugo/public/en.search-data.min.1f49c2c0baa9e6c85bed1b69fc5db18d2f984956b04186653e147a2c76d76a88.json",
+    "hugo/public/en.search.min.4561377075e587f2561ed73e743ad276dd1d4210e12008ee12ed0349ccda1768.js",
+    "cli-params.md",
     "router-mode.md",
     "quickstart.md",
     "openwrt-service-install.md",
@@ -192,19 +207,8 @@
     "{{.md",
     "deployment.md",
     "quickstart 1.md",
-    "cli-params.md",
     "router-mode 1.md",
     "ikuai-v4-ipkg-install-guide.md",
-    "docs_dev.sh",
-    "_sass/custom/custom.scss",
-    "_site/assets/js/custom.js",
-    "_sass/custom",
-    "_sass",
-    "_includes/head_custom.html",
-    "assets/js/custom.js",
-    "assets/js",
-    "assets",
-    "_includes",
     "_site/assets/images/small-image.jpg",
     "_site/assets/images/large-image.jpg",
     "faq.md",

@@ -18,12 +18,13 @@ let
     ## 配置组说明
     - basePackages：基础工具全集 all = utils + net + archive + dev + build + libs
       - utils 通用命令 / net 网络下载 / archive 压缩打包 / dev 开发辅助 / build 编译工具链 / libs 编译链接库
-    - jsPackages：bun + typescript + tsserver + prettierd（前端）
+    - jsPackages：nodejs + bun + typescript + tsserver + prettierd（前端）
+    - languagePackages：系统级语言运行时、LSP、格式化器与常用开发工具
     - cloudflarePackages：wrangler（Cloudflare Workers）
     - playwrightPackages / playwrightLibPath：chromium、google-chrome 及运行库路径
     - rustPackages：rustup + cargo 工具链 + LLVM；env 含 RUSTFLAGS / sccache 等
     - desktopPackages：Linux 桌面 GUI 依赖（GTK / WebKitGTK / 图形栈），Tauri / Flutter / Electron 通用
-    - espPackages：ESP32 工具（espflash / esptool 等）+ python 串口依赖
+    - espPackages：ESP32 工具（espflash / esptool / espup / ldproxy 等）+ esp-idf 动态库与 python 依赖 + pip 国内镜像
     - docsPackages：文档工具 all = hugo + jekyll + mdbook
     - golangPackages：go + gopls + delve；env 含 GOPROXY 国内镜像
     - zigPackages：zig + zls
@@ -36,7 +37,7 @@ let
     - 组合模板：flake_tpl_rust_tauri（Rust + Tauri + Android + Bun）、flake_tpl_all（全量）。
 
     ## 系统级引入（可选）
-    - os-config modules/dev/dev_ext_import_all.nix 将全部包挂入系统 systemPackages：
+    - os-config modules/dev/dev_base_and_import_all.nix 将全部包挂入系统 systemPackages：
       - 防止 nix-collect-garbage 清理开发环境包（devShell 包不在系统闭包内）
       - 仅引入 packages，不注入 env，避免污染日用环境
   '';
@@ -66,7 +67,97 @@ let
   };
 
   # 前端
-  jsPackages = pkgList "bun|typescript|typescript-language-server|prettierd";
+  jsPackages = pkgList "nodejs|pnpm|bun|typescript|typescript-language-server|prettierd";
+
+  # Node/npm 全局安装环境：Nix store 内 nodejs 安装目录只读，npm -g 的 prefix
+  # 必须指向用户可写目录，否则 install/uninstall -g 都会报 ENOENT。
+  nodejs = {
+    env = {
+      NPM_CONFIG_PREFIX = "/home/y/.npm-global";
+    };
+  };
+
+  # 语言运行时、LSP、格式化器与编辑器通用开发工具。
+  # 系统模块和项目 devShell 共用这组定义，避免维护两套基础开发环境。
+  languagePackages = rec {
+    python = pkgs.python313.withPackages (
+      ps: with ps; [
+        pip
+        requests
+        pyyaml
+        toml
+        tkinter
+        numpy
+        pandas
+        scipy
+        scikit-learn
+        matplotlib
+        pillow
+        beautifulsoup4
+        lxml
+        httpx
+        aiohttp
+        flask
+        fastapi
+        uvicorn
+        django
+        pytest
+        openpyxl
+        python-dotenv
+        click
+        tqdm
+        rich
+      ]
+    );
+    packages =
+      with pkgs;
+      [
+        mise
+        python
+        uv
+        ruff
+        python3Packages.debugpy
+        pyright
+        go
+        gopls
+        golangci-lint
+        gofumpt
+        delve
+        lua-language-server
+        stylua
+        vscode-langservers-extracted
+        vscode-js-debug
+        taplo
+        yaml-language-server
+        kdlfmt
+        nixfmt
+        nixd
+        nil
+        nixpkgs-fmt
+        shfmt
+        bruno
+        yaak
+        jq
+        ripgrep
+        tokei
+        lsof
+        file
+        tree
+        perl
+        bc
+        xdg-utils
+        sshpass
+        xdotool
+        pciutils
+        usbutils
+        vips
+        imagemagick
+        ffmpeg-full
+        blender
+        hugo
+      ]
+      ++ jsPackages;
+  };
 
   # Cloudflare Workers（wrangler 已从 nix 移除，改用 bunx/npx wrangler 按需调用）
   cloudflarePackages = [ ];
@@ -116,13 +207,30 @@ let
       WEBKIT_DISABLE_COMPOSITING_MODE = "1";
     };
   };
-  # exp32工具
-  espPackages = {
-    tools = pkgList "espflash|esptool|ldproxy|mpremote|minicom|picocom|libxml2";
+  # ESP32 工具与 esp-idf 运行环境
+  espPackages = rec {
+    libPath = pkgs.lib.makeLibraryPath (pkgList "libxml2|xz|zlib|libffi");
+    tools = pkgList "espflash|esptool|espup|ldproxy|mpremote|minicom|picocom|libxml2|xz|cmake|ninja|python313";
     pythonDeps =
       ps: with ps; [
         pyserial
+        pyparsing
+        click
+        packaging
+        pyyaml
+        setuptools
+        pyelftools
+        construct
+        cryptography
+        pygdbmi
+        requests
       ];
+    env = {
+      LD_LIBRARY_PATH = libPath;
+      PIP_INDEX_URL = "https://mirrors.aliyun.com/pypi/simple/";
+      PIP_EXTRA_INDEX_URL = "https://dl.espressif.com/pypi";
+      PIP_TRUSTED_HOST = "mirrors.aliyun.com dl.espressif.com";
+    };
   };
 
   #文档工具
@@ -191,6 +299,8 @@ in
     pkgs
     basePackages
     jsPackages
+    nodejs
+    languagePackages
     cloudflarePackages
     playwrightLibPath
     playwrightPackages

@@ -12,15 +12,7 @@ nav_order: 1
 [![GitHub stars](https://img.shields.io/github/stars/joyanhui/ikuai-bypass?style=flat-square&logo=github&label=Stars)](https://github.com/joyanhui/ikuai-bypass)
 [![GitHub downloads](https://img.shields.io/github/downloads/joyanhui/ikuai-bypass/total?style=flat-square&logo=github&label=下载总量)](https://github.com/joyanhui/ikuai-bypass/releases)
 
-从订阅地址自动同步域名分流、IP 分组、自定义运营商等规则到爱快，实现 OpenWRT 旁路无感分流——国内网站访问更快、旁路故障不影响基础上网、恢复后网络自愈。
 
-## 特性
-
-- **安全优先** — 远程资源下载失败时跳过更新，不清理旧规则（Safe-Before）
-- **原地更新** — 匹配则编辑、不匹配则新增，爱快内部 ID 保持稳定
-- **多平台** — 支持 Docker / CLI / OpenWRT ipkg / PVE / Unraid 等部署方式
-- **WebUI + GUI** — 浏览器管理界面与桌面/手机 App 双入口
-- **规则兼容** — 支持自定义运营商、域名分流、端口分流、广告屏蔽
 
 ## 🚀 入门
 

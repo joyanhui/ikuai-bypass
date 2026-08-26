@@ -7,8 +7,9 @@ mermaid: true
 
 # 爱快两种分流模式解析
 
-本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。运行 CLI 时通过 `-m` 参数选择分流模式，详见 [CLI 参数说明](cli-params.md#分流模式--m)。
+本项目支持两种主流的分流实现方案，您可以根据自己的网络拓扑选择最合适的模式。运行 CLI 时通过 `-m` 参数选择分流模式 [CLI 参数说明](cli-params.md#分流模式--m)。
 
+简单的说，如果你旁路由没有多网口，那么选择 ip分组配合端口分流的下一条网关的方式把要分流的流量给到旁路由。如果支持多网口（虚拟机 pve也可以）那么
 
 ---
 ### 1. IP 分组与端口分流模式 
@@ -18,7 +19,7 @@ mermaid: true
 **实现逻辑：**
 
 1. **IP 分组**：本工具将订阅的 IP 列表同步到 iKuai 的"IP 分组"中。
-2. **策略路由**：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组IP的流量，将其"下一跳网关"指向 旁路由（通常是OpenWRT） 的 IP。把流量导向旁路由
+2. **策略路由**：利用 iKuai 的"端口分流"功能，匹配目标地址为该分组IP的流量，将其"下一跳网关"指向 旁路由的 IP。把流量导向旁路由
 
 **数据流向：**
 
@@ -28,7 +29,7 @@ mermaid: true
 
 ```
 
-**特点**：配置简单直接，OpenWrt 宕机时匹配到该分组的规则将无法上网。
+**特点**：流量逻辑简单直接，也更加灵活。
 
 ```mermaid
 graph TD
@@ -93,9 +94,9 @@ graph TD
 **适用场景：** 追求极致稳定性、网络自愈、终端无感分流。（需要多网卡或能添加虚拟网卡）
 .
 **实现逻辑：**
-这种模式下，iKuai 将 OpenWrt（旁路由）视为一个"虚拟的上级运营商"。
+这种模式下，iKuai 将 旁路由 同时视为"虚拟的上级运营商"和下级终端设备。
 
-1. **链路设计**：OpenWrt 作为 iKuai 的下级设备接收流量，处理后再将出口流量"绕回"给 iKuai 的 WAN 口。
+1. **链路设计**：旁路由作为 iKuai 的上级isp接收流量，处理后再将出口流量"绕回"给 iKuai ,然后ikuai根据来源ip（旁路由的lan地址），然后再发给真实的 WAN 口（光猫）。
 2. **规则同步**：本工具将目标 IP 列表导入 iKuai 的"自定义运营商"。iKuai 会认为这些 IP 属于该"虚拟运营商"，从而将流量转发给 OpenWrt。
 
 **数据流向：**
@@ -104,16 +105,15 @@ graph TD
 客户端 → iKuai 路由 → 检查IP/域名  
 
      → 直接走wan1/运营商光猫
-     → 走wan2  → 旁路由 插件处理 → 重新交回 iKuai 的lan口 → ikuai根据来源 请求wan1/运营商光猫
+     → 或者 走wan2  → 旁路由处理 → 重新交回 iKuai 的lan口 → ikuai根据来源 请求wan1/运营商光猫
 ```
 
-**核心优势：**
+**特性：**
 
-- **极高可靠性**：旁路由 宕机只会导致被分流的流量中断，普通流量依然通过主线直连，不会全家断网。
-- **配置无感**：终端设备无需更改网关配置，完全由 iKuai 在内核层级完成调度。
+- **无感**：终端设备无需更改网关;可以利用爱快的多wan自动切换功能实现自愈。
 - **性能优异**：直连速度最快，旁路仅处理特定流量。
-
-**参考文档**：[查看具体实现方式](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。
+- **缺点** ： 网络拓扑理解起来较为复杂，需要占用ikuai的一个wan一个lan，旁路由自身最好也需要双网口。
+**参考文档**：可以参考 [小类的文章](https://dev.leiyanhui.com/route/ikuai-bypass-joyanhui/) 或 [恩山eezz的教程](https://www.right.com.cn/forum/thread-8252571-1-1.html)。 
 
 
 ```mermaid
@@ -183,7 +183,7 @@ graph TD
     linkStyle 12 stroke:#10b981,stroke-width:4px;
 ```
 <details>
-<summary>点击这里展开查看详细图文说明(自定义运营商分流模式拓扑图)</summary>
+<summary>⭐ 点击这里展开查看详细图文说明(自定义运营商分流模式拓扑图)</summary>
 <img src="https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/v4.4.13/assets/img.png" alt="自定义运营商分流模式拓扑图">
 </details>
 

@@ -4,9 +4,14 @@
 
 ## 语言和注释
 - 沟通、文档使用中文；源码标识符、错误信息、接口返回、日志、git commit messages 使用英文（项目特殊约定见 `AGENTS_This.md`）。
-- 除非明确要求，永远不要新增注释；旧注释失效须主动更新或清理，否则不要删除已有注释。
 - 除非明确要求，不得新增任何测试代码。
+## Comments
 
+- Do NOT add comments to code unless the user explicitly requests comments.
+- Do NOT add explanatory, descriptive, or documentation comments on your own.
+- Preserve all existing comments when modifying code.
+- If a code change makes an existing comment factually incorrect or obsolete, update or remove that comment.
+- Do not remove existing comments for cleanup, style, brevity, or readability reasons.
 ## 文档约定
 - 文档只记录当前有效设计与约束，不写实现步骤、计划、历史沿革、历史对比、代码片段。
 - 新建文档禁用 emoji 与 `**xx**`；多用 `-` 列表，避免多余空行与废话，不写大段示例代码和约定俗成文案。
@@ -62,8 +67,10 @@
 ## 其他约定
 - 可能存在用户或其他 agent 的未提交改动，禁止回滚、覆盖或整理与当前任务无关的改动。
 - 为提高开发效率 尽量使用 `do sleep x` 避免使用  `timeout xx`执行命令
-- 命令防卡死：`vite build`（vite-plugin-checker 构建完进程不退出）与 `typesafe-i18n`（默认 watch 永不退出，手工调用必须带 `--no-watch`）这类不退出进程不可接 `| tail` / `| head` 等等待管道 EOF 的命令；截断输出改用 `do sleep 5`或者 重定向到文件再 tail。
+- 命令防卡死：`vite build`（vite-plugin-checker 构建完进程不退出）与 `typesafe-i18n`（默认 watch 永不退出，手工调用必须带 `--no-watch`）这类不退出进程不可接 `| tail` / `| head` 等等待管道 EOF 的命令；截断输出改用 `do sleep 5`或者 重定向到文件再 tail，如果非要用timeout 那么先执行依赖下载命令，timeout 的时间不要超过30秒。
+- 禁止对 `bun run build`、`vite build`、`typesafe-i18n` 等不会自动退出的命令使用 `| head` / `| tail`。执行时应后台运行并重定向日志，使用 `do sleep 1` 后检查日志中的完成结果，不要等待进程退出,不要直接使用长时间sleep。
 - GitHub Actions 记录用 `gh` 命令查看；Cloudflare Worker 交互用 `bunx wrangler`，明确由 GitHub 触发 Cloudflare Worker 构建的项目不手动执行 wrangler。
+- 所有模块都需要带 /healthz /readyz 两个标准的api（不带/v1前缀）以兼容k8s的无版本号的路径
 
 ## 浏览器控制（Chrome DevTools MCP）
 除非明确要求你使用浏览器调试，否则永远不要打开浏览器调试和截图。
@@ -73,4 +80,4 @@
 - 除非远程调试手机的webdav，否则禁止使用 --headless（测试前端功能时 headless 会跳过 GPU 渲染、字体渲染、WebGL 等）
 - 禁止使用 --user-data-dir=/tmp/...（临时目录）
 - 禁止手动清理 user-data-dir 目录（MCP 服务器自动管理持久化 profile）
-
+- 本机是nixos，chrome的路径是 /etc/profiles/per-user/y/bin/google-chrome-stable

@@ -65,26 +65,36 @@ weight: 11
     <animateMotion dur="3s" repeatCount="indefinite"><mpath href="#pa1"/></animateMotion>
   </circle>
 
-  <!-- 路由判断 命中去旁路由 -->
-  <path d="M525 143 L525 172 L569 172 L865 172 L865 150" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)" fill="none"/>
-  <path id="pa2" d="M525 143 L525 172 L865 172 L865 148" stroke="none" fill="none"/>
+  <!-- 路径 2：爱快命中 -> 下一跳 -> 旁路由 -->
+  <path d="M605 172 L768 180" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)" fill="none"/>
+  <path id="pa2" d="M605 172 L768 180" stroke="none" fill="none"/>
   <circle r="7" fill="url(#dotA)">
     <animateMotion dur="3s" begin="3s" repeatCount="indefinite"><mpath href="#pa2"/></animateMotion>
   </circle>
 
-  <!-- 旁路由处理完 源IP变 返回爱快 -->
-  <path d="M770 240 L525 240 L525 350" stroke="#4ade80" stroke-width="2" marker-end="url(#arr)" fill="none"/>
-  <path id="pa3" d="M768 240 L525 240 L525 348" stroke="none" fill="none"/>
+  <!-- 路径 3：旁路由处理完 -> 返回爱快（源IP=192.168.1.2） -->
+  <path d="M770 235 L525 235 L525 218" stroke="#4ade80" stroke-width="2" marker-end="url(#arr)" fill="none"/>
+  <path id="pa3" d="M768 235 L525 235 L525 216" stroke="none" fill="none"/>
   <circle r="7" fill="url(#dotA)">
     <animateMotion dur="3s" begin="6s" repeatCount="indefinite"><mpath href="#pa3"/></animateMotion>
   </circle>
 
-  <!-- 直连走 wan1 出光猫 -->
-  <path d="M430 380 L525 380" stroke="#cbd5e1" stroke-width="2" marker-end="url(#arr)" fill="none" opacity="0.6"/>
+  <!-- 路径 4：爱快放行 -> 真实 WAN 出光猫 -->
+  <path d="M525 222 L525 348" stroke="#86efac" stroke-width="2" marker-end="url(#arr)" fill="none"/>
+  <path id="pa4" d="M525 222 L525 346" stroke="none" fill="none"/>
+  <circle r="7" fill="url(#dotA)">
+    <animateMotion dur="3s" begin="9s" repeatCount="indefinite"><mpath href="#pa4"/></animateMotion>
+  </circle>
+
+  <!-- 直连（未命中分组）静态示意 -->
+  <path d="M483 189 L483 348" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr)" fill="none" opacity="0.7"/>
+  <text x="483" y="335" fill="#94a3b8" font-size="10" text-anchor="middle">直连</text>
 
   <!-- 标注 -->
-  <text x="525" y="335" fill="#86efac" font-size="12" text-anchor="middle">回程源 IP 已变 192.168.1.2 → 放行 → 真实 WAN</text>
-  <text x="20" y="425" fill="#94a3b8" font-size="12">数据包流向：客户端 → iKuai 目标IP匹配分组 → 命中⇢下一跳指向旁路由 → 处理完毕原路返回 → 走真实 WAN 出网</text>
+  <text x="690" y="165" fill="#7dd3fc" font-size="11" text-anchor="middle">命中⇢下一跳网关</text>
+  <text x="640" y="262" fill="#86efac" font-size="11" text-anchor="middle">源IP变为192.168.1.2 返回</text>
+  <text x="525" y="335" fill="#86efac" font-size="11" text-anchor="middle">iKuai 放行 → 真实 WAN</text>
+  <text x="20" y="425" fill="#94a3b8" font-size="12">数据包流向：客户端 → iKuai（目标IP匹配分组）→ 命中⇢端口分流下一跳指向旁路由 → 旁路由处理 → 源IP变为192.168.1.2 返回 iKuai → iKuai 放行 → 真实 WAN 出网</text>
 </svg>
 
 物理连接与 IP：
@@ -167,23 +177,36 @@ weight: 11
     <animateMotion dur="3s" repeatCount="indefinite"><mpath href="#pb1"/></animateMotion>
   </circle>
 
-  <!-- 爱快判断 -> wan2 -> 旁路由LAN -->
-  <path d="M395 104 L444 104 L444 130 L805 130 L805 155" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
-  <path id="pb2" d="M395 104 L444 104 L444 130 L805 130 L805 153" stroke="none" fill="none"/>
+  <!-- 路径 2：爱快命中 -> WAN2 -> 旁路由 LAN -->
+  <path d="M485 150 L703 177" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
+  <path id="pb2" d="M485 150 L703 177" stroke="none" fill="none"/>
   <circle r="7" fill="url(#dotB)">
     <animateMotion dur="3s" begin="3s" repeatCount="indefinite"><mpath href="#pb2"/></animateMotion>
   </circle>
 
-  <!-- 旁路由处理完 从WAN口 回送爱快LAN -->
-  <path d="M690 233 L520 233 L520 360 L395 360 L395 410" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
-  <path id="pb3" d="M688 233 L520 233 L520 360 L395 360 L395 408" stroke="none" fill="none"/>
+  <!-- 路径 3：旁路由 WAN -> 回送爱快 LAN（进入 iKuai） -->
+  <path d="M705 233 L395 233 L395 218" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
+  <path id="pb3" d="M703 233 L395 233 L395 216" stroke="none" fill="none"/>
   <circle r="7" fill="url(#dotB)">
     <animateMotion dur="3s" begin="6s" repeatCount="indefinite"><mpath href="#pb3"/></animateMotion>
   </circle>
 
+  <!-- 路径 4：爱快按来源IP放行 -> WAN1 -> 光猫 -->
+  <path d="M395 222 L395 408" stroke="#fde68a" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
+  <path id="pb4" d="M395 222 L395 406" stroke="none" fill="none"/>
+  <circle r="7" fill="url(#dotB)">
+    <animateMotion dur="3s" begin="9s" repeatCount="indefinite"><mpath href="#pb4"/></animateMotion>
+  </circle>
+
+  <!-- 直连（未命中名单）静态示意 -->
+  <path d="M348 170 L348 408" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrB)" fill="none" opacity="0.7"/>
+  <text x="348" y="395" fill="#94a3b8" font-size="10" text-anchor="middle">直连</text>
+
   <!-- 标注 -->
-  <text x="395" y="398" fill="#fde68a" font-size="12" text-anchor="middle">旁路由 WAN 回送爱快 LAN，来源 IP 192.168.1.2 识别放行</text>
-  <text x="20" y="488" fill="#94a3b8" font-size="12">数据包流向：客户端 → iKuai 规则判断 → 命中自定义运营商名单 → WAN2 转给旁路由 LAN → 处理完毕从旁路由 WAN 回送爱快 → 走真实 WAN 出网</text>
+  <text x="595" y="160" fill="#fde68a" font-size="11" text-anchor="middle">WAN2 转给旁路由</text>
+  <text x="550" y="262" fill="#fde68a" font-size="11" text-anchor="middle">回送爱快 LAN</text>
+  <text x="395" y="398" fill="#fde68a" font-size="11" text-anchor="middle">来源 IP 192.168.1.2 放行 → 真实 WAN</text>
+  <text x="20" y="488" fill="#94a3b8" font-size="12">数据包流向：客户端 → iKuai 规则判断 → 命中自定义运营商名单 → WAN2(10.0.0.2→10.0.0.1) 转给旁路由 LAN → 处理完毕从旁路由 WAN(192.168.1.2→192.168.1.1) 回送爱快 LAN → iKuai 按来源IP放行 → 走真实 WAN 出网</text>
 </svg>
 
 物理连接与 IP：

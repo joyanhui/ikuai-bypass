@@ -1,10 +1,8 @@
 ---
-title: 首页
-permalink: /
-nav_order: 1
+title: iKuai Bypass
+type: docs
+weight: 1
 ---
-
-# iKuai Bypass
 
 爱快路由器专用的分流规则自动同步工具。
 

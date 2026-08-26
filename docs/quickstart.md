@@ -1,7 +1,7 @@
 ---
 title: 🚀 快速上手与入门指南
-nav_order: 2
-has_children: true
+type: docs
+weight: 2
 ---
 
 # 🚀 快速上手与入门指南

@@ -29,25 +29,14 @@ frontend_build() {
 }
 
 docs_dev() {
-    cd "${PROJECT_ROOT}/docs"
-    if ! command -v ruby >/dev/null 2>&1; then
-        echo "Error: Ruby is not installed."
-        echo "  Ubuntu/Debian: sudo apt install ruby-full"
-        echo "  NixOS: nix shell nixpkgs#ruby nixpkgs#bundler"
+    if ! command -v hugo >/dev/null 2>&1; then
+        echo "Error: Hugo is not installed."
+        echo "  Ubuntu/Debian: sudo apt install hugo"
+        echo "  NixOS: nix shell nixpkgs#hugo"
         exit 1
     fi
-    if ! command -v bundle >/dev/null 2>&1; then
-        echo "Installing Bundler..."
-        gem install bundler
-    fi
-    bundle install
-    echo "Starting Jekyll dev server at http://127.0.0.1:4000"
-    exec bundle exec jekyll serve \
-        --baseurl '' \
-        --watch \
-        --livereload \
-        --host 127.0.0.1 \
-        --port 4000
+    echo "Starting Hugo dev server (docs) at http://127.0.0.1:4000"
+    exec bash "${SCRIPT_DIR}/pages.sh" serve
 }
 
 
@@ -99,7 +88,7 @@ print_usage() {
     echo "  gui:dev                           运行 GUI(App)（封装/复用 CLI 完整能力）"
     echo ""
     echo "  （可选附带能力）"
-    echo "  docs:dev                          启动 Jekyll 文档站（localhost:4000）"
+    echo "  docs:dev                          启动 Hugo 文档站开发预览（localhost:4000）"
     echo "  webui:build                       构建 Astro dist（供 CLI/Tauri 加载）"
 }
 

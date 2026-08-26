@@ -1,0 +1,10 @@
+# 构建期生成，不纳入 git（主题与自定义文件除外）
+/content/
+/public/
+/resources/
+/themes/
+/hugo_stats.json
+/.hugo_build.lock
+/static/favicon.ico
+/static/install.sh
+/static/install-file/

@@ -1,8 +1,9 @@
 ---
 title: 部署方案纵览
-nav_order: 3
-has_children: true
+type: docs
+weight: 5
 ---
+
 # 部署方案
 
 ## 一键安装（推荐）

@@ -1,6 +1,7 @@
 ---
 title: FAQ - 常见问题
-nav_order: 4
+type: docs
+weight: 8
 ---
 
 # FAQ - 常见问题

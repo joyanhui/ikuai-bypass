@@ -1,8 +1,7 @@
 ---
 title: 分流模式：运营商 vs IP 分组
-parent: 🚀 快速上手与入门指南
-nav_order: 1
-mermaid: true
+type: docs
+weight: 3
 ---
 
 # 爱快两种分流模式解析

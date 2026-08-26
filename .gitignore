@@ -1,4 +1,6 @@
 /release/
+/hugo_stats.json
+.hugo-themes/
 /target/
 /docs/_site/
 /docs/Gemfile.lock

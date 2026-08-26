@@ -1,0 +1,44 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "script/pages.sh"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.163.3"
+          extended: true
+
+      - name: Build site
+        run: bash script/pages.sh build
+
+      - name: Deploy to GitHub Pages (branch)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/hugo/public
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false

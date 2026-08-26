@@ -7,13 +7,13 @@
 - 除非用户明确要求，不要把新功能继续做进 `golang_archive/` 归档目录。
 
 ## 文档事实来源
-- `docs/`：Jekyll + GitHub Pages 文档站，部署于 `https://joyanhui.github.io/ikuai-bypass/`（子目录）；本地预览执行 `bash script/dev.sh docs:dev`。
+- `docs/`：Hugo + GitHub Pages 文档站（主题 Hextra，构建时拉取到仓库根 `.hugo-themes/`，不纳入 git）。原始 Markdown 源在 `docs/*.md`（不被构建过程修改）；Hugo 工程与自定义文件在 `docs/hugo/`（含 `hugo.toml`、`layouts/404-page.html` 自定义 404）；构建与发布由 `script/pages.sh` 与 `.github/workflows/docs.yml` 完成，发布到 `gh-pages` 分支，部署于 `https://joyanhui.github.io/ikuai-bypass/`（子目录）；本地预览执行 `bash script/dev.sh docs:dev`。
 - `api-docs/`：爱快 4.x API 抓包记录。
 - `dev-docs/`：专题开发说明，含 `openwrt-luci-ipk构建和说明.md`、运行模式和分流模式配置原则、域名/端口/IPv4/IPv6 分组、添加运营商等。
-- docs 内部链接必须使用标准 Markdown 相对路径 `](file.md)` 或 `](file.md#锚点)`，禁止 `](/根路径/)` 和 `]({{ site.baseurl }}/path/)` 等 Liquid 写法；`jekyll-relative-links` 插件构建时自动将 `file.md` 转 `/ikuai-bypass/file/`，同时 Obsidian 原生支持 `.md` 相对路径跳转和图谱。
+- docs 内部链接必须使用标准 Markdown 相对路径 `](file.md)` 或 `](file.md#锚点)`，禁止 `](/根路径/)` 等绝对写法；Hugo（Hextra 主题）构建时通过 render-link 自动将 `file.md` 解析为 `/ikuai-bypass/file/` 干净 URL，同时 Obsidian 原生支持 `.md` 相对路径跳转和图谱。
 
 ## 开发环境
-- 进入仓库目录后执行 `nix develop`（或 direnv），获得 Rust/前端/Jekyll 开发环境。
+- 进入仓库目录后执行 `nix develop`（或 direnv），获得 Rust/前端/Hugo 开发环境。
 
 ## 仓库结构
 ```text
@@ -25,7 +25,7 @@ ikuai-bypass/
 ├── frontends/app/           # Bun + Astro 单页前端（WebUI 与 Tauri 共用）
 ├── config.yml               # 示例配置
 ├── api-docs/                # 爱快 4.x API 抓包记录
-├── docs/                    # Jekyll + GitHub Pages 文档站
+├── docs/                    # Hugo + GitHub Pages 文档站（工程在 docs/hugo/）
 ├── dev-docs/                # 专题开发说明
 ├── packaging/               # 打包相关
 └── golang_archive/          # Go 版本归档

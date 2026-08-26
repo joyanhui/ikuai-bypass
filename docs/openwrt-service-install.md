@@ -1,8 +1,9 @@
 ---
 title: OpenWRT 系统服务安装
-parent: 部署方案纵览
-nav_order: 1
+type: docs
+weight: 6
 ---
+
 ## 在 OpenWRT 上安装 ikb (Rust 版) 为系统服务
 
 > 💡 **推荐使用一键安装**，详见[快速上手 - 一键安装](quickstart.md#一键安装)。两种方式：

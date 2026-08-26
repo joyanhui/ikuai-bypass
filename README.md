@@ -27,11 +27,12 @@
 
 ## 快速开始
 
-> 📖 安装教程详见[快速上手](https://joyanhui.github.io/ikuai-bypass/quickstart.html#一键安装)，包含：
+> 📖 安装教程详见[快速上手](https://joyanhui.github.io/ikuai-bypass/quickstart/#一键安装)，包含：
 > - Linux CLI 服务一键安装
 > - OpenWrt LuCI 面板安装
 > - Docker / GUI 部署
 > - 配置、运行与详情
+
 
 ## 赞助支持
 

@@ -1,7 +1,7 @@
 ---
 title: CLI 参数运行模式和分流模式说明
-parent: 🚀 快速上手与入门指南
-nav_order: 3
+type: docs
+weight: 4
 ---
 
 # CLI 参数说明

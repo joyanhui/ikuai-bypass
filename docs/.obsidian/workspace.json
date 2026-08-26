@@ -188,6 +188,8 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
+    "hugo/public/en.search.min.bf4bbc91cb2c19fb148d357f012710ba0055c52eafa16862dca951c8876544dd.js",
+    "hugo/public/en.search-data.min.2dee1a183fad0a596ceab543143a4a780a6caf244021a1805b937f9ec2d95d50.json",
     "hugo/public/en.search.min.b01d02627d85a3e2a1ae8a2c0fade999b2165f72789f32478eb00d4d3b0a35bc.js",
     "hugo/public/en.search-data.min.ffd7c073e163c2db350d8b67d7c609adcf7e7b291d5ae9dc711f526f73929840.json",
     "hugo/public/en.search.min.b816323b746ff53f42dc7b73574774a4f3114b066ee87e5b822839d3578de52e.js",
@@ -201,8 +203,6 @@
     "hugo/public/分流模式动画/index.html",
     "hugo/public/分流模式动画",
     "hugo/public/en.search.min.492fa44021f7e8d6aa3507508914402a7a092b4911b5907c657edcedd28ae4c0.js",
-    "hugo/public/en.search-data.min.93066671f9910248074b2cedbe0557be962a7ece1a1d44c6da45408bef5f3434.json",
-    "hugo/public/en.search.min.7482f744f2ade05175a83b0f3a214bc589e9297d34663e7434f97bef93d29412.js",
     "cli-params.md",
     "quickstart.md",
     "openwrt-service-install.md",

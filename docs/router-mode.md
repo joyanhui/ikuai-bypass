@@ -24,11 +24,11 @@ weight: 3
 
 ```
 客户端 → iKuai 路由 → 检查请求的IP地址
-      → iKuai 物理 WAN1 接口 → 运营商光猫
-      → 端口分流（下一跳指向 旁路由特殊处理) → 返回iKuai  → 运营商光猫
+      → iKuai 物理 WAN1 接口 → 光猫
+      → 端口分流（下一跳指向 旁路由特殊处理) → 返回iKuai → 光猫
 ```
 
-**特点**：流量逻辑简单直接，也更加灵活。 下图svg动画为指示的用户请求。`ikuai-bypass`负责处理ip分组的订阅也会创建`下一跳`的规则。
+**特点**：流量逻辑简单直接，也更加灵活。 下图svg动画为指示的用户请求。`ikuai-bypass`负责处理ip分组的订阅也会创建`下一跳`的规则（下一跳规则记得避开旁路由的ip地址）。
 
 <svg viewBox="80 20 560 410" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
   <defs>
@@ -59,7 +59,7 @@ weight: 3
   </defs>
 
   <!-- 终端设备 -->
-  <rect x="430" y="160" width="190" height="110" rx="10" fill="#14532d" stroke="#4ade80" stroke-width="2"/>
+  <rect x="430" y="144" width="190" height="126" rx="10" fill="#14532d" stroke="#4ade80" stroke-width="2"/>
 
   <!-- 爱快路由 -->
   <rect x="90" y="40" width="310" height="205" rx="10" fill="#1e293b" stroke="#2563eb" stroke-width="2"/>
@@ -117,9 +117,10 @@ weight: 3
   <circle r="7" fill="url(#dotB)">
     <animateMotion dur="2s" begin="3s" repeatCount="indefinite"><mpath xlink:href="#pb"/></animateMotion>
   </circle>
-  <text x="525" y="192" fill="#e2e8f0" font-size="15" text-anchor="middle">终端设备</text>
-  <text x="525" y="215" fill="#7dd3fc" font-size="12" text-anchor="middle">ip 192.168.1.100</text>
-  <text x="525" y="234" fill="#94a3b8" font-size="11" text-anchor="middle">网关 192.168.1.1</text>
+  <text x="525" y="176" fill="#e2e8f0" font-size="15" text-anchor="middle">终端设备</text>
+  <text x="525" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">AP/手机/电脑/平板</text>
+  <text x="525" y="212" fill="#7dd3fc" font-size="12" text-anchor="middle">ip 192.168.1.3-254</text>
+  <text x="525" y="232" fill="#94a3b8" font-size="11" text-anchor="middle">网关 192.168.1.1</text>
   <text x="525" y="252" fill="#94a3b8" font-size="11" text-anchor="middle">网口连爱快 LAN</text>
   <text x="245" y="70" fill="#fca5a5" font-size="15" text-anchor="middle">爱快主路由 iKuai</text>
   <text x="245" y="90" fill="#94a3b8" font-size="11" text-anchor="middle">LAN ip 192.168.1.1 / WAN1 pppoe</text>
@@ -143,8 +144,8 @@ weight: 3
 **实现逻辑：**
 这种模式下，iKuai 将 旁路由 同时视为"虚拟的上级运营商"和下级终端设备。
 
-1. **链路设计**：旁路由作为 iKuai 的上级isp接收流量，处理后再将出口流量"绕回"给 iKuai ,然后ikuai根据来源ip（旁路由的lan地址），然后再发给真实的 WAN 口（光猫）。
-2. **规则同步**：本工具将目标 IP 列表导入 iKuai 的"自定义运营商"。iKuai 会认为这些 IP 属于该"虚拟运营商"，从而将流量转发给 OpenWrt。
+- **链路设计**：旁路由作为 iKuai 的上级isp接收流量，处理后再将出口流量"绕回"给 iKuai ,然后ikuai根据来源ip（旁路由的lan地址），然后再发给真实的 WAN 口（光猫）。
+- **规则同步**：本工具将目标 IP 列表导入 iKuai 的"自定义运营商"。iKuai 会认为这些 IP 属于该"虚拟运营商"，从而将流量转发给 OpenWrt。
 
 **数据流向：**
 
@@ -173,7 +174,7 @@ weight: 3
   <g transform="translate(-260,0)">
 
   <!-- 终端设备 -->
-  <rect x="665" y="165" width="180" height="86" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="2"/>
+  <rect x="665" y="149" width="180" height="102" rx="10" fill="#1e293b" stroke="#22c55e" stroke-width="2"/>
 
   <!-- 爱快 -->
   <rect x="283" y="20" width="355" height="200" rx="10" fill="#1e293b" stroke="#2563eb" stroke-width="2"/>
@@ -245,9 +246,10 @@ weight: 3
   <path d="M493.0 161.1 L485.0 154.9" stroke="#ef4444" stroke-width="1" marker-end="url(#arrR2)"/>
   <path d="M450 133.5 L440 133" stroke="#ef4444" stroke-width="1" marker-end="url(#arrR2)"/>
   <path d="M303 305 L303 315" stroke="#ef4444" stroke-width="1" marker-end="url(#arrR2)"/>
-  <text x="755" y="198" fill="#e2e8f0" font-size="14" text-anchor="middle">终端设备</text>
-  <text x="755" y="222" fill="#4ade80" font-size="12" text-anchor="middle">ip 192.168.1.100</text>
-  <text x="755" y="241" fill="#94a3b8" font-size="11" text-anchor="middle">网关 192.168.1.1（爱快 LAN）</text>
+  <text x="755" y="182" fill="#e2e8f0" font-size="14" text-anchor="middle">终端设备</text>
+  <text x="755" y="192" fill="#94a3b8" font-size="10" text-anchor="middle">AP/手机/电脑/平板</text>
+  <text x="755" y="214" fill="#4ade80" font-size="12" text-anchor="middle">ip 192.168.1.3-254</text>
+  <text x="755" y="234" fill="#94a3b8" font-size="11" text-anchor="middle">网关 192.168.1.1（爱快 LAN）</text>
   <text x="445" y="38" fill="#fca5a5" font-size="14" text-anchor="middle">爱快主路由 iKuai</text>
   <text x="445" y="54" fill="#94a3b8" font-size="10" text-anchor="middle">LAN ip 192.168.1.1 / WAN1 pppoe /WAN2接旁路由的lan</text>
   <text x="434" y="90" fill="#e2e8f0" font-size="9" text-anchor="middle">规则：IP匹配自定义虚拟运营商或者域名匹配</text>
@@ -260,7 +262,7 @@ weight: 3
   <text x="755" y="386" fill="#7dd3fc" font-size="14" text-anchor="middle">旁路由</text>
   <text x="755" y="402" fill="#94a3b8" font-size="11" text-anchor="middle">双网口、跨网段</text>
   <text x="755" y="286" fill="#7dd3fc" font-size="11" text-anchor="middle">WAN 口 ip 192.168.1.2</text>
-  <text x="755" y="303" fill="#94a3b8" font-size="10" text-anchor="middle">网关 192.168.1.1（接爱快 LAN, 出网）</text>
+  <text x="755" y="303" fill="#94a3b8" font-size="10" text-anchor="middle">网关 192.168.1.1（接爱快 LAN）</text>
   <text x="755" y="338" fill="#7dd3fc" font-size="11" text-anchor="middle">LAN 口 ip 10.0.0.1</text>
   <text x="755" y="355" fill="#94a3b8" font-size="10" text-anchor="middle">（接爱快 WAN2，最好关闭DHCP服务）</text>
   <text x="385" y="476" fill="#c4b5fd" font-size="14" text-anchor="middle">光猫</text>

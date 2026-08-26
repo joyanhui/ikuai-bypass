@@ -3,28 +3,23 @@ title: 分流模式 SVG 动画对比
 type: docs
 weight: 11
 ---
-
-# 分流模式 SVG 动画对比
-
-本页用动画直观展示本项目两种分流模式的流量走向差异，并标注每个节点的 IP 配置与物理连接。文字详解见 [分流模式解析](router-mode.md)。
-
-两种模式对应的分流参数见 [CLI 参数说明](cli-params.md#分流模式--m)：
-
-- `ispdomain`（默认）— 自定义运营商 + 域名分流
-- `ipgroup` — IPv4 分组 + 端口分流
-
-## 模式一：ipgroup（IP 分组 + 端口分流）
-
-旁路由没有多网口时的简单方案。工具把订阅 IP 同步进 iKuai 的 "IP 分组"，再用 "端口分流" 把目标命中分组的流量，下一跳网关指向旁路由。物理上所有设备都挂在同一个局域网（192.168.1.0/24），旁路由只有一个网口接入。
-
-<svg viewBox="0 0 980 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
+## ip分组和端口分流
+<svg viewBox="0 0 980 440" width="980" height="440" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
   <defs>
     <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0,0 L8,4 L0,8 Z" fill="#e2e8f0"/>
     </marker>
-    <radialGradient id="dotA" cx="50%" cy="50%" r="50%">
+    <radialGradient id="dotG" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#4ade80"/>
       <stop offset="100%" stop-color="#16a34a"/>
+    </radialGradient>
+    <radialGradient id="dotR" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fca5a5"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </radialGradient>
+    <radialGradient id="dotB" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#2563eb"/>
     </radialGradient>
   </defs>
 
@@ -57,73 +52,36 @@ weight: 11
   <rect x="430" y="350" width="190" height="60" rx="10" fill="#1e293b" stroke="#a78bfa" stroke-width="2"/>
   <text x="525" y="386" fill="#c4b5fd" font-size="15" text-anchor="middle">运营商光猫 / WAN</text>
 
-  <!-- 路径 -->
-  <!-- 客户端 -> 路由 -->
-  <path d="M200 205 L430 205" stroke="#e2e8f0" stroke-width="2" marker-end="url(#arr)" fill="none"/>
-  <path id="pa1" d="M202 205 L428 205" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotA)">
-    <animateMotion dur="3s" repeatCount="indefinite"><mpath href="#pa1"/></animateMotion>
+  <!-- 绿：客户端 -> 规则 -->
+  <path d="M200 205 L443 124" stroke="#4ade80" stroke-width="2" marker-end="url(#arr)" fill="none"/>
+  <path id="pg" d="M200 205 L441 124" stroke="none" fill="none"/>
+  <circle r="7" fill="url(#dotG)">
+    <animateMotion dur="2s" repeatCount="indefinite"><mpath xlink:href="#pg"/></animateMotion>
   </circle>
 
-  <!-- 路径 2：爱快命中 -> 下一跳 -> 旁路由 -->
-  <path d="M605 172 L768 180" stroke="#38bdf8" stroke-width="2" marker-end="url(#arr)" fill="none"/>
-  <path id="pa2" d="M605 172 L768 180" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotA)">
-    <animateMotion dur="3s" begin="3s" repeatCount="indefinite"><mpath href="#pa2"/></animateMotion>
+  <!-- 红：规则 -> 下一跳 -> 旁路由 -> 返回 -> 出网 -->
+  <path d="M525 143 L569 172 L768 180 L525 235 L525 348" stroke="#f87171" stroke-width="2" marker-end="url(#arr)" fill="none"/>
+  <path id="pr" d="M525 143 L569 172 L768 180 L525 235 L525 346" stroke="none" fill="none"/>
+  <circle r="7" fill="url(#dotR)">
+    <animateMotion dur="6s" begin="2s" repeatCount="indefinite"><mpath xlink:href="#pr"/></animateMotion>
   </circle>
 
-  <!-- 路径 3：旁路由处理完 -> 返回爱快（源IP=192.168.1.2） -->
-  <path d="M770 235 L525 235 L525 218" stroke="#4ade80" stroke-width="2" marker-end="url(#arr)" fill="none"/>
-  <path id="pa3" d="M768 235 L525 235 L525 216" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotA)">
-    <animateMotion dur="3s" begin="6s" repeatCount="indefinite"><mpath href="#pa3"/></animateMotion>
+  <!-- 蓝：规则 -> WAN1 -> 直连出网 -->
+  <path d="M525 143 L483 172 L483 348" stroke="#60a5fa" stroke-width="2" marker-end="url(#arr)" fill="none"/>
+  <path id="pb" d="M525 143 L483 172 L483 346" stroke="none" fill="none"/>
+  <circle r="7" fill="url(#dotB)">
+    <animateMotion dur="4s" begin="2s" repeatCount="indefinite"><mpath xlink:href="#pb"/></animateMotion>
   </circle>
-
-  <!-- 路径 4：爱快放行 -> 真实 WAN 出光猫 -->
-  <path d="M525 222 L525 348" stroke="#86efac" stroke-width="2" marker-end="url(#arr)" fill="none"/>
-  <path id="pa4" d="M525 222 L525 346" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotA)">
-    <animateMotion dur="3s" begin="9s" repeatCount="indefinite"><mpath href="#pa4"/></animateMotion>
-  </circle>
-
-  <!-- 直连（未命中分组）静态示意 -->
-  <path d="M483 189 L483 348" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arr)" fill="none" opacity="0.7"/>
-  <text x="483" y="335" fill="#94a3b8" font-size="10" text-anchor="middle">直连</text>
-
-  <!-- 标注 -->
-  <text x="690" y="165" fill="#7dd3fc" font-size="11" text-anchor="middle">命中⇢下一跳网关</text>
-  <text x="640" y="262" fill="#86efac" font-size="11" text-anchor="middle">源IP变为192.168.1.2 返回</text>
-  <text x="525" y="335" fill="#86efac" font-size="11" text-anchor="middle">iKuai 放行 → 真实 WAN</text>
-  <text x="20" y="425" fill="#94a3b8" font-size="12">数据包流向：客户端 → iKuai（目标IP匹配分组）→ 命中⇢端口分流下一跳指向旁路由 → 旁路由处理 → 源IP变为192.168.1.2 返回 iKuai → iKuai 放行 → 真实 WAN 出网</text>
 </svg>
 
-物理连接与 IP：
+### isp+ 域名分流
 
-- 所有设备（客户端 / 爱快 / 旁路由）处于同一局域网 192.168.1.0/24，旁路由单网口接入爱快 LAN。
-- 客户端 ip 192.168.1.100，网关 192.168.1.1（爱快 LAN）。
-- 爱快 LAN ip 192.168.1.1；WAN1 由 pppoe 从运营商分配，出真实光猫。
-- 旁路由 ip 192.168.1.2，与爱快同网段，仅一个逻辑网口。
-- 分流由爱快 "端口分流" 规则实现，把命中分组流量下一跳指向 192.168.1.2。
-
-数据流向：
-
-- 客户端所有流量默认网关指向爱快。
-- 爱快按目标 IP 匹配 "IP 分组"，命中的流量通过 "端口分流" 下一跳网关指向旁路由。
-- 旁路由处理（解密 / 加速 / 代理）后，源 IP 变为 192.168.1.2，经同一网段原路返回爱快。
-- 爱快按来源 IP 放行，将其交给真实 WAN 出网。
-- 特点：逻辑简单直接、灵活；旁路由无需多网口。
-- 局限：终端需确认流量均默认指向爱快；无多 WAN 自动切换自愈能力。
-
-## 模式二：ispdomain（自定义运营商分流）
-
-追求稳定 / 自愈 / 无感分流。旁路由被 iKuai 同时视为"虚拟上级运营商"和"下级终端"：旁路由的 LAN 口接爱快的 WAN2（旁路由作为上级，供爱快把流量转给它），旁路由的 WAN 口接爱快的 LAN（旁路由作为下级终端出网）。需要爱快额外占用一个 WAN 和一个 LAN，旁路由最好双网口。
-
-<svg viewBox="0 0 980 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
+<svg viewBox="0 0 980 500" width="980" height="500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:100%;height:auto;background:#0f172a;border-radius:8px;">
   <defs>
     <marker id="arrB" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <path d="M0,0 L8,4 L0,8 Z" fill="#e2e8f0"/>
     </marker>
-    <radialGradient id="dotB" cx="50%" cy="50%" r="50%">
+    <radialGradient id="dotB2" cx="50%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#fbbf24"/>
       <stop offset="100%" stop-color="#d97706"/>
     </radialGradient>
@@ -169,74 +127,34 @@ weight: 11
   <rect x="290" y="410" width="210" height="60" rx="10" fill="#1e293b" stroke="#a78bfa" stroke-width="2"/>
   <text x="395" y="446" fill="#c4b5fd" font-size="14" text-anchor="middle">运营商光猫 / 真实 WAN</text>
 
-  <!-- 路径 -->
-  <!-- 客户端 -> 爱快 -->
+  <!-- 路径 1：客户端 -> 爱快 -->
   <path d="M200 75 L290 75" stroke="#e2e8f0" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
   <path id="pb1" d="M202 75 L288 75" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotB)">
-    <animateMotion dur="3s" repeatCount="indefinite"><mpath href="#pb1"/></animateMotion>
+  <circle r="7" fill="url(#dotB2)">
+    <animateMotion dur="3s" repeatCount="indefinite"><mpath xlink:href="#pb1"/></animateMotion>
   </circle>
 
-  <!-- 路径 2：爱快命中 -> WAN2 -> 旁路由 LAN -->
+  <!-- 路径 2：爱快 -> WAN2 -> 旁路由 LAN -->
   <path d="M485 150 L703 177" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
   <path id="pb2" d="M485 150 L703 177" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotB)">
-    <animateMotion dur="3s" begin="3s" repeatCount="indefinite"><mpath href="#pb2"/></animateMotion>
+  <circle r="7" fill="url(#dotB2)">
+    <animateMotion dur="3s" begin="3s" repeatCount="indefinite"><mpath xlink:href="#pb2"/></animateMotion>
   </circle>
 
-  <!-- 路径 3：旁路由 WAN -> 回送爱快 LAN（进入 iKuai） -->
+  <!-- 路径 3：旁路由 WAN -> 回送爱快 LAN -->
   <path d="M705 233 L395 233 L395 218" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
   <path id="pb3" d="M703 233 L395 233 L395 216" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotB)">
-    <animateMotion dur="3s" begin="6s" repeatCount="indefinite"><mpath href="#pb3"/></animateMotion>
+  <circle r="7" fill="url(#dotB2)">
+    <animateMotion dur="3s" begin="6s" repeatCount="indefinite"><mpath xlink:href="#pb3"/></animateMotion>
   </circle>
 
-  <!-- 路径 4：爱快按来源IP放行 -> WAN1 -> 光猫 -->
+  <!-- 路径 4：爱快 -> WAN1 -> 光猫 -->
   <path d="M395 222 L395 408" stroke="#fde68a" stroke-width="2" marker-end="url(#arrB)" fill="none"/>
   <path id="pb4" d="M395 222 L395 406" stroke="none" fill="none"/>
-  <circle r="7" fill="url(#dotB)">
-    <animateMotion dur="3s" begin="9s" repeatCount="indefinite"><mpath href="#pb4"/></animateMotion>
+  <circle r="7" fill="url(#dotB2)">
+    <animateMotion dur="3s" begin="9s" repeatCount="indefinite"><mpath xlink:href="#pb4"/></animateMotion>
   </circle>
 
   <!-- 直连（未命中名单）静态示意 -->
   <path d="M348 170 L348 408" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrB)" fill="none" opacity="0.7"/>
-  <text x="348" y="395" fill="#94a3b8" font-size="10" text-anchor="middle">直连</text>
-
-  <!-- 标注 -->
-  <text x="595" y="160" fill="#fde68a" font-size="11" text-anchor="middle">WAN2 转给旁路由</text>
-  <text x="550" y="262" fill="#fde68a" font-size="11" text-anchor="middle">回送爱快 LAN</text>
-  <text x="395" y="398" fill="#fde68a" font-size="11" text-anchor="middle">来源 IP 192.168.1.2 放行 → 真实 WAN</text>
-  <text x="20" y="488" fill="#94a3b8" font-size="12">数据包流向：客户端 → iKuai 规则判断 → 命中自定义运营商名单 → WAN2(10.0.0.2→10.0.0.1) 转给旁路由 LAN → 处理完毕从旁路由 WAN(192.168.1.2→192.168.1.1) 回送爱快 LAN → iKuai 按来源IP放行 → 走真实 WAN 出网</text>
 </svg>
-
-物理连接与 IP：
-
-- 旁路由双网口，构成"回环"拓扑：旁路由 LAN 口接爱快 WAN2，旁路由 WAN 口接爱快 LAN。
-- 爱快侧：LAN ip 192.168.1.1（接客户端与旁路由 WAN）；WAN1 由 pppoe 从运营商分配，出真实光猫；WAN2 ip 10.0.0.2、网关 10.0.0.1（即旁路由 LAN）。
-- 旁路由侧：LAN 口 ip 10.0.0.1（作为爱快 WAN2 的"虚拟上级运营商"）；WAN 口 ip 192.168.1.2、网关 192.168.1.1（作为下级终端经爱快出网）。
-- 客户端 ip 192.168.1.100，网关 192.168.1.1，无需修改。
-
-数据流向：
-
-- 客户端无需改网关，默认流量全部交给爱快。
-- 工具把目标 IP 导入爱快 "自定义运营商"，iKuai 视这些 IP 属于旁路由这个"虚拟运营商"。
-- 命中名单的流量经 WAN2（10.0.0.2 → 10.0.0.1）转给旁路由处理。
-- 旁路由处理（解密 / 加速 / 代理）后，从自身 WAN 口（192.168.1.2 → 192.168.1.1）回送爱快 LAN；iKuai 依据来源 IP 识别后放行到真实 WAN 出网。
-- 特点：终端无感、直连流量最快、旁路只处理特定流量；可利用爱快多 WAN 自动切换实现网络自愈。
-- 局限：拓扑较复杂，需占用爱快一个 WAN 和一个 LAN，旁路由最好双网口。
-
-## 差异对比
-
-| 维度 | ipgroup（IP 分组 + 端口分流） | ispdomain（自定义运营商） |
-| :--- | :--- | :--- |
-| 底层原理 | IP 分组 + 端口分流（下一跳网关） | 自定义运营商（旁路由虚拟成运营商） |
-| 物理链接 | 单局域网，旁路由单网口 | 旁路由双网口回环（LAN↔WAN2、WAN↔LAN） |
-| 旁路由网口 | 1 个即可 | 最好 2 个 |
-| 爱快占用 | 仅逻辑规则 | 额外占一个 WAN + 一个 LAN |
-| 客户端 IP | 192.168.1.x，需默认指向爱快 | 192.168.1.x，无需改网关 |
-| 网络自愈 | 无多 WAN 自动切换 | 可用多 WAN 自动切换实现自愈 |
-| 性能 | 正常 | 直连最快、旁路只处理特定流量 |
-| 复杂度 | 简单直接 | 拓扑较复杂 |
-| 适用场景 | 简单旁路由、无多网口 | 追求稳定自愈、无感分流 |
-
-> 提示：cli-params 中 `ipv6group / ii / ip / iip` 等为上述两种基础方案的组合扩展。默认推荐 `ispdomain`。

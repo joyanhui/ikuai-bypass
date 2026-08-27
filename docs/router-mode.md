@@ -117,19 +117,19 @@ weight: 3
   </circle>
   <text x="525" y="176" fill="#e2e8f0" font-size="15" text-anchor="middle">终端设备</text>
   <text x="525" y="190" fill="#94a3b8" font-size="10" text-anchor="middle">AP/手机/电脑/平板</text>
-  <text x="525" y="212" fill="#bfdbfe" stroke="#1e3a8a" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.3-254</text>
-  <text x="525" y="232" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
+  <text x="525" y="212" fill="#bfdbfe" stroke="#7c2d12" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.3-254</text>
+  <text x="525" y="232" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
   <text x="525" y="252" fill="#94a3b8" font-size="11" text-anchor="middle">网口连爱快 LAN，DHCP分配</text>
   <text x="245" y="70" fill="#fca5a5" font-size="15" text-anchor="middle">爱快主路由 iKuai</text>
-  <text x="245" y="90" fill="#94a3b8" font-size="11" text-anchor="middle">LAN ip <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan> / WAN1 pppoe</text>
+  <text x="245" y="90" fill="#94a3b8" font-size="11" text-anchor="middle">LAN ip <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan> / WAN1 pppoe</text>
   <text x="185" y="128" fill="#e2e8f0" font-size="12" text-anchor="middle">规则：目标 IP 匹配分组</text>
   <text x="242" y="162" fill="#0f172a" font-size="9" text-anchor="middle">下一跳网关</text>
-  <text x="242" y="178" fill="#0f172a" font-size="8" text-anchor="middle">到旁路由 <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="5" paint-order="stroke" stroke-linejoin="round">192.168.1.2</tspan></text>
+  <text x="242" y="178" fill="#0f172a" font-size="8" text-anchor="middle">到旁路由 <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="5" paint-order="stroke" stroke-linejoin="round">192.168.1.2</tspan></text>
   <text x="145" y="208" fill="#e2e8f0" font-size="11" text-anchor="middle">WAN1(PPPOE)</text>
   <text x="255.5" y="208" fill="#e2e8f0" font-size="11" text-anchor="middle">LAN口</text>
   <text x="525" y="310" fill="#4ade80" font-size="15" text-anchor="middle">旁路由 </text>
   <text x="525" y="335" fill="#94a3b8" font-size="11" text-anchor="middle">单网口单臂/多网口都可以、同网段</text>
-  <text x="525" y="354" fill="#bfdbfe" stroke="#1e3a8a" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.2</text>
+  <text x="525" y="354" fill="#bfdbfe" stroke="#7c2d12" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.2</text>
   <text x="525" y="368" fill="#94a3b8" font-size="10" text-anchor="middle">DHCP获取或者手动配置</text>
   <text x="185" y="396" fill="#c4b5fd" font-size="15" text-anchor="middle">光猫 </text>
 </svg>
@@ -243,14 +243,14 @@ weight: 3
   <path d="M303 305 L303 315" stroke="#ef4444" stroke-width="1" marker-end="url(#arrR2)"/>
   <text x="755" y="157" fill="#e2e8f0" font-size="15" text-anchor="middle">终端设备</text>
   <text x="755" y="171" fill="#94a3b8" font-size="10" text-anchor="middle">AP/手机/电脑/平板</text>
-  <text x="755" y="193" fill="#bfdbfe" stroke="#1e3a8a" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.3-254</text>
-  <text x="755" y="213" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
+  <text x="755" y="193" fill="#bfdbfe" stroke="#7c2d12" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.3-254</text>
+  <text x="755" y="213" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
   <text x="755" y="233" fill="#94a3b8" font-size="11" text-anchor="middle">网口连爱快 LAN，DHCP分配</text>
   <text x="445" y="38" fill="#fca5a5" font-size="14" text-anchor="middle">爱快主路由 iKuai</text>
-  <text x="445" y="54" fill="#94a3b8" font-size="10" text-anchor="middle">LAN ip <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan> / WAN1 pppoe /WAN2接旁路由的lan</text>
+  <text x="445" y="54" fill="#94a3b8" font-size="10" text-anchor="middle">LAN ip <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan> / WAN1 pppoe /WAN2接旁路由的lan</text>
   <text x="434" y="90" fill="#e2e8f0" font-size="9" text-anchor="middle">规则：IP匹配自定义虚拟运营商或者域名匹配</text>
   <text x="496" y="139" fill="#e2e8f0" font-size="10" text-anchor="middle">规则：来源 IP</text>
-  <text x="496" y="150" fill="#94a3b8" font-size="8" text-anchor="middle">（来自<tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="5" paint-order="stroke" stroke-linejoin="round">192.168.1.2</tspan>）</text>
+  <text x="496" y="150" fill="#94a3b8" font-size="8" text-anchor="middle">（来自<tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="5" paint-order="stroke" stroke-linejoin="round">192.168.1.2</tspan>）</text>
   <text x="554" y="178" fill="#e2e8f0" font-size="10" text-anchor="middle">LAN 口</text>
   <text x="338" y="182" fill="#e2e8f0" font-size="11" text-anchor="middle">WAN1(PPPOE)</text>
   <text x="441" y="176" fill="#000" font-size="9" text-anchor="middle">WAN2(虚拟运营商)</text>
@@ -258,8 +258,8 @@ weight: 3
   <text x="441" y="208" fill="#000" font-size="9" text-anchor="middle">网关 <tspan stroke="#f472b6" stroke-width="6" paint-order="stroke" stroke-linejoin="round">10.0.0.1</tspan></text>
   <text x="755" y="408" fill="#7dd3fc" font-size="14" text-anchor="middle">旁路由</text>
   <text x="755" y="426" fill="#94a3b8" font-size="11" text-anchor="middle">双网口、跨网段</text>
-  <text x="755" y="284" fill="#7dd3fc" font-size="11" text-anchor="middle">WAN 口 <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="7" paint-order="stroke" stroke-linejoin="round">ip 192.168.1.2</tspan></text>
-  <text x="755" y="302" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#1e3a8a" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
+  <text x="755" y="284" fill="#7dd3fc" font-size="11" text-anchor="middle">WAN 口 <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="7" paint-order="stroke" stroke-linejoin="round">ip 192.168.1.2</tspan></text>
+  <text x="755" y="302" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
   <text x="755" y="320" fill="#94a3b8" font-size="10" text-anchor="middle">网口连爱快 LAN，DHCP分配</text>
   <text x="755" y="358" fill="#000" font-size="11" text-anchor="middle">LAN 口 ip <tspan stroke="#f472b6" stroke-width="6" paint-order="stroke" stroke-linejoin="round">10.0.0.1</tspan></text>
   <text x="755" y="375" fill="#000" font-size="10" text-anchor="middle">（接爱快 WAN2，最好关闭DHCP服务）</text>

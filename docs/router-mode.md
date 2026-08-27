@@ -130,6 +130,7 @@ weight: 3
   <text x="525" y="310" fill="#4ade80" font-size="15" text-anchor="middle">旁路由 </text>
   <text x="525" y="335" fill="#94a3b8" font-size="11" text-anchor="middle">单网口单臂/多网口都可以、同网段</text>
   <text x="525" y="354" fill="#86efac" font-size="12" text-anchor="middle">ip 192.168.1.2</text>
+  <text x="525" y="368" fill="#94a3b8" font-size="10" text-anchor="middle">DHCP获取或者手动配置</text>
   <text x="185" y="396" fill="#c4b5fd" font-size="15" text-anchor="middle">光猫 </text>
 </svg>
 

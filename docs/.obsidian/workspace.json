@@ -188,6 +188,8 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
+    "hugo/public/en.search.min.c5be97c801a5b5a881d1d4d660274a154cb6442893b27824686883caf2ceefec.js",
+    "hugo/public/en.search-data.min.9ae2f43d0bc2fee459fa7f24d10975c3a4bf4d561fcb71624a887d4b4afd973b.json",
     "router-mode.md~",
     "hugo/public/en.search.min.a39fe016224e46438406fe1be861870771629edd117f790d51a00b71fe8dd423.js",
     "hugo/public/en.search-data.min.b1799a0958f1d718cc250a887038f8e909ee98bd0bee764f43d92679b0ac7130.json",
@@ -199,8 +201,6 @@
     "hugo/public/en.search-data.min.e514a3f80fa348a755ca5e5f2c580a5a493b08162e8d0b5b13a610b34860ee2c.json",
     "分流模式动画.md",
     "router-mode.md",
-    "hugo/public/en.search.min.49f69e246e6ae5d3b6f59a02625a970b3e86a4712341f2778b76b026b4bfb775.js",
-    "hugo/public/en.search-data.min.5a3b0bf304e8003f9d7730d7bf0e618972ee33345f342c15012c2e6730890fe0.json",
     "ikuai-firmware-4.0.210-port-streaming-mode-fix.md",
     "proxy-vs-github-proxy-guide.md",
     "cli-params.md",

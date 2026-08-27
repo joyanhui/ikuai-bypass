@@ -3,9 +3,6 @@ title: 爱快应用市场 ipkg 安装
 type: docs
 weight: 7
 ---
-
-## iKuai v4 应用市场 ipkg 安装
-
 ### 1. 下载 ipkg 包
 
 打开 [GitHub Releases](https://github.com/joyanhui/ikuai-bypass/releases)，选择对应版本下载 ipkg 包。

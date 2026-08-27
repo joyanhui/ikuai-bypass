@@ -67,7 +67,7 @@ weight: 3
   <rect x="193" y="188" width="125" height="44" rx="6" fill="#334155" stroke="#38bdf8" stroke-width="1.5"/>
 
   <!-- 旁路由 -->
-  <rect x="430" y="280" width="190" height="110" rx="10" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
+  <rect x="430" y="280" width="190" height="120" rx="10" fill="#0c4a6e" stroke="#38bdf8" stroke-width="2"/>
 
 
   <!-- 光猫 -->
@@ -130,7 +130,8 @@ weight: 3
   <text x="525" y="310" fill="#4ade80" font-size="15" text-anchor="middle">旁路由 </text>
   <text x="525" y="335" fill="#94a3b8" font-size="11" text-anchor="middle">单网口单臂/多网口都可以、同网段</text>
   <text x="525" y="354" fill="#bfdbfe" stroke="#7c2d12" stroke-width="7" paint-order="stroke" stroke-linejoin="round" font-size="12" text-anchor="middle">ip 192.168.1.2</text>
-  <text x="525" y="368" fill="#94a3b8" font-size="10" text-anchor="middle">DHCP获取或者手动配置</text>
+  <text x="525" y="368" fill="#94a3b8" font-size="11" text-anchor="middle">网关 <tspan fill="#bfdbfe" stroke="#7c2d12" stroke-width="6" paint-order="stroke" stroke-linejoin="round">192.168.1.1</tspan></text>
+  <text x="525" y="382" fill="#94a3b8" font-size="10" text-anchor="middle">DHCP获取或者手动配置</text>
   <text x="185" y="396" fill="#c4b5fd" font-size="15" text-anchor="middle">光猫 </text>
 </svg>
 

@@ -269,7 +269,7 @@ weight: 3
 </svg>
 
 <details>
-<summary>⭐ 点击这里展开查看详细图文说明(运营商(ISP)分流+域名分流模式拓扑图)</summary>
+<summary>⭐ 点击这里展开查看之前的详细图文说明(运营商(ISP)分流+域名分流模式拓扑图)</summary>
 <img src="https://raw.githubusercontent.com/joyanhui/ikuai-bypass/refs/heads/v4.4.13/assets/img.png" alt="运营商(ISP)分流+域名分流模式拓扑图">
 </details>
 

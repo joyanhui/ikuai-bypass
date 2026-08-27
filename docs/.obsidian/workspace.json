@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "faq.md",
+                "file": "_index.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "faq"
+              "title": "_index"
             }
           }
         ]
@@ -158,7 +158,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "faq.md",
+                "file": "_index.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -188,6 +188,9 @@
   },
   "active": "f1df1b981b8f05d0",
   "lastOpenFiles": [
+    "cli-params.md",
+    "404.md",
+    "faq.md",
     "v4.4.13-update-to-v4.4.10x.md",
     "v4.2.x-notes.md",
     "updatelog.md",
@@ -208,14 +211,12 @@
     "hugo/public/en.search-data.min.671444e6224bdf25215afcc4b593c7a18f8ff458fc18f26de526d53c8a322a36.json",
     "hugo/public/en.search.min.c5be97c801a5b5a881d1d4d660274a154cb6442893b27824686883caf2ceefec.js",
     "分流模式动画.md",
-    "cli-params.md",
     "index.md",
     "{{.md",
     "deployment.md",
     "quickstart 1.md",
     "router-mode 1.md",
     "_site/assets/images/small-image.jpg",
-    "_site/assets/images/large-image.jpg",
-    "faq.md"
+    "_site/assets/images/large-image.jpg"
   ]
 }

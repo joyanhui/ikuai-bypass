@@ -1,10 +1,8 @@
 ---
-title: 更新日志：版本历史
+title: 更新日志
 type: docs
 weight: 9
 ---
-
-# 更新日志
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
 

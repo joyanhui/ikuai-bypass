@@ -1,0 +1,57 @@
+baseURL = "https://joyanhui.github.io/ikuai-bypass/"
+title = "iKuai Bypass"
+languageCode = "zh-CN"
+theme = "hextra"
+
+# 直接以 docs/ 为内容目录，源 Markdown 文件不再复制/转换
+contentDir = "../"
+
+# 排除 Hugo 工程自身的非内容目录（主题已移至仓库根 .hugo-themes，不在内容目录内）
+ignoreFiles = [
+  "hugo/layouts/",
+  "hugo/static/",
+  "hugo/assets/",
+  "hugo/archetypes/",
+  "hugo/i18n/",
+  "hugo/content/",
+  "hugo/public/",
+  "hugo/resources/",
+  "\\.obsidian/",
+]
+
+# 主题不在 docs/ 内，单独指定（相对于 docs/hugo）
+themesDir = "../../.hugo-themes"
+
+# 本地预览由 script/pages.sh serve 覆盖 baseURL 为 http://localhost:4000/
+enableGitInfo = false
+
+# 文档含原始 HTML（SVG 动画、<details> 等），保留与 Jekyll 一致的行为
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+
+[params]
+  description = "爱快路由器专用的分流规则自动同步工具"
+  favicon = "/favicon.ico"
+
+  [params.navbar]
+    displayTitle = true
+
+  [params.footer]
+    displayPoweredBy = false
+    displayCopyright = true
+    copyright = "Copyright © 2026 iKuai Bypass."
+
+# 顶部导航（原 Jekyll aux_links）
+[[menu.main]]
+  name = "GitHub"
+  type = "link"
+  url = "https://github.com/joyanhui/ikuai-bypass"
+  weight = 2
+
+[[menu.main]]
+  name = "Releases"
+  type = "link"
+  url = "https://github.com/joyanhui/ikuai-bypass/releases"
+  weight = 3

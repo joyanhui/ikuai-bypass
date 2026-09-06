@@ -1,0 +1,1 @@
+function setTheme(e){document.documentElement.classList.remove("light","dark"),e!=="light"&&e!=="dark"&&(e=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"),document.documentElement.classList.add(e),document.documentElement.style.colorScheme=e}setTheme("color-theme"in localStorage?localStorage.getItem("color-theme"):"system")

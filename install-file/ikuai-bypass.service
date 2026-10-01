@@ -1,0 +1,13 @@
+[Unit]
+Description=iKuai Bypass CLI Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/opt/ikuai-bypass/ikuai-bypass -r cron -c /opt/ikuai-bypass/config.yml
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

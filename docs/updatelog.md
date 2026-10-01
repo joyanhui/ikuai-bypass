@@ -12,7 +12,7 @@ weight: 9
 
 ## v4.4.110
 
-- 修复ikuai 4.0.310强制https后自签证书无法识别的问题[#153](https://github.com/joyanhui/ikuai-bypass/discussions/153)
+- 兼容ikuai 4.0.310强制https后的自签证书问题[#153](https://github.com/joyanhui/ikuai-bypass/discussions/153)
 
 ## v4.4.109
 
@@ -45,18 +45,18 @@ weight: 9
 - 针对爱快 v4.0.210beta 端口分流 mode:5 被弃用改为 6 的兼容性修复 [#130](https://github.com/joyanhui/ikuai-bypass/issues/130)
 - 增加端口分流的优先级参数配置 `prio`（默认 0）[#128](https://github.com/joyanhui/ikuai-bypass/issues/128)
 
-## v4.4.103 (2026-04-11)
+## v4.4.103
 
 - 修复 macOS/Windows 下 GUI 版本无法智能创建配置文件路径导致无法保存配置文件的 bug
 - 完善远程加载配置文件的模态框，增加使用嵌入的 YAML 配置文件功能，增加直接使用 ghproxy 下载功能
 - CLI 模式下增加自动创建配置文件能力（配置文件不存在时询问是否创建），GUI 模式在远程下载配置文件界面也有此功能
 
-## v4.4.102 (2026-04-11)
+## v4.4.102
 
 - YAML 编辑器简化为直接使用多行输入框
 - 修复 Windows 的 GUI 版本无法显示内置页面（提示页面未找到）的 bug [#127](https://github.com/joyanhui/ikuai-bypass/issues/127)
 
-## v4.4.101 (2026-04-10)
+## v4.4.101
 
 - 备注信息改为 `IkuaiBypass`，避免爱快部分模块不支持特殊字符的困扰
 - 支持端口分流配置的"反向匹配" [#119](https://github.com/joyanhui/ikuai-bypass/issues/119)
@@ -65,7 +65,7 @@ weight: 9
 - 去掉爱快应用市场的其他环境变量配置，移步到 WebUI/配置文件内配置
 - CI/CD 集成测试相关推进
 
-## v4.4.100 (2026-04-05)
+## v4.4.100
 
 - 首个 Rust 版本，开始支持手机 App 和电脑直接可视化配置和使用
 - 技术栈从 Go+HTML 迁移到 Rust + Tauri + Astro，引入集成测试和爱快 API 模拟器

@@ -942,7 +942,8 @@ async fn update_stream_ipport(
 ) -> Result<(), UpdateError> {
     let stream_logger = Logger::new("STREAM:端口分流", Arc::clone(sink));
 
-    let mut dst_addr = String::new();
+    let dst_custom = String::new();
+    let mut dst_objects: Vec<String> = Vec::new();
     if input.ip_group_name.trim().is_empty() {
         stream_logger.info("CHECK:参数校验", "ip-group parameter is empty");
     } else {
@@ -965,10 +966,11 @@ async fn update_stream_ipport(
             );
             return Ok(());
         }
-        dst_addr = dst_groups.join(",");
+        dst_objects = dst_groups;
     }
 
-    let mut src_addr = input.src_addr.to_string();
+    let mut src_custom = input.src_addr.to_string();
+    let mut src_objects: Vec<String> = Vec::new();
     if !input.src_addr_opt_ipgroup.trim().is_empty() {
         let mut src_groups = Vec::new();
         for item in input.src_addr_opt_ipgroup.split(',') {
@@ -980,7 +982,8 @@ async fn update_stream_ipport(
             src_groups.extend(matches);
         }
         if !src_groups.is_empty() {
-            src_addr = src_groups.join(",");
+            src_objects = src_groups;
+            src_custom.clear();
         } else {
             stream_logger.info(
                 "SKIP:跳过操作",
@@ -998,8 +1001,10 @@ async fn update_stream_ipport(
     let spec = ikuai::stream_ipport::StreamIpPortSpec {
         forward_type: input.forward_type,
         iface: input.iface,
-        dst_addr: &dst_addr,
-        src_addr: &src_addr,
+        src_custom: &src_custom,
+        src_objects: &src_objects,
+        dst_custom: &dst_custom,
+        dst_objects: &dst_objects,
         src_addr_inv: input.src_addr_inv,
         nexthop: input.nexthop,
         tag: input.tag,

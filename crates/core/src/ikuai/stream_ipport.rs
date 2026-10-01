@@ -6,7 +6,7 @@ use super::tag_name::{build_tag_name, match_tag_name_filter};
 use super::types::{
     FUNC_NAME_STREAM_IPPORT, IKuaiClient, IKuaiError, NEW_COMMENT, StreamIpPortData,
 };
-use super::utils::{categorize_addrs, to_string_list};
+use super::utils::{to_string_list};
 
 #[derive(Debug, Deserialize)]
 struct AddrBlock {
@@ -136,8 +136,10 @@ pub async fn get_stream_ipport_map(
 pub struct StreamIpPortSpec<'a> {
     pub forward_type: &'a str,
     pub iface: &'a str,
-    pub dst_addr: &'a str,
-    pub src_addr: &'a str,
+    pub src_custom: &'a str,
+    pub src_objects: &'a [String],
+    pub dst_custom: &'a str,
+    pub dst_objects: &'a [String],
     pub src_addr_inv: i64,
     pub nexthop: &'a str,
     pub tag: &'a str,
@@ -153,24 +155,10 @@ pub async fn add_stream_ipport(
     spec: StreamIpPortSpec<'_>,
 ) -> Result<(), IKuaiError> {
     let f_type: i64 = spec.forward_type.parse().unwrap_or(0);
-    let src_list: Vec<String> = spec
-        .src_addr
-        .trim()
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    let dst_list: Vec<String> = spec
-        .dst_addr
-        .trim()
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    let (src_custom, src_obj) = categorize_addrs(&src_list);
-    let (dst_custom, dst_obj) = categorize_addrs(&dst_list);
-    let src_objects = resolve_ip_group_objects(api, &src_obj).await?;
-    let dst_objects = resolve_ip_group_objects(api, &dst_obj).await?;
+    let src_custom = split_csv(spec.src_custom);
+    let dst_custom = split_csv(spec.dst_custom);
+    let src_objects = resolve_ip_group_objects(api, spec.src_objects).await?;
+    let dst_objects = resolve_ip_group_objects(api, spec.dst_objects).await?;
     let param = serde_json::json!({
         "enabled": "yes",
         "tagname": build_tag_name(spec.tag),
@@ -208,24 +196,10 @@ pub async fn edit_stream_ipport(
     id: i64,
 ) -> Result<(), IKuaiError> {
     let f_type: i64 = spec.forward_type.parse().unwrap_or(0);
-    let src_list: Vec<String> = spec
-        .src_addr
-        .trim()
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    let dst_list: Vec<String> = spec
-        .dst_addr
-        .trim()
-        .split(',')
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    let (src_custom, src_obj) = categorize_addrs(&src_list);
-    let (dst_custom, dst_obj) = categorize_addrs(&dst_list);
-    let src_objects = resolve_ip_group_objects(api, &src_obj).await?;
-    let dst_objects = resolve_ip_group_objects(api, &dst_obj).await?;
+    let src_custom = split_csv(spec.src_custom);
+    let dst_custom = split_csv(spec.dst_custom);
+    let src_objects = resolve_ip_group_objects(api, spec.src_objects).await?;
+    let dst_objects = resolve_ip_group_objects(api, spec.dst_objects).await?;
     let param = serde_json::json!({
         "enabled": "yes",
         "tagname": build_tag_name(spec.tag),
@@ -284,6 +258,13 @@ pub async fn del_ikuai_bypass_stream_ipport(
         }
         del_stream_ipport(api, &ids.join(",")).await?;
     }
+}
+
+fn split_csv(s: &str) -> Vec<String> {
+    s.split(',')
+        .map(|v| v.trim().to_string())
+        .filter(|v| !v.is_empty())
+        .collect()
 }
 
 async fn resolve_ip_group_objects(

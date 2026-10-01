@@ -88,6 +88,7 @@ ikuai-bypass/
 - 本地集成测试默认优先使用 KVM/QEMU 真机链路，用于验证和模拟器的行为差异。
 - 本地无 `qemu-system-x86_64` / `qemu-img` / `/dev/kvm` 时，允许通过 `IKB_TEST_IKUAI_URL` 连接开发者显式指定的爱快地址继续跑集成测试。
 - 本地 KVM 默认镜像优先使用仓库内 `.github/smoke-test-ikuai.qcow2.7z` 解压得到的 `.github/smoke-test-ikuai.qcow2`，除非开发者通过环境变量覆盖。
+- 本地 KVM 临时启动爱快 VM：`qemu-system-x86_64 -M q35,usb=on,acpi=on,hpet=off -m 4G -smp cores=4 -accel kvm -drive file=<镜像qcow2>,if=virtio -device usb-tablet -device VGA,vgamem_mb=64 -monitor none -display gtk -nic tap,ifname=tap0,script=no,downscript=no,model=e1000,mac=52:54:00:11:11:11 -nic user,model=e1000,mac=52:54:00:22:22:22 -nic user,model=e1000,mac=52:54:00:33:33:33 -nic user,model=e1000,mac=52:54:00:44:44:44`，宿主机 tap0 配 192.168.9.2/24，爱快 V4 强制 HTTPS，WebUI 为 https://192.168.9.1（admin/admin888），物理机访问需 socat 转发 8443→443 后打开 https://localhost:8443。
 - `webui` 浏览器 smoke 本地验证必须基于 `nix develop`，先预编译 `ikb-webui-fixture`，再以二进制路径运行 `apps/integration-tests/run-webui-browser-smoke.sh`。
 
 ## 安装脚本测试

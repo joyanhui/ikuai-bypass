@@ -6,36 +6,41 @@ weight: 9
 
 > 仅包含 Rust 版本（v4.4.100+）的更新记录。历史 Go 版本归档于 [v4.4.13](https://github.com/joyanhui/ikuai-bypass/releases/tag/v4.4.13)。
 
+## v4.4.111
+
+- 修复ip端口分流源地址使用ip分组时的兼容问题[#154](https://github.com/joyanhui/ikuai-bypass/issues/154)
+
 ## v4.4.110
+
 - 修复ikuai 4.0.310强制https后自签证书无法识别的问题[#153](https://github.com/joyanhui/ikuai-bypass/discussions/153)
 
-## v4.4.109 (2026-08-03)
+## v4.4.109
 
 - 修复 iKuai 应用市场和 Docker 镜像默认时区未生效的问题，默认时区设为上海 (Asia/Shanghai)，支持在爱快应用市场自定义时区 [#145](https://github.com/joyanhui/ikuai-bypass/discussions/145) [#146](https://github.com/joyanhui/ikuai-bypass/issues/146)
 - 端口分流新增 `protocol` 配置字段，支持 tcp/udp/tcp+udp/icmp/any 协议 [#143](https://github.com/joyanhui/ikuai-bypass/discussions/143)
 - 安装脚本与 OpenWrt LuCI 鲁棒性重构：install.sh/common.sh 统一输出结构化错误（error_code/message/error_detail），下载/解压/写盘失败时日志可准确显示具体原因
 - LuCI 安装任务超时从 60s 放宽至 300s、服务操作超时从 10s 放宽至 30s，避免慢速网络下误报"请求超时"
 
-## v4.4.108 (2026-06-29)
+## v4.4.108
 
 - 新增 `run-mode` / `mode` 配置字段，支持三优先级解析（CLI 参数 > config.yml > 默认值）
 - 大幅简化 OpenWRT luCI IPK的ui功能 尽可能的简单易用，并复用 install.sh 完成可视化的安装
 
-## v4.4.107 (2026-06-29)
+## v4.4.107
 
 - OpenWrt LuCI IPK 重大升级：完整双语标签页界面、配置文件在线编辑器（备份/恢复）、插件自更新、自卸载（双重确认）、步骤进度+实时日志、代理配置模态框
 - 新增一键安装脚本 `docs/install.sh`，支持 Ubuntu (systemd) 和 OpenWrt，附带 CI 测试覆盖安装/卸载全生命周期
 - 文档重构：合并 quickstart/guide，新增一键安装指引
 
-## v4.4.106 (2026-06-15)
+## v4.4.106
 
 - 修复 CLI 版本未能嵌入 WebUI 静态编译结果的 bug [#142](https://github.com/joyanhui/ikuai-bypass/issues/142)
-于4.0.310ttps://github.com/joyanhui/ikuai-bypass/issues/138)
+  于4.0.310ttps://github.com/joyanhui/ikuai-bypass/issues/138)
 - 增加 arm64 版本爱快 ipkg 插件支持
 - iOS 端优化
 - 增加对爱快≥ 4.0.210 端口分流的主备模式说明文案和默认值[aaa2c3c](https://github.com/joyanhui/ikuai-bypass/commit/aaa2c3c0b9d6d06086b2fc1b3558210327c8b2fd)
 
-## v4.4.104 (2026-04-27)
+## v4.4.104
 
 - 针对爱快 v4.0.210beta 端口分流 mode:5 被弃用改为 6 的兼容性修复 [#130](https://github.com/joyanhui/ikuai-bypass/issues/130)
 - 增加端口分流的优先级参数配置 `prio`（默认 0）[#128](https://github.com/joyanhui/ikuai-bypass/issues/128)

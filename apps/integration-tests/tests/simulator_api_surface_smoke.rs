@@ -89,8 +89,10 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
         ikuai::stream_ipport::StreamIpPortSpec {
             forward_type: "1",
             iface: "",
-            dst_addr: "IKBSim4",
-            src_addr: "192.168.1.10-192.168.1.20",
+            dst_custom: "",
+            dst_objects: &["IKBSim4".to_string()],
+            src_custom: "192.168.1.10-192.168.1.20",
+            src_objects: &[],
             src_addr_inv: 1,
             nexthop: "192.168.1.2",
             tag: "SimRoute",
@@ -113,8 +115,10 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
         ikuai::stream_ipport::StreamIpPortSpec {
             forward_type: "1",
             iface: "",
-            dst_addr: "IKBSim4",
-            src_addr: "192.168.1.10-192.168.1.20",
+            dst_custom: "",
+            dst_objects: &["IKBSim4".to_string()],
+            src_custom: "192.168.1.10-192.168.1.20",
+            src_objects: &[],
             src_addr_inv: 0,
             nexthop: "192.168.1.3",
             tag: "SimRoute",
@@ -132,6 +136,81 @@ async fn simulator_api_surface_smoke() -> Result<(), String> {
         .await
         .map_err(|e| format!("stream_ipport show after edit failed: {e}"))?;
     assert_eq!(sip_rows[0].mode, 6, "stream_ipport edit should preserve mode=6");
+
+    ikuai::ip_group::add_ip_group_named(&api, "FW-LAN", "192.168.50.0/24")
+        .await
+        .map_err(|e| format!("ip_group FW-LAN add failed: {e}"))?;
+    ikuai::stream_ipport::add_stream_ipport(
+        &api,
+        ikuai::stream_ipport::StreamIpPortSpec {
+            forward_type: "1",
+            iface: "",
+            dst_custom: "",
+            dst_objects: &["IKBSim4".to_string()],
+            src_custom: "",
+            src_objects: &["FW-LAN".to_string()],
+            src_addr_inv: 0,
+            nexthop: "192.168.80.110",
+            tag: "SimHyphen",
+            dst_addr_inv: 0,
+            prio: 0,
+            mode: 6,
+            iface_band: 0,
+            protocol: "tcp+udp",
+        },
+    )
+    .await
+    .map_err(|e| format!("stream_ipport hyphen-group add failed: {e}"))?;
+    let raw_resp = api
+        .call::<_, serde_json::Value>(
+            ikb_core::ikuai::FUNC_NAME_STREAM_IPPORT,
+            "show",
+            &serde_json::json!({ "TYPE": "total,data", "limit": "0,1000" }),
+        )
+        .await
+        .map_err(|e| format!("raw stream_ipport show failed: {e}"))?;
+    let raw_rows = raw_resp
+        .results
+        .ok_or_else(|| "raw stream_ipport show missing results".to_string())?
+        .data;
+    let hyphen_row = raw_rows
+        .as_array()
+        .and_then(|rows| {
+            rows.iter().find(|row| {
+                row.get("tagname")
+                    .and_then(serde_json::Value::as_str)
+                    .is_some_and(|name| name.starts_with("IKBSimHyphen"))
+            })
+        })
+        .ok_or_else(|| "hyphen group rule not found in stream_ipport show".to_string())?;
+    let src_obj = hyphen_row
+        .get("src_addr")
+        .and_then(|block| block.get("object"))
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "stream_ipport src_addr.object missing".to_string())?;
+    assert_eq!(src_obj.len(), 1, "src_addr.object should contain exactly one reference");
+    assert_eq!(src_obj[0]["gp_name"], "FW-LAN", "src_addr.object should reference FW-LAN by name");
+    assert_eq!(src_obj[0]["type"], 0, "src_addr.object type should be 0");
+    assert!(
+        src_obj[0]["gid"].as_str().is_some_and(|gid| gid.starts_with("IPGP")),
+        "src_addr.object gid should be IPGP-prefixed"
+    );
+    let src_custom = hyphen_row
+        .get("src_addr")
+        .and_then(|block| block.get("custom"));
+    match src_custom {
+        None => {}
+        Some(serde_json::Value::Array(items)) => {
+            assert!(items.is_empty(), "src_addr.custom must stay empty for ip-group sources")
+        }
+        Some(_) => {}
+    }
+    ikuai::stream_ipport::del_stream_ipport(
+        &api,
+        &hyphen_row["id"].as_i64().unwrap_or_default().to_string(),
+    )
+    .await
+    .map_err(|e| format!("stream_ipport hyphen-group del failed: {e}"))?;
 
     ikuai::stream_ipport::del_stream_ipport(&api, &sip_id.to_string())
         .await

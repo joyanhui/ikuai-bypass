@@ -6,7 +6,6 @@ weight: 8
 
 # FAQ - 常见问题
 
-
 ## 代理与下载加速配置
 
 代理模式（`proxy`）与 GitHub 下载加速（`github-proxy`）的区别与配置方法。
@@ -14,7 +13,7 @@ weight: 8
 ```yaml
 # 全局 HTTP 代理（推荐按需开启）
 proxy:
-  mode: smart           # custom / system / smart
+  mode: smart # custom / system / smart
   url: ""
   user: ""
   pass: ""
@@ -38,11 +37,26 @@ ghproxy URL 前缀重写，仅对 `raw.githubusercontent.com` / `github.com` 生
 > 完整配置示例请参考 [config.yml](https://github.com/joyanhui/ikuai-bypass/blob/main/config.yml)，里面有详细注释。
 
 ---
+
 ## 爱快配置为https 无法登录
+
 因为爱快4.0.310之后的版本强制开启https，但是默认证书是自签名证书并不在操作系统的信任链内，所以ikuai-bypass也无法识别。
 
 解决方案是 更新ikuai-bypass到4.4.110以后的版本，然后配置项目新增 `ikuai-url-ignore-cert: true` 即可。此参数会忽略爱快访问地址https的证书错误。
 
+## WebUi管理界面无法保存
+
+提示错误 `Forbidden: Online update is disabled in configuration` ,此问题仅在旧版本`v4.4.13`之前的版本存在。
+
+对应的配置项如下
+
+```yaml
+webui:
+  enable: true # 是否启用 WebUI 服务
+  enable-update: false # 是否启用配置文件在线更新功能
+```
+
+把 `enable-update: false` 改为 `enable-update: true` 然后重启ikuai-bypass即可
 
 ## 爱快固件兼容性：端口分流参数变更
 
@@ -75,15 +89,15 @@ stream-ipport:
 
 ### 模式兼容性
 
-| mode | 说明 | 兼容固件版本 |
-|------|------|-------------|
-| 0 | 新建连接数 | 全部 |
-| 1 | 源IP | 全部 |
-| 2 | 源IP+源端口 | 全部 |
-| 3 | 源IP+目的IP | 全部 |
-| 4 | 源IP+目的IP+目的端口 | 全部 |
-| 5 | 主备模式 | **仅 ≤ 4.0.120** |
-| 6 | 主备模式 | **≥ 4.0.210** |
+| mode | 说明                 | 兼容固件版本     |
+| ---- | -------------------- | ---------------- |
+| 0    | 新建连接数           | 全部             |
+| 1    | 源IP                 | 全部             |
+| 2    | 源IP+源端口          | 全部             |
+| 3    | 源IP+目的IP          | 全部             |
+| 4    | 源IP+目的IP+目的端口 | 全部             |
+| 5    | 主备模式             | **仅 ≤ 4.0.120** |
+| 6    | 主备模式             | **≥ 4.0.210**    |
 
 > 固件 ≤ 4.0.120 只能用 `mode: 5`；≥ 4.0.210 只能用 `mode: 6`。
 
